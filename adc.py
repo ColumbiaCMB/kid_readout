@@ -11,6 +11,15 @@ if not globals().has_key('r1'):
     
 # alternative boffile which is not yet working: adcfft14dac14r3_2013_May_31_1457.bof'
 def initialize(boffile='adcfft14dac14r2_2013_May_29_1658.bof')
+    """
+    Initialize the readout system:
+        program the roach
+        check the clock rate
+        set the FFT gain
+        give an initial sync pulse
+        start up with a single sine wave and select the corresponding fftbin
+        
+    """
     r1.progdev('') # deprogram the ROACH
     r1.progdev(boffile) #program it
     clk = r1.est_brd_clk()
@@ -62,6 +71,17 @@ def setChannel(ch,dphi=-0.25,amp=-3,nfft=2**14, ns = 2**16):
     selectBin(int(ibin))
     
 def getFFT(nread=10):
+    """
+    Get a stream of data from a single FFT bin
+    
+    nread: number of 4096 sample frames to read
+    
+    returns  dout,addrs
+    dout: complex data stream. Real and imaginary parts are each 16 bit signed 
+            integers (but cast to numpy complex)
+    addrs: counter values when each frame was read. Can be used to check that 
+            frames are contiguous
+    """
     a = r1.read_uint('ppout_addr') & 0x1000
     addr = r1.read_uint('ppout_addr') 
     b = addr & 0x1000
@@ -94,7 +114,16 @@ def getFFT(nread=10):
     dout = np.concatenate(([np.fromstring(x,dtype='>i2').astype('float').view('complex') for x in data]))
     addrs = np.array(addrs)
     return dout,addrs
+    
 def getAdc(ns=2**13):
+    """
+    Grab raw ADC samples
+    ns: number of samples in buffer (this is fixed for a given boffile)
+    
+    returns: s0,s1
+    s0 and s1 are the samples from adc 0 and adc 1 respectively
+    Each sample is a 14 bit signed integer (cast to a numpy float)
+    """
     r1.write_int('i0_ctrl',0)
     r1.write_int('q0_ctrl',0)
     r1.write_int('i0_ctrl',5)
@@ -103,6 +132,16 @@ def getAdc(ns=2**13):
     s1 = (np.fromstring(r1.read('q0_bram',ns),dtype='>i2'))/16.0
     return s0,s1
 
+def getIQ(ns=2**13):
+    """
+    convenience function to treat raw adc samples as complex numbers
+    """
+    s0,s1 = getAdc(ns=ns)
+    return s0+1j*s1
+
+
+########
+# Functions below here are special purpose, not for general use
 def getFFTDebug(ns=2**12):
     r1.write_int('fftout_ctrl',0)
     r1.write_int('fftout_ctrl',5)
@@ -112,9 +151,6 @@ def getFFTDebug(ns=2**12):
         pass
     d = np.fromstring(r1.read('fftout_bram',ns*4),dtype='>i2').astype('float').view('complex')
     return d
-def getIQ(ns=2**17):
-    s0,s1 = getAdc(ns=ns)
-    return s0+1j*s1
     
 def setTone(f0,dphi=0.25,amp=-3,ns = 2**16):
     a = 10**(amp/20.0)
