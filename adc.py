@@ -9,6 +9,16 @@ if not globals().has_key('r1'):
     r1 = FpgaClient('roach')
     globals()['r1'] = r1
     
+# alternative boffile which is not yet working: adcfft14dac14r3_2013_May_31_1457.bof'
+def initialize(boffile='adcfft14dac14r2_2013_May_29_1658.bof')
+    r1.progdev('') # deprogram the ROACH
+    r1.progdev(boffile) #program it
+    clk = r1.est_brd_clk()
+    print "The ROACH clock is ~ %.1f MHz" % clk
+    setFFTGain(0)  # generally use FFTgain = 2**0 = 1
+    r1.write_int('sync',0) # give a sync pulse to get things going
+    r1.write_int('sync',1)
+    setChannel(1024) #start up with a tone coming out
 
 def setFFTGain(gain):
     """
@@ -84,7 +94,7 @@ def getFFT(nread=10):
     dout = np.concatenate(([np.fromstring(x,dtype='>i2').astype('float').view('complex') for x in data]))
     addrs = np.array(addrs)
     return dout,addrs
-def getAdc(ns=2**17):
+def getAdc(ns=2**13):
     r1.write_int('i0_ctrl',0)
     r1.write_int('q0_ctrl',0)
     r1.write_int('i0_ctrl',5)
@@ -93,9 +103,18 @@ def getAdc(ns=2**17):
     s1 = (np.fromstring(r1.read('q0_bram',ns),dtype='>i2'))/16.0
     return s0,s1
 
+def getFFTDebug(ns=2**12):
+    r1.write_int('fftout_ctrl',0)
+    r1.write_int('fftout_ctrl',5)
+    r1.write_int('sync',0)
+    r1.write_int('sync',1)
+    while r1.read_int('fftout_status') != ns*4:
+        pass
+    d = np.fromstring(r1.read('fftout_bram',ns*4),dtype='>i2').astype('float').view('complex')
+    return d
 def getIQ(ns=2**17):
     s0,s1 = getAdc(ns=ns)
-    return s0*1j*s1
+    return s0+1j*s1
     
 def setTone(f0,dphi=0.25,amp=-3,ns = 2**16):
     a = 10**(amp/20.0)
