@@ -10,7 +10,7 @@ if not globals().has_key('r1'):
     globals()['r1'] = r1
     
 # alternative boffile which is not yet working: adcfft14dac14r3_2013_May_31_1457.bof'
-def initialize(boffile='adcfft14dac14r2_2013_May_29_1658.bof')
+def initialize(boffile='adcfft14dac14r2_2013_May_29_1658.bof'):
     """
     Initialize the readout system:
         program the roach
