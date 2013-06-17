@@ -38,6 +38,17 @@ class SinglePixelReadout(object):
         fftshift = (2**20 - 1) - (2**gain - 1)  #this expression puts downsifts at the earliest stages of the FFT
         self.r.write_int('fftshift',fftshift)
         
+    def initialize(self):
+        """
+        Reprogram the ROACH and get things running
+        """
+        print "Deprogramming"
+        self.r.progdev('')
+        print "Programming", self.boffile
+        self.r.progdev(self.boffile)
+        self.setFFTGain(0)
+        self.setChannel(1024)
+        
     def setChannel(self,ch,dphi=None,amp=-3):
         raise NotImplementedError("Abstract base class")
     def getFFT(self,nread=10):
@@ -108,6 +119,7 @@ class SinglePixelBaseband(SinglePixelReadout):
         self.dac_ns = 2**16 # number of samples in the dac buffer
         self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
         self.nfft = 2**14
+        self.boffile = 'adcdac2xfft14r4_2013_Jun_13_1717.bof'
         
     def setChannel(self,ch,dphi=None,amp=-3):
         """
@@ -190,6 +202,7 @@ class SinglePixelHeterodyne(SinglePixelReadout):
         self.dac_ns = 2**16 # number of samples in the dac buffer
         self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
         self.nfft = 2**14
+        self.boffile = 'adcfft14dac14r2_2013_May_29_1658.bof'
         
     def setChannel(self,ch,dphi=-0.25,amp=-3):
         """
