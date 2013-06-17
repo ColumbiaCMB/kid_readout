@@ -3,6 +3,13 @@ Classes to interface to single pixel KID readout systems
 """
 
 class SinglePixelReadout(object):
+    """
+    Base class for single pixel readout systems.
+    These methods define an abstract interface that can be relied on to be consistent between
+    the baseband and heterodyne readout systems
+    """
+    def __init__(self):
+        raise NotImplementedError("Abstract class, instantiate a subclass instead of this class")
     def getRawAdc(self):
         """
         Grab raw ADC samples
@@ -30,49 +37,20 @@ class SinglePixelReadout(object):
         """
         fftshift = (2**20 - 1) - (2**gain - 1)  #this expression puts downsifts at the earliest stages of the FFT
         self.r.write_int('fftshift',fftshift)
-
-class SinglePixelBaseband(SinglePixelReadout):
-    def __init__(self,roach=None,wafer=0,roachip='roach'):
-        if roach:
-            self.r = roach
-        else:
-            from corr.katcp_wrapper import FpgaClient
-            self.r = FpgaClient(roachip)
-            
-        self.wafer = wafer
-        self.dac_ns = 2**16 # number of samples in the dac buffer
-        self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
-        self.nfft = 2**14
         
     def setChannel(self,ch,dphi=None,amp=-3):
-        """
-        ch: channel number (0 to nfft-1)
-        dphi: phase offset between I and Q components in turns (nominally 1/4 = pi/2 radians)
-        amp: amplitude relative to full scale in dB
-        nfft: size of the fft
-        ns: number of samples in the playback memory 
-        """
-        setTone(ch/(1.0*self.dac_ns), dphi=dphi, amp=amp)
-        absch = np.abs(ch)
-        chan_per_bin = self.dac_ns/self.nfft
-        ibin = absch // chan_per_bin
-#        if ch < 0:
-#            ibin = nfft-ibin       
-        self.selectBin(int(ibin))
-        
+        raise NotImplementedError("Abstract base class")
     def getFFT(self,nread=10):
+        raise NotImplementedError("Abstract base class")
+    def setTone(self,f0,dphi=None,amp=-3):
+        raise NotImplementedError("Abstract base class")
+    def selectBin(self,ibin):
+        raise NotImplementedError("Abstract base class")
+    
+    def _readData(self,nread,bufname):
         """
-        Get a stream of data from a single FFT bin
-        
-        nread: number of 4096 sample frames to read
-        
-        returns  dout,addrs
-        dout: complex data stream. Real and imaginary parts are each 16 bit signed 
-                integers (but cast to numpy complex)
-        addrs: counter values when each frame was read. Can be used to check that 
-                frames are contiguous
+        Low level data reading loop, common to both readouts
         """
-        bufname = 'ppout%d' % self.wafer
         regname = '%s_addr' % bufname
         a = self.r.read_uint(regname) & 0x1000
         addr = self.r.read_uint(regname) 
@@ -106,6 +84,61 @@ class SinglePixelBaseband(SinglePixelReadout):
         dout = np.concatenate(([np.fromstring(x,dtype='>i2').astype('float').view('complex') for x in data]))
         addrs = np.array(addrs)
         return dout,addrs
+
+
+class SinglePixelBaseband(SinglePixelReadout):
+    def __init__(self,roach=None,wafer=0,roachip='roach'):
+        """
+        Class to represent the baseband readout system (low-frequency (150 MHz), no mixers)
+        
+        roach: an FpgaClient instance for communicating with the ROACH. If not specified,
+                will try to instantiate one connected to *roachip*
+        wafer: 0 or 1. 
+                In baseband mode, each of the two DAC and ADC connections can be used independantly to
+                readout a single wafer each. This parameter indicates which connection you want to use.
+        roachip: (optional). Network address of the ROACH if you don't want to provide an FpgaClient
+        """
+        if roach:
+            self.r = roach
+        else:
+            from corr.katcp_wrapper import FpgaClient
+            self.r = FpgaClient(roachip)
+            
+        self.wafer = wafer
+        self.dac_ns = 2**16 # number of samples in the dac buffer
+        self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
+        self.nfft = 2**14
+        
+    def setChannel(self,ch,dphi=None,amp=-3):
+        """
+        ch: channel number (0 to nfft-1)
+        dphi: phase offset between I and Q components in turns (nominally 1/4 = pi/2 radians)
+        amp: amplitude relative to full scale in dB
+        nfft: size of the fft
+        ns: number of samples in the playback memory 
+        """
+        setTone(ch/(1.0*self.dac_ns), dphi=dphi, amp=amp)
+        absch = np.abs(ch)
+        chan_per_bin = self.dac_ns/self.nfft
+        ibin = absch // chan_per_bin
+#        if ch < 0:
+#            ibin = nfft-ibin       
+        self.selectBin(int(ibin))
+        
+    def getData(self,nread=10):
+        """
+        Get a stream of data from a single FFT bin
+        
+        nread: number of 4096 sample frames to read
+        
+        returns  dout,addrs
+        dout: complex data stream. Real and imaginary parts are each 16 bit signed 
+                integers (but cast to numpy complex)
+        addrs: counter values when each frame was read. Can be used to check that 
+                frames are contiguous
+        """
+        bufname = 'ppout%d' % self.wafer
+        return self._readData(nread, bufname)
         
     def loadWaveform(self,wave):
         if len(wave) != self.dac_ns:
@@ -128,6 +161,89 @@ class SinglePixelBaseband(SinglePixelReadout):
             a = 0.9999
         swr = (2**15)*a*np.cos(2*np.pi*(f0*np.arange(self.dac_ns)))
         self.loadWaveform(swr)
+        
+    def selectBin(self,ibin):
+        """
+        Set the register which selects the FFT bin we get data from
+        
+        ibin: 0 to fftlen -1
+        """
+        self.r.write_int('chansel',ibin)
+    
+
+
+class SinglePixelHeterodyne(SinglePixelReadout):
+    def __init__(self,roach=None,roachip='roach'):
+        """
+        Class to represent the heterodyne readout system (high frequency, 1.5 GHz, with IQ mixers)
+        
+        roach: an FpgaClient instance for communicating with the ROACH. If not specified,
+                will try to instantiate one connected to *roachip*
+        roachip: (optional). Network address of the ROACH if you don't want to provide an FpgaClient
+        """
+        if roach:
+            self.r = roach
+        else:
+            from corr.katcp_wrapper import FpgaClient
+            self.r = FpgaClient(roachip)
+            
+        self.dac_ns = 2**16 # number of samples in the dac buffer
+        self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
+        self.nfft = 2**14
+        
+    def setChannel(self,ch,dphi=-0.25,amp=-3):
+        """
+        ch: channel number (-nfft/2 to nfft/2-1)
+        dphi: phase offset between I and Q components in turns (nominally -1/4 = pi/2 radians)
+        amp: amplitude relative to full scale in dB
+        nfft: size of the fft
+        ns: number of samples in the playback memory 
+        """
+        setTone(ch/(1.0*self.dac_ns), dphi=dphi, amp=amp)
+        absch = np.abs(ch)
+        chan_per_bin = self.dac_ns/self.nfft
+        ibin = absch // chan_per_bin
+        if ch < 0:
+            ibin = nfft-ibin       
+        self.selectBin(int(ibin))
+        
+    def getData(self,nread=10):
+        """
+        Get a stream of data from a single FFT bin
+        
+        nread: number of 4096 sample frames to read
+        
+        returns  dout,addrs
+        dout: complex data stream. Real and imaginary parts are each 16 bit signed 
+                integers (but cast to numpy complex)
+        addrs: counter values when each frame was read. Can be used to check that 
+                frames are contiguous
+        """
+        bufname = 'ppout'
+        return self._readData(nread, bufname)
+        
+    def loadWaveform(self,iwave,qwave):
+        if len(iwave) != self.dac_ns or len(qwave) != self.dac_ns:
+            raise Exception("Waveforms should be %d samples long" % self.dac_ns)
+        iw2 = iwave.astype('>i2').tostring()
+        qw2 = qwave.astype('>i2').tostring()
+    
+        self.r.blindwrite('iout',iw2)
+        self.r.blindwrite('qout',qw2)
+            
+        self.r.write_int('dacctrl',0)
+        self.r.write_int('dacctrl',1)
+        
+    def setTone(self,f0,dphi=0.25,amp=-3):
+        if dphi:
+            print "warning: got dphi parameter in setTone; ignoring for baseband readout"
+        a = 10**(amp/20.0)
+        if a > 0.9999:
+            print "warning: clipping amplitude to 0.9999"
+            a = 0.9999
+        swr = (2**15)*a*np.cos(2*np.pi*(f0*np.arange(self.dac_ns)))
+        swi = (2**15)*a*np.cos(2*np.pi*(dphi+f0*np.arange(ns)))
+        self.loadWaveform(swr,swi)
         
     def selectBin(self,ibin):
         """
