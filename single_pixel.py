@@ -136,7 +136,7 @@ class SinglePixelBaseband(SinglePixelReadout):
         """
         self.setTone(ch/(1.0*self.dac_ns), dphi=dphi, amp=amp)
         absch = np.abs(ch)
-        chan_per_bin = self.dac_ns/self.nfft
+        chan_per_bin = (self.dac_ns/self.nfft)/2 # divide by 2 because it's a real signal
         ibin = absch // chan_per_bin
 #        if ch < 0:
 #            ibin = nfft-ibin       
@@ -185,6 +185,8 @@ class SinglePixelBaseband(SinglePixelReadout):
         
         ibin: 0 to fftlen -1
         """
+        offset = 2 # bins are shifted by 2
+        ibin = np.mod(ibin-offset,self.nfft)
         self.r.write_int('chansel',ibin)
     
 
