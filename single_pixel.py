@@ -2,6 +2,10 @@
 Classes to interface to single pixel KID readout systems
 """
 
+import numpy as np
+import time
+import sys
+
 class SinglePixelReadout(object):
     """
     Base class for single pixel readout systems.
@@ -46,6 +50,7 @@ class SinglePixelReadout(object):
         self.r.progdev('')
         print "Programming", self.boffile
         self.r.progdev(self.boffile)
+        print "FPGA clock rate ~", self.r.est_brd_clk()
         self.setFFTGain(0)
         self.setChannel(1024)
         
@@ -129,7 +134,7 @@ class SinglePixelBaseband(SinglePixelReadout):
         nfft: size of the fft
         ns: number of samples in the playback memory 
         """
-        setTone(ch/(1.0*self.dac_ns), dphi=dphi, amp=amp)
+        self.setTone(ch/(1.0*self.dac_ns), dphi=dphi, amp=amp)
         absch = np.abs(ch)
         chan_per_bin = self.dac_ns/self.nfft
         ibin = absch // chan_per_bin
