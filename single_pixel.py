@@ -63,6 +63,28 @@ class SinglePixelReadout(object):
     def selectBin(self,ibin):
         raise NotImplementedError("Abstract base class")
     
+    def setAttenuator(self,attendb,gpio_reg='gpioa',data_bit=0x04,clk_bit=0x08,le_bit=0x02):
+        atten = int(attendb*2)
+        u.write_int(gpio_reg, 0)
+        mask = le_bit
+        for j in range(6):
+            if atten & mask:
+                data=clk_bit
+            else:
+                data = 0x00
+            mask = mask>>1
+            u.write_int(gpio_reg, data)
+            u.write_int(gpio_reg, data | data_bit)
+            u.write_int(gpio_reg, data)
+        u.write_int(gpio_reg, le_bit)
+        u.write_int(gpio_reg, 0x00)
+        
+    def setAdcAttenuator(self,attendb):
+        self.setAttenuator(attendb,le_bit=0x02)
+
+    def setDacAttenuator(self,attendb):
+        self.setAttenuator(attendb,le_bit=0x01)
+    
     def _readData(self,nread,bufname):
         """
         Low level data reading loop, common to both readouts
