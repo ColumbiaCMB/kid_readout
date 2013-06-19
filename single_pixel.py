@@ -247,7 +247,7 @@ class SinglePixelHeterodyne(SinglePixelReadout):
         nfft: size of the fft
         ns: number of samples in the playback memory 
         """
-        setTone(ch/(1.0*self.dac_ns), dphi=dphi, amp=amp)
+        self.setTone(ch/(1.0*self.dac_ns), dphi=dphi, amp=amp)
         absch = np.abs(ch)
         chan_per_bin = self.dac_ns/self.nfft
         ibin = absch // chan_per_bin
@@ -290,7 +290,7 @@ class SinglePixelHeterodyne(SinglePixelReadout):
             print "warning: clipping amplitude to 0.9999"
             a = 0.9999
         swr = (2**15)*a*np.cos(2*np.pi*(f0*np.arange(self.dac_ns)))
-        swi = (2**15)*a*np.cos(2*np.pi*(dphi+f0*np.arange(ns)))
+        swi = (2**15)*a*np.cos(2*np.pi*(dphi+f0*np.arange(self.dac_ns)))
         self.loadWaveform(swr,swi)
         
     def selectBin(self,ibin):
