@@ -63,21 +63,21 @@ class SinglePixelReadout(object):
     def selectBin(self,ibin):
         raise NotImplementedError("Abstract base class")
     
-    def setAttenuator(self,attendb,gpio_reg='gpioa',data_bit=0x04,clk_bit=0x08,le_bit=0x02):
+    def setAttenuator(self,attendb,gpio_reg='gpioa',data_bit=0x08,clk_bit=0x04,le_bit=0x02):
         atten = int(attendb*2)
-        u.write_int(gpio_reg, 0)
-        mask = le_bit
+        self.r.write_int(gpio_reg, 0x00)
+        mask = 0x20
         for j in range(6):
             if atten & mask:
-                data=clk_bit
+                data=data_bit
             else:
                 data = 0x00
             mask = mask>>1
-            u.write_int(gpio_reg, data)
-            u.write_int(gpio_reg, data | data_bit)
-            u.write_int(gpio_reg, data)
-        u.write_int(gpio_reg, le_bit)
-        u.write_int(gpio_reg, 0x00)
+            self.r.write_int(gpio_reg, data)
+            self.r.write_int(gpio_reg, data | clk_bit)
+            self.r.write_int(gpio_reg, data)
+        self.r.write_int(gpio_reg, le_bit)
+        self.r.write_int(gpio_reg, 0x00)
         
     def setAdcAttenuator(self,attendb):
         self.setAttenuator(attendb,le_bit=0x02)
@@ -100,23 +100,28 @@ class SinglePixelReadout(object):
         addrs = []
         tic = time.time()
         idle = 0
-        for n in range(nread):
-            a = b
-            if a:
-                bram = '%s_a' % bufname
-            else:
-                bram = '%s_b' % bufname
-            data.append(self.r.read(bram,4*2**12))
-            addrs.append(addr)
-            
-            addr = self.r.read_uint(regname)
-            b = addr & 0x1000
-            while a == b:
+        try:
+            for n in range(nread):
+                a = b
+                if a:
+                    bram = '%s_a' % bufname
+                else:
+                    bram = '%s_b' % bufname
+                data.append(self.r.read(bram,4*2**12))
+                addrs.append(addr)
+                
                 addr = self.r.read_uint(regname)
                 b = addr & 0x1000
-                idle += 1
-            print ("\r got %d" % n),
-            sys.stdout.flush()
+                while a == b:
+                    addr = self.r.read_uint(regname)
+                    b = addr & 0x1000
+                    idle += 1
+                print ("\r got %d" % n),
+                sys.stdout.flush()
+        except Exception,e:
+            print "read only partway because of error:"
+            print e
+            print "\n"
         tot = time.time()-tic
         print "\rread %d in %.1f seconds, %.2f samples per second, idle %.2f per read" % (nread, tot, (nread*2**12/tot),idle/(nread*1.0))
         dout = np.concatenate(([np.fromstring(x,dtype='>i2').astype('float').view('complex') for x in data]))
@@ -146,7 +151,8 @@ class SinglePixelBaseband(SinglePixelReadout):
         self.dac_ns = 2**16 # number of samples in the dac buffer
         self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
         self.nfft = 2**14
-        self.boffile = 'adcdac2xfft14r4_2013_Jun_13_1717.bof'
+#        self.boffile = 'adcdac2xfft14r4_2013_Jun_13_1717.bof'
+        self.boffile = 'adcdac2xfft14r5_2013_Jun_18_1542.bof'
         
     def setChannel(self,ch,dphi=None,amp=-3):
         """
