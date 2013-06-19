@@ -146,6 +146,11 @@ class SinglePixelBaseband(SinglePixelReadout):
         else:
             from corr.katcp_wrapper import FpgaClient
             self.r = FpgaClient(roachip)
+            t1 = time.time()
+            timeout = 10
+            while not self.r.is_connected():
+                if (time.time()-t1) > timeout:
+                    exit("Connection timeout to roach")
             
         self.wafer = wafer
         self.dac_ns = 2**16 # number of samples in the dac buffer
@@ -233,6 +238,11 @@ class SinglePixelHeterodyne(SinglePixelReadout):
         else:
             from corr.katcp_wrapper import FpgaClient
             self.r = FpgaClient(roachip)
+            t1 = time.time()
+            timeout = 10
+            while not self.r.is_connected():
+                if (time.time()-t1) > timeout:
+                    exit("Connection timeout to roach")
             
         self.dac_ns = 2**16 # number of samples in the dac buffer
         self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
