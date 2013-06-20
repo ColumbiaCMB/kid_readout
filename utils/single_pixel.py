@@ -264,7 +264,7 @@ class SinglePixelHeterodyne(SinglePixelReadout):
         chan_per_bin = self.dac_ns/self.nfft
         ibin = absch // chan_per_bin
         if ch < 0:
-            ibin = nfft-ibin       
+            ibin = self.nfft-ibin       
         self.selectBin(int(ibin))
         
     def get_data(self,nread=10):
