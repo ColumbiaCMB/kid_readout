@@ -202,7 +202,7 @@ class SinglePixelBaseband(SinglePixelReadout):
         self.r.write_int('dacctrl',0)
         self.r.write_int('dacctrl',1)
         
-    def set_wone(self,f0,dphi=None,amp=-3):
+    def set_tone(self,f0,dphi=None,amp=-3):
         if dphi:
             print "warning: got dphi parameter in setTone; ignoring for baseband readout"
         a = 10**(amp/20.0)
