@@ -56,7 +56,7 @@ class SinglePixelReadout(object):
         
     def set_channel(self,ch,dphi=None,amp=-3):
         raise NotImplementedError("Abstract base class")
-    def get_fft(self,nread=10):
+    def get_data(self,nread=10):
         raise NotImplementedError("Abstract base class")
     def set_tone(self,f0,dphi=None,amp=-3):
         raise NotImplementedError("Abstract base class")
