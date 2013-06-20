@@ -150,7 +150,8 @@ class SinglePixelBaseband(SinglePixelReadout):
             timeout = 10
             while not self.r.is_connected():
                 if (time.time()-t1) > timeout:
-                    exit("Connection timeout to roach")
+                    raise Exception("Connection timeout to roach")
+                time.sleep(0.1)
             
         self.wafer = wafer
         self.dac_ns = 2**16 # number of samples in the dac buffer
@@ -242,7 +243,8 @@ class SinglePixelHeterodyne(SinglePixelReadout):
             timeout = 10
             while not self.r.is_connected():
                 if (time.time()-t1) > timeout:
-                    exit("Connection timeout to roach")
+                    raise Exception("Connection timeout to roach")
+                time.sleep(0.1)
             
         self.dac_ns = 2**16 # number of samples in the dac buffer
         self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
