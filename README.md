@@ -23,3 +23,5 @@ if kid_readout lives in /home/user/git/kid_readout,
 you should add the following line to .bashrc: 
 export $PYTHONPATH:/home/user/git
 notice that kid_readout is NOT in the directory.
+
+Testing https and ssh -daniel
