@@ -14,7 +14,7 @@ class SinglePixelReadout(object):
     """
     def __init__(self):
         raise NotImplementedError("Abstract class, instantiate a subclass instead of this class")
-    def getRawAdc(self):
+    def get_raw_adc(self):
         """
         Grab raw ADC samples
         
@@ -30,7 +30,7 @@ class SinglePixelReadout(object):
         s1 = (np.fromstring(self.r.read('q0_bram',self.raw_adc_ns*2),dtype='>i2'))/16.0
         return s0,s1
     
-    def setFFTGain(self,gain):
+    def set_fft_gain(self,gain):
         """
         Set the gain in the FFT
         
@@ -54,16 +54,16 @@ class SinglePixelReadout(object):
         self.setFFTGain(0)
         self.setChannel(1024)
         
-    def setChannel(self,ch,dphi=None,amp=-3):
+    def set_channel(self,ch,dphi=None,amp=-3):
         raise NotImplementedError("Abstract base class")
-    def getFFT(self,nread=10):
+    def get_fft(self,nread=10):
         raise NotImplementedError("Abstract base class")
-    def setTone(self,f0,dphi=None,amp=-3):
+    def set_tone(self,f0,dphi=None,amp=-3):
         raise NotImplementedError("Abstract base class")
-    def selectBin(self,ibin):
+    def select_bin(self,ibin):
         raise NotImplementedError("Abstract base class")
     
-    def setAttenuator(self,attendb,gpio_reg='gpioa',data_bit=0x08,clk_bit=0x04,le_bit=0x02):
+    def set_attenuator(self,attendb,gpio_reg='gpioa',data_bit=0x08,clk_bit=0x04,le_bit=0x02):
         atten = int(attendb*2)
         self.r.write_int(gpio_reg, 0x00)
         mask = 0x20
@@ -79,13 +79,13 @@ class SinglePixelReadout(object):
         self.r.write_int(gpio_reg, le_bit)
         self.r.write_int(gpio_reg, 0x00)
         
-    def setAdcAttenuator(self,attendb):
+    def set_adc_attenuator(self,attendb):
         self.setAttenuator(attendb,le_bit=0x02)
 
-    def setDacAttenuator(self,attendb):
+    def set_dac_attenuator(self,attendb):
         self.setAttenuator(attendb,le_bit=0x01)
     
-    def _readData(self,nread,bufname):
+    def _read_data(self,nread,bufname):
         """
         Low level data reading loop, common to both readouts
         """
@@ -159,7 +159,7 @@ class SinglePixelBaseband(SinglePixelReadout):
 #        self.boffile = 'adcdac2xfft14r4_2013_Jun_13_1717.bof'
         self.boffile = 'adcdac2xfft14r5_2013_Jun_18_1542.bof'
         
-    def setChannel(self,ch,dphi=None,amp=-3):
+    def set_channel(self,ch,dphi=None,amp=-3):
         """
         ch: channel number (0 to nfft-1)
         dphi: phase offset between I and Q components in turns (nominally 1/4 = pi/2 radians)
@@ -175,7 +175,7 @@ class SinglePixelBaseband(SinglePixelReadout):
 #            ibin = nfft-ibin       
         self.selectBin(int(ibin))
         
-    def getData(self,nread=10):
+    def get_data(self,nread=10):
         """
         Get a stream of data from a single FFT bin
         
@@ -190,7 +190,7 @@ class SinglePixelBaseband(SinglePixelReadout):
         bufname = 'ppout%d' % self.wafer
         return self._readData(nread, bufname)
         
-    def loadWaveform(self,wave):
+    def load_waveform(self,wave):
         if len(wave) != self.dac_ns:
             raise Exception("Waveform should be %d samples long" % self.dac_ns)
         w2 = wave.astype('>i2').tostring()
@@ -202,7 +202,7 @@ class SinglePixelBaseband(SinglePixelReadout):
         self.r.write_int('dacctrl',0)
         self.r.write_int('dacctrl',1)
         
-    def setTone(self,f0,dphi=None,amp=-3):
+    def set_wone(self,f0,dphi=None,amp=-3):
         if dphi:
             print "warning: got dphi parameter in setTone; ignoring for baseband readout"
         a = 10**(amp/20.0)
@@ -212,7 +212,7 @@ class SinglePixelBaseband(SinglePixelReadout):
         swr = (2**15)*a*np.cos(2*np.pi*(f0*np.arange(self.dac_ns)))
         self.loadWaveform(swr)
         
-    def selectBin(self,ibin):
+    def select_bin(self,ibin):
         """
         Set the register which selects the FFT bin we get data from
         
@@ -249,7 +249,7 @@ class SinglePixelHeterodyne(SinglePixelReadout):
         self.nfft = 2**14
         self.boffile = 'adcfft14dac14r2_2013_May_29_1658.bof'
         
-    def setChannel(self,ch,dphi=-0.25,amp=-3):
+    def set_channel(self,ch,dphi=-0.25,amp=-3):
         """
         ch: channel number (-nfft/2 to nfft/2-1)
         dphi: phase offset between I and Q components in turns (nominally -1/4 = pi/2 radians)
@@ -265,7 +265,7 @@ class SinglePixelHeterodyne(SinglePixelReadout):
             ibin = nfft-ibin       
         self.selectBin(int(ibin))
         
-    def getData(self,nread=10):
+    def get_data(self,nread=10):
         """
         Get a stream of data from a single FFT bin
         
@@ -280,7 +280,7 @@ class SinglePixelHeterodyne(SinglePixelReadout):
         bufname = 'ppout'
         return self._readData(nread, bufname)
         
-    def loadWaveform(self,iwave,qwave):
+    def load_waveform(self,iwave,qwave):
         if len(iwave) != self.dac_ns or len(qwave) != self.dac_ns:
             raise Exception("Waveforms should be %d samples long" % self.dac_ns)
         iw2 = iwave.astype('>i2').tostring()
@@ -292,7 +292,7 @@ class SinglePixelHeterodyne(SinglePixelReadout):
         self.r.write_int('dacctrl',0)
         self.r.write_int('dacctrl',1)
         
-    def setTone(self,f0,dphi=0.25,amp=-3):
+    def set_tone(self,f0,dphi=0.25,amp=-3):
         if dphi:
             print "warning: got dphi parameter in setTone; ignoring for baseband readout"
         a = 10**(amp/20.0)
@@ -303,7 +303,7 @@ class SinglePixelHeterodyne(SinglePixelReadout):
         swi = (2**15)*a*np.cos(2*np.pi*(dphi+f0*np.arange(self.dac_ns)))
         self.loadWaveform(swr,swi)
         
-    def selectBin(self,ibin):
+    def select_bin(self,ibin):
         """
         Set the register which selects the FFT bin we get data from
         

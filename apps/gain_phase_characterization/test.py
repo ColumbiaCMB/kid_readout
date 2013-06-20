@@ -6,9 +6,9 @@ from kid_readout.utils.single_pixel import SinglePixelHeterodyne
 
 sp_readout = SinglePixelHeterodyne()
 #sp_readout.initialize()
-channel = 2**8
-sp_readout.setChannel(channel, amp=-3)
-dout, addrs = sp_readout.getData(nread=4)
+channel = 2**2
+sp_readout.set_channel(channel, amp=-2)
+dout, addrs = sp_readout.get_data(nread=2)
 
 #pl.plot(dout.real, label='real')
 pl.plot(dout.imag, label='imag')
