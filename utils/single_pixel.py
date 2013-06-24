@@ -51,8 +51,8 @@ class SinglePixelReadout(object):
         print "Programming", self.boffile
         self.r.progdev(self.boffile)
         print "FPGA clock rate ~", self.r.est_brd_clk()
-        self.setFFTGain(0)
-        self.setChannel(1024)
+        self.set_fft_gain(0)
+        self.set_channel(1024)
         
     def set_channel(self,ch,dphi=None,amp=-3):
         raise NotImplementedError("Abstract base class")
@@ -80,10 +80,10 @@ class SinglePixelReadout(object):
         self.r.write_int(gpio_reg, 0x00)
         
     def set_adc_attenuator(self,attendb):
-        self.setAttenuator(attendb,le_bit=0x02)
+        self.set_attenuator(attendb,le_bit=0x02)
 
     def set_dac_attenuator(self,attendb):
-        self.setAttenuator(attendb,le_bit=0x01)
+        self.set_attenuator(attendb,le_bit=0x01)
     
     def _read_data(self,nread,bufname):
         """
@@ -168,13 +168,13 @@ class SinglePixelBaseband(SinglePixelReadout):
         nfft: size of the fft
         ns: number of samples in the playback memory 
         """
-        self.setTone(ch/(1.0*self.dac_ns), dphi=dphi, amp=amp)
+        self.set_tone(ch/(1.0*self.dac_ns), dphi=dphi, amp=amp)
         absch = np.abs(ch)
         chan_per_bin = (self.dac_ns/self.nfft)/2 # divide by 2 because it's a real signal
         ibin = absch // chan_per_bin
 #        if ch < 0:
 #            ibin = nfft-ibin       
-        self.selectBin(int(ibin))
+        self.select_bin(int(ibin))
         
     def get_data(self,nread=10):
         """
@@ -189,7 +189,7 @@ class SinglePixelBaseband(SinglePixelReadout):
                 frames are contiguous
         """
         bufname = 'ppout%d' % self.wafer
-        return self._readData(nread, bufname)
+        return self._read_data(nread, bufname)
         
     def load_waveform(self,wave):
         if len(wave) != self.dac_ns:
@@ -205,13 +205,13 @@ class SinglePixelBaseband(SinglePixelReadout):
         
     def set_tone(self,f0,dphi=None,amp=-3):
         if dphi:
-            print "warning: got dphi parameter in setTone; ignoring for baseband readout"
+            print "warning: got dphi parameter in set_tone; ignoring for baseband readout"
         a = 10**(amp/20.0)
         if a > 0.9999:
             print "warning: clipping amplitude to 0.9999"
             a = 0.9999
         swr = (2**15)*a*np.cos(2*np.pi*(f0*np.arange(self.dac_ns)))
-        self.loadWaveform(swr)
+        self.load_waveform(swr)
         
     def select_bin(self,ibin):
         """
@@ -259,13 +259,13 @@ class SinglePixelHeterodyne(SinglePixelReadout):
         nfft: size of the fft
         ns: number of samples in the playback memory 
         """
-        self.setTone(ch/(1.0*self.dac_ns), dphi=dphi, amp=amp)
+        self.set_tone(ch/(1.0*self.dac_ns), dphi=dphi, amp=amp)
         absch = np.abs(ch)
         chan_per_bin = self.dac_ns/self.nfft
         ibin = absch // chan_per_bin
         if ch < 0:
             ibin = self.nfft-ibin       
-        self.selectBin(int(ibin))
+        self.select_bin(int(ibin))
         
     def get_data(self,nread=10):
         """
@@ -280,7 +280,7 @@ class SinglePixelHeterodyne(SinglePixelReadout):
                 frames are contiguous
         """
         bufname = 'ppout'
-        return self._readData(nread, bufname)
+        return self._read_data(nread, bufname)
         
     def load_waveform(self,iwave,qwave):
         if len(iwave) != self.dac_ns or len(qwave) != self.dac_ns:
@@ -301,7 +301,7 @@ class SinglePixelHeterodyne(SinglePixelReadout):
             a = 0.9999
         swr = (2**15)*a*np.cos(2*np.pi*(f0*np.arange(self.dac_ns)))
         swi = (2**15)*a*np.cos(2*np.pi*(dphi+f0*np.arange(self.dac_ns)))
-        self.loadWaveform(swr,swi)
+        self.load_waveform(swr,swi)
         
     def select_bin(self,ibin):
         """
