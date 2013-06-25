@@ -247,9 +247,9 @@ class SinglePixelHeterodyne(SinglePixelReadout):
                 time.sleep(0.1)
             
         self.dac_ns = 2**16 # number of samples in the dac buffer
-        self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
+        self.raw_adc_ns = 2**11 # number of samples in the raw ADC buffer
         self.nfft = 2**14
-        self.boffile = 'adcfft14dac14r2_2013_May_29_1658.bof'
+        self.boffile = 'iqx2fft14dac14r1_2013_Jun_24_1921.bof'
         
     def set_channel(self,ch,dphi=-0.25,amp=-3):
         """
