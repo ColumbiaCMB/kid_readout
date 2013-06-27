@@ -101,9 +101,15 @@ class SinglePixelReadout(object):
         self.r.write_int(gpio_reg, 0x00)
         
     def set_adc_attenuator(self,attendb):
+        """
+        attendb: attenuation of 0 to 31.5 dB in increments of 0.5
+        """
         self.set_attenuator(attendb,le_bit=0x02)
 
     def set_dac_attenuator(self,attendb):
+        """
+        attendb: attenuation of 0 to 31.5 dB in increments of 0.5
+        """
         self.set_attenuator(attendb,le_bit=0x01)
     
     def _set_fs(self,fs):
