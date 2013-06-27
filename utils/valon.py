@@ -15,6 +15,13 @@ import subprocess
 def find_valons():
     """
     Find /dev/ttyUSB* ports with FTDI chips which are probably Valons
+    
+    Works by parsing the dmesg output and looking for lines containing FTDI (the brand of
+    usb-rs232 chip used) and 'attached to' which will contain the ttyUSB* string
+    
+    returns a list of all unique ports that have FTDI chips.
+    The list is sorted starting with the most recent entry in dmesg.
+    Duplicate ports are ignored (only the most recent entry (line in dmesg) for that port is returned)
     """
     
     dmesg = check_output('dmesg | grep "FTDI.*attached to"',shell=True)
