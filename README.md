@@ -9,7 +9,6 @@ kid_readout/
         gain_phase_characterization
         ...
     utils/
-        adc.py (soon to be depreciated)
         single_pixel.py
     output/
 
