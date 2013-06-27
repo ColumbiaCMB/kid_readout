@@ -40,19 +40,40 @@ class SinglePixelReadout(object):
         gain: the number of stages to divide on. The final gain will be 2^gain
         """
         fftshift = (2**20 - 1) - (2**gain - 1)  #this expression puts downsifts at the earliest stages of the FFT
+        self.fft_gain = gain
         self.r.write_int('fftshift',fftshift)
         
-    def initialize(self):
+    def initialize(self, fs=500.0):
         """
         Reprogram the ROACH and get things running
+        
+        fs: float
+            Sampling frequency in MHz
         """
         print "Deprogramming"
         self.r.progdev('')
+        self._set_fs(fs)
         print "Programming", self.boffile
         self.r.progdev(self.boffile)
-        print "FPGA clock rate ~", self.r.est_brd_clk()
+        estfs = self.measure_fs()
+        if np.abs(fs-estfs) > 2.0:
+            print "Warning! FPGA clock may not be locked to sampling clock!"
+        print "Requested sampling rate %.1f MHz. Estimated sampling rate %.1f MHz" % (fs,estfs)
+        print "setting attenuators to maximum values"
+        self.set_adc_attenuator(31.5)
+        self.set_dac_attenuator(31.5)
         self.set_fft_gain(0)
+        print "selecting channel 1024 to start things off"
         self.set_channel(1024)
+        
+    def measure_fs(self):
+        """
+        Estimate the sampling rate
+        
+        This takes about 2 seconds to run
+        returns: fs, the approximate sampling rate in MHz
+        """
+        return 2*self.r.est_brd_clk() 
         
     def set_channel(self,ch,dphi=None,amp=-3):
         raise NotImplementedError("Abstract base class")
@@ -85,6 +106,11 @@ class SinglePixelReadout(object):
     def set_dac_attenuator(self,attendb):
         self.set_attenuator(attendb,le_bit=0x01)
     
+    def _set_fs(self,fs):
+        """
+        Set sampling frequency in MHz
+        """
+        raise NotImplementedError
     def _read_data(self,nread,bufname):
         """
         Low level data reading loop, common to both readouts
@@ -130,16 +156,25 @@ class SinglePixelReadout(object):
 
 
 class SinglePixelBaseband(SinglePixelReadout):
-    def __init__(self,roach=None,wafer=0,roachip='roach'):
+    def __init__(self,roach=None,wafer=0,roachip='roach',adc_valon=None):
         """
         Class to represent the baseband readout system (low-frequency (150 MHz), no mixers)
         
-        roach: an FpgaClient instance for communicating with the ROACH. If not specified,
-                will try to instantiate one connected to *roachip*
+        roach: an FpgaClient instance for communicating with the ROACH. 
+                If not specified, will try to instantiate one connected to *roachip*
         wafer: 0 or 1. 
                 In baseband mode, each of the two DAC and ADC connections can be used independantly to
                 readout a single wafer each. This parameter indicates which connection you want to use.
         roachip: (optional). Network address of the ROACH if you don't want to provide an FpgaClient
+        adc_valon: a Valon class, a string, or None
+                Provide access to the Valon class which controls the Valon synthesizer which provides
+                the ADC and DAC sampling clock.
+                The default None value will use the valon.find_valon function to locate a synthesizer
+                and create a Valon class for you.
+                You can alternatively pass a string such as '/dev/ttyUSB0' to specify the port for the
+                synthesizer, which will then be used for creating a Valon class.
+                Finally, for test suites, you can directly pass a Valon class or a class with the same
+                interface.
         """
         if roach:
             self.r = roach
@@ -152,21 +187,36 @@ class SinglePixelBaseband(SinglePixelReadout):
                 if (time.time()-t1) > timeout:
                     raise Exception("Connection timeout to roach")
                 time.sleep(0.1)
+                
+        if adc_valon is None:
+            import valon
+            ports = valon.find_valons()
+            if len(ports) == 0:
+                raise Exception("No Valon found!")
+            self.adc_valon_port = ports[0]
+            self.adc_valon = valon.Synthesizer(ports[0]) #use latest port
+        elif type(adc_valon) is str:
+            import valon
+            self.adc_valon_port = adc_valon
+            self.adc_valon = valon.Synthesizer(self.adc_valon_port)
+        else:
+            self.adc_valon = adc_valon
             
+        self.fs = self.adc_valon.get_frequency_a()
         self.wafer = wafer
         self.dac_ns = 2**16 # number of samples in the dac buffer
         self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
         self.nfft = 2**14
 #        self.boffile = 'adcdac2xfft14r4_2013_Jun_13_1717.bof'
         self.boffile = 'adcdac2xfft14r5_2013_Jun_18_1542.bof'
-        
+    
     def set_channel(self,ch,dphi=None,amp=-3):
         """
-        ch: channel number (0 to nfft-1)
+        ch: channel number (0 to dac_ns-1)
         dphi: phase offset between I and Q components in turns (nominally 1/4 = pi/2 radians)
+                not used for Baseband readout
         amp: amplitude relative to full scale in dB
         nfft: size of the fft
-        ns: number of samples in the playback memory 
         """
         self.set_tone(ch/(1.0*self.dac_ns), dphi=dphi, amp=amp)
         absch = np.abs(ch)
@@ -217,16 +267,24 @@ class SinglePixelBaseband(SinglePixelReadout):
         """
         Set the register which selects the FFT bin we get data from
         
-        ibin: 0 to fftlen -1
+        ibin: 0 to nfft -1
         """
         offset = 2 # bins are shifted by 2
         ibin = np.mod(ibin-offset,self.nfft)
         self.r.write_int('chansel',ibin)
     
+    def _set_fs(self,fs,chan_spacing=2.0):
+        """
+        Set sampling frequency in MHz
+        Note, this should generally not be called without also reprogramming the ROACH
+        Use initialize() instead        
+        """
+        self.adc_valon.set_frequency_a(fs,chan_spacing=chan_spacing)
+        self.fs = fs
 
 
 class SinglePixelHeterodyne(SinglePixelReadout):
-    def __init__(self,roach=None,roachip='roach'):
+    def __init__(self,roach=None,roachip='roach',adc_valon = None):
         """
         Class to represent the heterodyne readout system (high frequency, 1.5 GHz, with IQ mixers)
         
@@ -245,7 +303,22 @@ class SinglePixelHeterodyne(SinglePixelReadout):
                 if (time.time()-t1) > timeout:
                     raise Exception("Connection timeout to roach")
                 time.sleep(0.1)
+        
+        if adc_valon is None:
+            import valon
+            ports = valon.find_valons()
+            if len(ports) == 0:
+                raise Exception("No Valon found!")
+            self.adc_valon_port = ports[0]
+            self.adc_valon = valon.Synthesizer(ports[0]) #use latest port
+        elif type(adc_valon) is str:
+            import valon
+            self.adc_valon_port = adc_valon
+            self.adc_valon = valon.Synthesizer(self.adc_valon_port)
+        else:
+            self.adc_valon = adc_valon
             
+        self.fs = self.adc_valon.get_frequency_a()        
         self.dac_ns = 2**16 # number of samples in the dac buffer
         self.raw_adc_ns = 2**11 # number of samples in the raw ADC buffer
         self.nfft = 2**14
@@ -253,11 +326,10 @@ class SinglePixelHeterodyne(SinglePixelReadout):
         
     def set_channel(self,ch,dphi=-0.25,amp=-3):
         """
-        ch: channel number (-nfft/2 to nfft/2-1)
+        ch: channel number (-dac_ns/2 to dac_ns/2-1)
         dphi: phase offset between I and Q components in turns (nominally -1/4 = pi/2 radians)
         amp: amplitude relative to full scale in dB
         nfft: size of the fft
-        ns: number of samples in the playback memory 
         """
         self.set_tone(ch/(1.0*self.dac_ns), dphi=dphi, amp=amp)
         absch = np.abs(ch)
@@ -307,7 +379,15 @@ class SinglePixelHeterodyne(SinglePixelReadout):
         """
         Set the register which selects the FFT bin we get data from
         
-        ibin: 0 to fftlen -1
+        ibin: 0 to nfft -1
         """
         self.r.write_int('chansel',ibin)
     
+    def _set_fs(self,fs,chan_spacing=2.0):
+        """
+        Set sampling frequency in MHz
+        Note, this should generally not be called without also reprogramming the ROACH
+        Use initialize() instead
+        """
+        self.adc_valon.set_frequency_a(fs,chan_spacing=chan_spacing)
+        self.fs = fs
