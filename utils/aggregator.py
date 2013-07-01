@@ -3,12 +3,24 @@ import time
 import sys
 import single_pixel
 import threading
+import Pyro4
 
 
 class Aggregator():
     def __init__(self,parent,writer):
         self.parent = parent
         self.writer = writer
+        self.subscriptions = {'power spectrum': []}
+        self.subscribers = {} #maps uri to subscriber
+        
+    def subscribe_uri(self,uri,data_products):
+        if self.subscribers.has_key(uri):
+            print "already subscribed!",uri
+            return
+        subscriber = Pyro4.Proxy(uri)
+        self.subscribers[uri] = subscriber
+        for data_product in data_products:
+            self.subscriptions[data_product].append(subscriber)
 
     def proc_raw_data(self,data,addr):
         if addr - self.last_addr > 8192:
