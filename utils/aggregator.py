@@ -12,6 +12,7 @@ class Aggregator():
         self.writer = writer
         self.subscriptions = {'power spectrum': []}
         self.subscribers = {} #maps uri to subscriber
+        self.last_addr = 0
         
     def subscribe_uri(self,uri,data_products):
         if self.subscribers.has_key(uri):
@@ -43,6 +44,7 @@ class Aggregator():
     def publish(self,data_product):
         #pass the data products on to the appropriate subscribers
         subscription_list = self.subscriptions[data_product['type']] # list of subscribers interested in this data product
+        print "publishing pxx to",subscription_list
         for subscriber in subscription_list:
             subscriber.handle(data_product)
         

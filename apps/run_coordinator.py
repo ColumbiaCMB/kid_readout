@@ -13,6 +13,7 @@ except:
     pass
 
 coord = kid_readout.utils.coordinator.Coordinator()
+coord.start_data_thread()
 daemon = Pyro4.Daemon()
 uri = daemon.register(coord)
 ns.register("BasebandCoordinator",uri)

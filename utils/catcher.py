@@ -5,7 +5,8 @@ import threading
 
 
 class KatcpCatcher():
-    def __init__(self,proc_func,roachip='roach'):
+    def __init__(self,proc_func,bufname,roachip='roach'):
+        self.bufname = bufname
         self.data_thread = None
         self.proc_func = proc_func
         from corr.katcp_wrapper import FpgaClient
