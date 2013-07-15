@@ -43,7 +43,7 @@ class Aggregator():
         
     def create_data_products_experimental(self, packet):
         # udpcatcher formats the data, so it can more directly feed into data products.
-        pxx = (np.abs(np.fft.fft(packet.data[0])) ** 2)
+        pxx = (np.abs(np.fft.fft(packet.data)) ** 2)
         pxx_product = dict(type='power spectrum', data=pxx)
         self.publish(pxx_product)
         
