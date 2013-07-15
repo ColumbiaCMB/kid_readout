@@ -18,7 +18,7 @@ class Coordinator(single_pixel.SinglePixelBaseband):
         self.aggregator = aggregator.Aggregator(parent=self, writer=self.writer)
         # self.catcher = catcher.KatcpCatcher(proc_func=self.aggregator.proc_raw_data, bufname=self.bufname, roachip=roachip)
         # self.catcher = catcher.UDPCatcher(publish_func=self.aggregator.create_data_products_udp, bufname=self.bufname, roachip=roachip)
-        self.catcher = catcher.PacketCatcher(publish_func=self.aggregator.create_data_products_udp, bufname=self.bufname, roachip=roachip)
+        self.catcher = catcher.PacketCatcher(publish_func=self.aggregator.create_data_products_experimental, bufname=self.bufname, roachip=roachip)
         
     def start_data_thread(self):
         self.catcher.start_data_thread()
