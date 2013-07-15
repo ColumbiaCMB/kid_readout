@@ -7,44 +7,50 @@ import Pyro4
 
 
 class Aggregator():
-    def __init__(self,parent,writer):
+    def __init__(self, parent, writer):
         self.parent = parent
         self.writer = writer
         self.subscriptions = {'power spectrum': []}
-        self.subscribers = {} #maps uri to subscriber
+        self.subscribers = {}  # maps uri to subscriber
         self.last_addr = 0
         
-    def subscribe_uri(self,uri,data_products):
+    def subscribe_uri(self, uri, data_products):
         if self.subscribers.has_key(uri):
-            print "already subscribed!",uri
+            print "already subscribed!", uri
             return
         subscriber = Pyro4.Proxy(uri)
         self.subscribers[uri] = subscriber
         for data_product in data_products:
             self.subscriptions[data_product].append(subscriber)
 
-    def proc_raw_data(self,data,addr):
+    def proc_raw_data(self, data, addr):
         if addr - self.last_addr > 8192:
-            print "skipped:", addr,self.last_addr,(addr-self.last_addr)
+            print "skipped:", addr, self.last_addr, (addr - self.last_addr)
         self.last_addr = addr 
-        data = np.fromstring(data,dtype='>i2').astype('float32').view('complex64')
-        #create chunk representation of this data
-        chunk = dict(data=data,time = time.time())
+        data = np.fromstring(data, dtype='>i2').astype('float32').view('complex64')
+        # create chunk representation of this data
+        chunk = dict(data=data, time=time.time())
         self.writer.write_data_chunk(chunk)
         self.create_data_products(chunk)
         
-    def create_data_products(self,chunk):
-        #create higher level data products and distribute them to subscribers
-        #this could be eventually moved to another thread or Pyro object etc to
-        #improve CPU usage
-        pxx = (np.abs(np.fft.fft(chunk['data'].reshape((-1,1024)),axis=1))**2).mean(0)
-        pxx_product = dict(type='power spectrum',data=pxx)
+    def create_data_products(self, chunk):
+        # create higher level data products and distribute them to subscribers
+        # this could be eventually moved to another thread or Pyro object etc to
+        # improve CPU usage
+        pxx = (np.abs(np.fft.fft(chunk['data'].reshape((-1, 1024)), axis=1)) ** 2).mean(0)
+        pxx_product = dict(type='power spectrum', data=pxx)
         self.publish(pxx_product)
         
-    def publish(self,data_product):
-        #pass the data products on to the appropriate subscribers
-        subscription_list = self.subscriptions[data_product['type']] # list of subscribers interested in this data product
-        print "publishing pxx to",subscription_list
+    def create_data_products_experimental(self, packet):
+        # udpcatcher formats the data, so it can more directly feed into data products.
+        pxx = (np.abs(np.fft.fft(packet.data[0])) ** 2)
+        pxx_product = dict(type='power spectrum', data=pxx)
+        self.publish(pxx_product)
+        
+    def publish(self, data_product):
+        # pass the data products on to the appropriate subscribers
+        subscription_list = self.subscriptions[data_product['type']]  # list of subscribers interested in this data product
+        print "publishing pxx to", subscription_list
         for subscriber in subscription_list:
             subscriber.handle(data_product)
         
@@ -72,8 +78,8 @@ class Aggregator():
                 bram = brama
             else:
                 bram = bramb
-            data = r.read(bram,4*2**12)
-            self._proc_raw_data(data,addr)
+            data = r.read(bram, 4 * 2 ** 12)
+            self._proc_raw_data(data, addr)
             
             addr = r.read_uint(regname)
             b = addr & 0x1000
