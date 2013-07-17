@@ -20,7 +20,7 @@ class PacketCatcher():
             self.data_thread.join(1.0)
             self.data_thread = None
         self.quit_data_thread = False
-        self.data_thread = threading.Thread(target=self._cont_read_data, args=("192.168.1.1", 12345))
+        self.data_thread = threading.Thread(target=self._cont_read_data, args=("192.168.1.1", 12345, 1))
         # Using the port and IP startup_server runs on for now.
         self.data_thread.daemon = True
         self.data_thread.start()
@@ -37,13 +37,14 @@ class PacketCatcher():
         data = range(chan)
         for i in range(chan):
             data[i] = data_list[i::chan]
+            # Demultiplexes data.
         
         Packet = col.namedtuple('Packet', ['index', 'channel_id', 'addr', 'data'])
         myPacket = Packet(index, channel_id, addr, data)
     
         return myPacket
     
-    def _cont_read_data(self, UDP_IP, UDP_PORT):
+    def _cont_read_data(self, UDP_IP, UDP_PORT, channel_number):
         """
         Reads data from socket as a chunk. Passes it to a publishing function passed
         to UDPCatcher (intended to be aggregator.create_data_products).
@@ -53,11 +54,9 @@ class PacketCatcher():
         
         while not self.quit_data_thread:
             raw_data = sock.recv(10000)
-            packet = self.decode(raw_data, 1)
-            # Currently publishing data in 1 channel. Will become n channels.
+            packet = self.decode(raw_data, channel_number)
             self.publish_func(packet)
             # This is where data will be pushed to aggregator, and in turn to subscribers.
-            # Intended aggregator function is create_data_products_udp
 
 
 class Packet:

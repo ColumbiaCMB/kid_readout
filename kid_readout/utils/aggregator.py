@@ -43,47 +43,50 @@ class Aggregator():
         # for each channel, push that onto the corresponding array.
         
         if self.packetCounter == packet.index[0]:
-            self.tmpbuffer[0][packet.index * 256:(packet.index + 1) * 256] = packet.data[0]
-            # Note that I put this into the zeroth row because we are currently testing with one channel.
-            # Once more channels we will have tmpbuffer[n] and packet.data[n]
+            for index in range(len(packet.data)):
+                self.tmpbuffer[index][packet.index * 256:(packet.index + 1) * 256] = packet.data[index]
+            # Takes into account channels
             self.packetCounter += 1
         else:
             if self.packetCounter > packet.index:
                 pass;
                 # Throws away late packets.
             if self.packetCounter < packet.index:
-                self.tmpbuffer[0][(self.packetCounter * 256):((packet.index) * 256)] = float('NaN')
+                for index in range(len(packet.data)):
+                    self.tmpbuffer[index][(self.packetCounter * 256):((packet.index) * 256)] = float('NaN')
                 # Fills discrepancy between counter and index with 'nan'
-                self.tmpbuffer[0][ (packet.index * 256):((packet.index + 1) * 256)] = packet.data[0]
+                for index in range(len(packet.data)):
+                    self.tmpbuffer[index][packet.index * 256:(packet.index + 1) * 256] = packet.data[index]
                 # Fills in correct index normally.
                 self.packetCounter += 1
         
         if self.packetCounter == 16:
-            self.create_data_products_from_gather(self.tmpbuffer)
-            # pushes data to next function.
+            self.create_data_products_from_gather(self.tmpbuffer, packet.addr)
+            # pushes data to next function. Passes buffer and addr of packet index 16.
             
             self.packetCounter = 0
             # Resets packetCounter
+            # For arbitrary buffer size, a mod function (packetCounter%16) could be used instead.
             
             # self.tmpbuffer = np.zeros((10, 256 * 16))
-            # Reset tmpbuffer to zeros. If there is a way to easily initialize it to NaN's,
-            # this would be great. Global variable?
-            
+            # Reset tmpbuffer to zeros. If there is a way to easily initialize it to NaN's...
             # Resetting this created problems: the program would work correctly once and then the
             # tmpbuffer would no longer be written to. I took out the reset since all data will be overwritten
             # anyway.
         
-    def create_data_products_from_gather(self, passedArray):
+    def create_data_products_from_gather(self, passedArray, clockCount):
         pxx = (np.abs(np.fft.fft(passedArray[0])) ** 2)
         # Note that since we are currently testing with 1 channel, I only use the first channel of passed Array.
         # In the future there will need to be a pxx for each channel (for loop).
         # In reality, we will probably have more advanced data processing.
-        pxx_product = dict(type='power spectrum', data=pxx)
+        pxx_product = dict(type='power spectrum', data=pxx, addr=clockCount)
         self.publish(pxx_product)
         
     def publishTest(self, data_product):
         print data_product['type']
         print data_product['data']
+        print data_product['addr'] % 8192
+        # Used for debugging
     
         
     def create_data_products(self, chunk):
