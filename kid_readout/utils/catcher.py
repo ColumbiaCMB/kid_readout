@@ -39,8 +39,7 @@ class PacketCatcher():
             data[i] = data_list[i::chan]
         
         Packet = col.namedtuple('Packet', ['index', 'channel_id', 'addr', 'data'])
-        myPacket = Packet(index, channel_id, addr, data_list)
-        xmyPacket = Packet(index, channel_id, addr, data)
+        myPacket = Packet(index, channel_id, addr, data)
     
         return myPacket
     
@@ -54,7 +53,8 @@ class PacketCatcher():
         
         while not self.quit_data_thread:
             raw_data = sock.recv(10000)
-            packet = self.decode(raw_data, 5)
+            packet = self.decode(raw_data, 1)
+            # Currently publishing data in 1 channel. Will become n channels.
             self.publish_func(packet)
             # This is where data will be pushed to aggregator, and in turn to subscribers.
             # Intended aggregator function is create_data_products_udp

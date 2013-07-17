@@ -33,7 +33,7 @@ ns = Pyro4.naming.locateNS()
 
 viewer = SimpleViewer()
 daemon = Pyro4.Daemon()
-uri = daemon.register(viewer) 
+uri = daemon.register(viewer)
 coord = Pyro4.Proxy(ns.lookup("BasebandCoordinator"))
 
 coord.subscribe_uri(uri,['power spectrum'])

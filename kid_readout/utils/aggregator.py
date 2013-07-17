@@ -14,6 +14,11 @@ class Aggregator():
         self.subscribers = {}  # maps uri to subscriber
         self.last_addr = 0
         
+        self.packetCounter = 0
+        # Used for keeping track of the packet order.
+        self.tmpbuffer = np.zeros((10, 256 * 16)).view('complex64')
+        # Used for aggregating packets for ordering.
+        
     def subscribe_uri(self, uri, data_products):
         if self.subscribers.has_key(uri):
             print "already subscribed!", uri
@@ -33,6 +38,54 @@ class Aggregator():
         self.writer.write_data_chunk(chunk)
         self.create_data_products(chunk)
         
+    def gather(self, packet):
+        
+        # for each channel, push that onto the corresponding array.
+        
+        if self.packetCounter == packet.index[0]:
+            self.tmpbuffer[0][packet.index * 256:(packet.index + 1) * 256] = packet.data[0]
+            # Note that I put this into the zeroth row because we are currently testing with one channel.
+            # Once more channels we will have tmpbuffer[n] and packet.data[n]
+            self.packetCounter += 1
+        else:
+            if self.packetCounter > packet.index:
+                pass;
+                # Throws away late packets.
+            if self.packetCounter < packet.index:
+                self.tmpbuffer[0][(self.packetCounter * 256):((packet.index) * 256)] = float('NaN')
+                # Fills discrepancy between counter and index with 'nan'
+                self.tmpbuffer[0][ (packet.index * 256):((packet.index + 1) * 256)] = packet.data[0]
+                # Fills in correct index normally.
+                self.packetCounter += 1
+        
+        if self.packetCounter == 16:
+            self.create_data_products_from_gather(self.tmpbuffer)
+            # pushes data to next function.
+            
+            self.packetCounter = 0
+            # Resets packetCounter
+            
+            # self.tmpbuffer = np.zeros((10, 256 * 16))
+            # Reset tmpbuffer to zeros. If there is a way to easily initialize it to NaN's,
+            # this would be great. Global variable?
+            
+            # Resetting this created problems: the program would work correctly once and then the
+            # tmpbuffer would no longer be written to. I took out the reset since all data will be overwritten
+            # anyway.
+        
+    def create_data_products_from_gather(self, passedArray):
+        pxx = (np.abs(np.fft.fft(passedArray[0])) ** 2)
+        # Note that since we are currently testing with 1 channel, I only use the first channel of passed Array.
+        # In the future there will need to be a pxx for each channel (for loop).
+        # In reality, we will probably have more advanced data processing.
+        pxx_product = dict(type='power spectrum', data=pxx)
+        self.publish(pxx_product)
+        
+    def publishTest(self, data_product):
+        print data_product['type']
+        print data_product['data']
+    
+        
     def create_data_products(self, chunk):
         # create higher level data products and distribute them to subscribers
         # this could be eventually moved to another thread or Pyro object etc to
@@ -42,8 +95,7 @@ class Aggregator():
         self.publish(pxx_product)
         
     def create_data_products_experimental(self, packet):
-        # udpcatcher formats the data, so it can more directly feed into data products.
-        pxx = (np.abs(np.fft.fft(packet.data)) ** 2)
+        pxx = (np.abs(np.fft.fft(packet.data[0])) ** 2)
         pxx_product = dict(type='power spectrum', data=pxx)
         self.publish(pxx_product)
         
