@@ -38,9 +38,14 @@ class PacketCatcher():
         for i in range(chan):
             data[i] = data_list[i::chan]
             # Demultiplexes data.
+            
+        clock = range(len(data[0]))
+        clock[0::] += (addr / 4096) + (1024 / chan) * index
+        # Creates the clock, incrementing by one.
+        # Problem: 1024*16>4096, so clock of packet 16 will be larger than the next clock of packet 0.
         
-        Packet = col.namedtuple('Packet', ['index', 'channel_id', 'addr', 'data'])
-        myPacket = Packet(index, channel_id, addr, data)
+        Packet = col.namedtuple('Packet', ['index', 'channel_id', 'clock', 'data'])
+        myPacket = Packet(index, channel_id, clock, data)
     
         return myPacket
     
