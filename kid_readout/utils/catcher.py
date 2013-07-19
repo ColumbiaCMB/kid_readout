@@ -13,6 +13,8 @@ class PacketCatcher():
         self.data_thread = None
         self.publish_func = publish_func
         self.last_addr = 0
+        self.packetcounter = 0
+        self.lastpacket = None
         
     def start_data_thread(self):
         if self.data_thread:
@@ -39,15 +41,41 @@ class PacketCatcher():
             data[i] = data_list[i::chan]
             # Demultiplexes data.
             
-        clock = range(len(data[0]))
-        clock[0::] += (addr / 4096) + (1024 / chan) * index
+        clock = np.arange(len(data[0]))
+        clock += int(addr / 4096) * 4096 + (1024 / chan) * index
         # Creates the clock, incrementing by one.
-        # Problem: 1024*16>4096, so clock of packet 16 will be larger than the next clock of packet 0.
         
         Packet = col.namedtuple('Packet', ['index', 'channel_id', 'clock', 'data'])
         myPacket = Packet(index, channel_id, clock, data)
     
         return myPacket
+    
+    
+    def order(self, packet):
+        # Packet order is checked, then packet is pushed to aggregator.
+        
+        filldata = None
+        if self.packetcounter % 16 == packet.index[0]:
+            self.packetcounter += 1
+            self.lastpacket = packet
+            self.publish_func(packet)
+        else:
+            if self.packetcounter > packet.index:
+                pass;
+                # Throws away late packets.
+            if self.packetcounter < packet.index:
+                # Creates filler packet and send it. Copies clock and channel_id from last valid packet.
+                # Gets correct index and data filled with 'NaN'.
+                fillarray = np.empty(len(lastpacket.data[0]))
+                fillarray[0:] = 'nan'
+                
+                filldata = range(len(lastpacket.data))
+                for i in len(filldata):
+                    filldata.append(fillarray)    
+                newfiller = Filler(index, lastpacket.channel_id, lastpacket.clock, filldata)
+                
+                self.packetcounter += 1
+                self.publish_func(newfiller)
     
     def _cont_read_data(self, UDP_IP, UDP_PORT, channel_number):
         """
@@ -60,8 +88,8 @@ class PacketCatcher():
         while not self.quit_data_thread:
             raw_data = sock.recv(10000)
             packet = self.decode(raw_data, channel_number)
-            self.publish_func(packet)
-            # This is where data will be pushed to aggregator, and in turn to subscribers.
+            self.order(packet)
+            # Packet formed from raw input, sent to ordering.
 
 
 class Packet:

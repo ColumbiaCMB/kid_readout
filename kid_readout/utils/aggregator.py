@@ -44,6 +44,8 @@ class Aggregator():
         
     def gather(self, packet):
         
+        # Keeping this function around in case I need to write another buffer. Not in use.
+        
         # for each channel, push that onto the corresponding array.
         
         if self.packetCounter == packet.index[0]:
@@ -72,45 +74,7 @@ class Aggregator():
             # Resets packetCounter
             # For arbitrary buffer size, a mod function (packetCounter%16) could be used instead.
             
-            # self.tmpbuffer = np.zeros((10, 256 * 16))
-            # Reset tmpbuffer to zeros. If there is a way to easily initialize it to NaN's...
-            # Resetting this created problems: the program would work correctly once and then the
-            # tmpbuffer would no longer be written to. I took out the reset since all data will be overwritten
-            # anyway.
-    
-    def gather_no_buff(self, packet):
-        
-        filldata = None
-        if self.packetCounter == packet.index[0]:
-            # send packet on
-            self.packetCounter += 1
-            self.lastpacket = packet
-            self.create_data_products_experimental(packet)
-        else:
-            if self.packetCounter > packet.index:
-                pass;
-                # Throws away late packets.
-            if self.packetCounter < packet.index:
-                # Create filler packet and send it. All data should be NaN, copy other attributes from
-                # previous packet.
-                fillarray = np.empty(len(lastpacket.data[0]))
-                fillarray[0:] = 'nan'
-                
-                filldata = range(len(lastpacket.data))
-                for i in len(filldata):
-                    filldata.append(fillarray)    
-                newfiller = Filler(index, lastpacket.channel_id, lastpacket.clock, filldata)
-                
-                self.packetCounter += 1
-                self.create_data_products_experimental(packet)
-        
-        if self.packetCounter == 16:
-            
-            self.packetCounter = 0
-            # Resets packetCounter
-            # For arbitrary buffer size, a mod function (packetCounter%16) could be used instead.
-            
-            # Could alternately just use a mod function. Maybe easier.
+           
         
     def create_data_products_from_gather(self, passedArray, clockCount):
         pxx = (np.abs(np.fft.fft(passedArray[0])) ** 2)
