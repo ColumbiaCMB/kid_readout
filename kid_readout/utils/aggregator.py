@@ -42,49 +42,7 @@ class Aggregator():
         self.writer.write_data_chunk(chunk)
         self.create_data_products(chunk)
         
-    def gather(self, packet):
-        
-        # Keeping this function around in case I need to write another buffer. Not in use.
-        
-        # for each channel, push that onto the corresponding array.
-        
-        if self.packetCounter == packet.index[0]:
-            for index in range(len(packet.data)):
-                self.tmpbuffer[index][packet.index * 256:(packet.index + 1) * 256] = packet.data[index]
-            # Takes into account channels
-            self.packetCounter += 1
-        else:
-            if self.packetCounter > packet.index:
-                pass;
-                # Throws away late packets.
-            if self.packetCounter < packet.index:
-                for index in range(len(packet.data)):
-                    self.tmpbuffer[index][(self.packetCounter * 256):((packet.index) * 256)] = float('NaN')
-                # Fills discrepancy between counter and index with 'nan'
-                for index in range(len(packet.data)):
-                    self.tmpbuffer[index][packet.index * 256:(packet.index + 1) * 256] = packet.data[index]
-                # Fills in correct index normally.
-                self.packetCounter += 1
-        
-        if self.packetCounter == 16:
-            self.create_data_products_from_gather(self.tmpbuffer, packet.clock)
-            # pushes data to next function. Passes buffer and addr of packet index 16.
-            
-            self.packetCounter = 0
-            # Resets packetCounter
-            # For arbitrary buffer size, a mod function (packetCounter%16) could be used instead.
-            
-           
-        
-    def create_data_products_from_gather(self, passedArray, clockCount):
-        pxx = (np.abs(np.fft.fft(passedArray[0])) ** 2)
-        # Note that since we are currently testing with 1 channel, I only use the first channel of passed Array.
-        # In the future there will need to be a pxx for each channel (for loop).
-        # In reality, we will probably have more advanced data processing.
-        pxx_product = dict(type='power spectrum', data=pxx, clock=clockCount)
-        self.publish(pxx_product)
-        
-    def publishTest(self, data_product):
+    def publish_test(self, data_product):
         print data_product['type']
         print data_product['data']
         print data_product['clock']
@@ -95,13 +53,13 @@ class Aggregator():
         # create higher level data products and distribute them to subscribers
         # this could be eventually moved to another thread or Pyro object etc to
         # improve CPU usage
-        pxx = (np.abs(np.fft.fft(chunk['data'].reshape((-1, 1024)), axis=1)) ** 2).mean(0)
+        pxx = (np.abs(np.fft.fft(chunk['data'].reshape((-1, 1024))  , axis=1)) ** 2).mean(0)
         pxx_product = dict(type='power spectrum', data=pxx)
         self.publish(pxx_product)
         
-    def create_data_products_experimental(self, packet):
+    def create_data_products_short(self, packet):
         pxx = (np.abs(np.fft.fft(packet.data[0])) ** 2)
-        pxx_product = dict(type='power spectrum', data=pxx)
+        pxx_product = dict(type='power spectrum', data=pxx, clock=packet.clock)
         self.publish(pxx_product)
         
     def publish(self, data_product):
