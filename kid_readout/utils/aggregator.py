@@ -61,6 +61,13 @@ class Aggregator():
         pxx = (np.abs(np.fft.fft(packet.data[0])) ** 2)
         pxx_product = dict(type='power spectrum', data=pxx, clock=packet.clock)
         self.publish(pxx_product)
+    
+    
+    def create_data_products_dict(self, packet):
+        raw_data=packet[0]['data']
+        pxx = (np.abs(np.fft.fft(raw_data)) ** 2)
+        pxx_product = dict(type='power spectrum', data=pxx, clock=packet[0]['clock'])
+        self.publish(pxx_product)
         
     def publish(self, data_product):
         # pass the data products on to the appropriate subscribers
