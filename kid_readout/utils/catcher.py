@@ -17,6 +17,7 @@ class DemultiplexCatcher():
         self.bufname = bufname
         self.data_thread = None
         self.publish_func = publish_func
+        self.channel_ids = []
         
         self.packet_counter = 0
         self.last_packet = None
@@ -31,10 +32,15 @@ class DemultiplexCatcher():
             self.data_thread.join(1.0)
             self.data_thread = None
         self.quit_data_thread = False
-        self.data_thread = threading.Thread(target=self._cont_read_data, args=("192.168.1.1", 12345, 1))
+        self.data_thread = threading.Thread(target=self._cont_read_data, args=("192.168.1.1", 12345, 2))
         # Using the port and IP startup_server runs on for now.
+        # Also using just 1 channel.
         self.data_thread.daemon = True
         self.data_thread.start()
+        
+    def set_channel_ids(self, ids):
+        self.channel_ids = ids
+        # reset data thread...
         
     def decode(self, pkt):
     
@@ -50,6 +56,7 @@ class DemultiplexCatcher():
     
     def get_clock(self, packet, chan):
         clock = np.arange((len(packet['data_list']) / chan) + 1)
+        # Creates a clock array of length equal to one channel.
         clock += ((packet['addr'] / 4096) * 4096 + (1024 / chan) * packet['index']) - self.time_zero
         packet['clock'] = clock
         
@@ -75,6 +82,7 @@ class DemultiplexCatcher():
                 # Updates clock to increment from last packet.
                 
                 fill_array = np.empty(len(self.last_packet['data_list']))
+                # Error if the first packet received is out of order: no last_packet.
                 fill_array[0:] = 'nan'
                 # Fills all channels of the filler packet with 'NaN'.
                 
@@ -85,7 +93,7 @@ class DemultiplexCatcher():
                     fill_clock += last_packet['clock'][-1] + 1
                     # Updates the clock of the filler based on the previous packet.
                   
-                    new_filler = dict([('index', self.packet_counter), ('channel_id', last_packet['channel_id']), 
+                    new_filler = dict([('index', self.packet_counter), ('channel_id', last_packet['channel_id']),
                                        ('addr', last_packet['addr']), ('data_list' , fill_array), ('clock', fill_clock)])
                     self.demultiplex(new_filler, chan_num)
                     # Makes the filler packet and publishes it.
@@ -104,10 +112,25 @@ class DemultiplexCatcher():
         
         
         packet_list = []
+        chan_index = 0
+        
         for i in range(chan_number):
+            if i == 0:
+                channel_id = packet['channel_id']
+                chan_index = self.channel_ids.index(channel_id)
+                chan_index += 1
+            else:
+                channel_id = self.channel_ids[chan_index % len(self.channel_ids)]
+                chan_index += 1
+            # These statements assign the correct channel_id to each demultiplexed packet.
+            
             data = packet['data_list'][i::chan_number]
-            demultiplex_packet = dict([('index', packet['index']), ('channel_id', packet['index']), ('clock', packet['clock'][:len(data)]), ('data' , data)])
+            # Does the demultiplexing of the data.
+            
+            demultiplex_packet = dict([('index', packet['index']), ('channel_id', channel_id),
+                                       ('clock', packet['clock'][:len(data)]), ('data' , data)])
             packet_list.append(demultiplex_packet)
+            # Makes a list of the demultiplexed packets that is pushed to the publish_func.
         self.publish_func(packet_list)
             
     
@@ -118,6 +141,10 @@ class DemultiplexCatcher():
         """
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind((UDP_IP, UDP_PORT))
+        
+        fixed_ids = [1003, 2003, 3003, 4003, 5003]
+        self.set_channel_ids(fixed_ids)
+        # Manually setting them for now, should be variable in the future.
         
         while not self.quit_data_thread:
             raw_data = sock.recv(10000)

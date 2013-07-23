@@ -43,9 +43,11 @@ class Aggregator():
         self.create_data_products(chunk)
         
     def publish_test(self, data_product):
-        print data_product['type']
-        print data_product['data']
-        print data_product['clock']
+        print data_product[0]['type']
+        print data_product[0]['channel_id']
+        print data_product[1]['channel_id']
+        # print data_product['clock']
+        # print data_product['data']
         # Used for debugging
     
         
@@ -64,10 +66,15 @@ class Aggregator():
     
     
     def create_data_products_dict(self, packet):
-        raw_data=packet[0]['data']
-        pxx = (np.abs(np.fft.fft(raw_data)) ** 2)
-        pxx_product = dict(type='power spectrum', data=pxx, clock=packet[0]['clock'])
-        self.publish(pxx_product)
+        
+        pxx_list = []
+        for i in range(len(packet)):
+            raw_data = packet[i]['data']
+            pxx = (np.abs(np.fft.fft(raw_data)) ** 2)
+            pxx_product = dict(type='power spectrum', data=pxx, clock=packet[i]['clock'], channel_id=packet[i]['channel_id'])
+            pxx_list.append(pxx_product)
+        # self.publish_test(pxx_list)
+        self.publish(pxx_list[0])
         
     def publish(self, data_product):
         # pass the data products on to the appropriate subscribers
