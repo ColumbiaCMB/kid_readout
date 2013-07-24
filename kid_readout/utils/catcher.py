@@ -32,13 +32,13 @@ class DemultiplexCatcher():
             self.data_thread.join(1.0)
             self.data_thread = None
         self.quit_data_thread = False
-        self.data_thread = threading.Thread(target=self._cont_read_data, args=("192.168.1.1", 12345, 2))
+        self.data_thread = threading.Thread(target=self._cont_read_data, args=("192.168.1.1", 12345, 10))
         # Using the port and IP startup_server runs on for now.
         # Also using just 1 channel.
         self.data_thread.daemon = True
         self.data_thread.start()
         
-    def set_channel_ids(self, ids):
+    def set_channel_ids(self, ids): 
         self.channel_ids = ids
         # reset data thread...
         
@@ -54,10 +54,25 @@ class DemultiplexCatcher():
         multiplex_packet = dict([('index', index[0]), ('channel_id', channel_id[0]), ('addr', addr[0]), ('data_list' , data_list)])
         return multiplex_packet
     
-    def get_clock(self, packet, chan):
-        clock = np.arange((len(packet['data_list']) / chan) + 1)
+    def get_clock(self, packet, chan_number):
+        
+        if self.zero_switch == 0:
+            self.time_zero = packet['addr']
+            self.zero_switch = 1
+        
+        clock = np.arange((len(packet['data_list']) + (-len(packet['data_list']) % chan_number)) / chan_number)
         # Creates a clock array of length equal to one channel.
-        clock += ((packet['addr'] / 4096) * 4096 + (1024 / chan) * packet['index']) - self.time_zero
+        # The -len(packet['data_list'])%chan_number is the amount that must be added to the length of the packet/chan to be evenly divisible.
+        # Essentially just a round-up function.
+        
+        # Works for even channel numbers. However, a remainder problem here.
+        # clock += ((packet['addr'] / 4096) * 4096 - (self.time_zero / 4096) * 4096) / chan_number + len(clock) * packet['index']
+        
+        
+        clock += ((packet['addr'] / 4096) - (self.time_zero / 4096)) * len(clock) * 16 + len(clock) * packet['index']
+        # 16 packets has a total clock length not as described in the commented-out equation. It has a length of 16*len(clock).
+        # This equation takes the amount of 16-packet chunks since time zero (addr/4096 - timezero/4096) and multiplies it by 16 * clock_length.
+        
         packet['clock'] = clock
         
     
@@ -127,7 +142,7 @@ class DemultiplexCatcher():
             data = packet['data_list'][i::chan_number]
             # Does the demultiplexing of the data.
             
-            demultiplex_packet = dict([('index', packet['index']), ('channel_id', channel_id),
+            demultiplex_packet = dict([('index', packet['index']), ('channel_id', channel_id), ('addr', packet['addr']),
                                        ('clock', packet['clock'][:len(data)]), ('data' , data)])
             packet_list.append(demultiplex_packet)
             # Makes a list of the demultiplexed packets that is pushed to the publish_func.
