@@ -32,9 +32,10 @@ class DemultiplexCatcher():
             self.data_thread.join(1.0)
             self.data_thread = None
         self.quit_data_thread = False
+        # self.data_thread = threading.Thread(target=self._cont_read_data, args=("localhost", 12345, 2))
+        # Used for debugging on localhost.
         self.data_thread = threading.Thread(target=self._cont_read_data, args=("192.168.1.1", 12345, 10))
         # Using the port and IP startup_server runs on for now.
-        # Also using just 1 channel.
         self.data_thread.daemon = True
         self.data_thread.start()
         
@@ -104,13 +105,13 @@ class DemultiplexCatcher():
                 while self.packet_counter < packet['index']:
                     # Loop runs until packet_counter = packet.index. Fills discrepancy with filler packets.
                     
-                    fill_clock = np.arange(len(lastpacket['clock']))
-                    fill_clock += last_packet['clock'][-1] + 1
+                    fill_clock = np.arange(len(self.last_packet['clock']))
+                    fill_clock += self.last_packet['clock'][-1] + 1
                     # Updates the clock of the filler based on the previous packet.
                   
-                    new_filler = dict([('index', self.packet_counter), ('channel_id', last_packet['channel_id']),
-                                       ('addr', last_packet['addr']), ('data_list' , fill_array), ('clock', fill_clock)])
-                    self.demultiplex(new_filler, chan_num)
+                    new_filler = dict([('index', self.packet_counter), ('channel_id', self.last_packet['channel_id']),
+                                       ('addr', self.last_packet['addr']), ('data_list' , fill_array), ('clock', fill_clock)])
+                    self.demultiplex(new_filler, chan_number)
                     # Makes the filler packet and publishes it.
                     
                     self.last_packet = new_filler
@@ -119,7 +120,7 @@ class DemultiplexCatcher():
                
                 
                 self.last_packet = packet
-                self.demultiplex(packet, chan_num)
+                self.demultiplex(packet, chan_number)
                 self.packet_counter += 1
                 # Once the while loop terminates, the function operates normally.
                 
@@ -149,23 +150,25 @@ class DemultiplexCatcher():
         self.publish_func(packet_list)
             
     
-    def _cont_read_data(self, UDP_IP, UDP_PORT, CHANNEL_NUMBER):
+    def _cont_read_data(self, udp_ip, udp_port, chan_number):
         """
         Reads data from socket as a chunk. Passes it to a publishing function passed
         to UDPCatcher (intended to be aggregator.create_data_products).
         """
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.bind((UDP_IP, UDP_PORT))
+        sock.bind((udp_ip, udp_port))
         
         fixed_ids = [1003, 2003, 3003, 4003, 5003]
+        # fixed_ids = [0, 1, 2, 3, 4]
+        # Used for debugging on localhost.
         self.set_channel_ids(fixed_ids)
         # Manually setting them for now, should be variable in the future.
         
         while not self.quit_data_thread:
             raw_data = sock.recv(10000)
             packet = self.decode(raw_data)
-            self.get_clock(packet, CHANNEL_NUMBER)
-            self.check_order(packet, CHANNEL_NUMBER)
+            self.get_clock(packet, chan_number)
+            self.check_order(packet, chan_number)
             # Packet formed from raw input, sent to ordering.
 
 

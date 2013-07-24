@@ -45,10 +45,11 @@ class Aggregator():
     def publish_test(self, data_product):
         print data_product[0]['type']
         print data_product[0]['channel_id']
-        print data_product[1]['channel_id']
+        # print data_product[1]['channel_id']
         print data_product[0]['addr']
         print data_product[0]['clock']
-        # print data_product['data']
+        print data_product[0]['index']
+        print data_product[0]['data']
         # Used for debugging
     
         
@@ -73,7 +74,7 @@ class Aggregator():
             raw_data = packet[i]['data']
             pxx = (np.abs(np.fft.fft(raw_data)) ** 2)
             pxx_product = dict(type='power spectrum', data=pxx, clock=packet[i]['clock'],
-                               channel_id=packet[i]['channel_id'], addr=packet[i]['addr'])
+                               channel_id=packet[i]['channel_id'], addr=packet[i]['addr'], index=packet[i]['index'])
             pxx_list.append(pxx_product)
         # self.publish_test(pxx_list)
         self.publish_test(pxx_list)
