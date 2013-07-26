@@ -215,7 +215,7 @@ class SinglePixelBaseband(SinglePixelReadout):
         self.nfft = 2**14
 #        self.boffile = 'adcdac2xfft14r4_2013_Jun_13_1717.bof'
         self.boffile = 'adcdac2xfft14r5_2013_Jun_18_1542.bof'
-    
+        self.bufname = 'ppout%d' % wafer
     def set_channel(self,ch,dphi=None,amp=-3):
         """
         ch: channel number (0 to dac_ns-1)
