@@ -1,0 +1,220 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.utils.aggregator &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for kid_readout.utils.aggregator</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">single_pixel</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">Pyro4</span>
+<span class="kn">import</span> <span class="nn">collections</span> <span class="kn">as</span> <span class="nn">col</span>
+
+
+<div class="viewcode-block" id="Aggregator"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.aggregator.Aggregator">[docs]</a><span class="k">class</span> <span class="nc">Aggregator</span><span class="p">():</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">writer</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">writer</span> <span class="o">=</span> <span class="n">writer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subscriptions</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;power spectrum&#39;</span><span class="p">:</span> <span class="p">[]}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subscribers</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c"># maps uri to subscriber</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_addr</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">packetCounter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c"># Used for keeping track of the packet order.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tmpbuffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span> <span class="mi">256</span> <span class="o">*</span> <span class="mi">16</span><span class="p">))</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="s">&#39;complex64&#39;</span><span class="p">)</span>
+        <span class="c"># Used for aggregating packets for ordering.</span>
+        <span class="n">Filler</span> <span class="o">=</span> <span class="n">col</span><span class="o">.</span><span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Packet&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;index&#39;</span><span class="p">,</span> <span class="s">&#39;channel_id&#39;</span><span class="p">,</span> <span class="s">&#39;clock&#39;</span><span class="p">,</span> <span class="s">&#39;data&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lastpacket</span> <span class="o">=</span> <span class="bp">None</span>
+        
+        
+<div class="viewcode-block" id="Aggregator.subscribe_uri"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.aggregator.Aggregator.subscribe_uri">[docs]</a>    <span class="k">def</span> <span class="nf">subscribe_uri</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">data_products</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subscribers</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="n">uri</span><span class="p">):</span>
+            <span class="k">print</span> <span class="s">&quot;already subscribed!&quot;</span><span class="p">,</span> <span class="n">uri</span>
+            <span class="k">return</span>
+        <span class="n">subscriber</span> <span class="o">=</span> <span class="n">Pyro4</span><span class="o">.</span><span class="n">Proxy</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subscribers</span><span class="p">[</span><span class="n">uri</span><span class="p">]</span> <span class="o">=</span> <span class="n">subscriber</span>
+        <span class="k">for</span> <span class="n">data_product</span> <span class="ow">in</span> <span class="n">data_products</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">subscriptions</span><span class="p">[</span><span class="n">data_product</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subscriber</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="Aggregator.proc_raw_data"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.aggregator.Aggregator.proc_raw_data">[docs]</a>    <span class="k">def</span> <span class="nf">proc_raw_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">addr</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_addr</span> <span class="o">&gt;</span> <span class="mi">8192</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;skipped:&quot;</span><span class="p">,</span> <span class="n">addr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_addr</span><span class="p">,</span> <span class="p">(</span><span class="n">addr</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_addr</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_addr</span> <span class="o">=</span> <span class="n">addr</span> 
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s">&#39;&gt;i2&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s">&#39;float32&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="s">&#39;complex64&#39;</span><span class="p">)</span>
+        <span class="c"># create chunk representation of this data</span>
+        <span class="n">chunk</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">writer</span><span class="o">.</span><span class="n">write_data_chunk</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_data_products</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="Aggregator.publish_test"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.aggregator.Aggregator.publish_test">[docs]</a>    <span class="k">def</span> <span class="nf">publish_test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_product</span><span class="p">):</span>
+        <span class="k">print</span> <span class="n">data_product</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s">&#39;type&#39;</span><span class="p">]</span>
+        <span class="k">print</span> <span class="n">data_product</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s">&#39;channel_id&#39;</span><span class="p">]</span>
+        <span class="c"># print data_product[1][&#39;channel_id&#39;]</span>
+        <span class="k">print</span> <span class="n">data_product</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s">&#39;addr&#39;</span><span class="p">]</span>
+        <span class="k">print</span> <span class="n">data_product</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s">&#39;clock&#39;</span><span class="p">]</span>
+        <span class="k">print</span> <span class="n">data_product</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s">&#39;index&#39;</span><span class="p">]</span>
+        <span class="k">print</span> <span class="n">data_product</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s">&#39;data&#39;</span><span class="p">]</span>
+        <span class="c"># Used for debugging</span>
+    
+        </div>
+<div class="viewcode-block" id="Aggregator.create_data_products"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.aggregator.Aggregator.create_data_products">[docs]</a>    <span class="k">def</span> <span class="nf">create_data_products</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chunk</span><span class="p">):</span>
+        <span class="c"># create higher level data products and distribute them to subscribers</span>
+        <span class="c"># this could be eventually moved to another thread or Pyro object etc to</span>
+        <span class="c"># improve CPU usage</span>
+        <span class="n">pxx</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">chunk</span><span class="p">[</span><span class="s">&#39;data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1024</span><span class="p">))</span>  <span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">pxx_product</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s">&#39;power spectrum&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">pxx</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">pxx_product</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="Aggregator.create_data_products_short"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.aggregator.Aggregator.create_data_products_short">[docs]</a>    <span class="k">def</span> <span class="nf">create_data_products_short</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">packet</span><span class="p">):</span>
+        <span class="n">pxx</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">packet</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">pxx_product</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s">&#39;power spectrum&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">pxx</span><span class="p">,</span> <span class="n">clock</span><span class="o">=</span><span class="n">packet</span><span class="o">.</span><span class="n">clock</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">pxx_product</span><span class="p">)</span>
+    
+    </div>
+<div class="viewcode-block" id="Aggregator.create_data_products_dict"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.aggregator.Aggregator.create_data_products_dict">[docs]</a>    <span class="k">def</span> <span class="nf">create_data_products_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">packet</span><span class="p">):</span>
+        
+        <span class="n">pxx_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">packet</span><span class="p">)):</span>
+            <span class="n">raw_data</span> <span class="o">=</span> <span class="n">packet</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">&#39;data&#39;</span><span class="p">]</span>
+            <span class="n">pxx</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">raw_data</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">pxx_product</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s">&#39;power spectrum&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">pxx</span><span class="p">,</span> <span class="n">clock</span><span class="o">=</span><span class="n">packet</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">&#39;clock&#39;</span><span class="p">],</span>
+                               <span class="n">channel_id</span><span class="o">=</span><span class="n">packet</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">&#39;channel_id&#39;</span><span class="p">],</span> <span class="n">addr</span><span class="o">=</span><span class="n">packet</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">&#39;addr&#39;</span><span class="p">],</span> <span class="n">index</span><span class="o">=</span><span class="n">packet</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">&#39;index&#39;</span><span class="p">])</span>
+            <span class="n">pxx_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pxx_product</span><span class="p">)</span>
+        <span class="c"># self.publish_test(pxx_list)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">publish_test</span><span class="p">(</span><span class="n">pxx_list</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="Aggregator.publish"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.aggregator.Aggregator.publish">[docs]</a>    <span class="k">def</span> <span class="nf">publish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_product</span><span class="p">):</span>
+        <span class="c"># pass the data products on to the appropriate subscribers</span>
+        <span class="n">subscription_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subscriptions</span><span class="p">[</span><span class="n">data_product</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">]]</span>  <span class="c"># list of subscribers interested in this data product</span>
+        <span class="k">print</span> <span class="s">&quot;publishing pxx to&quot;</span><span class="p">,</span> <span class="n">subscription_list</span>
+        <span class="k">for</span> <span class="n">subscriber</span> <span class="ow">in</span> <span class="n">subscription_list</span><span class="p">:</span>
+            <span class="n">subscriber</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span><span class="n">data_product</span><span class="p">)</span>
+        </div>
+    <span class="k">def</span> <span class="nf">_cont_read_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Low level data reading loop. Reads data continuously and passes it to self._proc_raw_data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">regname</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_addr&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">bufname</span>
+        <span class="n">brama</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_a&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">bufname</span>
+        <span class="n">bramb</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_b&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">bufname</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_thread_r</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">read_uint</span><span class="p">(</span><span class="n">regname</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x1000</span>
+        <span class="n">addr</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">read_uint</span><span class="p">(</span><span class="n">regname</span><span class="p">)</span> 
+        <span class="n">b</span> <span class="o">=</span> <span class="n">addr</span> <span class="o">&amp;</span> <span class="mh">0x1000</span>
+        <span class="k">while</span> <span class="n">a</span> <span class="o">==</span> <span class="n">b</span><span class="p">:</span>
+            <span class="n">addr</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">read_uint</span><span class="p">(</span><span class="n">regname</span><span class="p">)</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">addr</span> <span class="o">&amp;</span> <span class="mh">0x1000</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">addrs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">tic</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">idle</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">quit_data_thread</span><span class="p">:</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">b</span>
+            <span class="k">if</span> <span class="n">a</span><span class="p">:</span>
+                <span class="n">bram</span> <span class="o">=</span> <span class="n">brama</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">bram</span> <span class="o">=</span> <span class="n">bramb</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">bram</span><span class="p">,</span> <span class="mi">4</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">12</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_proc_raw_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span>
+            
+            <span class="n">addr</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">read_uint</span><span class="p">(</span><span class="n">regname</span><span class="p">)</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">addr</span> <span class="o">&amp;</span> <span class="mh">0x1000</span>
+            <span class="k">while</span> <span class="p">(</span><span class="n">a</span> <span class="o">==</span> <span class="n">b</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">quit_data_thread</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">addr</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">read_uint</span><span class="p">(</span><span class="n">regname</span><span class="p">)</span>
+                    <span class="n">b</span> <span class="o">=</span> <span class="n">addr</span> <span class="o">&amp;</span> <span class="mh">0x1000</span>
+                    <span class="n">idle</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">print</span> <span class="n">e</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;exiting data thread&quot;</span>
+            </div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+    </div>
+  </body>
+</html>
