@@ -13,6 +13,19 @@
 
 void fileRead(FILE *file_in, int socket_in, struct sockaddr_in destination,
 		socklen_t destlen, char* timestamp, char* channel_dir) {
+
+	/*
+	 * Description of the variables input into fileRead. Last is the name of the variables
+	 * when run by main.
+	 *
+	 * file_in - the file to be read - myfile
+	 * socket_in - the socket - sock
+	 * destination - a socket structure describing destination - to
+	 * destlen - size of the sock structure - tolen
+	 * timestamp - the addr timestamp from the ROACH - addr_buff
+	 * channel_dir - the channel stamp for myfile. - addr_specs_chan
+	 */
+
 	int buff_length;
 	buff_length = 1032;
 	char filebuffer[buff_length];
@@ -46,11 +59,11 @@ void fileRead(FILE *file_in, int socket_in, struct sockaddr_in destination,
 		ishift = i << 16;
 		ishift = ishift | *((int*) channelbuffer);
 
+		// This byte masks i and the channelbuffer to the first four bytes of charbuffer.
+
 		memcpy(&filebuffer, (char*) &ishift, 4);
 		// Copies i, again so we can arrange files down the road.
 		// Copies to filebuffer as a char array.
-
-		// To do: byte mask i and the channelbuffer to the first four bytes of filebuffer.
 
 		result = fread(filebuffer + 8, 1, loadup, file_in);
 		// Reads into buffer from position 8 to end.
@@ -68,6 +81,9 @@ int main(int argc, char *argv[]) {
 	char addr_buff[4];
 	int result;
 	unsigned int addr;
+	unsigned int last_addr;
+	last_addr = 0;
+	// Used for checking discrepancy between subsequent packages.
 	long size;
 	size = 4;
 	//Necessary for the switch file.
@@ -78,7 +94,7 @@ int main(int argc, char *argv[]) {
 	int originalnum;
 	int has_switched;
 	has_switched = 0;
-	// These are to make sure the program reads the file not being written to.
+	// These are to make sure the program reads the file that is not being written to.
 
 	int sock, length;
 	socklen_t tolen;
@@ -103,7 +119,8 @@ int main(int argc, char *argv[]) {
 	bcopy((char *) hp->h_addr, (char *) &to.sin_addr, hp->h_length);
 	to.sin_port = htons(atoi("12345"));
 	tolen = sizeof(struct sockaddr_in);
-	// This is from fileserver.c to create connections. Refer to fileserver.c for details.
+	// This code is from fileserver.c to create connections.
+	// Refer to fileserver.c for details on how it works.
 
 	char addr_specs_switch[256];
 	char addr_specs_a[256];
@@ -113,31 +130,33 @@ int main(int argc, char *argv[]) {
 	sprintf(addr_specs_a, "/proc/%s/hw/ioreg/%s_a", argv[1], argv[2]);
 	sprintf(addr_specs_b, "/proc/%s/hw/ioreg/%s_b", argv[1], argv[2]);
 	sprintf(addr_specs_chan, "/proc/%s/hw/ioreg/%s_chan", argv[1], argv[2]);
-	// For testing argv[1] shoudl be 641 and argv[2] should be ppout. Or something like that.
+	// For testing argv[1] should be along the lines of 641 and argv[2] should be ppout.
 	// Sets the files from which the program will read.
+	// When the program is run without channels, ppout_chan will not exist and you will get a segfault.
 
 	while (1) {
 		switch_file = fopen(addr_specs_switch, "r");
-		//switch_file = fopen("/proc/641/hw/ioreg/ppout_addr", "r");
 
 		result = fread(addr_buff, 1, size, switch_file);
 
 		addr = *(unsigned int *) addr_buff;
+		if (((int) addr) - ((int) last_addr) > 4096) {
+			printf("discrepancy between subsequent addrs ");
+			printf("%d\n", ((int) addr) - ((int) last_addr));
+			// Used for checking discrepancies.
+		}
+		last_addr = addr;
+
 		myswitch = addr % 8192;
 
 		fclose(switch_file);
 
-		//printf("ppout_addr value is %d and switch is on mode: ", myswitch);
-		// For error checking
-
 		if (wait == TRUE) {
+			// Waits for the ROACH to finish writing to read.
 			if (has_switched == 0) {
 				originalnum = myswitch;
 				has_switched = 1;
 			}
-
-			//printf("WAITING: \n");
-			// For error checking
 			if (myswitch < 4096) {
 				if (originalnum >= 4096) {
 					wait = FALSE;
@@ -149,25 +168,20 @@ int main(int argc, char *argv[]) {
 				}
 			}
 		} else {
+			// Reads from a or b depending on the addr.
 			if (myswitch < 4096) {
-				//myfile = fopen("/proc/641/hw/ioreg/ppout_b", "r");
 				myfile = fopen(addr_specs_b, "r");
 				fileRead(myfile, sock, to, tolen, addr_buff, addr_specs_chan);
 				fclose(myfile);
 				wait = TRUE;
 				has_switched = 0;
-				//printf("reading b\n");
-				// For error checking
 			}
 			if (myswitch >= 4096) {
-				//myfile = fopen("/proc/641/hw/ioreg/ppout_a", "r");
 				myfile = fopen(addr_specs_a, "r");
 				fileRead(myfile, sock, to, tolen, addr_buff, addr_specs_chan);
 				fclose(myfile);
 				wait = TRUE;
 				has_switched = 0;
-				//printf("reading a\n");
-				// For error checking.
 			}
 		}
 	}
