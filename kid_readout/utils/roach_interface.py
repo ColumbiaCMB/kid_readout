@@ -215,7 +215,7 @@ class RoachHeterodyne(RoachInterface):
         self.dac_ns = 2**16 # number of samples in the dac buffer
         self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
         self.nfft = 2**14
-        self.boffile = 'bb2xpfb14mcr5_2013_Jul_31_1301.bof'
+        self.boffile = 'iq2xpfb14mcr3_2013_Jul_31_1748.bof'
         self.bufname = 'ppout%d' % wafer
     def pause_dram(self):
         self.r.write_int('dram_rst',0)
@@ -276,7 +276,7 @@ class RoachHeterodyne(RoachInterface):
         
     def calc_fft_bins(self,tone_bins,nsamp):
         tone_bins_per_fft_bin = nsamp/(self.nfft) 
-        fft_bins = np.round(2*tone_bins/float(tone_bins_per_fft_bin)).astype('int') # factor of 2 because we're only reading out even channels at the moment
+        fft_bins = np.round(tone_bins/float(tone_bins_per_fft_bin)).astype('int') # factor of 2 because we're only reading out even channels at the moment
         return fft_bins
     
     def fft_bin_to_index(self,bins):
@@ -295,7 +295,9 @@ class RoachHeterodyne(RoachInterface):
         self.readout_fft_bins = self.fft_bins[self.readout_selection]
 
         binsel = np.zeros((self.fpga_fft_readout_indexes.shape[0]+1,),dtype='>i4')
-        binsel[:-1] = np.mod(self.fpga_fft_readout_indexes-offset,self.nfft)
+        evenodd = np.mod(self.fpga_fft_readout_indexes,2)
+        binsel[:-1] = np.mod(self.fpga_fft_readout_indexes/2-offset,self.nfft/2)
+        binsel[:-1] += evenodd*2**16
         binsel[-1] = -1
         self.r.write('chans',binsel.tostring())
         
@@ -312,7 +314,7 @@ class RoachHeterodyne(RoachInterface):
                 sign = -1.0
             nfft = self.nfft
             ns = self.tone_nsamp
-            foffs = (2*k*nfft - m*ns)/float(ns)
+            foffs = (k*nfft - m*ns)/float(ns)
             demod[:,n] = np.exp(sign*1j*(2*np.pi*foffs*t + phi0)) * data[:,n]
             if m >= self.nfft/2:
                 demod[:,n] = np.conjugate(demod[:,n])
@@ -342,7 +344,7 @@ class RoachHeterodyne(RoachInterface):
             print "address skip!"
         nch = self.readout_selection.shape[0]
         dout = draw.reshape((-1,nch))
-        shift = np.flatnonzero(self.fpga_fft_readout_indexes==(ch[0]-chan_offset))[0] - (nch-1)
+        shift = np.flatnonzero(self.fpga_fft_readout_indexes/2==(ch[0]-chan_offset))[0] - (nch-1)
         print shift
         dout = np.roll(dout,shift,axis=1)
         if demod:
