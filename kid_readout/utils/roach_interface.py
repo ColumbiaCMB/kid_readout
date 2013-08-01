@@ -276,7 +276,7 @@ class RoachHeterodyne(RoachInterface):
         
     def calc_fft_bins(self,tone_bins,nsamp):
         tone_bins_per_fft_bin = nsamp/(self.nfft) 
-        fft_bins = np.round(tone_bins/float(tone_bins_per_fft_bin)).astype('int') # factor of 2 because we're only reading out even channels at the moment
+        fft_bins = np.round(tone_bins/float(tone_bins_per_fft_bin)).astype('int')
         return fft_bins
     
     def fft_bin_to_index(self,bins):
