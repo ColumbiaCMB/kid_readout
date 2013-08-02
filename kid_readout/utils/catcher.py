@@ -13,10 +13,11 @@ class DemultiplexCatcher():
     
     '''
     
-    def __init__(self, publish_func, bufname, roachip='roach'):
+    def __init__(self, publish_func, bufname, roachip='roach', dataip = "192.168.1.1"):
         self.bufname = bufname
         self.data_thread = None
         self.publish_func = publish_func
+        self.dataip = dataip
         # self.channel_ids = [0, 1, 2, 3, 4]
         self.channel_ids = [(i * 100) + 3 for i in range(1, 101)]
         # Defaults used for testing.
@@ -37,7 +38,7 @@ class DemultiplexCatcher():
         self.quit_data_thread = False
         # self.data_thread = threading.Thread(target=self._cont_read_data, args=("localhost", 12345, 5))
         # Used for debugging on localhost.
-        self.data_thread = threading.Thread(target=self._cont_read_data, args=("192.168.1.1", 12345, 10))
+        self.data_thread = threading.Thread(target=self._cont_read_data, args=(self.dataip, 12345, 10))
         # Using the port and IP startup_server runs on for now.
         self.data_thread.daemon = True
         self.data_thread.start()
@@ -187,131 +188,6 @@ class DemultiplexCatcher():
             packet = self.decode(raw_data)
             self.get_clock(packet, chan_number)
             self.check_order(packet, chan_number)
-            # Packet formed from raw input, sent to ordering.
-
-
-class PacketCatcher():
-    ''' Receives packets from UDP socket, 
-    
-    decodes from a character string to a namedtuple, checks order and pushes to aggregator.
-    
-    '''
-    
-    def __init__(self, publish_func, bufname, roachip='roach'):
-        self.bufname = bufname
-        self.data_thread = None
-        self.publish_func = publish_func
-        
-        self.packet_counter = 0
-        self.last_packet = None
-        # Used for packet ordering.
-        
-        self.time_zero = None
-        self.zero_switch = 0
-        
-    def start_data_thread(self):
-        if self.data_thread:
-            self.quit_data_thread = True
-            self.data_thread.join(1.0)
-            self.data_thread = None
-        self.quit_data_thread = False
-        self.data_thread = threading.Thread(target=self._cont_read_data, args=("192.168.1.1", 12345, 1))
-        # Using the port and IP startup_server runs on for now.
-        self.data_thread.daemon = True
-        self.data_thread.start()
-        
-    def decode(self, pkt, chan):
-    
-        index = np.fromstring(pkt[:2], dtype='>i2')
-        channel_id = np.fromstring(pkt[2:4], dtype='>i2')
-        addr = np.fromstring(pkt[4:8], dtype='>u4')
-        data_list = np.fromstring(pkt[8:], dtype='>i2').astype('float').view('complex')
-        '''Read data as an array of 2byte integers --> convert to float --> view as
-        complex pairs (real and imaginary)'''
-        
-        data = range(chan)
-        for i in range(chan):
-            data[i] = data_list[i::chan]
-            # Demultiplexes data.
-            
-            
-        if self.zero_switch == 0:
-            self.time_zero = addr
-            self.zero_switch = 1
-            # time_zero can be reset to what is needed. For testing, it sets the first clock it receives to zero.
-            
-            
-        clock = np.arange(len(data[0]))
-        clock += ((addr / 4096) * 4096 + (1024 / chan) * index) - self.time_zero
-        # Creates the clock, incrementing by one.
-        
-        packet = col.namedtuple('Packet', ['index', 'channel_id', 'clock', 'data'])
-        my_packet = packet(index, channel_id, clock, data)
-    
-        return my_packet
-    
-    
-    def order(self, packet):
-        # Packet order is checked, then packet is pushed to aggregator.
-        
-        fill_data = None
-        if self.packet_counter % 16 == packet.index[0]:
-            self.packet_counter += 1
-            self.last_packet = packet
-            self.publish_func(packet)
-        else:
-            if self.packet_counter > packet.index[0]:
-                pass;
-                # Throws away late packets.
-                
-            if self.packet_counter < packet.index[0]:
-                
-                # Creates filler packet and send it. Channel_id from last valid packet.
-                # Gets correct index and data filled with 'NaN'.
-                # Updates clock to increment from last packet.
-                
-                fill_array = np.empty(len(self.last_packet.data[0]))
-                fill_array[0:] = 'nan'
-                
-                fill_data = range(len(self.last_packet.data))
-                for i in len(fill_data):
-                    fill_data[i] = fill_array
-                # Fills all channels of the filler packet with 'NaN' at the longest possible length of any channel.
-                # Makes the filler data once for any number of filler packets.
-                
-                while self.packet_counter < packet.index[0]:
-                    # Loop runs until packet_counter = packet.index. Fills discrepancy with filler packets.
-                    fill_clock = np.arange(len(fill_data[0]))
-                    fill_clock += last_packet.clock[-1] + 1
-                    # Updates the clock of the filler based on the previous packet.
-                
-                    Packet = col.namedtuple('Packet', ['index', 'channel_id', 'clock', 'data'])    
-                    new_filler = Packet(self.packet_counter, self.last_packet.channel_id, fill_clock, fill_data)
-                    self.publish_func(new_filler)
-                    # Makes the filler packet and publishes it.
-                    
-                    self.last_packet = new_filler
-                    self.packet_counter += 1
-                    # Updates variables.
-               
-                
-                self.last_packet = packet
-                self.publish_func(packet)
-                self.packet_counter += 1
-                # Once the while loop terminates, the function operates normally. 
-    
-    def _cont_read_data(self, UDP_IP, UDP_PORT, CHANNEL_NUMBER):
-        """
-        Reads data from socket as a chunk. Passes it to a publishing function passed
-        to UDPCatcher (intended to be aggregator.create_data_products).
-        """
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.bind((UDP_IP, UDP_PORT))
-        
-        while not self.quit_data_thread:
-            raw_data = sock.recv(10000)
-            packet = self.decode(raw_data, CHANNEL_NUMBER)
-            self.order(packet)
             # Packet formed from raw input, sent to ordering.
 
 class KatcpCatcher():
