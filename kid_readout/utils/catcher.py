@@ -13,7 +13,7 @@ class DemultiplexCatcher():
     
     '''
     
-    def __init__(self, publish_func, bufname, roachip='roach', dataip = "192.168.1.1"):
+    def __init__(self, publish_func, bufname = None, roachip='roach', dataip = "192.168.1.1"):
         self.bufname = bufname
         self.data_thread = None
         self.publish_func = publish_func

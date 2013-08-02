@@ -72,8 +72,6 @@ class RoachInterface(object):
         """
         return 2*self.r.est_brd_clk() 
         
-    def set_waveform(self,wave):
-        raise NotImplementedError("Abstract base class")
     def select_fft_bins(self,bins):
         raise NotImplementedError("Abstract base class")
         
@@ -396,8 +394,14 @@ class RoachBaseband(RoachInterface):
             ports = valon.find_valons()
             if len(ports) == 0:
                 raise Exception("No Valon found!")
-            self.adc_valon_port = ports[0]
-            self.adc_valon = valon.Synthesizer(ports[0]) #use latest port
+            for port in ports:
+                try:
+                    self.adc_valon_port = port
+                    self.adc_valon = valon.Synthesizer(port)
+                    f = self.adc_valon.get_frequency_a()
+                    break
+                except:
+                    pass
         elif type(adc_valon) is str:
             import valon
             self.adc_valon_port = adc_valon
@@ -460,7 +464,8 @@ class RoachBaseband(RoachInterface):
         self.amps = amps
         spec[bins] = amps*np.exp(1j*phases)
         wave = np.fft.irfft(spec)
-        qwave = np.round((wave/np.abs(wave).max())*(2**15-1024)).astype('>i2')
+        self.wavenorm = np.abs(wave).max()
+        qwave = np.round((wave/self.wavenorm)*(2**15-1024)).astype('>i2')
         self.qwave = qwave
         self.load_waveform(qwave)
         

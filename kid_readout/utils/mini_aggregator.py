@@ -44,13 +44,13 @@ class MiniAggregator():
     
     
     def create_data_products_debug(self, packet):
-       data_list = []
-       for i in range(len(packet)):
-           data_product = dict(type='power spectrum', data=packet[i]['data'], clock=packet[i]['clock'],
+        data_list = []
+        for i in range(len(packet)):
+            data_product = dict(type='power spectrum', data=packet[i]['data'], clock=packet[i]['clock'],
                                channel_id=packet[i]['channel_id'], addr=packet[i]['addr'], index=packet[i]['index'])
-           data_list.append(data_product)
-       self.last_product = data_list
-       self.is_new = True
+            data_list.append(data_product)
+        self.last_product = data_list
+        self.is_new = True
     
     def create_data_products_dict(self, packet):
         pxx_list = []
