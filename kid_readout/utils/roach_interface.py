@@ -160,6 +160,203 @@ class RoachInterface(object):
         chans = np.array(chans)
         return dout,addrs,chans
 
+class RoachHeterodyne(RoachInterface):
+    def __init__(self,roach=None,wafer=0,roachip='roach',adc_valon=None):
+        """
+        Class to represent the heterodyne readout system (high-frequency (1.5 GHz), IQ mixers)
+        
+        roach: an FpgaClient instance for communicating with the ROACH. 
+                If not specified, will try to instantiate one connected to *roachip*
+        wafer: 0
+                Not used for heterodyne system
+        roachip: (optional). Network address of the ROACH if you don't want to provide an FpgaClient
+        adc_valon: a Valon class, a string, or None
+                Provide access to the Valon class which controls the Valon synthesizer which provides
+                the ADC and DAC sampling clock.
+                The default None value will use the valon.find_valon function to locate a synthesizer
+                and create a Valon class for you.
+                You can alternatively pass a string such as '/dev/ttyUSB0' to specify the port for the
+                synthesizer, which will then be used for creating a Valon class.
+                Finally, for test suites, you can directly pass a Valon class or a class with the same
+                interface.
+        """
+        if roach:
+            self.r = roach
+        else:
+            from corr.katcp_wrapper import FpgaClient
+            self.r = FpgaClient(roachip)
+            t1 = time.time()
+            timeout = 10
+            while not self.r.is_connected():
+                if (time.time()-t1) > timeout:
+                    raise Exception("Connection timeout to roach")
+                time.sleep(0.1)
+                
+        if adc_valon is None:
+            import valon
+            ports = valon.find_valons()
+            if len(ports) == 0:
+                raise Exception("No Valon found!")
+            self.adc_valon_port = ports[0]
+            self.adc_valon = valon.Synthesizer(ports[0]) #use latest port
+        elif type(adc_valon) is str:
+            import valon
+            self.adc_valon_port = adc_valon
+            self.adc_valon = valon.Synthesizer(self.adc_valon_port)
+        else:
+            self.adc_valon = adc_valon
+            
+        self.fs = self.adc_valon.get_frequency_a()
+        self.wafer = wafer
+        self.dac_ns = 2**16 # number of samples in the dac buffer
+        self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
+        self.nfft = 2**14
+        self.boffile = 'iq2xpfb14mcr3_2013_Jul_31_1748.bof'
+        self.bufname = 'ppout%d' % wafer
+    def pause_dram(self):
+        self.r.write_int('dram_rst',0)
+    def unpause_dram(self):
+        self.r.write_int('dram_rst',2)
+    def _load_dram(self,data,tries=2):
+        while tries > 0:
+            try:
+                self.pause_dram()
+                self.r.write_dram(data.tostring())
+                self.unpause_dram()
+                return
+            except Exception, e:
+                print "failure writing to dram, trying again"
+#                print e
+            tries = tries - 1
+        raise Exception("Writing to dram failed!")
+    def load_waveforms(self,i_wave,q_wave):
+        data = np.zeros((2*i_wave.shape[0],),dtype='>i2')
+        data[0::4] = i_wave[::2]
+        data[1::4] = i_wave[1::2]
+        data[2::4] = q_wave[::2]
+        data[3::4] = q_wave[1::2]
+        self.r.write_int('dram_mask', data.shape[0]/4 - 1)
+        self._load_dram(data)
+        
+    def set_tone_freqs(self,freqs,nsamp,amps=None):
+        bins = np.round((freqs/self.fs)*nsamp).astype('int')
+        actual_freqs = self.fs*bins/float(nsamp)
+        bins[bins<0] = nsamp + bins[bins<0]
+        self.set_tone_bins(bins, nsamp,amps=amps)
+        self.fft_bins = self.calc_fft_bins(bins, nsamp)
+        if self.fft_bins.shape[0] > 4:
+            readout_selection = range(4)
+        else:
+            readout_selection = range(self.fft_bins.shape[0])   
+            
+        self.select_fft_bins(readout_selection)
+        return actual_freqs
+
+    def set_tone_bins(self,bins,nsamp,amps=None):
+        spec = np.zeros((nsamp,),dtype='complex')
+        self.tone_bins = bins.copy()
+        self.tone_nsamp = nsamp
+        phases = np.random.random(len(bins))*2*np.pi
+        self.phases = phases.copy()
+        if amps is None:
+            amps = 1.0
+        self.amps = amps
+        spec[bins] = amps*np.exp(1j*phases)
+        wave = np.fft.ifft(spec)
+        max = np.abs(wave.real).max()
+        i_wave = np.round((wave.real/max)*(2**15-1024)).astype('>i2')
+        q_wave = np.round((wave.imag/max)*(2**15-1024)).astype('>i2')
+        self.i_wave = i_wave
+        self.q_wave = q_wave
+        self.load_waveforms(i_wave,q_wave)
+        
+    def calc_fft_bins(self,tone_bins,nsamp):
+        tone_bins_per_fft_bin = nsamp/(self.nfft) 
+        fft_bins = np.round(tone_bins/float(tone_bins_per_fft_bin)).astype('int')
+        return fft_bins
+    
+    def fft_bin_to_index(self,bins):
+        top_half = bins > self.nfft/2
+        idx = bins.copy()
+        idx[top_half] = self.nfft - bins[top_half] + self.nfft/2
+        return idx
+        
+    def select_fft_bins(self,readout_selection):
+        offset = 2
+        idxs = self.fft_bin_to_index(self.fft_bins[readout_selection])
+        order = idxs.argsort()
+        idxs = idxs[order]
+        self.readout_selection = np.array(readout_selection)[order]
+        self.fpga_fft_readout_indexes = idxs
+        self.readout_fft_bins = self.fft_bins[self.readout_selection]
+
+        binsel = np.zeros((self.fpga_fft_readout_indexes.shape[0]+1,),dtype='>i4')
+        evenodd = np.mod(self.fpga_fft_readout_indexes,2)
+        binsel[:-1] = np.mod(self.fpga_fft_readout_indexes/2-offset,self.nfft/2)
+        binsel[:-1] += evenodd*2**16
+        binsel[-1] = -1
+        self.r.write('chans',binsel.tostring())
+        
+    def demodulate_data(self,data):
+        demod = np.zeros_like(data)
+        t = np.arange(data.shape[0])
+        for n,ich in enumerate(self.readout_selection):
+            phi0 = self.phases[ich]
+            k = self.tone_bins[ich]
+            m = self.fft_bins[ich]
+            if m >= self.nfft/2:
+                sign = 1.0
+            else:
+                sign = -1.0
+            nfft = self.nfft
+            ns = self.tone_nsamp
+            foffs = (k*nfft - m*ns)/float(ns)
+            demod[:,n] = np.exp(sign*1j*(2*np.pi*foffs*t + phi0)) * data[:,n]
+            if m >= self.nfft/2:
+                demod[:,n] = np.conjugate(demod[:,n])
+        return demod
+                
+    def get_data(self,nread=10,demod=True):
+        """
+        Get a chunk of data
+        
+        nread: number of 4096 sample frames to read
+        
+        demod: should the data be demodulated before returning? Default, yes
+        
+        returns  dout,addrs
+        dout: complex data stream. Real and imaginary parts are each 16 bit signed 
+                integers (but cast to numpy complex)
+        addrs: counter values when each frame was read. Can be used to check that 
+                frames are contiguous
+        """
+        bufname = 'ppout%d' % self.wafer
+        chan_offset = 1
+        draw,addr,ch =  self._read_data(nread, bufname)
+        if not np.all(ch == ch[0]):
+            print "all channel registers not the same; this case not yet supported"
+            return draw,addr,ch
+        if not np.all(np.diff(addr)<8192):
+            print "address skip!"
+        nch = self.readout_selection.shape[0]
+        dout = draw.reshape((-1,nch))
+        shift = np.flatnonzero(self.fpga_fft_readout_indexes/2==(ch[0]-chan_offset))[0] - (nch-1)
+        print shift
+        dout = np.roll(dout,shift,axis=1)
+        if demod:
+            dout = self.demodulate_data(dout)
+        return dout,addr
+    
+    def _set_fs(self,fs,chan_spacing=2.0):
+        """
+        Set sampling frequency in MHz
+        Note, this should generally not be called without also reprogramming the ROACH
+        Use initialize() instead        
+        """
+        self.adc_valon.set_frequency_a(fs,chan_spacing=chan_spacing)
+        self.fs = fs
+
+
 
 class RoachBaseband(RoachInterface):
     def __init__(self,roach=None,wafer=0,roachip='roach',adc_valon=None):
