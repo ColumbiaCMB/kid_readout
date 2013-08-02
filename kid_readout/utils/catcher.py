@@ -18,8 +18,7 @@ class DemultiplexCatcher():
         self.data_thread = None
         self.publish_func = publish_func
         # self.channel_ids = [0, 1, 2, 3, 4]
-        # self.channel_ids = [103, 203, 303, 403, 503]
-        self.channel_ids = [(i * 100) + 3 for i in range(1, 401)]
+        self.channel_ids = [(i * 100) + 3 for i in range(1, 101)]
         # Defaults used for testing.
         # Set roach channels using mcrotest.py
         
@@ -38,7 +37,7 @@ class DemultiplexCatcher():
         self.quit_data_thread = False
         # self.data_thread = threading.Thread(target=self._cont_read_data, args=("localhost", 12345, 5))
         # Used for debugging on localhost.
-        self.data_thread = threading.Thread(target=self._cont_read_data, args=("192.168.1.1", 12345, 1))
+        self.data_thread = threading.Thread(target=self._cont_read_data, args=("192.168.1.1", 12345, 10))
         # Using the port and IP startup_server runs on for now.
         self.data_thread.daemon = True
         self.data_thread.start()
@@ -176,6 +175,12 @@ class DemultiplexCatcher():
         """
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind((udp_ip, udp_port))
+        
+        fixed_ids = [1003, 2003, 3003, 4003, 5003]
+        # fixed_ids = [0, 1, 2, 3, 4]
+        # Used for debugging on localhost.
+        self.set_channel_ids(fixed_ids)
+        # Manually setting them for now, should be variable in the future.
         
         while not self.quit_data_thread:
             raw_data = sock.recv(10000)
