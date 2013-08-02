@@ -74,10 +74,6 @@ class RoachInterface(object):
         
     def set_waveform(self,wave):
         raise NotImplementedError("Abstract base class")
-    
-    def set_stim_tones(self,tones):
-        raise NotImplementedError("Abstract base class")
-
     def select_fft_bins(self,bins):
         raise NotImplementedError("Abstract base class")
         
