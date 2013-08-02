@@ -19,7 +19,7 @@ class DemultiplexCatcher():
         self.publish_func = publish_func
         self.dataip = dataip
         # self.channel_ids = [0, 1, 2, 3, 4]
-        self.channel_ids = [(i * 100) + 3 for i in range(1, 101)]
+        self.channel_ids = [(i * 100) + 3 for i in range(1, 11)]
         # Defaults used for testing.
         # Set roach channels using mcrotest.py
         
@@ -140,24 +140,30 @@ class DemultiplexCatcher():
         packet_list = []
         chan_index = 0
         
+        if not packet['channel_id'] in self.channel_ids:
+            print "Channel id not found in channel_ids"
+            return
+        # If the channel_id isn't in channel_ids, this just returns. Prevents the program from crashing while channels
+        # are changed.
+        
         for i in range(chan_number):
             if i == 0:
+                # channel_id = packet['channel_id']
+                # chan_index = self.channel_ids.index(channel_id)
+                # chan_index += 1
+                # Old algorithm
                 channel_id = packet['channel_id']
                 chan_index = self.channel_ids.index(channel_id)
+                chan_index = chan_index - 1 + (len(packet['data_list']) % len(self.channel_ids)) % len(self.channel_ids)
+                channel_id = self.channel_ids[chan_index % len(self.channel_ids)]
                 chan_index += 1
+                # Packet['channel_id'] is the channel id for the last data point in the data_list. This modular arithmetic
+                # matches the data point with the appropriate channel.
             else:
                 channel_id = self.channel_ids[chan_index % len(self.channel_ids)]
                 chan_index += 1
-            # These statements assign the correct channel_id to each demultiplexed packet.
-            # Problem: for output from the channel_pingpong_filebuffer, this doesn't work. The zeroeth index packet is 
-            # correctly arranged, but subsequent indices are not. This is because channel_pingpong_filebuffer writes the channel
-            # id of packet zero to the entire 16-packets. Looking at the code, the first 4 bytes of the buffer are assigned before
-            # the bytemasking and loading up. Options here are to rewrite the channel_id loading in c or program python
-            # to figure it out manually. In the future, a better system will need to be designed to identify the starting channel
-            # since currently it is just the first data value (which happens to also be the channel value).
-            
-            # Other problem: channel doesn't seem to change after first 16 indices.
-            # Other problem: doesn't work for some reason.
+                # After the first data point is matched, we continue around the list of channel_ids matching subsequent
+                # data points with their correct channel_id.
             
             data = packet['data_list'][i::chan_number]
             # Does the demultiplexing of the data.
@@ -176,12 +182,6 @@ class DemultiplexCatcher():
         """
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind((udp_ip, udp_port))
-        
-        fixed_ids = [1003, 2003, 3003, 4003, 5003]
-        # fixed_ids = [0, 1, 2, 3, 4]
-        # Used for debugging on localhost.
-        self.set_channel_ids(fixed_ids)
-        # Manually setting them for now, should be variable in the future.
         
         while not self.quit_data_thread:
             raw_data = sock.recv(10000)
