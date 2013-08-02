@@ -46,6 +46,7 @@ def start_server(buff_name):
     try:
     # Try/except block
         c = check_output('ssh root@roach pkill -f pingpong', shell=True)
+        print 'process killed'
     # Problem here: if there is no process to kill, the program ends in an error.
     except subprocess.CalledProcessError:
         pass

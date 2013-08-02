@@ -20,7 +20,7 @@ class Coordinator(single_pixel.SinglePixelBaseband):
         # OLD CATCHER CLASSES
         
         # self.catcher = catcher.PacketCatcher(publish_func=self.aggregator.create_data_products_short, bufname=self.bufname, roachip=roachip)
-        self.catcher = catcher.DemultiplexCatcher(publish_func=self.aggregator.create_data_products_dict, bufname=self.bufname, roachip=roachip)
+        self.catcher = catcher.DemultiplexCatcher(publish_func=self.aggregator.create_data_products_debug, bufname=self.bufname, roachip=roachip)
         
     def start_data_thread(self):
         self.catcher.start_data_thread()

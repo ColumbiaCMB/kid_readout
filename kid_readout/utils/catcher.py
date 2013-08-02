@@ -17,9 +17,10 @@ class DemultiplexCatcher():
         self.bufname = bufname
         self.data_thread = None
         self.publish_func = publish_func
-        self.channel_ids = [0, 1, 2, 3, 4]
-        # self.channel_ids = [1003, 2003, 3003, 4003, 5003]
+        # self.channel_ids = [0, 1, 2, 3, 4]
+        self.channel_ids = [(i * 100) + 3 for i in range(1, 101)]
         # Defaults used for testing.
+        # Set roach channels using mcrotest.py
         
         self.packet_counter = 0
         self.last_packet = None
@@ -34,9 +35,9 @@ class DemultiplexCatcher():
             self.data_thread.join(1.0)
             self.data_thread = None
         self.quit_data_thread = False
-        self.data_thread = threading.Thread(target=self._cont_read_data, args=("localhost", 12345, 2))
+        # self.data_thread = threading.Thread(target=self._cont_read_data, args=("localhost", 12345, 5))
         # Used for debugging on localhost.
-        # self.data_thread = threading.Thread(target=self._cont_read_data, args=("192.168.1.1", 12345, 10))
+        self.data_thread = threading.Thread(target=self._cont_read_data, args=("192.168.1.1", 12345, 10))
         # Using the port and IP startup_server runs on for now.
         self.data_thread.daemon = True
         self.data_thread.start()
@@ -99,32 +100,38 @@ class DemultiplexCatcher():
                 # Gets correct index and data filled with 'NaN'.
                 # Updates clock to increment from last packet.
                 
-                fill_array = np.empty(len(self.last_packet['data_list']))
-                # Error if the first packet received is out of order: no last_packet.
-                fill_array[0:] = 'nan'
-                # Fills all channels of the filler packet with 'NaN'.
+                if self.last_packet == None:
+                    print 'Waiting for zero index packet.'
+                    # Makes sure the loop starts at the first zero indexed packet.
+                    
+                else:
                 
-                while self.packet_counter < packet['index']:
-                    # Loop runs until packet_counter = packet.index. Fills discrepancy with filler packets.
+                    fill_array = np.empty(len(self.last_packet['data_list']))
+                    # Error if the first packet received is out of order: no last_packet.
+                    fill_array[0:] = 'nan'
+                    # Fills all channels of the filler packet with 'NaN'.
                     
-                    fill_clock = np.arange(len(self.last_packet['clock']))
-                    fill_clock += self.last_packet['clock'][-1] + 1
-                    # Updates the clock of the filler based on the previous packet.
-                  
-                    new_filler = dict([('index', self.packet_counter), ('channel_id', self.last_packet['channel_id']),
-                                       ('addr', self.last_packet['addr']), ('data_list' , fill_array), ('clock', fill_clock)])
-                    self.demultiplex(new_filler, chan_number)
-                    # Makes the filler packet and publishes it.
+                    while self.packet_counter < packet['index']:
+                        # Loop runs until packet_counter = packet.index. Fills discrepancy with filler packets.
+                        
+                        fill_clock = np.arange(len(self.last_packet['clock']))
+                        fill_clock += self.last_packet['clock'][-1] + 1
+                        # Updates the clock of the filler based on the previous packet.
+                      
+                        new_filler = dict([('index', self.packet_counter), ('channel_id', self.last_packet['channel_id']),
+                                           ('addr', self.last_packet['addr']), ('data_list' , fill_array), ('clock', fill_clock)])
+                        self.demultiplex(new_filler, chan_number)
+                        # Makes the filler packet and publishes it.
+                        
+                        self.last_packet = new_filler
+                        self.packet_counter += 1
+                        # Updates variables.
+                   
                     
-                    self.last_packet = new_filler
+                    self.last_packet = packet
+                    self.demultiplex(packet, chan_number)
                     self.packet_counter += 1
-                    # Updates variables.
-               
-                
-                self.last_packet = packet
-                self.demultiplex(packet, chan_number)
-                self.packet_counter += 1
-                # Once the while loop terminates, the function operates normally.
+                    # Once the while loop terminates, the function operates normally.
                 
     def demultiplex(self, packet, chan_number):
         
@@ -141,6 +148,15 @@ class DemultiplexCatcher():
                 channel_id = self.channel_ids[chan_index % len(self.channel_ids)]
                 chan_index += 1
             # These statements assign the correct channel_id to each demultiplexed packet.
+            # Problem: for output from the channel_pingpong_filebuffer, this doesn't work. The zeroeth index packet is 
+            # correctly arranged, but subsequent indices are not. This is because channel_pingpong_filebuffer writes the channel
+            # id of packet zero to the entire 16-packets. Looking at the code, the first 4 bytes of the buffer are assigned before
+            # the bytemasking and loading up. Options here are to rewrite the channel_id loading in c or program python
+            # to figure it out manually. In the future, a better system will need to be designed to identify the starting channel
+            # since currently it is just the first data value (which happens to also be the channel value).
+            
+            # Other problem: channel doesn't seem to change after first 16 indices.
+            # Other problem: doesn't work for some reason.
             
             data = packet['data_list'][i::chan_number]
             # Does the demultiplexing of the data.
@@ -159,6 +175,12 @@ class DemultiplexCatcher():
         """
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind((udp_ip, udp_port))
+        
+        fixed_ids = [1003, 2003, 3003, 4003, 5003]
+        # fixed_ids = [0, 1, 2, 3, 4]
+        # Used for debugging on localhost.
+        self.set_channel_ids(fixed_ids)
+        # Manually setting them for now, should be variable in the future.
         
         while not self.quit_data_thread:
             raw_data = sock.recv(10000)
