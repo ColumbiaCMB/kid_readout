@@ -43,14 +43,29 @@ class Aggregator():
         self.create_data_products(chunk)
         
     def publish_test(self, data_product):
-        print data_product[0]['type']
-        print data_product[0]['channel_id']
-        # print data_product[1]['channel_id']
-        print data_product[0]['addr']
-        print data_product[0]['clock']
+        print
+        '''print data_product[0]['channel_id']
+        # print data_product[0]['addr']
+        # print data_product[0]['clock']
         print data_product[0]['index']
         print data_product[0]['data']
+        # Used for debugging'''
+        
+        for i in range(len(data_product)):
+            print data_product[i]['channel_id']
+            print data_product[i]['index']
+            print data_product[i]['data']
         # Used for debugging
+        
+    def create_data_products_debug(self, packet):
+        
+        data_list = []
+        for i in range(len(packet)):
+            data_product = dict(type='power spectrum', data=packet[i]['data'], clock=packet[i]['clock'],
+                               channel_id=packet[i]['channel_id'], addr=packet[i]['addr'], index=packet[i]['index'])
+            data_list.append(data_product)
+        self.publish_test(data_list)
+        #self.publish(data_list[0])
     
         
     def create_data_products(self, chunk):
