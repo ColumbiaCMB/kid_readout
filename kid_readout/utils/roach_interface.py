@@ -215,7 +215,7 @@ class RoachHeterodyne(RoachInterface):
         self.dac_ns = 2**16 # number of samples in the dac buffer
         self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
         self.nfft = 2**14
-        self.boffile = 'iq2xpfb14mcr3_2013_Jul_31_1748.bof'
+        self.boffile = 'iq2xpfb14mcr4_2013_Aug_02_1446.bof'
         self.bufname = 'ppout%d' % wafer
     def pause_dram(self):
         self.r.write_int('dram_rst',0)
@@ -286,7 +286,7 @@ class RoachHeterodyne(RoachInterface):
         return idx
         
     def select_fft_bins(self,readout_selection):
-        offset = 2
+        offset = 4
         idxs = self.fft_bin_to_index(self.fft_bins[readout_selection])
         order = idxs.argsort()
         idxs = idxs[order]
@@ -295,9 +295,10 @@ class RoachHeterodyne(RoachInterface):
         self.readout_fft_bins = self.fft_bins[self.readout_selection]
 
         binsel = np.zeros((self.fpga_fft_readout_indexes.shape[0]+1,),dtype='>i4')
-        evenodd = np.mod(self.fpga_fft_readout_indexes,2)
-        binsel[:-1] = np.mod(self.fpga_fft_readout_indexes/2-offset,self.nfft/2)
-        binsel[:-1] += evenodd*2**16
+        #evenodd = np.mod(self.fpga_fft_readout_indexes,2)
+        #binsel[:-1] = np.mod(self.fpga_fft_readout_indexes/2-offset,self.nfft/2)
+        #binsel[:-1] += evenodd*2**16
+        binsel[:-1] = np.mod(self.fpga_fft_readout_indexes-offset,self.nfft)
         binsel[-1] = -1
         self.r.write('chans',binsel.tostring())
         
