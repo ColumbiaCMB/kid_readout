@@ -11,8 +11,9 @@ class MiniAggregator():
         self.subscriptions = {'power spectrum': []}
         self.subscribers = {}  # maps uri to subscriber
         self.last_addr = 0
-        self.is_new = False
+        self.is_ready = False
         self.last_product = None
+        self.condition = threading.Condition()
         
         
     def subscribe_uri(self, uri, data_products):
@@ -35,24 +36,32 @@ class MiniAggregator():
     def get_data(self, data_request):
         data_to_send = []
         ii = 0
+        self.condition.acquire()
         while ii < data_request:
-            if self.is_new == True:
+            if self.is_ready == True:
                 data_to_send.append(self.last_product)
-                self.is_new = False
+                self.is_ready = False
                 ii += 1
+            self.condition.wait()
+            print 'waiting'
+        self.condition.release()
+            
         return data_to_send
     # Check out http://docs.python.org/2/library/threading.html#condition-objects
     # Looks promising to create the wait function correctly.
     
     
     def create_data_products_debug(self, packet):
+        self.condition.acquire()
         data_list = []
         for i in range(len(packet)):
             data_product = dict(type='power spectrum', data=packet[i]['data'], clock=packet[i]['clock'],
                                channel_id=packet[i]['channel_id'], addr=packet[i]['addr'], index=packet[i]['index'])
             data_list.append(data_product)
         self.last_product = data_list
-        self.is_new = True
+        self.condition.notify()
+        self.is_ready = True
+        self.condition.release()
     
     def create_data_products_dict(self, packet):
         pxx_list = []
