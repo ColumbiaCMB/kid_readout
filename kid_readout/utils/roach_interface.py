@@ -346,6 +346,27 @@ class RoachHeterodyne(RoachInterface):
             dout = self.demodulate_data(dout)
         return dout,addr
     
+    def set_lo(self,lomhz=1200.0,chan_spacing=2.0):
+        """
+        Set the local oscillator frequency for the IQ mixers
+        
+        lomhz: float, frequency in MHz
+        """
+        self.adc_valon.set_frequency_b(lomhz,chan_spacing=chan_spacing)
+        
+    def set_dac_attenuator(self,attendb):
+        if attendb > 31.5:
+            attena = 31.5
+            attenb = attendb - attena
+        else:
+            attena = attendb
+            attenb = 0
+        self.set_attenuator(attena,le_bit=0x01)
+        self.set_attenuator(attenb,le_bit=0x80)
+        
+    def set_adc_attenuator(self,attendb):
+        self.set_attenuator(attendb,le_bit=0x02)
+    
     def _set_fs(self,fs,chan_spacing=2.0):
         """
         Set sampling frequency in MHz
