@@ -44,17 +44,12 @@ class Aggregator():
         
     def publish_test(self, data_product):
         print
-        '''print data_product[0]['channel_id']
-        # print data_product[0]['addr']
-        # print data_product[0]['clock']
-        print data_product[0]['index']
-        print data_product[0]['data']
-        # Used for debugging'''
-        
         for i in range(len(data_product)):
-            print data_product[i]['channel_id']
+            if data_product[i]['channel_id']==103:
+                print data_product[i]['data']
+            '''print data_product[i]['channel_id']
             print data_product[i]['index']
-            print data_product[i]['data']
+            print data_product[i]['data']'''
         # Used for debugging
         
     def create_data_products_debug(self, packet):
@@ -65,7 +60,7 @@ class Aggregator():
                                channel_id=packet[i]['channel_id'], addr=packet[i]['addr'], index=packet[i]['index'])
             data_list.append(data_product)
         self.publish_test(data_list)
-        #self.publish(data_list[0])
+        # self.publish(data_list[0])
     
         
     def create_data_products(self, chunk):

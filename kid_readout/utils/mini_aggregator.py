@@ -41,6 +41,8 @@ class MiniAggregator():
                 self.is_new = False
                 ii += 1
         return data_to_send
+    # Check out http://docs.python.org/2/library/threading.html#condition-objects
+    # Looks promising to create the wait function correctly.
     
     
     def create_data_products_debug(self, packet):

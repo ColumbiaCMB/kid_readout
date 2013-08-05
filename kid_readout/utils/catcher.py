@@ -13,13 +13,13 @@ class DemultiplexCatcher():
     
     '''
     
-    def __init__(self, publish_func, bufname = None, roachip='roach', dataip = "192.168.1.1"):
+    def __init__(self, publish_func, bufname=None, roachip='roach', dataip="192.168.1.1"):
         self.bufname = bufname
         self.data_thread = None
         self.publish_func = publish_func
         self.dataip = dataip
         # self.channel_ids = [0, 1, 2, 3, 4]
-        self.channel_ids = [(i * 100) + 3 for i in range(1, 11)]
+        self.channel_ids = list(np.array([(i * 100) for i in range(1, 18)]) / 2 + 3)
         # Defaults used for testing.
         # Set roach channels using mcrotest.py
         
@@ -38,7 +38,7 @@ class DemultiplexCatcher():
         self.quit_data_thread = False
         # self.data_thread = threading.Thread(target=self._cont_read_data, args=("localhost", 12345, 5))
         # Used for debugging on localhost.
-        self.data_thread = threading.Thread(target=self._cont_read_data, args=(self.dataip, 12345, 10))
+        self.data_thread = threading.Thread(target=self._cont_read_data, args=(self.dataip, 12345))
         # Using the port and IP startup_server runs on for now.
         self.data_thread.daemon = True
         self.data_thread.start()
@@ -141,24 +141,21 @@ class DemultiplexCatcher():
         chan_index = 0
         
         if not packet['channel_id'] in self.channel_ids:
-            print "Channel id not found in channel_ids"
+            print "Channel id: %d  not found in channel_ids" % packet['channel_id']
             return
         # If the channel_id isn't in channel_ids, this just returns. Prevents the program from crashing while channels
         # are changed.
         
         for i in range(chan_number):
             if i == 0:
-                # channel_id = packet['channel_id']
-                # chan_index = self.channel_ids.index(channel_id)
-                # chan_index += 1
-                # Old algorithm
                 channel_id = packet['channel_id']
                 chan_index = self.channel_ids.index(channel_id)
-                chan_index = chan_index - 1 + (len(packet['data_list']) % len(self.channel_ids)) % len(self.channel_ids)
+                chan_index = (chan_index + 1) + ((packet['index'] - 16) * len(packet['data_list']))
                 channel_id = self.channel_ids[chan_index % len(self.channel_ids)]
                 chan_index += 1
-                # Packet['channel_id'] is the channel id for the last data point in the data_list. This modular arithmetic
-                # matches the data point with the appropriate channel.
+                # Channel_id is locked as the last value in the 16 kB buffer. This algorithm does some
+                # modular arithmetic to find what the first value of each 1 kB index and assigns the
+                # correct channel to it.
             else:
                 channel_id = self.channel_ids[chan_index % len(self.channel_ids)]
                 chan_index += 1
@@ -168,6 +165,7 @@ class DemultiplexCatcher():
             data = packet['data_list'][i::chan_number]
             # Does the demultiplexing of the data.
             
+            test = packet['channel_id']
             demultiplex_packet = dict([('index', packet['index']), ('channel_id', channel_id), ('addr', packet['addr']),
                                        ('clock', packet['clock'][:len(data)]), ('data' , data)])
             packet_list.append(demultiplex_packet)
@@ -175,7 +173,7 @@ class DemultiplexCatcher():
         self.publish_func(packet_list)
             
     
-    def _cont_read_data(self, udp_ip, udp_port, chan_number):
+    def _cont_read_data(self, udp_ip, udp_port):
         """
         Reads data from socket as a chunk. Passes it to a publishing function passed
         to UDPCatcher (intended to be aggregator.create_data_products).
@@ -186,8 +184,8 @@ class DemultiplexCatcher():
         while not self.quit_data_thread:
             raw_data = sock.recv(10000)
             packet = self.decode(raw_data)
-            self.get_clock(packet, chan_number)
-            self.check_order(packet, chan_number)
+            self.get_clock(packet, len(self.channel_ids))
+            self.check_order(packet, len(self.channel_ids))
             # Packet formed from raw input, sent to ordering.
 
 class KatcpCatcher():

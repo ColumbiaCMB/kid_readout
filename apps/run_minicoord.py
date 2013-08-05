@@ -17,7 +17,7 @@ class MiniCoordinator():
     def __init__(self):
         
         self.miniagg = kid_readout.utils.mini_aggregator.MiniAggregator()
-        self.catcher = kid_readout.utils.catcher.DemultiplexCatcher(self.miniagg.create_data_products_debug, dataip="192.168.4.1")
+        self.catcher = kid_readout.utils.catcher.DemultiplexCatcher(self.miniagg.create_data_products_debug)
         
         self.catcher.start_data_thread()
         
