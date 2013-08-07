@@ -52,7 +52,7 @@ class DemultiplexCatcher():
         index = np.fromstring(pkt[:2], dtype='>i2')
         channel_id = np.fromstring(pkt[2:4], dtype='>i2')
         addr = np.fromstring(pkt[4:8], dtype='>u4')
-        data_list = np.fromstring(pkt[8:], dtype='>i2').astype('float').view('complex')
+        data_list = np.fromstring(pkt[8:], dtype='>i2').astype('float32').view('complex64')
         '''Read data as an array of 2byte integers --> convert to float --> view as
         complex pairs (real and imaginary)'''
         
@@ -180,6 +180,7 @@ class DemultiplexCatcher():
         """
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind((udp_ip, udp_port))
+        sock.setsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF,2**24)
         
         while not self.quit_data_thread:
             raw_data = sock.recv(10000)
@@ -187,6 +188,7 @@ class DemultiplexCatcher():
             self.get_clock(packet, len(self.channel_ids))
             self.check_order(packet, len(self.channel_ids))
             # Packet formed from raw input, sent to ordering.
+        print "quitting data thread"
 
 class KatcpCatcher():
     def __init__(self, proc_func, bufname, roachip='roach'):
