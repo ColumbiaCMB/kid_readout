@@ -5,6 +5,8 @@ Classes to interface to ROACH hardware for KID readout systems
 import numpy as np
 import time
 import sys
+import os
+import borph_utils
 
 class RoachInterface(object):
     """
@@ -14,6 +16,15 @@ class RoachInterface(object):
     """
     def __init__(self):
         raise NotImplementedError("Abstract class, instantiate a subclass instead of this class")
+    
+    def update_bof_pid(self):
+        if self.bof_pid:
+            return
+        try:
+            self.bof_pid = borph_utils.get_bof_pid()
+        except Exception,e:
+            self.bof_pid = None
+            raise e 
     def get_raw_adc(self):
         """
         Grab raw ADC samples
@@ -204,6 +215,8 @@ class RoachHeterodyne(RoachInterface):
         else:
             self.adc_valon = adc_valon
             
+        self.bof_pid = None
+        self.roachip = roachip
         self.fs = self.adc_valon.get_frequency_a()
         self.wafer = wafer
         self.dac_ns = 2**16 # number of samples in the dac buffer
@@ -227,6 +240,7 @@ class RoachHeterodyne(RoachInterface):
 #                print e
             tries = tries - 1
         raise Exception("Writing to dram failed!")
+        
     def load_waveforms(self,i_wave,q_wave):
         data = np.zeros((2*i_wave.shape[0],),dtype='>i2')
         data[0::4] = i_wave[::2]
@@ -430,7 +444,9 @@ class RoachBaseband(RoachInterface):
             self.adc_valon = valon.Synthesizer(self.adc_valon_port)
         else:
             self.adc_valon = adc_valon
-            
+        
+        self.bof_pid = None
+        self.roachip = roachip
         self.fs = self.adc_valon.get_frequency_a()
         self.wafer = wafer
         self.dac_ns = 2**16 # number of samples in the dac buffer
@@ -454,13 +470,40 @@ class RoachBaseband(RoachInterface):
 #                print e
             tries = tries - 1
         raise Exception("Writing to dram failed!")
-    def load_waveform(self,wave):
+    def _load_dram_ssh(self,data,roach_root='/srv/roach_boot/etch',datafile='boffiles/dram.bin'):
+        self.update_bof_pid()
+        self.pause_dram()
+        data.tofile(os.path.join(roach_root,datafile))
+        dram_file = '/proc/%d/hw/ioreg/dram_memory' % self.bof_pid
+        datafile = '/' + datafile
+        result = borph_utils.check_output(('ssh root@%s "dd if=%s of=%s"' % (self.roachip,datafile,dram_file)),shell=True)
+        print result
+        self.unpause_dram()
+        
+    def _load_dram_fast_not_working(self,data,roach_root='/roach_mount'):
+        self.update_bof_pid()
+        self.pause_dram()
+        tic = time.time()
+        dram_file = 'proc/%d/hw/ioreg/dram_memory' % self.bof_pid
+        dram_file = os.path.join(roach_root,dram_file)
+        fh = open(dram_file,'wb')
+        fh.write(data.tostring())
+#        data.tofile(fh)
+        fh.close()
+        elapsed = time.time()-tic
+        print "wrote %.1f MB in %.1f seconds %.1f MB/s" % (data.size/2.**20,elapsed,data.size/elapsed/2.**20)
+        self.unpause_dram()
+
+    def load_waveform(self,wave,fast=True):
         data = np.zeros((2*wave.shape[0],),dtype='>i2')
         offset = self.wafer*2
         data[offset::4] = wave[::2]
         data[offset+1::4] = wave[1::2]
         self.r.write_int('dram_mask', data.shape[0]/4 - 1)
-        self._load_dram(data)
+        if fast:
+            self._load_dram_ssh(data)
+        else:
+            self._load_dram(data)
         
     def set_tone_freqs(self,freqs,nsamp,amps=None):
         bins = np.round((freqs/self.fs)*nsamp).astype('int')
