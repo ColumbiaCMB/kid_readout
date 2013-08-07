@@ -43,7 +43,6 @@ class MiniAggregator():
                 self.is_ready = False
                 ii += 1
             self.condition.wait()
-            print 'waiting'
         self.condition.release()
             
         return data_to_send

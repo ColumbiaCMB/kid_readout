@@ -45,11 +45,9 @@ class Aggregator():
     def publish_test(self, data_product):
         print
         for i in range(len(data_product)):
-            if data_product[i]['channel_id']==103:
-                print data_product[i]['data']
-            '''print data_product[i]['channel_id']
+            print data_product[i]['channel_id']
             print data_product[i]['index']
-            print data_product[i]['data']'''
+            print data_product[i]['data']
         # Used for debugging
         
     def create_data_products_debug(self, packet):

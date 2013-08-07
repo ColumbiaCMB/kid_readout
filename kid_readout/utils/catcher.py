@@ -19,7 +19,7 @@ class DemultiplexCatcher():
         self.publish_func = publish_func
         self.dataip = dataip
         # self.channel_ids = [0, 1, 2, 3, 4]
-        self.channel_ids = list(np.array([(i * 100) for i in range(1, 18)]) / 2 + 3)
+        self.channel_ids = list(np.array([(i * 100) for i in range(1, 11)]) / 2 + 3)
         # Defaults used for testing.
         # Set roach channels using mcrotest.py
         
@@ -56,7 +56,8 @@ class DemultiplexCatcher():
         '''Read data as an array of 2byte integers --> convert to float --> view as
         complex pairs (real and imaginary)'''
         
-        multiplex_packet = dict([('index', index[0]), ('channel_id', channel_id[0]), ('addr', addr[0]), ('data_list' , data_list)])
+        # multiplex_packet = dict([('index', index[0]), ('channel_id', channel_id[0]), ('addr', addr[0]), ('data_list' , data_list)])
+        multiplex_packet = dict(index=index[0], channel_id=channel_id[0], addr=addr[0], data_list=data_list)
         return multiplex_packet
     
     def get_clock(self, packet, chan_number):
@@ -70,15 +71,29 @@ class DemultiplexCatcher():
         # The -len(packet['data_list'])%chan_number is the amount that must be added to the length of the packet/chan to be evenly divisible.
         # Essentially just a round-up function.
         
-        # Works for even channel numbers. However, a remainder problem here.
-        # clock += ((packet['addr'] / 4096) * 4096 - (self.time_zero / 4096) * 4096) / chan_number + len(clock) * packet['index']
-        
-        
         clock += ((packet['addr'] / 4096) - (self.time_zero / 4096)) * len(clock) * 16 + len(clock) * packet['index']
         # 16 packets has a total clock length not as described in the commented-out equation. It has a length of 16*len(clock).
         # This equation takes the amount of 16-packet chunks since time zero (addr/4096 - timezero/4096) and multiplies it by 16 * clock_length.
         
+        # Changed to get_clock_offset, generate clock based on len(data) later.
+        
         packet['clock'] = clock
+        
+    def get_clock_offset(self, addr, index, data_length):
+        # Should replace get_clock. See commented out code in demultiplex.
+        
+        if self.zero_switch == 0:
+            self.time_zero = addr
+            self.zero_switch = 1
+            
+        clock_offset = ((addr / 4096) - (self.time_zero / 4096)) * data_length * 16 + data_length * index
+        # 16 packets has a total clock length not as described in the commented-out equation. It has a length of 16*len(clock).
+        # This equation takes the amount of 16-packet chunks since time zero (addr/4096 - timezero/4096) and multiplies it by 16 * clock_length.
+        
+        # Changed to get_clock_offset, generate clock based on len(data) later.
+        
+        print clock_offset
+        return clock_offset
         
     
     
@@ -135,8 +150,6 @@ class DemultiplexCatcher():
                     # Once the while loop terminates, the function operates normally.
                 
     def demultiplex(self, packet, chan_number):
-        
-        
         packet_list = []
         chan_index = 0
         
@@ -164,10 +177,16 @@ class DemultiplexCatcher():
             
             data = packet['data_list'][i::chan_number]
             # Does the demultiplexing of the data.
+            demultiplex_packet = dict(index=packet['index'], channel_id=channel_id, addr=packet['addr'], clock=packet['clock'][:len(data)], data=data)
             
-            test = packet['channel_id']
-            demultiplex_packet = dict([('index', packet['index']), ('channel_id', channel_id), ('addr', packet['addr']),
-                                       ('clock', packet['clock'][:len(data)]), ('data' , data)])
+            
+            # clock=np.arange(len(data)) + self.get_clock_offset(packet['addr'], len(data), packet['index'])
+            
+            '''demultiplex_packet = dict([('index', packet['index']), ('channel_id', channel_id), ('addr', packet['addr']),
+                                       ('clock', packet['clock'][:len(data)]), ('data' , data)])'''
+            '''packet['data'] = data
+            packet['clock'] = packet['clock'][:len(data)]
+            del packet['data_list']'''
             packet_list.append(demultiplex_packet)
             # Makes a list of the demultiplexed packets that is pushed to the publish_func.
         self.publish_func(packet_list)

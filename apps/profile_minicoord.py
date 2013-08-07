@@ -1,7 +1,7 @@
 import Pyro4
 import kid_readout.utils.mini_aggregator
 import kid_readout.utils.catcher
-import cProfile
+import yappi
 
 ns = Pyro4.naming.locateNS()
 
@@ -29,11 +29,11 @@ class MiniCoordinator():
         return self.miniagg.get_data(data_request)
 
 
+yappi.start()
 minicoord = MiniCoordinator()
-daemon = Pyro4.Daemon()
-uri = daemon.register(minicoord)
-ns.register("minicoord", uri)
 
-daemon.requestLoop()
-
-
+minicoord.set_channel_ids([(i * 100) / 2 + 3 for i in range(1, 11)])
+for i in range(1000):
+    minicoord.get_data(10)
+    
+yappi.print_stats()
