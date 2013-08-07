@@ -10,10 +10,11 @@ class MiniAggregator():
     def __init__(self):
         self.subscriptions = {'power spectrum': []}
         self.subscribers = {}  # maps uri to subscriber
-        self.last_addr = 0
-        self.is_ready = False
+        
+        self.request = False
+        self.ready = False
         self.last_product = None
-        self.condition = threading.Condition()
+        self.lock = threading.Lock()
         
         
     def subscribe_uri(self, uri, data_products):
@@ -36,31 +37,52 @@ class MiniAggregator():
     def get_data(self, data_request):
         data_to_send = []
         ii = 0
-        self.condition.acquire()
+        
+        self.lock.acquire()
+        self.request = True
+        self.lock.release()
+        # Acquires lock, asks for data, releases lock.
+        
         while ii < data_request:
-            if self.is_ready == True:
-                data_to_send.append(self.last_product)
-                self.is_ready = False
-                ii += 1
-            self.condition.wait()
-        self.condition.release()
+            self.lock.acquire()
             
+            if self.ready == True:
+                data_to_send.append(self.last_product)
+                self.ready = False
+                ii += 1
+                # If new data is ready, appends it to the data_to_send.
+                # Resets ready to false --> gets set to true if more data written.
+                # Increments ii up towards data request.
+                
+            if ii == data_request:
+                self.request = False
+                # If ii == data_request, get data is doen, so request gets set to false/
+                # This needs to happen here (rather than after the while loop) so that the function has the lock.
+         
+            self.lock.release()
+            # After going through the while loop, the lock is released.
+       
         return data_to_send
-    # Check out http://docs.python.org/2/library/threading.html#condition-objects
-    # Looks promising to create the wait function correctly.
+        # After all the data has been gathered, data_to_send is returned.
     
     
     def create_data_products_debug(self, packet):
-        self.condition.acquire()
-        data_list = []
-        for i in range(len(packet)):
-            data_product = dict(type='power spectrum', data=packet[i]['data'], clock=packet[i]['clock'],
-                               channel_id=packet[i]['channel_id'], addr=packet[i]['addr'], index=packet[i]['index'])
-            data_list.append(data_product)
-        self.last_product = data_list
-        self.condition.notify()
-        self.is_ready = True
-        self.condition.release()
+        self.lock.acquire()
+        
+        if self.request == True:
+            # Does stuff with the data only if request is true.
+            
+            data_list = []
+            for i in range(len(packet)):
+                data_product = dict(type='power spectrum', data=packet[i]['data'], clock=packet[i]['clock'],
+                                   channel_id=packet[i]['channel_id'], addr=packet[i]['addr'], index=packet[i]['index'])
+                data_list.append(data_product)
+            self.last_product = data_list
+            self.ready = True
+            # ready is set to true when last_product is renewed.
+            # ready gets set to false when get_data reads last_product.
+            
+        self.lock.release()
     
     def create_data_products_dict(self, packet):
         pxx_list = []
