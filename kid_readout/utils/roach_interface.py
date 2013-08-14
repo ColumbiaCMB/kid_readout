@@ -326,9 +326,11 @@ class RoachHeterodyne(RoachInterface):
         Set the stimulus tones by specific integer bins
         
         bins : array of bins at which tones should be placed
-            For Heterodyne system, negative frequencies should be placed in cannonical FFT order
+        For Heterodyne system, negative frequencies should be placed in cannonical FFT order
+
         nsamp : int, must be power of 2
-            number of samples in the playback buffer. Frequency resolution will be fs/nsamp
+        number of samples in the playback buffer. Frequency resolution will be fs/nsamp
+
         amps : optional array of floats, same length as bins array
             specify the relative amplitude of each tone. Can set to zero to read out a portion
             of the spectrum with no stimulus tone.
@@ -357,6 +359,7 @@ class RoachHeterodyne(RoachInterface):
         
         tone_bins: array of integers
             the tone bins (0 to nsamp - 1) which contain tones
+
         nsamp : length of the playback bufffer
         
         returns: fft_bins, array of integers.
@@ -441,8 +444,10 @@ class RoachHeterodyne(RoachInterface):
         demod: should the data be demodulated before returning? Default, yes
         
         returns  dout,addrs
+
         dout: complex data stream. Real and imaginary parts are each 16 bit signed 
                 integers (but cast to numpy complex)
+
         addrs: counter values when each frame was read. Can be used to check that 
                 frames are contiguous
         """
@@ -642,12 +647,14 @@ class RoachBaseband(RoachInterface):
         """
         Calculate the FFT bins in which the tones will fall
         
-        tone_bins: array of integers
+        tone_bins : array of integers
             the tone bins (0 to nsamp - 1) which contain tones
+        
         nsamp : length of the playback bufffer
         
-        returns: fft_bins, array of integers.
+        returns : fft_bins, array of integers. 
         """
+        
         tone_bins_per_fft_bin = nsamp/(2*self.nfft) # factor of 2 because real signal
         fft_bins = np.round(tone_bins/float(tone_bins_per_fft_bin)).astype('int')
         return fft_bins
@@ -725,11 +732,14 @@ class RoachBaseband(RoachInterface):
         demod: should the data be demodulated before returning? Default, yes
         
         returns  dout,addrs
-        dout: complex data stream. Real and imaginary parts are each 16 bit signed 
-                integers (but cast to numpy complex)
-        addrs: counter values when each frame was read. Can be used to check that 
-                frames are contiguous
+
+        dout: complex data stream. Real and imaginary parts are each 16 bit signed
+            integers (but cast to numpy complex)
+
+        addrs: counter values when each frame was read. Can be used to check that
+            frames are contiguous
         """
+
         bufname = 'ppout%d' % self.wafer
         chan_offset = 1
         draw,addr,ch =  self._read_data(nread, bufname)
