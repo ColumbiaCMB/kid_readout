@@ -304,9 +304,9 @@ class RoachHeterodyne(RoachInterface):
         self.amps = amps
         spec[bins] = amps*np.exp(1j*phases)
         wave = np.fft.ifft(spec)
-        max = np.abs(wave.real).max()
-        i_wave = np.round((wave.real/max)*(2**15-1024)).astype('>i2')
-        q_wave = np.round((wave.imag/max)*(2**15-1024)).astype('>i2')
+        self.wavenorm = np.abs(wave).max()
+        i_wave = np.round((wave.real/self.wavenorm)*(2**15-1024)).astype('>i2')
+        q_wave = np.round((wave.imag/self.wavenorm)*(2**15-1024)).astype('>i2')
         self.i_wave = i_wave
         self.q_wave = q_wave
         self.load_waveforms(i_wave,q_wave)
