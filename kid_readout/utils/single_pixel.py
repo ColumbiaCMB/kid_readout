@@ -219,9 +219,12 @@ class SinglePixelBaseband(SinglePixelReadout):
     def set_channel(self,ch,dphi=None,amp=-3):
         """
         ch: channel number (0 to dac_ns-1)
+
         dphi: phase offset between I and Q components in turns (nominally 1/4 = pi/2 radians)
                 not used for Baseband readout
+
         amp: amplitude relative to full scale in dB
+
         nfft: size of the fft
         """
         self.set_tone(ch/(1.0*self.dac_ns), dphi=dphi, amp=amp)
@@ -239,8 +242,10 @@ class SinglePixelBaseband(SinglePixelReadout):
         nread: number of 4096 sample frames to read
         
         returns  dout,addrs
+
         dout: complex data stream. Real and imaginary parts are each 16 bit signed 
                 integers (but cast to numpy complex)
+
         addrs: counter values when each frame was read. Can be used to check that 
                 frames are contiguous
         """
@@ -352,8 +357,10 @@ class SinglePixelHeterodyne(SinglePixelReadout):
         nread: number of 4096 sample frames to read
         
         returns  dout,addrs
+
         dout: complex data stream. Real and imaginary parts are each 16 bit signed 
                 integers (but cast to numpy complex)
+
         addrs: counter values when each frame was read. Can be used to check that 
                 frames are contiguous
         """
