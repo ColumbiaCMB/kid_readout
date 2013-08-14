@@ -142,10 +142,16 @@ class RoachInterface(object):
         self.r.write_int(gpio_reg, 0x00)
         
     def set_adc_attenuator(self,attendb):
+        if attendb <0 or attendb > 31.5:
+            raise ValueError("ADC Attenuator must be between 0 and 31.5 dB. Value given was: %s" % str(attendb))
         self.set_attenuator(attendb,le_bit=0x02)
+        self.adc_atten = int(attendb*2)/2.0
 
     def set_dac_attenuator(self,attendb):
+        if attendb <0 or attendb > 31.5:
+            raise ValueError("DAC Attenuator must be between 0 and 31.5 dB. Value given was: %s" % str(attendb))
         self.set_attenuator(attendb,le_bit=0x01)
+        self.dac_atten = int(attendb*2)/2.0
     
     def _set_fs(self,fs):
         """
@@ -385,6 +391,9 @@ class RoachHeterodyne(RoachInterface):
         self.adc_valon.set_frequency_b(lomhz,chan_spacing=chan_spacing)
         
     def set_dac_attenuator(self,attendb):
+        if attendb <0 or attendb > 63:
+            raise ValueError("ADC Attenuator must be between 0 and 63 dB. Value given was: %s" % str(attendb))
+
         if attendb > 31.5:
             attena = 31.5
             attenb = attendb - attena
@@ -393,9 +402,13 @@ class RoachHeterodyne(RoachInterface):
             attenb = 0
         self.set_attenuator(attena,le_bit=0x01)
         self.set_attenuator(attenb,le_bit=0x80)
+        self.dac_atten = int(attendb*2)/2.0
         
     def set_adc_attenuator(self,attendb):
+        if attendb <0 or attendb > 31.5:
+            raise ValueError("ADC Attenuator must be between 0 and 31.5 dB. Value given was: %s" % str(attendb))
         self.set_attenuator(attendb,le_bit=0x02)
+        self.adc_atten = int(attendb*2)/2.0
     
     def _set_fs(self,fs,chan_spacing=2.0):
         """
