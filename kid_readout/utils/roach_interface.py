@@ -17,7 +17,8 @@ class RoachInterface(object):
     def __init__(self):
         raise NotImplementedError("Abstract class, instantiate a subclass instead of this class")
     
-    def update_bof_pid(self):
+    # FPGA Functions
+    def _update_bof_pid(self):
         if self.bof_pid:
             return
         try:
@@ -25,6 +26,7 @@ class RoachInterface(object):
         except Exception,e:
             self.bof_pid = None
             raise e 
+        
     def get_raw_adc(self):
         """
         Grab raw ADC samples
@@ -82,19 +84,47 @@ class RoachInterface(object):
         returns: fs, the approximate sampling rate in MHz
         """
         return 2*self.r.est_brd_clk() 
-        
-    def select_fft_bins(self,bins):
-        raise NotImplementedError("Abstract base class")
-        
-    def set_channel(self,ch,dphi=None,amp=-3):
-        raise NotImplementedError("Abstract base class")
-    def get_data(self,nread=10):
-        raise NotImplementedError("Abstract base class")
-    def set_tone(self,f0,dphi=None,amp=-3):
-        raise NotImplementedError("Abstract base class")
-    def select_bin(self,ibin):
-        raise NotImplementedError("Abstract base class")
+ 
+#### Add back in these abstract methods once the interface stablilizes       
+#    def select_fft_bins(self,bins):
+#        raise NotImplementedError("Abstract base class")
+#        
+#    def set_channel(self,ch,dphi=None,amp=-3):
+#        raise NotImplementedError("Abstract base class")
+#    def get_data(self,nread=10):
+#        raise NotImplementedError("Abstract base class")
+#    def set_tone(self,f0,dphi=None,amp=-3):
+#        raise NotImplementedError("Abstract base class")
+#    def select_bin(self,ibin):
+#        raise NotImplementedError("Abstract base class")
     
+    def _pause_dram(self):
+        self.r.write_int('dram_rst',0)
+    def _unpause_dram(self):
+        self.r.write_int('dram_rst',2)
+    def _load_dram(self,data,tries=2):
+        while tries > 0:
+            try:
+                self._pause_dram()
+                self.r.write_dram(data.tostring())
+                self._unpause_dram()
+                return
+            except Exception, e:
+                print "failure writing to dram, trying again"
+#                print e
+            tries = tries - 1
+        raise Exception("Writing to dram failed!")
+    def _load_dram_ssh(self,data,roach_root='/srv/roach_boot/etch',datafile='boffiles/dram.bin'):
+        self._update_bof_pid()
+        self._pause_dram()
+        data.tofile(os.path.join(roach_root,datafile))
+        dram_file = '/proc/%d/hw/ioreg/dram_memory' % self.bof_pid
+        datafile = '/' + datafile
+        result = borph_utils.check_output(('ssh root@%s "dd if=%s of=%s"' % (self.roachip,datafile,dram_file)),shell=True)
+        print result
+        self._unpause_dram()    
+    
+    ### Other hardware functions (attenuator, valon)
     def set_attenuator(self,attendb,gpio_reg='gpioa',data_bit=0x08,clk_bit=0x04,le_bit=0x02):
         atten = int(attendb*2)
         self.r.write_int(gpio_reg, 0x00)
@@ -122,6 +152,8 @@ class RoachInterface(object):
         Set sampling frequency in MHz
         """
         raise NotImplementedError
+    
+    ### Tried and true readout function
     def _read_data(self,nread,bufname):
         """
         Low level data reading loop, common to both readouts
@@ -224,22 +256,6 @@ class RoachHeterodyne(RoachInterface):
         self.nfft = 2**14
         self.boffile = 'iq2xpfb14mcr4_2013_Aug_02_1446.bof'
         self.bufname = 'ppout%d' % wafer
-    def pause_dram(self):
-        self.r.write_int('dram_rst',0)
-    def unpause_dram(self):
-        self.r.write_int('dram_rst',2)
-    def _load_dram(self,data,tries=2):
-        while tries > 0:
-            try:
-                self.pause_dram()
-                self.r.write_dram(data.tostring())
-                self.unpause_dram()
-                return
-            except Exception, e:
-                print "failure writing to dram, trying again"
-#                print e
-            tries = tries - 1
-        raise Exception("Writing to dram failed!")
         
     def load_waveforms(self,i_wave,q_wave):
         data = np.zeros((2*i_wave.shape[0],),dtype='>i2')
@@ -454,45 +470,6 @@ class RoachBaseband(RoachInterface):
         self.nfft = 2**14
         self.boffile = 'bb2xpfb14mcr5_2013_Jul_31_1301.bof'
         self.bufname = 'ppout%d' % wafer
-    def pause_dram(self):
-        self.r.write_int('dram_rst',0)
-    def unpause_dram(self):
-        self.r.write_int('dram_rst',2)
-    def _load_dram(self,data,tries=2):
-        while tries > 0:
-            try:
-                self.pause_dram()
-                self.r.write_dram(data.tostring())
-                self.unpause_dram()
-                return
-            except Exception, e:
-                print "failure writing to dram, trying again"
-#                print e
-            tries = tries - 1
-        raise Exception("Writing to dram failed!")
-    def _load_dram_ssh(self,data,roach_root='/srv/roach_boot/etch',datafile='boffiles/dram.bin'):
-        self.update_bof_pid()
-        self.pause_dram()
-        data.tofile(os.path.join(roach_root,datafile))
-        dram_file = '/proc/%d/hw/ioreg/dram_memory' % self.bof_pid
-        datafile = '/' + datafile
-        result = borph_utils.check_output(('ssh root@%s "dd if=%s of=%s"' % (self.roachip,datafile,dram_file)),shell=True)
-        print result
-        self.unpause_dram()
-        
-    def _load_dram_fast_not_working(self,data,roach_root='/roach_mount'):
-        self.update_bof_pid()
-        self.pause_dram()
-        tic = time.time()
-        dram_file = 'proc/%d/hw/ioreg/dram_memory' % self.bof_pid
-        dram_file = os.path.join(roach_root,dram_file)
-        fh = open(dram_file,'wb')
-        fh.write(data.tostring())
-#        data.tofile(fh)
-        fh.close()
-        elapsed = time.time()-tic
-        print "wrote %.1f MB in %.1f seconds %.1f MB/s" % (data.size/2.**20,elapsed,data.size/elapsed/2.**20)
-        self.unpause_dram()
 
     def load_waveform(self,wave,fast=True):
         data = np.zeros((2*wave.shape[0],),dtype='>i2')
@@ -615,7 +592,8 @@ class RoachBaseband(RoachInterface):
         Note, this should generally not be called without also reprogramming the ROACH
         Use initialize() instead        
         """
-        self.adc_valon.set_frequency_a(fs,chan_spacing=chan_spacing)
+        self.adc_valon.set_frequency_a(fs,chan_spacing=chan_spacing)    # for now the baseband readout uses both valon outputs,
+        self.adc_valon.set_frequency_b(fs,chan_spacing=chan_spacing)    # one for ADC, one for DAC
         self.fs = fs
 
 
