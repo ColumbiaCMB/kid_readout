@@ -123,6 +123,11 @@ class RoachInterface(object):
         result = borph_utils.check_output(('ssh root@%s "dd if=%s of=%s"' % (self.roachip,datafile,dram_file)),shell=True)
         print result
         self._unpause_dram()    
+        
+    def _sync(self):
+        self.r.write_int('sync',0)
+        self.r.write_int('sync',1)
+        self.r.write_int('sync',0)
     
     ### Other hardware functions (attenuator, valon)
     def set_attenuator(self,attendb,gpio_reg='gpioa',data_bit=0x08,clk_bit=0x04,le_bit=0x02):
