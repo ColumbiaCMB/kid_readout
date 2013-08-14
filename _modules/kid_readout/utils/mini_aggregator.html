@@ -1,0 +1,207 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.utils.mini_aggregator &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for kid_readout.utils.mini_aggregator</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">Pyro4</span>
+<span class="kn">import</span> <span class="nn">collections</span> <span class="kn">as</span> <span class="nn">col</span>
+
+
+<div class="viewcode-block" id="FakeLock"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.mini_aggregator.FakeLock">[docs]</a><span class="k">class</span> <span class="nc">FakeLock</span><span class="p">():</span>
+<div class="viewcode-block" id="FakeLock.acquire"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.mini_aggregator.FakeLock.acquire">[docs]</a>    <span class="k">def</span> <span class="nf">acquire</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">print</span></div>
+<div class="viewcode-block" id="FakeLock.release"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.mini_aggregator.FakeLock.release">[docs]</a>    <span class="k">def</span> <span class="nf">release</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">print</span>
+    <span class="c"># Problem, when these are pass or return, it seems to take a really long time.</span>
+</div></div>
+<div class="viewcode-block" id="MiniAggregator"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.mini_aggregator.MiniAggregator">[docs]</a><span class="k">class</span> <span class="nc">MiniAggregator</span><span class="p">():</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subscriptions</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;power spectrum&#39;</span><span class="p">:</span> <span class="p">[]}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subscribers</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c"># maps uri to subscriber</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ready</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_product</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+        
+        <span class="c">#self.lock = FakeLock()</span>
+        
+        
+<div class="viewcode-block" id="MiniAggregator.subscribe_uri"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.mini_aggregator.MiniAggregator.subscribe_uri">[docs]</a>    <span class="k">def</span> <span class="nf">subscribe_uri</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">data_products</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subscribers</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="n">uri</span><span class="p">):</span>
+            <span class="k">print</span> <span class="s">&quot;already subscribed!&quot;</span><span class="p">,</span> <span class="n">uri</span>
+            <span class="k">return</span>
+        <span class="n">subscriber</span> <span class="o">=</span> <span class="n">Pyro4</span><span class="o">.</span><span class="n">Proxy</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subscribers</span><span class="p">[</span><span class="n">uri</span><span class="p">]</span> <span class="o">=</span> <span class="n">subscriber</span>
+        <span class="k">for</span> <span class="n">data_product</span> <span class="ow">in</span> <span class="n">data_products</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">subscriptions</span><span class="p">[</span><span class="n">data_product</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subscriber</span><span class="p">)</span>
+            </div>
+<div class="viewcode-block" id="MiniAggregator.publish_test"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.mini_aggregator.MiniAggregator.publish_test">[docs]</a>    <span class="k">def</span> <span class="nf">publish_test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_product</span><span class="p">):</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_product</span><span class="p">)):</span>
+            <span class="k">print</span> <span class="n">data_product</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">&#39;channel_id&#39;</span><span class="p">]</span>
+            <span class="k">print</span> <span class="n">data_product</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">&#39;index&#39;</span><span class="p">]</span>
+            <span class="k">print</span> <span class="n">data_product</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">&#39;data&#39;</span><span class="p">]</span>
+        <span class="c"># Used for debugging</span>
+</div>
+<div class="viewcode-block" id="MiniAggregator.get_data"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.mini_aggregator.MiniAggregator.get_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_request</span><span class="p">):</span>
+        <span class="n">data_to_send</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">ii</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="c"># Acquires lock, asks for data, releases lock.</span>
+        
+        <span class="k">while</span> <span class="n">ii</span> <span class="o">&lt;</span> <span class="n">data_request</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+            
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ready</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+                <span class="n">data_to_send</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_product</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ready</span> <span class="o">=</span> <span class="bp">False</span>
+                <span class="n">ii</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="c"># If new data is ready, appends it to the data_to_send.</span>
+                <span class="c"># Resets ready to false --&gt; gets set to true if more data written.</span>
+                <span class="c"># Increments ii up towards data request.</span>
+                
+            <span class="k">if</span> <span class="n">ii</span> <span class="o">==</span> <span class="n">data_request</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">request</span> <span class="o">=</span> <span class="bp">False</span>
+                <span class="c"># If ii == data_request, get data is doen, so request gets set to false/</span>
+                <span class="c"># This needs to happen here (rather than after the while loop) so that the function has the lock.</span>
+         
+            <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+            <span class="c"># After going through the while loop, the lock is released.</span>
+       
+        <span class="k">return</span> <span class="n">data_to_send</span>
+        <span class="c"># After all the data has been gathered, data_to_send is returned.</span>
+    
+    </div>
+<div class="viewcode-block" id="MiniAggregator.create_data_products_debug"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.mini_aggregator.MiniAggregator.create_data_products_debug">[docs]</a>    <span class="k">def</span> <span class="nf">create_data_products_debug</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">packet</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="c"># Does stuff with the data only if request is true.</span>
+            
+            <span class="sd">&#39;&#39;&#39;data_list = []</span>
+<span class="sd">            for i in range(len(packet)):</span>
+<span class="sd">                data_product = dict(type=&#39;power spectrum&#39;, data=packet[i][&#39;data&#39;], clock=packet[i][&#39;clock&#39;],</span>
+<span class="sd">                                   channel_id=packet[i][&#39;channel_id&#39;], addr=packet[i][&#39;addr&#39;], index=packet[i][&#39;index&#39;])</span>
+<span class="sd">                data_list.append(data_product)</span>
+<span class="sd">            self.last_product = data_list&#39;&#39;&#39;</span>
+            <span class="c"># This can be done quicker without making it a list. All you lose is the type=&#39;power spectrum&#39;</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">last_product</span> <span class="o">=</span> <span class="n">packet</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ready</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="c"># ready is set to true when last_product is renewed.</span>
+            <span class="c"># ready gets set to false when get_data reads last_product.</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+    </div>
+<div class="viewcode-block" id="MiniAggregator.create_data_products_dict"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.mini_aggregator.MiniAggregator.create_data_products_dict">[docs]</a>    <span class="k">def</span> <span class="nf">create_data_products_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">packet</span><span class="p">):</span>
+        <span class="n">pxx_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">packet</span><span class="p">)):</span>
+            <span class="n">raw_data</span> <span class="o">=</span> <span class="n">packet</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">&#39;data&#39;</span><span class="p">]</span>
+            <span class="n">pxx</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">raw_data</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">pxx_product</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s">&#39;power spectrum&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">pxx</span><span class="p">,</span> <span class="n">clock</span><span class="o">=</span><span class="n">packet</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">&#39;clock&#39;</span><span class="p">],</span>
+                               <span class="n">channel_id</span><span class="o">=</span><span class="n">packet</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">&#39;channel_id&#39;</span><span class="p">],</span> <span class="n">addr</span><span class="o">=</span><span class="n">packet</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">&#39;addr&#39;</span><span class="p">],</span> <span class="n">index</span><span class="o">=</span><span class="n">packet</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s">&#39;index&#39;</span><span class="p">])</span>
+            <span class="n">pxx_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pxx_product</span><span class="p">)</span>
+        <span class="c"># self.publish_test(pxx_list)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">publish_test</span><span class="p">(</span><span class="n">pxx_list</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="MiniAggregator.publish"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.mini_aggregator.MiniAggregator.publish">[docs]</a>    <span class="k">def</span> <span class="nf">publish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_product</span><span class="p">):</span>
+        <span class="c"># pass the data products on to the appropriate subscribers</span>
+        <span class="n">subscription_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subscriptions</span><span class="p">[</span><span class="n">data_product</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">]]</span>  <span class="c"># list of subscribers interested in this data product</span>
+        <span class="k">print</span> <span class="s">&quot;publishing pxx to&quot;</span><span class="p">,</span> <span class="n">subscription_list</span>
+        <span class="k">for</span> <span class="n">subscriber</span> <span class="ow">in</span> <span class="n">subscription_list</span><span class="p">:</span>
+            <span class="n">subscriber</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span><span class="n">data_product</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+    </div>
+  </body>
+</html>
