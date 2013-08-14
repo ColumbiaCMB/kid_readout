@@ -6,6 +6,13 @@ import Pyro4
 import collections as col
 
 
+class FakeLock():
+    def acquire(self):
+        print
+    def release(self):
+        print
+    # Problem, when these are pass or return, it seems to take a really long time.
+
 class MiniAggregator():
     def __init__(self):
         self.subscriptions = {'power spectrum': []}
@@ -15,6 +22,8 @@ class MiniAggregator():
         self.ready = False
         self.last_product = None
         self.lock = threading.Lock()
+        
+        #self.lock = FakeLock()
         
         
     def subscribe_uri(self, uri, data_products):
@@ -72,12 +81,15 @@ class MiniAggregator():
         if self.request == True:
             # Does stuff with the data only if request is true.
             
-            data_list = []
+            '''data_list = []
             for i in range(len(packet)):
                 data_product = dict(type='power spectrum', data=packet[i]['data'], clock=packet[i]['clock'],
                                    channel_id=packet[i]['channel_id'], addr=packet[i]['addr'], index=packet[i]['index'])
                 data_list.append(data_product)
-            self.last_product = data_list
+            self.last_product = data_list'''
+            # This can be done quicker without making it a list. All you lose is the type='power spectrum'
+            
+            self.last_product = packet
             self.ready = True
             # ready is set to true when last_product is renewed.
             # ready gets set to false when get_data reads last_product.

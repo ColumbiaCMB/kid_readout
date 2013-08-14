@@ -29,11 +29,13 @@ class MiniCoordinator():
         return self.miniagg.get_data(data_request)
 
 
-yappi.start()
+# yappi.start()
 minicoord = MiniCoordinator()
 
-minicoord.set_channel_ids([(i * 100) / 2 + 3 for i in range(1, 11)])
+minicoord.set_channel_ids([(i * 100) / 2 + 3 for i in range(1, 21)])
+yappi.start()
+
 for i in range(1000):
-    minicoord.get_data(10)
+    minicoord.get_data(1)
     
 yappi.print_stats()

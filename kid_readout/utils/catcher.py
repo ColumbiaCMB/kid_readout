@@ -19,7 +19,7 @@ class DemultiplexCatcher():
         self.publish_func = publish_func
         self.dataip = dataip
         # self.channel_ids = [0, 1, 2, 3, 4]
-        self.channel_ids = list(np.array([(i * 100) for i in range(1, 11)]) / 2 + 3)
+        self.channel_ids = list(np.array([(i * 100) for i in range(1, 21)]) / 2 + 3)
         # Defaults used for testing.
         # Set roach channels using mcrotest.py
         
