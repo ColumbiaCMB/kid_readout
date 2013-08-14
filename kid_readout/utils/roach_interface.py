@@ -252,7 +252,9 @@ class RoachHeterodyne(RoachInterface):
             self.adc_valon = valon.Synthesizer(self.adc_valon_port)
         else:
             self.adc_valon = adc_valon
-            
+
+        self.adc_atten = -1
+        self.dac_atten = -1            
         self.bof_pid = None
         self.roachip = roachip
         self.fs = self.adc_valon.get_frequency_a()
@@ -474,6 +476,8 @@ class RoachBaseband(RoachInterface):
         else:
             self.adc_valon = adc_valon
         
+        self.adc_atten = -1
+        self.dac_atten = -1
         self.bof_pid = None
         self.roachip = roachip
         self.fs = self.adc_valon.get_frequency_a()
