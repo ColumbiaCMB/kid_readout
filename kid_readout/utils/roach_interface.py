@@ -276,6 +276,14 @@ class RoachHeterodyne(RoachInterface):
         self.bufname = 'ppout%d' % wafer
         
     def load_waveforms(self,i_wave,q_wave,fast=True):
+        """
+        Load waveforms for the two DACs
+        
+        i_wave,q_wave : arrays of 16-bit (dtype='i2') integers with waveforms for the two DACs
+        
+        fast : boolean
+            decide what method for loading the dram 
+        """
         data = np.zeros((2*i_wave.shape[0],),dtype='>i2')
         data[0::4] = i_wave[::2]
         data[1::4] = i_wave[1::2]
@@ -285,6 +293,21 @@ class RoachHeterodyne(RoachInterface):
         self._load_dram(data,fast=fast)
         
     def set_tone_freqs(self,freqs,nsamp,amps=None):
+        """
+        Set the stimulus tones to generate
+        
+        freqs : array of frequencies in MHz
+            For Heterodyne system, these can be positive or negative to produce tones above and
+            below the local oscillator frequency.
+        nsamp : int, must be power of 2
+            number of samples in the playback buffer. Frequency resolution will be fs/nsamp
+        amps : optional array of floats, same length as freqs array
+            specify the relative amplitude of each tone. Can set to zero to read out a portion
+            of the spectrum with no stimulus tone.
+        
+        returns:
+        actual_freqs : array of the actual frequencies after quantization based on nsamp
+        """
         bins = np.round((freqs/self.fs)*nsamp).astype('int')
         actual_freqs = self.fs*bins/float(nsamp)
         bins[bins<0] = nsamp + bins[bins<0]
@@ -299,6 +322,18 @@ class RoachHeterodyne(RoachInterface):
         return actual_freqs
 
     def set_tone_bins(self,bins,nsamp,amps=None):
+        """
+        Set the stimulus tones by specific integer bins
+        
+        bins : array of bins at which tones should be placed
+            For Heterodyne system, negative frequencies should be placed in cannonical FFT order
+        nsamp : int, must be power of 2
+            number of samples in the playback buffer. Frequency resolution will be fs/nsamp
+        amps : optional array of floats, same length as bins array
+            specify the relative amplitude of each tone. Can set to zero to read out a portion
+            of the spectrum with no stimulus tone.
+        """
+        
         spec = np.zeros((nsamp,),dtype='complex')
         self.tone_bins = bins.copy()
         self.tone_nsamp = nsamp
@@ -317,17 +352,40 @@ class RoachHeterodyne(RoachInterface):
         self.load_waveforms(i_wave,q_wave)
         
     def calc_fft_bins(self,tone_bins,nsamp):
+        """
+        Calculate the FFT bins in which the tones will fall
+        
+        tone_bins: array of integers
+            the tone bins (0 to nsamp - 1) which contain tones
+        nsamp : length of the playback bufffer
+        
+        returns: fft_bins, array of integers.
+        """
         tone_bins_per_fft_bin = nsamp/(self.nfft) 
         fft_bins = np.round(tone_bins/float(tone_bins_per_fft_bin)).astype('int')
         return fft_bins
     
     def fft_bin_to_index(self,bins):
-        top_half = bins > self.nfft/2
+        """
+        Convert FFT bins to FPGA indexes
+        """
         idx = bins.copy()
-#        idx[top_half] = self.nfft - bins[top_half] + self.nfft/2
         return idx
         
     def select_fft_bins(self,readout_selection):
+        """
+        Select which subset of the available FFT bins to read out
+        
+        Initially we can only read out from a subset of the FFT bins, so this function selects which bins to read out right now
+        This also takes care of writing the selection to the FPGA with the appropriate tweaks
+        
+        The readout selection is stored to self.readout_selection
+        The FPGA readout indexes is stored in self.fpga_fft_readout_indexes
+        The bins that we are reading out is stored in self.readout_fft_bins
+        
+        readout_selection : array of ints
+            indexes into the self.fft_bins array to specify the bins to read out
+        """
         offset = 4
         idxs = self.fft_bin_to_index(self.fft_bins[readout_selection])
         order = idxs.argsort()
@@ -345,6 +403,15 @@ class RoachHeterodyne(RoachInterface):
         self.r.write('chans',binsel.tostring())
         
     def demodulate_data(self,data):
+        """
+        Demodulate the data from the FFT bin
+        
+        This function assumes that self.select_fft_bins was called to set up the necessary class attributes
+        
+        data : array of complex data
+        
+        returns : demodulated data in an array of the same shape and dtype as *data*
+        """
         demod = np.zeros_like(data)
         t = np.arange(data.shape[0])
         for n,ich in enumerate(self.readout_selection):
@@ -501,6 +568,14 @@ class RoachBaseband(RoachInterface):
         self.bufname = 'ppout%d' % wafer
 
     def load_waveform(self,wave,fast=True):
+        """
+        Load waveform
+        
+        wave : array of 16-bit (dtype='i2') integers with waveform
+        
+        fast : boolean
+            decide what method for loading the dram 
+        """
         data = np.zeros((2*wave.shape[0],),dtype='>i2')
         offset = self.wafer*2
         data[offset::4] = wave[::2]
@@ -509,6 +584,20 @@ class RoachBaseband(RoachInterface):
         self._load_dram(data,fast=fast)
         
     def set_tone_freqs(self,freqs,nsamp,amps=None):
+        """
+        Set the stimulus tones to generate
+        
+        freqs : array of frequencies in MHz
+            For baseband system, these must be positive
+        nsamp : int, must be power of 2
+            number of samples in the playback buffer. Frequency resolution will be fs/nsamp
+        amps : optional array of floats, same length as freqs array
+            specify the relative amplitude of each tone. Can set to zero to read out a portion
+            of the spectrum with no stimulus tone.
+                    
+        returns:
+        actual_freqs : array of the actual frequencies after quantization based on nsamp
+        """        
         bins = np.round((freqs/self.fs)*nsamp).astype('int')
         actual_freqs = self.fs*bins/float(nsamp)
         self.set_tone_bins(bins, nsamp,amps=amps)
@@ -522,6 +611,18 @@ class RoachBaseband(RoachInterface):
         return actual_freqs
 
     def set_tone_bins(self,bins,nsamp,amps=None):
+        """
+        Set the stimulus tones by specific integer bins
+        
+        bins : array of bins at which tones should be placed
+            For Heterodyne system, negative frequencies should be placed in cannonical FFT order
+        nsamp : int, must be power of 2
+            number of samples in the playback buffer. Frequency resolution will be fs/nsamp
+        amps : optional array of floats, same length as bins array
+            specify the relative amplitude of each tone. Can set to zero to read out a portion
+            of the spectrum with no stimulus tone.
+        """
+        
         spec = np.zeros((nsamp/2+1,),dtype='complex')
         self.tone_bins = bins.copy()
         self.tone_nsamp = nsamp
@@ -538,17 +639,42 @@ class RoachBaseband(RoachInterface):
         self.load_waveform(qwave)
         
     def calc_fft_bins(self,tone_bins,nsamp):
+        """
+        Calculate the FFT bins in which the tones will fall
+        
+        tone_bins: array of integers
+            the tone bins (0 to nsamp - 1) which contain tones
+        nsamp : length of the playback bufffer
+        
+        returns: fft_bins, array of integers.
+        """
         tone_bins_per_fft_bin = nsamp/(2*self.nfft) # factor of 2 because real signal
         fft_bins = np.round(tone_bins/float(tone_bins_per_fft_bin)).astype('int')
         return fft_bins
     
     def fft_bin_to_index(self,bins):
+        """
+        Convert FFT bins to FPGA indexes
+        """
         top_half = bins > self.nfft/2
         idx = bins.copy()
         idx[top_half] = self.nfft - bins[top_half] + self.nfft/2
         return idx
         
     def select_fft_bins(self,readout_selection):
+        """
+        Select which subset of the available FFT bins to read out
+        
+        Initially we can only read out from a subset of the FFT bins, so this function selects which bins to read out right now
+        This also takes care of writing the selection to the FPGA with the appropriate tweaks
+        
+        The readout selection is stored to self.readout_selection
+        The FPGA readout indexes is stored in self.fpga_fft_readout_indexes
+        The bins that we are reading out is stored in self.readout_fft_bins
+        
+        readout_selection : array of ints
+            indexes into the self.fft_bins array to specify the bins to read out
+        """
         offset = 2
         idxs = self.fft_bin_to_index(self.fft_bins[readout_selection])
         order = idxs.argsort()
@@ -563,6 +689,15 @@ class RoachBaseband(RoachInterface):
         self.r.write('chans',binsel.tostring())
         
     def demodulate_data(self,data):
+        """
+        Demodulate the data from the FFT bin
+        
+        This function assumes that self.select_fft_bins was called to set up the necessary class attributes
+        
+        data : array of complex data
+        
+        returns : demodulated data in an array of the same shape and dtype as *data*
+        """
         demod = np.zeros_like(data)
         t = np.arange(data.shape[0])
         for n,ich in enumerate(self.readout_selection):
