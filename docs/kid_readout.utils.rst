@@ -9,6 +9,14 @@ utils Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`borph_utils` Module
+-------------------------
+
+.. automodule:: kid_readout.utils.borph_utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`catcher` Module
 ---------------------
 
@@ -25,6 +33,14 @@ utils Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`mini_aggregator` Module
+-----------------------------
+
+.. automodule:: kid_readout.utils.mini_aggregator
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`netcdf_writer` Module
 ---------------------------
 
@@ -33,10 +49,26 @@ utils Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`roach_interface` Module
+-----------------------------
+
+.. automodule:: kid_readout.utils.roach_interface
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`single_pixel` Module
 --------------------------
 
 .. automodule:: kid_readout.utils.single_pixel
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`sweeper` Module
+---------------------
+
+.. automodule:: kid_readout.utils.sweeper
     :members:
     :undoc-members:
     :show-inheritance:
