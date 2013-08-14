@@ -102,7 +102,12 @@ class RoachInterface(object):
         self.r.write_int('dram_rst',0)
     def _unpause_dram(self):
         self.r.write_int('dram_rst',2)
-    def _load_dram(self,data,tries=2):
+    def _load_dram(self,data, fast=True):
+        if fast:
+            self._load_dram_ssh(data)
+        else:
+            self._load_dram_katcp(data)
+    def _load_dram_katcp(self,data,tries=2):
         while tries > 0:
             try:
                 self._pause_dram()
@@ -270,14 +275,14 @@ class RoachHeterodyne(RoachInterface):
         self.boffile = 'iq2xpfb14mcr4_2013_Aug_02_1446.bof'
         self.bufname = 'ppout%d' % wafer
         
-    def load_waveforms(self,i_wave,q_wave):
+    def load_waveforms(self,i_wave,q_wave,fast=True):
         data = np.zeros((2*i_wave.shape[0],),dtype='>i2')
         data[0::4] = i_wave[::2]
         data[1::4] = i_wave[1::2]
         data[2::4] = q_wave[::2]
         data[3::4] = q_wave[1::2]
         self.r.write_int('dram_mask', data.shape[0]/4 - 1)
-        self._load_dram(data)
+        self._load_dram(data,fast=fast)
         
     def set_tone_freqs(self,freqs,nsamp,amps=None):
         bins = np.round((freqs/self.fs)*nsamp).astype('int')
@@ -319,7 +324,7 @@ class RoachHeterodyne(RoachInterface):
     def fft_bin_to_index(self,bins):
         top_half = bins > self.nfft/2
         idx = bins.copy()
-        idx[top_half] = self.nfft - bins[top_half] + self.nfft/2
+#        idx[top_half] = self.nfft - bins[top_half] + self.nfft/2
         return idx
         
     def select_fft_bins(self,readout_selection):
@@ -347,14 +352,16 @@ class RoachHeterodyne(RoachInterface):
             k = self.tone_bins[ich]
             m = self.fft_bins[ich]
             if m >= self.nfft/2:
-                sign = 1.0
+                sign = -1.0
+                doconj = True
             else:
                 sign = -1.0
+                doconj = False
             nfft = self.nfft
             ns = self.tone_nsamp
             foffs = (k*nfft - m*ns)/float(ns)
             demod[:,n] = np.exp(sign*1j*(2*np.pi*foffs*t + phi0)) * data[:,n]
-            if m >= self.nfft/2:
+            if doconj:
                 demod[:,n] = np.conjugate(demod[:,n])
         return demod
                 
@@ -499,10 +506,7 @@ class RoachBaseband(RoachInterface):
         data[offset::4] = wave[::2]
         data[offset+1::4] = wave[1::2]
         self.r.write_int('dram_mask', data.shape[0]/4 - 1)
-        if fast:
-            self._load_dram_ssh(data)
-        else:
-            self._load_dram(data)
+        self._load_dram(data,fast=fast)
         
     def set_tone_freqs(self,freqs,nsamp,amps=None):
         bins = np.round((freqs/self.fs)*nsamp).astype('int')
