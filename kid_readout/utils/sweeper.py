@@ -2,7 +2,7 @@ import Pyro4
 import numpy as np
 import time
 
-def fine_sweep(ri,coord,freqs=np.linspace(10,200,384),offs=np.linspace(0,0.5,8),nsamp=2**15,nchan_per_step=64,reads_per_step=2,fast_read=True):
+def fine_sweep(ri,coord=None,freqs=np.linspace(10,200,384),offs=np.linspace(0,0.5,8),nsamp=2**15,nchan_per_step=64,reads_per_step=2,fast_read=True):
     tones = []
     davgs = []
     datas = []
@@ -22,7 +22,7 @@ def fine_sweep(ri,coord,freqs=np.linspace(10,200,384),offs=np.linspace(0,0.5,8),
     tones = tones[order]
     return tones,davgs,datas,chanids
 
-def coarse_sweep(ri,coord,freqs=np.linspace(10,200,384),nsamp=2**15,nchan_per_step=64,reads_per_step=2,fast_read = True):
+def coarse_sweep(ri,coord=None,freqs=np.linspace(10,200,384),nsamp=2**15,nchan_per_step=64,reads_per_step=2,fast_read = True):
     actual_freqs = ri.set_tone_freqs(freqs,nsamp=nsamp)
     data = []
     tones = []
