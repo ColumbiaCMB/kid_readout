@@ -68,6 +68,8 @@ class RoachInterface(object):
         self._set_fs(fs)
         print "Programming", self.boffile
         self.r.progdev(self.boffile)
+        self.bof_pid = None
+        self._update_bof_pid()
         self.set_fft_gain(1)
         self.r.write_int('dacctrl',0)
         self.r.write_int('dacctrl',1)
@@ -216,6 +218,57 @@ class RoachInterface(object):
         addrs = np.array(addrs)
         chans = np.array(chans)
         return dout,addrs,chans
+
+
+    def _cont_read_data(self,callback,bufname):
+        """
+        Low level data reading continuous loop, common to both readouts
+        calls "callback" each time a chunk of data is ready
+        """
+        regname = '%s_addr' % bufname
+        chanreg = '%s_chan' % bufname
+        a = self.r.read_uint(regname) & 0x1000
+        addr = self.r.read_uint(regname) 
+        b = addr & 0x1000
+        while a == b:
+            addr = self.r.read_uint(regname)
+            b = addr & 0x1000
+        tic = time.time()
+        idle = 0
+        n = 0
+        try:
+            while True:
+                try:
+                    a = b
+                    if a:
+                        bram = '%s_a' % bufname
+                    else:
+                        bram = '%s_b' % bufname
+                    data = self.r.read(bram,4*2**12)
+                    addrs = addr
+                    chans = self.r.read_int(chanreg)
+                    res = callback(data,addrs,chans)
+                except Exception, e:
+                    print "read only partway because of error:"
+                    print e
+                    print "\n"
+                    res = False
+                n += 1
+                if res:
+                    break
+                addr = self.r.read_uint(regname)
+                b = addr & 0x1000
+                while a == b:
+                    addr = self.r.read_uint(regname)
+                    b = addr & 0x1000
+                    idle += 1
+                print ("\r got %d" % n),
+                sys.stdout.flush()
+        except KeyboardInterrupt:
+            pass
+        tot = time.time()-tic
+        print "\rread %d in %.1f seconds, %.2f samples per second, idle %.2f per read" % (n, tot, (n*2**12/tot),idle/(n*1.0))
+        
 
 class RoachHeterodyne(RoachInterface):
     def __init__(self,roach=None,wafer=0,roachip='roach',adc_valon=None):
