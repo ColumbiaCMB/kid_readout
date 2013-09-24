@@ -8,6 +8,20 @@ import sys
 import os
 import borph_utils
 
+import scipy.signal
+
+def window_correction(fr, npfb=2**15,taps = 2, wfunc = scipy.signal.flattop):
+    wv = wfunc(npfb*taps)
+    sc = np.sinc(np.arange(npfb*taps)/float(npfb) - taps/2.0)
+    coeff = wv*sc
+    mag = np.abs(np.fft.fft(coeff,npfb*taps*2**5)[:2**6])
+    mag = mag/mag.max()
+    res = np.interp(np.abs(fr)*2**6, np.arange(2**6), mag)
+    res = 1/res
+    return res
+    
+    
+
 class RoachInterface(object):
     """
     Base class for readout systems.
@@ -306,9 +320,18 @@ class RoachHeterodyne(RoachInterface):
             import valon
             ports = valon.find_valons()
             if len(ports) == 0:
-                raise Exception("No Valon found!")
-            self.adc_valon_port = ports[0]
-            self.adc_valon = valon.Synthesizer(ports[0]) #use latest port
+                self.adc_valon_port = None
+                self.adc_valon = None
+                print "Warning: No valon found!"
+            else:
+                for port in ports:
+                    try:
+                        self.adc_valon_port = port
+                        self.adc_valon = valon.Synthesizer(port)
+                        f = self.adc_valon.get_frequency_a()
+                        break
+                    except:
+                        pass
         elif type(adc_valon) is str:
             import valon
             self.adc_valon_port = adc_valon
@@ -597,15 +620,18 @@ class RoachBaseband(RoachInterface):
             import valon
             ports = valon.find_valons()
             if len(ports) == 0:
-                raise Exception("No Valon found!")
-            for port in ports:
-                try:
-                    self.adc_valon_port = port
-                    self.adc_valon = valon.Synthesizer(port)
-                    f = self.adc_valon.get_frequency_a()
-                    break
-                except:
-                    pass
+                self.adc_valon_port = None
+                self.adc_valon = None
+                print "Warning: No valon found!"
+            else:
+                for port in ports:
+                    try:
+                        self.adc_valon_port = port
+                        self.adc_valon = valon.Synthesizer(port)
+                        f = self.adc_valon.get_frequency_a()
+                        break
+                    except:
+                        pass
         elif type(adc_valon) is str:
             import valon
             self.adc_valon_port = adc_valon
@@ -771,7 +797,8 @@ class RoachBaseband(RoachInterface):
             nfft = self.nfft
             ns = self.tone_nsamp
             foffs = (2*k*nfft - m*ns)/float(ns)
-            demod[:,n] = np.exp(sign*1j*(2*np.pi*foffs*t + phi0)) * data[:,n]
+            wc = window_correction(foffs,npfb=nfft*2)
+            demod[:,n] = wc*np.exp(sign*1j*(2*np.pi*foffs*t + phi0)) * data[:,n]
             if m >= self.nfft/2:
                 demod[:,n] = np.conjugate(demod[:,n])
         return demod
