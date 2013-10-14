@@ -10,6 +10,9 @@ import numpy as np
 import os
 import sys
 import subprocess
+import re
+
+usbre = re.compile(r"usb (?P<port>\d*-\d*)")
 
 
 def find_valons():
@@ -25,11 +28,22 @@ def find_valons():
     """
     
     try:
-        dmesg = check_output('dmesg | grep "FTDI.*attached to"',shell=True)
+        dmesg = check_output('dmesg | grep "FT232RL"',shell=True)
     except subprocess.CalledProcessError:
         # grep failed so no ports found
         return []
     lines = dmesg.split('\n')
+    lines = [x for x in lines if len(x) > 0]
+    m = usbre.search(lines[-1])
+    usbport = m.group('port')
+    try:
+        dmesg = check_output(('dmesg | grep "usb %s.*now attached to"' % usbport),shell=True)
+    except subprocess.CalledProcessError:
+        # grep failed so no ports found
+        return []
+    lines = dmesg.split('\n')
+    lines = [x for x in lines if len(x) > 0]
+    lines = lines[-1:]
     ports = []
     for ln in lines[::-1]:
         idx = ln.find('ttyUSB')
