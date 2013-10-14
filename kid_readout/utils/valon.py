@@ -24,7 +24,11 @@ def find_valons():
     Duplicate ports are ignored (only the most recent entry (line in dmesg) for that port is returned)
     """
     
-    dmesg = check_output('dmesg | grep "FTDI.*attached to"',shell=True)
+    try:
+        dmesg = check_output('dmesg | grep "FTDI.*attached to"',shell=True)
+    except subprocess.CalledProcessError:
+        # grep failed so no ports found
+        return []
     lines = dmesg.split('\n')
     ports = []
     for ln in lines[::-1]:

@@ -364,7 +364,11 @@ class RoachHeterodyne(RoachInterface):
         self.dac_atten = -1            
         self.bof_pid = None
         self.roachip = roachip
-        self.fs = self.adc_valon.get_frequency_a()
+        try:
+            self.fs = self.adc_valon.get_frequency_a()
+        except:
+            print "warning couldn't get valon frequency, assuming 512 MHz"
+            self.fs = 512.0
         self.wafer = wafer
         self.dac_ns = 2**16 # number of samples in the dac buffer
         self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
@@ -600,9 +604,11 @@ class RoachHeterodyne(RoachInterface):
         Note, this should generally not be called without also reprogramming the ROACH
         Use initialize() instead        
         """
+        if self.adc_valon is None:
+            print "Could not set Valon; none available"
+            return
         self.adc_valon.set_frequency_a(fs,chan_spacing=chan_spacing)
         self.fs = fs
-
 
 
 class RoachBaseband(RoachInterface):
@@ -665,7 +671,11 @@ class RoachBaseband(RoachInterface):
         self.dac_atten = -1
         self.bof_pid = None
         self.roachip = roachip
-        self.fs = self.adc_valon.get_frequency_a()
+        try:
+            self.fs = self.adc_valon.get_frequency_a()
+        except:
+            print "warning couldn't get valon frequency, assuming 512 MHz"
+            self.fs = 512.0
         self.wafer = wafer
         self.dac_ns = 2**16 # number of samples in the dac buffer
         self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
@@ -867,6 +877,9 @@ class RoachBaseband(RoachInterface):
         Note, this should generally not be called without also reprogramming the ROACH
         Use initialize() instead        
         """
+        if self.adc_valon is None:
+            print "Could not set Valon; none available"
+            return
         self.adc_valon.set_frequency_a(fs,chan_spacing=chan_spacing)    # for now the baseband readout uses both valon outputs,
         self.adc_valon.set_frequency_b(fs,chan_spacing=chan_spacing)    # one for ADC, one for DAC
         self.fs = fs
