@@ -10,15 +10,13 @@ import borph_utils
 
 import scipy.signal
 
-def window_correction(fr, npfb=2**15,taps = 2, wfunc = scipy.signal.flattop):
+def compute_window(npfb=2**15,taps = 2, wfunc = scipy.signal.flattop):
     wv = wfunc(npfb*taps)
     sc = np.sinc(np.arange(npfb*taps)/float(npfb) - taps/2.0)
     coeff = wv*sc
     mag = np.abs(np.fft.fft(coeff,npfb*taps*2**5)[:2**6])
     mag = mag/mag.max()
-    res = np.interp(np.abs(fr)*2**6, np.arange(2**6), mag)
-    res = 1/res
-    return res
+    return mag
     
     
 
@@ -56,6 +54,23 @@ class RoachInterface(object):
         s0 = (np.fromstring(self.r.read('i0_bram',self.raw_adc_ns*2),dtype='>i2'))/16.0
         s1 = (np.fromstring(self.r.read('q0_bram',self.raw_adc_ns*2),dtype='>i2'))/16.0
         return s0,s1
+    
+    def auto_level_adc(self,goal=-2.0,max_tries=3):
+        if self.adc_atten < 0:
+            self.set_adc_attenuator(31.5)
+        n = 0
+        while n < max_tries:
+            x,y = self.get_raw_adc()
+            dbfs = 20*np.log10(x.ptp()/4096.0) # fraction of full scale
+            if np.abs(dbfs-goal) < 1.0:
+                print "success at: %.1f dB" % self.adc_atten
+                break
+            newatten = self.adc_atten + (dbfs-goal)
+            print "at: %.1f dBFS, current atten: %.1f dB, next trying: %.1f dB" % (dbfs,self.adc_atten,newatten)
+            self.set_adc_attenuator(newatten)
+            n +=1
+
+    
     
     def set_fft_gain(self,gain):
         """
@@ -184,6 +199,12 @@ class RoachInterface(object):
         Set sampling frequency in MHz
         """
         raise NotImplementedError
+    
+    def _window_response(self,fr):
+        res = np.interp(np.abs(fr)*2**6, np.arange(2**6), self._window_mag)
+        res = 1/res
+        return res
+
     
     ### Tried and true readout function
     def _read_data(self,nread,bufname):
@@ -350,6 +371,7 @@ class RoachHeterodyne(RoachInterface):
         self.nfft = 2**14
         self.boffile = 'iq2xpfb14mcr4_2013_Aug_02_1446.bof'
         self.bufname = 'ppout%d' % wafer
+        self._window_mag = compute_window(npfb = self.nfft, taps= 2, wfunc = scipy.signal.flattop)
         
     def load_waveforms(self,i_wave,q_wave,fast=True):
         """
@@ -650,6 +672,8 @@ class RoachBaseband(RoachInterface):
         self.nfft = 2**14
         self.boffile = 'bb2xpfb14mcr5_2013_Jul_31_1301.bof'
         self.bufname = 'ppout%d' % wafer
+        self._window_mag = compute_window(npfb = 2*self.nfft, taps= 2, wfunc = scipy.signal.flattop)
+
 
     def load_waveform(self,wave,fast=True):
         """
@@ -797,7 +821,7 @@ class RoachBaseband(RoachInterface):
             nfft = self.nfft
             ns = self.tone_nsamp
             foffs = (2*k*nfft - m*ns)/float(ns)
-            wc = window_correction(foffs,npfb=nfft*2)
+            wc = self._window_response(foffs)*(self.tone_nsamp/2.0**18)
             demod[:,n] = wc*np.exp(sign*1j*(2*np.pi*foffs*t + phi0)) * data[:,n]
             if m >= self.nfft/2:
                 demod[:,n] = np.conjugate(demod[:,n])

@@ -1,14 +1,15 @@
-import Pyro4
 import numpy as np
 import time
 
-def fine_sweep(ri,coord=None,freqs=np.linspace(10,200,384),offs=np.linspace(0,0.5,8),nsamp=2**15,nchan_per_step=64,reads_per_step=2,fast_read=True):
+from data_block import DataBlock, SweepData
+
+def fine_sweep(ri,freqs=np.linspace(10,200,384),offs=np.linspace(0,0.5,8),nsamp=2**15,nchan_per_step=4,reads_per_step=2):
     tones = []
     davgs = []
     datas = []
     chanids = []
     for k,off in enumerate(offs):
-        tt,davg,data,chids = coarse_sweep(ri,coord,freqs=freqs+off,nsamp=nsamp,nchan_per_step=nchan_per_step,reads_per_step=reads_per_step,fast_read=fast_read)
+        tt,davg,data,chids = coarse_sweep(ri,freqs=freqs+off,nsamp=nsamp,nchan_per_step=nchan_per_step,reads_per_step=reads_per_step)
         tones.append(tt)
         davgs.append(davg)
         datas.extend(data)
@@ -22,17 +23,13 @@ def fine_sweep(ri,coord=None,freqs=np.linspace(10,200,384),offs=np.linspace(0,0.
     tones = tones[order]
     return tones,davgs,datas,chanids
 
-def coarse_sweep(ri,coord=None,freqs=np.linspace(10,200,384),nsamp=2**15,nchan_per_step=64,reads_per_step=2,fast_read = True):
+def coarse_sweep(ri,freqs=np.linspace(10,200,384),nsamp=2**15,nchan_per_step=4,reads_per_step=2, callback = None, sweep_id = 1):
     actual_freqs = ri.set_tone_freqs(freqs,nsamp=nsamp)
-    data = []
-    tones = []
-    chanids = []
+    data = SweepData(sweep_id)
     ri.r.write_int('sync',0)
     ri.r.write_int('sync',1)
     ri.r.write_int('sync',0)
     time.sleep(1)
-    if not fast_read:
-        nchan_per_step = 4
     nchan = ri.fft_bins.shape[0]
     nstep = np.ceil(nchan/float(nchan_per_step))
     toread = set(range(nchan))
@@ -52,30 +49,26 @@ def coarse_sweep(ri,coord=None,freqs=np.linspace(10,200,384),nsamp=2**15,nchan_p
         ri.r.write_int('sync',1)
         ri.r.write_int('sync',0)
 
-        if fast_read:
-            coord.set_channel_ids(list(ri.fpga_fft_readout_indexes+1))
         time.sleep(0.2)
-        if fast_read:
-            draw = coord.get_data(reads_per_step)
-            chids,dout = reduce_catcher(draw)
-            dmod = ri.demodulate_data(dout)*ri.wavenorm
-        else:
-            try:
-                dmod,addr = ri.get_data(reads_per_step)
-            except:
-                continue
-            dmod = dmod*ri.wavenorm
-            chids = ri.fpga_fft_readout_indexes+1
-        data.append(dmod)
-        tones.append(ri.tone_bins[ri.readout_selection])
-        chanids.append(chids)
-    tones = np.concatenate(tones)
-    chanids = np.concatenate(chanids)
-    order = tones.argsort()
-    davg = np.concatenate([x.mean(0) for x in data])
-    davg = davg[order]
-    tones = tones[order]
-    return tones,davg,data,chanids
+        try:
+            dmod,addr = ri.get_data(reads_per_step)
+        except:
+            continue
+        dmod = dmod*ri.wavenorm
+        chids = ri.fpga_fft_readout_indexes+1
+        tones = ri.tone_bins[ri.readout_selection]
+        abort = False
+        for m in range(len(chids)):
+            block = DataBlock(data = dmod[:,m], tone=tones[m], fftbin = chids[m], 
+                     nsamp = nsamp, nfft = ri.nfft, t0 = time.time(), fs = ri.fs)
+            data.add_block(block)
+            if callback:
+                abort = callback(block)
+
+        if abort:
+            break
+        
+    return data
 
 def reduce_catcher(din):
     chandata = {}
