@@ -2,6 +2,7 @@ import netCDF4
 import time
 import os
 import numpy as np
+from kid_readout.utils.valon import check_output
 
 class DataFile():
     def __init__(self,base_dir='~/data'):
@@ -15,6 +16,11 @@ class DataFile():
         fn = os.path.join(base_dir,fn)
         self.filename = fn
         self.nc = netCDF4.Dataset(fn,mode='w')
+        try:
+            gitinfo = check_output(("git log -1 %s" % __file__),shell=True)
+        except:
+            gitinfo = ''
+        self.nc.gitinfo = gitinfo
         self.sweeps = self.nc.createGroup('sweeps')
         self.timestreams = self.nc.createGroup('timestreams')
         self.cryo = self.nc.createGroup('cryo')
