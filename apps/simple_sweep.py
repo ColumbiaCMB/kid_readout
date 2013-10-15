@@ -12,6 +12,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import IPython
 import time
+import bisect
 
 import threading
 
@@ -54,6 +55,10 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         self.phline2 = None
         self.peakline = None
         self.psd_text = None
+        self.selection_line = None
+        
+        self.selected_sweep = 'coarse'
+        self.selected_idx = 0
         
         self.ri = kid_readout.utils.roach_interface.RoachBaseband()
         self.ri.set_adc_attenuator(31)
@@ -74,11 +79,14 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         self.line_span_hz.textEdited.connect(self.recalc_spacing)
         self.tableview_freqs.itemChanged.connect(self.freq_table_item_changed)
         self.spin_subsweeps.valueChanged.connect(self.onspin_subsweeps_changed)
+        self.push_add_resonator.clicked.connect(self.onclick_add_resonator)
         
         self.logfile = None
         self.fresh = False
         self.fine_sweep_data = None
         self.recalc_spacing('')
+        
+        self.onspin_subsweeps_changed(1)
         QTimer.singleShot(1000, self.update_plot)
         
     def onclick_plot(self,event):
@@ -86,9 +94,12 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         if event.inaxes == self.axes:
             if event.button != 1 and self.fine_sweep_data is not None:
                 sweep_data = self.fine_sweep_data
+                self.selected_sweep = 'fine'
             else:
                 sweep_data = self.sweep_data
+                self.selected_sweep = 'coarse'
             idx = (np.abs(sweep_data.freqs - event.xdata)).argmin()
+            self.selected_idx = idx
             self.axes2.cla()
             NFFT = 2048
             pxx,fr = plt.mlab.psd(sweep_data.blocks[idx].data,Fs=512e6/2**14,NFFT=NFFT,detrend=plt.mlab.detrend_mean)
@@ -105,7 +116,8 @@ class SweepDialog(QDialog,Ui_SweepDialog):
             self.axes2.set_ylabel('dB/Hz')
             self.axes2.set_xlabel('Hz')
             #self.axes2.semilogx(fr[fr>0][0],10*np.log10(pxx[fr==0]), 'o', mew=2)
-            self.canvas.draw()
+            #self.canvas.draw()
+            self.fresh = True
             print idx
         
     def update_plot(self):
@@ -122,10 +134,17 @@ class SweepDialog(QDialog,Ui_SweepDialog):
 #                    self.phline.set_xdata(x)
 #                    self.phline.set_ydata(ph)
                     self.peakline.set_data(self.reslist,resy)
+                    
                 else:
                     self.line, = self.axes.plot(x,y,'bo-',alpha=0.5)
 #                    self.phline, = self.axes.plot(x,ph,'g',alpha=0)
                     self.peakline, = self.axes.plot(self.reslist,resy,'ro')
+                    
+                if self.selected_sweep == 'coarse':
+                    if self.selection_line:
+                        self.selection_line.set_data([x[self.selected_idx]],[y[self.selected_idx]])
+                    else:
+                        self.selection_line, = self.axes.plot([x[self.selected_idx]],[y[self.selected_idx]],'mx',mew=2,markersize=20)
 
                 if self.fine_sweep_data is not None:
                     x = self.fine_sweep_data.freqs
@@ -141,6 +160,12 @@ class SweepDialog(QDialog,Ui_SweepDialog):
                         else:
                             self.line2, = self.axes.plot(x,y,'r.',alpha=0.5)
 #                            self.phline2, = self.axes.plot(x,ph,'k.',alpha=0)
+                    if self.selected_sweep == 'fine':
+                        if self.selection_line:
+                            self.selection_line.set_data([x[self.selected_idx]],[y[self.selected_idx]])
+                        else:
+                            self.selection_line, = self.axes.plot([x[self.selected_idx]],[y[self.selected_idx]],'mx',mew=2,markersize=20)
+
                 self.canvas.draw()
             self.fresh = False
                 
@@ -154,6 +179,17 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         if nsamp < 18:
             nsamp = 18
         self.label_coarse_info.setText("Spacing: %.3f kHz using 2**%d samples" % (substep*1000,nsamp))
+    @pyqtSlot()
+    def onclick_add_resonator(self):
+        if self.selected_idx is not None:
+            if self.selected_sweep == 'coarse':
+                freq = self.sweep_data.freqs[self.selected_idx]
+            else:
+                freq = self.fine_sweep_data.freqs[self.selected_idx]
+        reslist = self.reslist.tolist()
+        bisect.insort(reslist,freq)
+        self.reslist = np.array(reslist)
+        self.refresh_freq_table()
     @pyqtSlot()
     def onclick_save(self):
         if self.logfile:
@@ -215,6 +251,8 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         
     @pyqtSlot()
     def onclick_start_fine_sweep(self):
+        if np.mod(self.reslist.shape[0],4) != 0:
+            print "Number of resonators must be divisible by 4! Add some dummy resonators."
         if self.sweep_thread:
             if self.sweep_thread.is_alive():
                 print "sweep already running"
