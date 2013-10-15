@@ -73,6 +73,7 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         self.line_npoints.textEdited.connect(self.recalc_spacing)
         self.line_span_hz.textEdited.connect(self.recalc_spacing)
         self.tableview_freqs.itemChanged.connect(self.freq_table_item_changed)
+        self.spin_subsweeps.valueChanged.connect(self.onspin_subsweeps_changed)
         
         self.logfile = None
         self.fresh = False
@@ -145,7 +146,14 @@ class SweepDialog(QDialog,Ui_SweepDialog):
                 
         QTimer.singleShot(1000, self.update_plot)
                 
-        
+    @pyqtSlot(int)
+    def onspin_subsweeps_changed(self, val):
+        step = 0.0625*2**self.combo_step_size.currentIndex()
+        substep = step/float(val)
+        nsamp = np.ceil(np.log2(self.ri.fs/substep))
+        if nsamp < 18:
+            nsamp = 18
+        self.label_coarse_info.setText("Spacing: %.3f kHz using 2**%d samples" % (substep*1000,nsamp))
     @pyqtSlot()
     def onclick_save(self):
         if self.logfile:
@@ -182,7 +190,7 @@ class SweepDialog(QDialog,Ui_SweepDialog):
             self.label_spacing.setText(msg)
         else:
             spacing = span/npoint
-            samps = np.ceil(np.log2(self.ri.fs*1e6/spacing))-1
+            samps = np.ceil(np.log2(self.ri.fs*1e6/spacing))
             self.label_spacing.setText("Spacing: %.3f Hz requires 2**%d samples" % (spacing,samps))
     def sweep_callback(self,block):
         self.sweep_data.add_block(block)
@@ -221,8 +229,17 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         start = self.spin_start_freq.value()
         stop = self.spin_stop_freq.value()
         step = 0.0625*2**self.combo_step_size.currentIndex()
-        kid_readout.utils.sweeps.coarse_sweep(self.ri, freqs = np.arange(start,stop+1e-3,step), 
-                                              nsamp = 2**18, nchan_per_step=4, callback=self.sweep_callback, sweep_id=1)
+        nsubstep = self.spin_subsweeps.value()
+        substepspace = step/nsubstep
+        nsamp = np.ceil(np.log2(self.ri.fs/substepspace))
+        if nsamp < 18:
+            nsamp = 18
+        for k in range(nsubstep):
+            print "subsweep",k,"of",nsubstep
+            kid_readout.utils.sweeps.coarse_sweep(self.ri, freqs = np.arange(start,stop+1e-3,step) + k*substepspace, 
+                                                  nsamp = 2**nsamp, nchan_per_step=4, callback=self.sweep_callback, sweep_id=1)
+            if self.abort_requested:
+                break
         if self.logfile:
             name = self.logfile.add_sweep(self.sweep_data)
             self.label_status.setText("saved %s" % name)

@@ -169,6 +169,27 @@
                 </property>
                </spacer>
               </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_11">
+                <item>
+                 <widget class="QLabel" name="label_5">
+                  <property name="text">
+                   <string>Sub-sweeps:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="spin_subsweeps">
+                  <property name="minimum">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <number>200</number>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
              </layout>
             </item>
             <item>
@@ -205,6 +226,13 @@
                  </size>
                 </property>
                </spacer>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_coarse_info">
+                <property name="text">
+                 <string>Spacing:</string>
+                </property>
+               </widget>
               </item>
              </layout>
             </item>
@@ -304,6 +332,13 @@
         <widget class="QLabel" name="label_status">
          <property name="text">
           <string>status</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="push_add_resonator">
+         <property name="text">
+          <string>Add Selected Point</string>
          </property>
         </widget>
        </item>

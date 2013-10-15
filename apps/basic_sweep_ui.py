@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'uis/basic_sweep.ui'
 #
-# Created: Thu Oct 10 21:26:24 2013
+# Created: Tue Oct 15 11:21:02 2013
 #      by: PyQt4 UI code generator 4.8.5
 #
 # WARNING! All changes made in this file will be lost!
@@ -102,6 +102,18 @@ class Ui_SweepDialog(object):
         self.verticalLayout_2.addLayout(self.horizontalLayout_3)
         spacerItem = QtGui.QSpacerItem(20, 0, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.verticalLayout_2.addItem(spacerItem)
+        self.horizontalLayout_11 = QtGui.QHBoxLayout()
+        self.horizontalLayout_11.setObjectName(_fromUtf8("horizontalLayout_11"))
+        self.label_5 = QtGui.QLabel(self.groupBox)
+        self.label_5.setText(QtGui.QApplication.translate("SweepDialog", "Sub-sweeps:", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_5.setObjectName(_fromUtf8("label_5"))
+        self.horizontalLayout_11.addWidget(self.label_5)
+        self.spin_subsweeps = QtGui.QSpinBox(self.groupBox)
+        self.spin_subsweeps.setMinimum(1)
+        self.spin_subsweeps.setMaximum(200)
+        self.spin_subsweeps.setObjectName(_fromUtf8("spin_subsweeps"))
+        self.horizontalLayout_11.addWidget(self.spin_subsweeps)
+        self.verticalLayout_2.addLayout(self.horizontalLayout_11)
         self.horizontalLayout_5.addLayout(self.verticalLayout_2)
         self.verticalLayout = QtGui.QVBoxLayout()
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
@@ -117,6 +129,10 @@ class Ui_SweepDialog(object):
         self.verticalLayout.addWidget(self.push_abort)
         spacerItem1 = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacerItem1)
+        self.label_coarse_info = QtGui.QLabel(self.groupBox)
+        self.label_coarse_info.setText(QtGui.QApplication.translate("SweepDialog", "Spacing:", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_coarse_info.setObjectName(_fromUtf8("label_coarse_info"))
+        self.verticalLayout.addWidget(self.label_coarse_info)
         self.horizontalLayout_5.addLayout(self.verticalLayout)
         self.horizontalLayout_6.addLayout(self.horizontalLayout_5)
         self.verticalLayout_5.addWidget(self.groupBox)
@@ -172,6 +188,10 @@ class Ui_SweepDialog(object):
         self.label_status.setText(QtGui.QApplication.translate("SweepDialog", "status", None, QtGui.QApplication.UnicodeUTF8))
         self.label_status.setObjectName(_fromUtf8("label_status"))
         self.verticalLayout_3.addWidget(self.label_status)
+        self.push_add_resonator = QtGui.QPushButton(SweepDialog)
+        self.push_add_resonator.setText(QtGui.QApplication.translate("SweepDialog", "Add Selected Point", None, QtGui.QApplication.UnicodeUTF8))
+        self.push_add_resonator.setObjectName(_fromUtf8("push_add_resonator"))
+        self.verticalLayout_3.addWidget(self.push_add_resonator)
         self.tableview_freqs = QtGui.QTableWidget(SweepDialog)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
