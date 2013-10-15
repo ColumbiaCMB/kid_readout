@@ -51,7 +51,7 @@ class DataFile():
         x,y = ri.get_raw_adc()
         self.adc_snaps_epoch[idx] = t0
         self.adc_snaps_data[idx,0,:] = x
-        self.adc_snaps_data[idx,1,:] = x
+        self.adc_snaps_data[idx,1,:] = y
 
     def add_sweep(self, sweep_data):
         name = time.strftime('sweep_%Y%m%d%H%M%S')
