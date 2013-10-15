@@ -76,7 +76,15 @@ class DataFile():
         
         blocks = sweep_data.blocks
         blen = blocks[0].data.shape[0]
-        data[:] = np.concatenate([x.data[None,:blen] for x in blocks],axis=0).astype('complex128').view(self.c128)
+        blocklist = []
+        for blk in blocks:
+            if blk.data.shape[0] >= blen:
+                blocklist.append(blk.data[None,:blen])
+            else:
+                newblk = np.zeros((1,blen),dtype=blk.data.dtype)
+                newblk[0,:blk.data.shape[0]] = blk.data[:]
+                blocklist.append(newblk)
+        data[:] = np.concatenate(blocklist,axis=0).astype('complex128').view(self.c128)
         fs[:] = np.array([x.fs for x in blocks])
         t0[:] = np.array([x.t0 for x in blocks])
         tone[:] = np.array([x.tone for x in blocks])
