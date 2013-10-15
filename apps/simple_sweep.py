@@ -274,8 +274,12 @@ class SweepDialog(QDialog,Ui_SweepDialog):
             nsamp = 18
         for k in range(nsubstep):
             print "subsweep",k,"of",nsubstep
+            if self.logfile:
+                self.logfile.log_hw_state(self.ri)
             kid_readout.utils.sweeps.coarse_sweep(self.ri, freqs = np.arange(start,stop+1e-3,step) + k*substepspace, 
                                                   nsamp = 2**nsamp, nchan_per_step=4, callback=self.sweep_callback, sweep_id=1)
+            if self.logfile:
+                self.logfile.log_adc_snap(self.ri)
             if self.abort_requested:
                 break
         if self.logfile:
@@ -301,8 +305,12 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         flist = self.reslist
         offsets = np.linspace(-width/2,width/2,npts)
         for k,offs in enumerate(offsets):
+            if self.logfile:
+                self.logfile.log_hw_state(self.ri)            
             kid_readout.utils.sweeps.coarse_sweep(self.ri, freqs = flist+offs, 
                                               nsamp = 2**samps, callback=self.fine_sweep_callback, sweep_id=2)
+            if self.logfile:
+                self.logfile.log_adc_snap(self.ri)
         if self.logfile:
             name = self.logfile.add_sweep(self.fine_sweep_data)
             self.label_status.setText("saved %s" % name)
