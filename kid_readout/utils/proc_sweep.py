@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 
 def extract_fine_sweeps(fr,s21):
     deltas = np.diff(fr)
-    ends = np.concatenate(([0],np.where(deltas>0.01)[0],[fr.shape[0]-1]))
+    ends = np.concatenate(([0],np.where(deltas>0.01)[0]+1,[fr.shape[0]]))
     nres = len(ends)-1
     ptsperres = np.ceil(len(fr)/float(nres))
     frout = np.zeros((nres,ptsperres))
