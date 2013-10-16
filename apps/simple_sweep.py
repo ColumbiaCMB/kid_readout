@@ -67,7 +67,22 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         self.abort_requested = False
         self.sweep_thread = None
         
-        self.reslist = np.array([20.0,49.998,137.8,139.9,153.322,165.123,169.33,171.11])
+        self.reslist = np.array([92.94,
+                         96.31,
+                         101.546,
+                         117.195,
+                         121.35,
+                         130.585,
+                         133.436,
+                         148.238,
+                         148.696,
+                         148.867,
+                         149.202,
+                         159.572,
+                         167.97,
+                         172.93,
+                         176.645,
+                         178.764])
         self.setup_freq_table()
         
         
