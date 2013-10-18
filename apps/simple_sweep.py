@@ -141,6 +141,8 @@ class SweepDialog(QDialog,Ui_SweepDialog):
             y = 20*np.log10(np.abs(self.sweep_data.data))
             ph = self.sweep_data.data[:]
             if len(x) == len(y) and len(x) == len(ph):
+                if self.selected_idx >= len(x):
+                    self.selected_idx = 0
                 resy = np.interp(self.reslist, x, y)
                 ph = np.angle(ph*np.exp(-1j*x*398.15))
                 if self.line:
