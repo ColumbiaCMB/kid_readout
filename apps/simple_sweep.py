@@ -56,6 +56,8 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         self.peakline = None
         self.psd_text = None
         self.selection_line = None
+        self.sweep_data = None
+        self.fine_sweep_data = None
         
         self.selected_sweep = 'coarse'
         self.selected_idx = 0
@@ -95,6 +97,7 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         self.tableview_freqs.itemChanged.connect(self.freq_table_item_changed)
         self.spin_subsweeps.valueChanged.connect(self.onspin_subsweeps_changed)
         self.push_add_resonator.clicked.connect(self.onclick_add_resonator)
+        self.push_clear_all.clicked.connect(self.onclick_clear_all)
         
         self.logfile = None
         self.fresh = False
@@ -136,14 +139,17 @@ class SweepDialog(QDialog,Ui_SweepDialog):
             print idx
         
     def update_plot(self):
-        if self.fresh:
+        if self.fresh and (self.sweep_data is not None or self.fine_sweep_data is not None):
             x = self.sweep_data.freqs
             y = 20*np.log10(np.abs(self.sweep_data.data))
             ph = self.sweep_data.data[:]
-            if len(x) == len(y) and len(x) == len(ph):
+            if len(x) >0 and len(x) == len(y) and len(x) == len(ph):
                 if self.selected_idx >= len(x):
                     self.selected_idx = 0
-                resy = np.interp(self.reslist, x, y)
+                if len(self.reslist):
+                    resy = np.interp(self.reslist, x, y)
+                else:
+                    resy = np.zeros((0,))
                 ph = np.angle(ph*np.exp(-1j*x*398.15))
                 if self.line:
                     self.line.set_xdata(x)
@@ -153,7 +159,7 @@ class SweepDialog(QDialog,Ui_SweepDialog):
                     self.peakline.set_data(self.reslist,resy)
                     
                 else:
-                    self.line, = self.axes.plot(x,y,'bo-',alpha=0.5)
+                    self.line, = self.axes.plot(x,y,'b.-',alpha=0.5)
 #                    self.phline, = self.axes.plot(x,ph,'g',alpha=0)
                     self.peakline, = self.axes.plot(self.reslist,resy,'ro')
                     
@@ -206,6 +212,11 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         reslist = self.reslist.tolist()
         bisect.insort(reslist,freq)
         self.reslist = np.array(reslist)
+        self.refresh_freq_table()
+        
+    @pyqtSlot()
+    def onclick_clear_all(self):
+        self.reslist = np.array([])
         self.refresh_freq_table()
     @pyqtSlot()
     def onclick_save(self):

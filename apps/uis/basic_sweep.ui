@@ -31,7 +31,7 @@
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_9">
+    <layout class="QHBoxLayout" name="horizontalLayout_12">
      <item>
       <layout class="QVBoxLayout" name="verticalLayout_5">
        <item>
@@ -197,7 +197,7 @@
               <item>
                <widget class="QPushButton" name="push_start_sweep">
                 <property name="text">
-                 <string>Start Sweep</string>
+                 <string>Start Coarse Sweep</string>
                 </property>
                 <property name="autoDefault">
                  <bool>false</bool>
@@ -205,14 +205,34 @@
                </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="push_abort">
-                <property name="text">
-                 <string>Abort</string>
-                </property>
-                <property name="autoDefault">
-                 <bool>false</bool>
-                </property>
-               </widget>
+               <layout class="QHBoxLayout" name="horizontalLayout_13">
+                <item>
+                 <widget class="QLabel" name="label_7">
+                  <property name="text">
+                   <string>Not working yet:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="doubleSpinBox">
+                  <property name="suffix">
+                   <string> dBm/tone</string>
+                  </property>
+                  <property name="decimals">
+                   <number>1</number>
+                  </property>
+                  <property name="minimum">
+                   <double>-50.000000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>0.000000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.500000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
               </item>
               <item>
                <spacer name="verticalSpacer">
@@ -231,6 +251,16 @@
                <widget class="QLabel" name="label_coarse_info">
                 <property name="text">
                  <string>Spacing:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="push_abort">
+                <property name="text">
+                 <string>Abort Sweep</string>
+                </property>
+                <property name="autoDefault">
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -299,7 +329,7 @@
             <item>
              <widget class="QPushButton" name="push_start_fine_sweep">
               <property name="text">
-               <string>Start Sweep</string>
+               <string>Start Fine Sweep</string>
               </property>
               <property name="autoDefault">
                <bool>false</bool>
@@ -336,11 +366,25 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="push_add_resonator">
-         <property name="text">
-          <string>Add Selected Point</string>
-         </property>
-        </widget>
+        <layout class="QHBoxLayout" name="horizontalLayout_9">
+         <item>
+          <widget class="QPushButton" name="push_add_resonator">
+           <property name="text">
+            <string>Add Selected Point</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="push_clear_all">
+           <property name="text">
+            <string>Clear All</string>
+           </property>
+           <property name="autoDefault">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QTableWidget" name="tableview_freqs">
