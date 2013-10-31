@@ -29,7 +29,6 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         super(SweepDialog, self).__init__(parent)
         self.__app = qApp
         self.setupUi(self)
-        
         self.dpi = 72
         self.fig = Figure((9.1, 5.2), dpi=self.dpi)
 #        self.fig = Figure(dpi=self.dpi)
@@ -375,7 +374,16 @@ def main():
     app.quitOnLastWindowClosed = True
     form = SweepDialog(app)
     form.setAttribute(Qt.WA_QuitOnClose)
-    form.setAttribute(Qt.WA_DeleteOnClose)    
+    form.setAttribute(Qt.WA_DeleteOnClose)
+    try:
+        from kid_readout.utils.borph_utils import check_output
+        cmd = ('git log -1 --pretty=format:"%%ci" %s' % __file__)
+#        print cmd
+        dcode = check_output(cmd, shell=True)
+    except:
+        dcode = ''
+    form.setWindowTitle("KIDleidoscope %s" % dcode)
+    
     form.show()
 #    form.raise_()
 #    app.connect(form, SIGNAL('closeApplication'), sys.exit)#app.exit)
