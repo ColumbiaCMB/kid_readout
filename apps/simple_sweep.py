@@ -109,6 +109,7 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         self.spin_subsweeps.valueChanged.connect(self.onspin_subsweeps_changed)
         self.push_add_resonator.clicked.connect(self.onclick_add_resonator)
         self.push_clear_all.clicked.connect(self.onclick_clear_all)
+        self.check_use_cal.stateChanged.connect(self.oncheck_use_cal)
         
         self.logfile = None
         self.fresh = False
@@ -155,6 +156,7 @@ class SweepDialog(QDialog,Ui_SweepDialog):
             y = self.sweep_data.data
             if self.check_use_cal.isChecked():
                 cal = np.interp(x,self.cal_freq,self.cal_mag)
+                cal *= 10**(-(self.ri.adc_atten+self.ri.dac_atten-31)/20.0)
             else:
                 cal = 1.0
             ph = self.sweep_data.data[:]
@@ -187,9 +189,15 @@ class SweepDialog(QDialog,Ui_SweepDialog):
 
                 if self.fine_sweep_data is not None:
                     x = self.fine_sweep_data.freqs
-                    y = 20*np.log10(np.abs(self.fine_sweep_data.data))
+                    y = self.fine_sweep_data.data
                     ph = self.fine_sweep_data.data[:]
                     if len(x) == len(y) and len(x) == len(ph):
+                        if self.check_use_cal.isChecked():
+                            cal = np.interp(x,self.cal_freq,self.cal_mag)
+                            cal *= 10**(-(self.ri.adc_atten+self.ri.dac_atten-31)/20.0)
+                        else:
+                            cal = 1.0
+                        y = 20*np.log10(np.abs(y/cal))
                         ph = np.angle(ph*np.exp(-1j*x*398.15))
                         if self.line2:
                             self.line2.set_xdata(x)
@@ -209,6 +217,10 @@ class SweepDialog(QDialog,Ui_SweepDialog):
             self.fresh = False
                 
         QTimer.singleShot(1000, self.update_plot)
+        
+    @pyqtSlot(int)
+    def oncheck_use_cal(self,val):
+        self.fresh = True
                 
     @pyqtSlot(int)
     def onspin_subsweeps_changed(self, val):
