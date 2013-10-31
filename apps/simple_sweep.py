@@ -48,6 +48,18 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         self.mpl_toolbar = NavigationToolbar(self.canvas,self.plot_group_box) #self.adc_plot_box)
         self.plot_layout.addWidget(self.mpl_toolbar)
         
+        self.cal_freq=np.arange(256)
+        self.cal_mag = np.ones((256,))
+        self.cal_phase = np.zeros((256,))
+        
+        try:
+            cdata = np.load('lbcal1.npz')
+            self.cal_freq = cdata['freq']
+            self.cal_mag = cdata['mag']
+            self.cal_phase = cdata['phase']
+        except Exception, e:
+            print "cal data could not be loaded",e
+            
         self.line = None
         self.phline = None
         self.line2 = None
@@ -140,9 +152,14 @@ class SweepDialog(QDialog,Ui_SweepDialog):
     def update_plot(self):
         if self.fresh and (self.sweep_data is not None or self.fine_sweep_data is not None):
             x = self.sweep_data.freqs
-            y = 20*np.log10(np.abs(self.sweep_data.data))
+            y = self.sweep_data.data
+            if self.check_use_cal.isChecked():
+                cal = np.interp(x,self.cal_freq,self.cal_mag)
+            else:
+                cal = 1.0
             ph = self.sweep_data.data[:]
             if len(x) >0 and len(x) == len(y) and len(x) == len(ph):
+                y = 20*np.log10(np.abs(y/cal))
                 if self.selected_idx >= len(x):
                     self.selected_idx = 0
                 if len(self.reslist):
