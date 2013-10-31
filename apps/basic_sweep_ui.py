@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'uis/basic_sweep.ui'
 #
-# Created: Thu Oct 31 14:35:30 2013
+# Created: Thu Oct 31 14:42:42 2013
 #      by: PyQt4 UI code generator 4.8.5
 #
 # WARNING! All changes made in this file will be lost!
@@ -102,6 +102,18 @@ class Ui_SweepDialog(object):
         self.combo_step_size.setItemText(4, QtGui.QApplication.translate("SweepDialog", "1.00 MHz", None, QtGui.QApplication.UnicodeUTF8))
         self.horizontalLayout_3.addWidget(self.combo_step_size)
         self.verticalLayout_2.addLayout(self.horizontalLayout_3)
+        self.horizontalLayout_11 = QtGui.QHBoxLayout()
+        self.horizontalLayout_11.setObjectName(_fromUtf8("horizontalLayout_11"))
+        self.label_5 = QtGui.QLabel(self.groupBox)
+        self.label_5.setText(QtGui.QApplication.translate("SweepDialog", "Sub-sweeps:", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_5.setObjectName(_fromUtf8("label_5"))
+        self.horizontalLayout_11.addWidget(self.label_5)
+        self.spin_subsweeps = QtGui.QSpinBox(self.groupBox)
+        self.spin_subsweeps.setMinimum(1)
+        self.spin_subsweeps.setMaximum(200)
+        self.spin_subsweeps.setObjectName(_fromUtf8("spin_subsweeps"))
+        self.horizontalLayout_11.addWidget(self.spin_subsweeps)
+        self.verticalLayout_2.addLayout(self.horizontalLayout_11)
         self.push_start_sweep = QtGui.QPushButton(self.groupBox)
         self.push_start_sweep.setText(QtGui.QApplication.translate("SweepDialog", "Start Coarse Sweep", None, QtGui.QApplication.UnicodeUTF8))
         self.push_start_sweep.setAutoDefault(False)
@@ -133,18 +145,6 @@ class Ui_SweepDialog(object):
         self.verticalLayout_2.addWidget(self.label_coarse_info)
         spacerItem = QtGui.QSpacerItem(20, 0, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.verticalLayout_2.addItem(spacerItem)
-        self.horizontalLayout_11 = QtGui.QHBoxLayout()
-        self.horizontalLayout_11.setObjectName(_fromUtf8("horizontalLayout_11"))
-        self.label_5 = QtGui.QLabel(self.groupBox)
-        self.label_5.setText(QtGui.QApplication.translate("SweepDialog", "Sub-sweeps:", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_5.setObjectName(_fromUtf8("label_5"))
-        self.horizontalLayout_11.addWidget(self.label_5)
-        self.spin_subsweeps = QtGui.QSpinBox(self.groupBox)
-        self.spin_subsweeps.setMinimum(1)
-        self.spin_subsweeps.setMaximum(200)
-        self.spin_subsweeps.setObjectName(_fromUtf8("spin_subsweeps"))
-        self.horizontalLayout_11.addWidget(self.spin_subsweeps)
-        self.verticalLayout_2.addLayout(self.horizontalLayout_11)
         self.horizontalLayout_5.addLayout(self.verticalLayout_2)
         self.horizontalLayout_6.addLayout(self.horizontalLayout_5)
         self.verticalLayout_5.addWidget(self.groupBox)
@@ -188,6 +188,11 @@ class Ui_SweepDialog(object):
         self.verticalLayout_7.addWidget(self.push_start_fine_sweep)
         self.horizontalLayout_10.addLayout(self.verticalLayout_7)
         self.verticalLayout_5.addWidget(self.groupBox_2)
+        self.check_use_cal = QtGui.QCheckBox(SweepDialog)
+        self.check_use_cal.setText(QtGui.QApplication.translate("SweepDialog", "Use Calibration", None, QtGui.QApplication.UnicodeUTF8))
+        self.check_use_cal.setChecked(True)
+        self.check_use_cal.setObjectName(_fromUtf8("check_use_cal"))
+        self.verticalLayout_5.addWidget(self.check_use_cal)
         self.horizontalLayout_12.addLayout(self.verticalLayout_5)
         self.verticalLayout_3 = QtGui.QVBoxLayout()
         self.verticalLayout_3.setObjectName(_fromUtf8("verticalLayout_3"))
