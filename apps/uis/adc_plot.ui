@@ -165,7 +165,7 @@
       <widget class="QLineEdit" name="line_tone_freq"/>
      </item>
      <item>
-      <widget class="QCheckBox" name="checkBox">
+      <widget class="QCheckBox" name="check_demod">
        <property name="text">
         <string>demodulate</string>
        </property>
