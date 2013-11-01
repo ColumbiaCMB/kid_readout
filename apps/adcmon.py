@@ -42,6 +42,8 @@ class AdcPlotDialog(QDialog,Ui_AdcPlotDialog):
         self.line3 = None
         self.line4 = None
         
+        self.pause_update = False
+        
         self.ri = kid_readout.utils.roach_interface.RoachBaseband()
         self.ri.set_tone_freqs(np.array([111.111]),nsamp=2**18)
         
@@ -50,10 +52,17 @@ class AdcPlotDialog(QDialog,Ui_AdcPlotDialog):
         self.push_apply_atten.clicked.connect(self.apply_atten)
         QTimer.singleShot(1000, self.update_all)
  
+    @pyqtSlot()
+    def onpush_set_tone(self):
+        frq = float(self.line_tone_freq.text())
+        self.pause_update = True
+        self.ri.set_tone_freqs(np.array([frq]),nsamp=2**18)
+        self.pause_update = False
     @pyqtSlot()       
     def apply_atten(self):
         self.on_adc_atten()
         self.on_dac_atten()
+        self.ri.set_fft_gain(int(self.spin_fft_gain.value()))
     @pyqtSlot()
     def on_adc_atten(self):
         val = self.adc_atten_spin.value()
@@ -66,7 +75,8 @@ class AdcPlotDialog(QDialog,Ui_AdcPlotDialog):
             
     def update_all(self):
         tic = time.time()
-        self.plot_adc()
+        if not self.pause_update:
+            self.plot_adc()
         self.status_label.setText("%.3f" % (time.time()-tic))
         QTimer.singleShot(1000, self.update_all)
         
