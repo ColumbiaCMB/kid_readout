@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'uis/adc_plot.ui'
 #
-# Created: Fri Nov  1 13:05:12 2013
+# Created: Fri Nov  1 13:16:16 2013
 #      by: PyQt4 UI code generator 4.8.5
 #
 # WARNING! All changes made in this file will be lost!
@@ -96,6 +96,10 @@ class Ui_AdcPlotDialog(object):
         self.line_tone_freq = QtGui.QLineEdit(AdcPlotDialog)
         self.line_tone_freq.setObjectName(_fromUtf8("line_tone_freq"))
         self.horizontalLayout_3.addWidget(self.line_tone_freq)
+        self.checkBox = QtGui.QCheckBox(AdcPlotDialog)
+        self.checkBox.setText(QtGui.QApplication.translate("AdcPlotDialog", "demodulate", None, QtGui.QApplication.UnicodeUTF8))
+        self.checkBox.setObjectName(_fromUtf8("checkBox"))
+        self.horizontalLayout_3.addWidget(self.checkBox)
         spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_3.addItem(spacerItem1)
         self.verticalLayout.addLayout(self.horizontalLayout_3)
