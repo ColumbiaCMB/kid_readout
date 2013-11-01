@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'uis/adc_plot.ui'
 #
-# Created: Wed Oct  9 14:39:00 2013
+# Created: Fri Nov  1 13:05:12 2013
 #      by: PyQt4 UI code generator 4.8.5
 #
 # WARNING! All changes made in this file will be lost!
@@ -74,12 +74,30 @@ class Ui_AdcPlotDialog(object):
         self.dac_atten_spin.setObjectName(_fromUtf8("dac_atten_spin"))
         self.horizontalLayout_2.addWidget(self.dac_atten_spin)
         self.horizontalLayout_3.addLayout(self.horizontalLayout_2)
+        self.label_3 = QtGui.QLabel(AdcPlotDialog)
+        self.label_3.setText(QtGui.QApplication.translate("AdcPlotDialog", "FFT gain", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_3.setObjectName(_fromUtf8("label_3"))
+        self.horizontalLayout_3.addWidget(self.label_3)
+        self.spin_fft_gain = QtGui.QSpinBox(AdcPlotDialog)
+        self.spin_fft_gain.setMaximum(16)
+        self.spin_fft_gain.setProperty("value", 1)
+        self.spin_fft_gain.setObjectName(_fromUtf8("spin_fft_gain"))
+        self.horizontalLayout_3.addWidget(self.spin_fft_gain)
         self.push_apply_atten = QtGui.QPushButton(AdcPlotDialog)
         self.push_apply_atten.setText(QtGui.QApplication.translate("AdcPlotDialog", "Apply", None, QtGui.QApplication.UnicodeUTF8))
         self.push_apply_atten.setObjectName(_fromUtf8("push_apply_atten"))
         self.horizontalLayout_3.addWidget(self.push_apply_atten)
         spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_3.addItem(spacerItem)
+        self.push_tone = QtGui.QPushButton(AdcPlotDialog)
+        self.push_tone.setText(QtGui.QApplication.translate("AdcPlotDialog", "set Tone:", None, QtGui.QApplication.UnicodeUTF8))
+        self.push_tone.setObjectName(_fromUtf8("push_tone"))
+        self.horizontalLayout_3.addWidget(self.push_tone)
+        self.line_tone_freq = QtGui.QLineEdit(AdcPlotDialog)
+        self.line_tone_freq.setObjectName(_fromUtf8("line_tone_freq"))
+        self.horizontalLayout_3.addWidget(self.line_tone_freq)
+        spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.horizontalLayout_3.addItem(spacerItem1)
         self.verticalLayout.addLayout(self.horizontalLayout_3)
 
         self.retranslateUi(AdcPlotDialog)
