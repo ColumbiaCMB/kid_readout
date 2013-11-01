@@ -29,17 +29,21 @@ class AdcPlotDialog(QDialog,Ui_AdcPlotDialog):
         self.canvas.setParent(self)
         self.verticalLayout.insertWidget(0,self.canvas)
         self.canvas.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
-        self.axes = self.fig.add_subplot(211)
-        self.axes2 = self.fig.add_subplot(212)
+        self.axes = self.fig.add_subplot(221)
+        self.axes2 = self.fig.add_subplot(222)
+        self.axes3 = self.fig.add_subplot(223)
+        self.axes4 = self.fig.add_subplot(224)
         # Use matplotlib event handler
 #        self.canvas.mpl_connect('button_press_event', self.onclick)
         self.mpl_toolbar = NavigationToolbar(self.canvas,self.navbar) #self.adc_plot_box)
         
         self.line = None
         self.line2 = None
+        self.line3 = None
+        self.line4 = None
         
         self.ri = kid_readout.utils.roach_interface.RoachBaseband()
-        
+        self.ri.set_tone_freqs(np.array([111.111]),nsamp=2**18)
         
 #        self.adc_atten_spin.editingFinished.connect(self.on_adc_atten)
 #        self.dac_atten_spin.editingFinished.connect(self.on_dac_atten)
@@ -72,20 +76,32 @@ class AdcPlotDialog(QDialog,Ui_AdcPlotDialog):
         fr = fr/1e6
         pxx = 10*np.log10(pxx)
         t = np.arange(len(x))/self.ri.fs
+        d,addr = self.ri.get_data(2,demod=False)
+        print d.shape
+        dpxx,dfr = matplotlib.mlab.psd(d[:,0],NFFT=1024,Fs=self.ri.fs*1e6/2.**15,scale_by_freq=True)
+        dpxx = 10*np.log10(dpxx)
         if self.line:
 #            xlim = self.axes.get_xlim()
 #            ylim = self.axes.get_ylim()
             self.line.set_xdata(fr)
             self.line.set_ydata(pxx)
             self.line2.set_ydata(x)
+            self.line3.set_data(d[:,0].real,d[:,0].imag)
+            self.line4.set_ydata(dpxx)
         else:
             self.line, = self.axes.plot(fr,pxx)
             self.line2, = self.axes2.plot(t,x)
+            self.line3, = self.axes3.plot(d[:,0].real,d[:,0].imag,',')
+            self.line4, = self.axes4.plot(dfr,dpxx)
             self.axes.set_xlabel('MHz')
             self.axes.set_ylabel('dB/Hz')
             self.axes.grid(True)
             self.axes2.set_xlabel('$\mu$s')
             self.axes2.set_xlim(0,1.0)
+            self.axes4.set_xlabel('Hz')
+            self.axes4.set_ylabel('dB/Hz')
+            self.axes3.set_xlim(-2.**15,2**15)
+            self.axes3.set_ylim(-2.**15,2**15)
 
         self.canvas.draw()
     

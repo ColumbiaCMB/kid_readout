@@ -110,6 +110,8 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         self.push_add_resonator.clicked.connect(self.onclick_add_resonator)
         self.push_clear_all.clicked.connect(self.onclick_clear_all)
         self.check_use_cal.stateChanged.connect(self.oncheck_use_cal)
+        self.push_save_res.clicked.connect(self.onclick_save_res)
+        self.push_load_res.clicked.connect(self.onclick_load_res)
         
         self.logfile = None
         self.fresh = False
@@ -162,8 +164,6 @@ class SweepDialog(QDialog,Ui_SweepDialog):
             ph = self.sweep_data.data[:]
             if len(x) >0 and len(x) == len(y) and len(x) == len(ph):
                 y = 20*np.log10(np.abs(y/cal))
-                if self.selected_idx >= len(x):
-                    self.selected_idx = 0
                 if len(self.reslist):
                     resy = np.interp(self.reslist, x, y)
                 else:
@@ -182,6 +182,8 @@ class SweepDialog(QDialog,Ui_SweepDialog):
                     self.peakline, = self.axes.plot(self.reslist,resy,'ro')
                     
                 if self.selected_sweep == 'coarse':
+                    if self.selected_idx >= len(x):
+                        self.selected_idx = 0
                     if self.selection_line:
                         self.selection_line.set_data([x[self.selected_idx]],[y[self.selected_idx]])
                     else:
@@ -208,6 +210,9 @@ class SweepDialog(QDialog,Ui_SweepDialog):
                             self.line2, = self.axes.plot(x,y,'r.',alpha=0.5)
 #                            self.phline2, = self.axes.plot(x,ph,'k.',alpha=0)
                     if self.selected_sweep == 'fine':
+                        if self.selected_idx >= len(x):
+                            self.selected_idx = 0
+
                         if self.selection_line:
                             self.selection_line.set_data([x[self.selected_idx]],[y[self.selected_idx]])
                         else:
@@ -242,6 +247,19 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         self.reslist = np.array(reslist)
         self.refresh_freq_table()
         
+    @pyqtSlot()
+    def onclick_save_res(self):
+        fname = str(QFileDialog.getSaveFileName(self, "Save resonators as:",".", "Numpy (*.npy)"))
+        np.save(fname,self.reslist)
+    
+    @pyqtSlot()
+    def onclick_load_res(self):
+        fname = str(QFileDialog.getOpenFileName(self, "Load resonators from:",".", "Numpy (*.npy)"))
+        if fname:
+            reslist = np.load(fname)
+            self.reslist = reslist
+            self.refresh_freq_table()
+            
     @pyqtSlot()
     def onclick_clear_all(self):
         self.reslist = np.array([])
