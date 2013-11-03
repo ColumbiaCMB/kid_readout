@@ -305,12 +305,14 @@ class SweepDialog(QDialog,Ui_SweepDialog):
     def sweep_callback(self,block):
         self.sweep_data.add_block(block)
         self.fresh = True
+        self.progress_sweep.setValue(int(block.progress*100))
 #        print "currently have freqs", self.sweep_data.freqs
         return self.abort_requested
     
     def fine_sweep_callback(self,block):
         self.fine_sweep_data.add_block(block)
         self.fresh = True
+        self.progress_sweep.setValue(int(block.progress*100))
         return self.abort_requested
     
     @pyqtSlot()
