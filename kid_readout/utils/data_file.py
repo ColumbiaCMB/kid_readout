@@ -65,8 +65,10 @@ class DataFile():
         swg.createDimension('frequency',None)
         freq = swg.createVariable('frequency',np.float64,('frequency',))
         s21 = swg.createVariable('s21',self.cdf128,('frequency',))
+        index = swg.createVariable('index',np.int32,('frequency',))
         freq[:] = sweep_data.freqs
         s21[:] = sweep_data.data.astype('complex128').view(self.c128)
+        index[:] = sweep_data.sweep_indexes
         
         dbg = swg.createGroup('datablocks')
         dbg.createDimension('epoch',None)
@@ -79,6 +81,7 @@ class DataFile():
         dt = dbg.createVariable('dt',np.float64,('epoch',))
         fs = dbg.createVariable('fs',np.float64,('epoch',))
         data = dbg.createVariable('data',self.cdf128,('epoch','sample'))
+        sweep_index = dbg.createVariable('sweep_index',np.int32,('epoch'))
         
         blocks = sweep_data.blocks
         blen = blocks[0].data.shape[0]
@@ -98,6 +101,7 @@ class DataFile():
         nsamp[:] = np.array([x.nsamp for x in blocks])
         dt[:] = np.array([x.dt for x in blocks])
         fftbin[:] = np.array([x.fftbin for x in blocks])
+        sweep_index[:] = np.array([x.sweep_index for x in blocks])
         
         return name
         
