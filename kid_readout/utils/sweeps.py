@@ -61,6 +61,7 @@ def coarse_sweep(ri,freqs=np.linspace(10,200,384),nsamp=2**15,nchan_per_step=4,r
         for m in range(len(chids)):
             block = DataBlock(data = dmod[:,m], tone=tones[m], fftbin = chids[m], 
                      nsamp = nsamp, nfft = ri.nfft, t0 = time.time(), fs = ri.fs, sweep_index=selection[m])
+            block.progress = (k+1)/float(nstep)
             data.add_block(block)
             if callback:
                 abort = callback(block)

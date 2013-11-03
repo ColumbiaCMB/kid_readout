@@ -72,6 +72,9 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         
         self.selected_sweep = 'coarse'
         self.selected_idx = 0
+        self.progress_value = 0
+        self.total_subsweeps = 1
+        self.current_subsweep = 0
         
         self.ri = kid_readout.utils.roach_interface.RoachBaseband()
         self.ri.set_adc_attenuator(31)
@@ -97,7 +100,6 @@ class SweepDialog(QDialog,Ui_SweepDialog):
                          176.645,
                          178.764])
         self.setup_freq_table()
-        
         
         self.push_abort.clicked.connect(self.onclick_abort)
         self.push_start_sweep.clicked.connect(self.onclick_start_sweep)
@@ -221,6 +223,7 @@ class SweepDialog(QDialog,Ui_SweepDialog):
                 self.canvas.draw()
             self.fresh = False
                 
+        self.progress_sweep.setValue(int(self.progress_value*100))
         QTimer.singleShot(1000, self.update_plot)
         
     @pyqtSlot(int)
@@ -305,14 +308,14 @@ class SweepDialog(QDialog,Ui_SweepDialog):
     def sweep_callback(self,block):
         self.sweep_data.add_block(block)
         self.fresh = True
-        self.progress_sweep.setValue(int(block.progress*100))
+        self.progress_value = (block.progress + self.current_subsweep)/float(self.total_subsweeps)
 #        print "currently have freqs", self.sweep_data.freqs
         return self.abort_requested
     
     def fine_sweep_callback(self,block):
         self.fine_sweep_data.add_block(block)
         self.fresh = True
-        self.progress_sweep.setValue(int(block.progress*100))
+        self.progress_value = (block.progress + self.current_subsweep)/float(self.total_subsweeps)
         return self.abort_requested
     
     @pyqtSlot()
@@ -348,7 +351,9 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         nsamp = np.ceil(np.log2(self.ri.fs/substepspace))
         if nsamp < 18:
             nsamp = 18
+        self.total_subsweeps = nsubstep
         for k in range(nsubstep):
+            self.current_subsweep = k
             print "subsweep",k,"of",nsubstep
             if self.logfile:
                 self.logfile.log_hw_state(self.ri)
@@ -380,7 +385,9 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         print samps
         flist = self.reslist
         offsets = np.linspace(-width/2,width/2,npts)
+        self.total_subsweeps = len(offsets)
         for k,offs in enumerate(offsets):
+            self.current_subsweep = k
             if self.logfile:
                 self.logfile.log_hw_state(self.ri)            
             kid_readout.utils.sweeps.coarse_sweep(self.ri, freqs = flist+offs, 
