@@ -322,7 +322,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QDoubleSpinBox" name="doubleSpinBox">
+            <widget class="QDoubleSpinBox" name="spin_dbm_per_tone">
              <property name="suffix">
               <string> dBm/tone</string>
              </property>

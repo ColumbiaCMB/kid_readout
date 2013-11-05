@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'uis/basic_sweep.ui'
 #
-# Created: Tue Nov  5 12:37:16 2013
+# Created: Tue Nov  5 12:43:56 2013
 #      by: PyQt4 UI code generator 4.8.5
 #
 # WARNING! All changes made in this file will be lost!
@@ -189,14 +189,14 @@ class Ui_SweepDialog(object):
         self.label_7.setText(QtGui.QApplication.translate("SweepDialog", "Not working yet:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_7.setObjectName(_fromUtf8("label_7"))
         self.horizontalLayout_13.addWidget(self.label_7)
-        self.doubleSpinBox = QtGui.QDoubleSpinBox(SweepDialog)
-        self.doubleSpinBox.setSuffix(QtGui.QApplication.translate("SweepDialog", " dBm/tone", None, QtGui.QApplication.UnicodeUTF8))
-        self.doubleSpinBox.setDecimals(1)
-        self.doubleSpinBox.setMinimum(-50.0)
-        self.doubleSpinBox.setMaximum(0.0)
-        self.doubleSpinBox.setSingleStep(0.5)
-        self.doubleSpinBox.setObjectName(_fromUtf8("doubleSpinBox"))
-        self.horizontalLayout_13.addWidget(self.doubleSpinBox)
+        self.spin_dbm_per_tone = QtGui.QDoubleSpinBox(SweepDialog)
+        self.spin_dbm_per_tone.setSuffix(QtGui.QApplication.translate("SweepDialog", " dBm/tone", None, QtGui.QApplication.UnicodeUTF8))
+        self.spin_dbm_per_tone.setDecimals(1)
+        self.spin_dbm_per_tone.setMinimum(-50.0)
+        self.spin_dbm_per_tone.setMaximum(0.0)
+        self.spin_dbm_per_tone.setSingleStep(0.5)
+        self.spin_dbm_per_tone.setObjectName(_fromUtf8("spin_dbm_per_tone"))
+        self.horizontalLayout_13.addWidget(self.spin_dbm_per_tone)
         self.verticalLayout_3.addLayout(self.horizontalLayout_13)
         self.horizontalLayout_14 = QtGui.QHBoxLayout()
         self.horizontalLayout_14.setObjectName(_fromUtf8("horizontalLayout_14"))
