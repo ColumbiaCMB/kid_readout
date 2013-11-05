@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'uis/basic_sweep.ui'
 #
-# Created: Tue Nov  5 11:12:38 2013
+# Created: Tue Nov  5 12:37:16 2013
 #      by: PyQt4 UI code generator 4.8.5
 #
 # WARNING! All changes made in this file will be lost!
@@ -216,6 +216,25 @@ class Ui_SweepDialog(object):
         self.line_dac_gain.setObjectName(_fromUtf8("line_dac_gain"))
         self.horizontalLayout_14.addWidget(self.line_dac_gain)
         self.verticalLayout_3.addLayout(self.horizontalLayout_14)
+        self.horizontalLayout_18 = QtGui.QHBoxLayout()
+        self.horizontalLayout_18.setObjectName(_fromUtf8("horizontalLayout_18"))
+        self.label_10 = QtGui.QLabel(SweepDialog)
+        self.label_10.setText(QtGui.QApplication.translate("SweepDialog", "DAC Atten (dB):", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_10.setObjectName(_fromUtf8("label_10"))
+        self.horizontalLayout_18.addWidget(self.label_10)
+        self.line_dac_atten = QtGui.QLineEdit(SweepDialog)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.line_dac_atten.sizePolicy().hasHeightForWidth())
+        self.line_dac_atten.setSizePolicy(sizePolicy)
+        self.line_dac_atten.setMinimumSize(QtCore.QSize(50, 0))
+        self.line_dac_atten.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.line_dac_atten.setBaseSize(QtCore.QSize(0, 0))
+        self.line_dac_atten.setReadOnly(True)
+        self.line_dac_atten.setObjectName(_fromUtf8("line_dac_atten"))
+        self.horizontalLayout_18.addWidget(self.line_dac_atten)
+        self.verticalLayout_3.addLayout(self.horizontalLayout_18)
         self.horizontalLayout_15 = QtGui.QHBoxLayout()
         self.horizontalLayout_15.setObjectName(_fromUtf8("horizontalLayout_15"))
         self.label_9 = QtGui.QLabel(SweepDialog)
@@ -232,6 +251,23 @@ class Ui_SweepDialog(object):
         self.line_adc_gain.setObjectName(_fromUtf8("line_adc_gain"))
         self.horizontalLayout_15.addWidget(self.line_adc_gain)
         self.verticalLayout_3.addLayout(self.horizontalLayout_15)
+        self.horizontalLayout_19 = QtGui.QHBoxLayout()
+        self.horizontalLayout_19.setObjectName(_fromUtf8("horizontalLayout_19"))
+        self.label_11 = QtGui.QLabel(SweepDialog)
+        self.label_11.setText(QtGui.QApplication.translate("SweepDialog", "ADC Atten (dB):", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_11.setObjectName(_fromUtf8("label_11"))
+        self.horizontalLayout_19.addWidget(self.label_11)
+        self.line_adc_atten = QtGui.QLineEdit(SweepDialog)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.line_adc_atten.sizePolicy().hasHeightForWidth())
+        self.line_adc_atten.setSizePolicy(sizePolicy)
+        self.line_adc_atten.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.line_adc_atten.setReadOnly(True)
+        self.line_adc_atten.setObjectName(_fromUtf8("line_adc_atten"))
+        self.horizontalLayout_19.addWidget(self.line_adc_atten)
+        self.verticalLayout_3.addLayout(self.horizontalLayout_19)
         self.horizontalLayout_16.addLayout(self.verticalLayout_3)
         self.verticalLayout = QtGui.QVBoxLayout()
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
