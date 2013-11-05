@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'uis/basic_sweep.ui'
 #
-# Created: Tue Nov  5 11:03:26 2013
+# Created: Tue Nov  5 11:12:38 2013
 #      by: PyQt4 UI code generator 4.8.5
 #
 # WARNING! All changes made in this file will be lost!
@@ -19,8 +19,8 @@ class Ui_SweepDialog(object):
         SweepDialog.setObjectName(_fromUtf8("SweepDialog"))
         SweepDialog.resize(1020, 830)
         SweepDialog.setWindowTitle(QtGui.QApplication.translate("SweepDialog", "KIDleidoscope", None, QtGui.QApplication.UnicodeUTF8))
-        self.horizontalLayout_18 = QtGui.QHBoxLayout(SweepDialog)
-        self.horizontalLayout_18.setObjectName(_fromUtf8("horizontalLayout_18"))
+        self.horizontalLayout_17 = QtGui.QHBoxLayout(SweepDialog)
+        self.horizontalLayout_17.setObjectName(_fromUtf8("horizontalLayout_17"))
         self.plot_group_box = QtGui.QGroupBox(SweepDialog)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -30,11 +30,11 @@ class Ui_SweepDialog(object):
         self.plot_group_box.setAutoFillBackground(False)
         self.plot_group_box.setFlat(False)
         self.plot_group_box.setObjectName(_fromUtf8("plot_group_box"))
-        self.horizontalLayout_18.addWidget(self.plot_group_box)
+        self.horizontalLayout_17.addWidget(self.plot_group_box)
         self.verticalLayout_4 = QtGui.QVBoxLayout()
         self.verticalLayout_4.setObjectName(_fromUtf8("verticalLayout_4"))
-        self.horizontalLayout_17 = QtGui.QHBoxLayout()
-        self.horizontalLayout_17.setObjectName(_fromUtf8("horizontalLayout_17"))
+        self.horizontalLayout_16 = QtGui.QHBoxLayout()
+        self.horizontalLayout_16.setObjectName(_fromUtf8("horizontalLayout_16"))
         self.verticalLayout_3 = QtGui.QVBoxLayout()
         self.verticalLayout_3.setObjectName(_fromUtf8("verticalLayout_3"))
         self.groupBox = QtGui.QGroupBox(SweepDialog)
@@ -198,8 +198,6 @@ class Ui_SweepDialog(object):
         self.doubleSpinBox.setObjectName(_fromUtf8("doubleSpinBox"))
         self.horizontalLayout_13.addWidget(self.doubleSpinBox)
         self.verticalLayout_3.addLayout(self.horizontalLayout_13)
-        self.horizontalLayout_16 = QtGui.QHBoxLayout()
-        self.horizontalLayout_16.setObjectName(_fromUtf8("horizontalLayout_16"))
         self.horizontalLayout_14 = QtGui.QHBoxLayout()
         self.horizontalLayout_14.setObjectName(_fromUtf8("horizontalLayout_14"))
         self.label_8 = QtGui.QLabel(SweepDialog)
@@ -217,7 +215,7 @@ class Ui_SweepDialog(object):
         self.line_dac_gain.setBaseSize(QtCore.QSize(0, 0))
         self.line_dac_gain.setObjectName(_fromUtf8("line_dac_gain"))
         self.horizontalLayout_14.addWidget(self.line_dac_gain)
-        self.horizontalLayout_16.addLayout(self.horizontalLayout_14)
+        self.verticalLayout_3.addLayout(self.horizontalLayout_14)
         self.horizontalLayout_15 = QtGui.QHBoxLayout()
         self.horizontalLayout_15.setObjectName(_fromUtf8("horizontalLayout_15"))
         self.label_9 = QtGui.QLabel(SweepDialog)
@@ -225,7 +223,7 @@ class Ui_SweepDialog(object):
         self.label_9.setObjectName(_fromUtf8("label_9"))
         self.horizontalLayout_15.addWidget(self.label_9)
         self.line_adc_gain = QtGui.QLineEdit(SweepDialog)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Fixed)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.line_adc_gain.sizePolicy().hasHeightForWidth())
@@ -233,9 +231,8 @@ class Ui_SweepDialog(object):
         self.line_adc_gain.setMaximumSize(QtCore.QSize(50, 16777215))
         self.line_adc_gain.setObjectName(_fromUtf8("line_adc_gain"))
         self.horizontalLayout_15.addWidget(self.line_adc_gain)
-        self.horizontalLayout_16.addLayout(self.horizontalLayout_15)
-        self.verticalLayout_3.addLayout(self.horizontalLayout_16)
-        self.horizontalLayout_17.addLayout(self.verticalLayout_3)
+        self.verticalLayout_3.addLayout(self.horizontalLayout_15)
+        self.horizontalLayout_16.addLayout(self.verticalLayout_3)
         self.verticalLayout = QtGui.QVBoxLayout()
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.label_status = QtGui.QLabel(SweepDialog)
@@ -275,8 +272,8 @@ class Ui_SweepDialog(object):
         self.tableview_freqs.setColumnCount(0)
         self.tableview_freqs.setRowCount(0)
         self.verticalLayout.addWidget(self.tableview_freqs)
-        self.horizontalLayout_17.addLayout(self.verticalLayout)
-        self.verticalLayout_4.addLayout(self.horizontalLayout_17)
+        self.horizontalLayout_16.addLayout(self.verticalLayout)
+        self.verticalLayout_4.addLayout(self.horizontalLayout_16)
         self.horizontalLayout_4 = QtGui.QHBoxLayout()
         self.horizontalLayout_4.setObjectName(_fromUtf8("horizontalLayout_4"))
         self.push_save = QtGui.QPushButton(SweepDialog)
@@ -294,7 +291,7 @@ class Ui_SweepDialog(object):
         self.line_filename.setObjectName(_fromUtf8("line_filename"))
         self.horizontalLayout_4.addWidget(self.line_filename)
         self.verticalLayout_4.addLayout(self.horizontalLayout_4)
-        self.horizontalLayout_18.addLayout(self.verticalLayout_4)
+        self.horizontalLayout_17.addLayout(self.verticalLayout_4)
 
         self.retranslateUi(SweepDialog)
         self.combo_step_size.setCurrentIndex(0)
