@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from lmfit import minimize
 
-from kid_readout.analysis.generic_resonator import GenericResonator
 # To use different defaults, change these three import statements.
 # Note that the current model doesn't include a cable delay, so feel
 # free to upgrade it to something better.
