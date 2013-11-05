@@ -37,7 +37,7 @@ class Resonator(object):
         """
         self.f = f
         self.data = data
-        self.model = model
+        self._model = model
         self._functions = functions
         self.fit(guess(f, data))
 
@@ -54,10 +54,11 @@ class Resonator(object):
         try:
             return self._functions[attr](self.result.params)
         except KeyError:
-            raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__, attr))
+            raise AttributeError("'{0}' object has no attribute '{1}'".format(self.__class__.__name__, attr))
 
     def __dir__(self):
         return (dir(super(Resonator, self)) +
+                self.__dict__.keys() +
                 self.result.params.keys() +
                 self._functions.keys())
     
@@ -73,7 +74,19 @@ class Resonator(object):
         """
         This is the residual function used by lmfit.
         """
-        return np.abs(self.data - self.model(params, self.f))
+        return np.abs(self.data - self.model(params))
+
+    def model(self, params=None, f=None):
+        """
+        Return the model evaulated with the given parameters at the
+        given frequencies. Defaults are the fit-derived params and the
+        frequencies corresponding to the data.
+        """
+        if params is None:
+            params = self.result.params
+        if f is None:
+            f = self.f
+        return self._model(params, f)
 
     def plot(self):
         """
