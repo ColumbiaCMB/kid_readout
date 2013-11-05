@@ -14,7 +14,7 @@ def cable_delay(f, delay, phi):
     """
     return np.exp(-1j * (2 * np.pi * f * delay + phi))
 
-def s21_generic(params, f):
+def generic_s21(params, f):
     """
     This is Equation 11, except that the parameter A is a complex
     prefactor intended to encapsulate the 1 + \hat{\epsilon} as well
@@ -31,7 +31,7 @@ def s21_generic(params, f):
 
 # This needs a corresponding guess function. It's fine if it includes
 # magic numbers that we have measured.
-def s21_generic_delayed(params, f):
+def delayed_generic_s21(params, f):
     """
     This adds a cable delay controlled by two parameters to the
     generic model above.
@@ -40,7 +40,7 @@ def s21_generic_delayed(params, f):
     phi = params['phi'].value
     return cable_delay(f, delay, phi) * generic(params, f)
 
-def guess_generic(f, data):
+def generic_guess(f, data):
     """
     Right now these Q values are magic numbers. I suppose the
     design values are a good initial guess, but there might be a
@@ -64,5 +64,4 @@ def Q_i(params):
            1j * params['Q_e_imag'].value)
     return (Q**-1 - np.real(Q_e**-1))**-1
 
-
-functions_generic = {'Q_i': Q_i}
+generic_functions = {'Q_i': Q_i}
