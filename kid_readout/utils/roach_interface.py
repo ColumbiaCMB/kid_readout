@@ -18,7 +18,11 @@ def compute_window(npfb=2**15,taps = 2, wfunc = scipy.signal.flattop):
     mag = mag/mag.max()
     return mag
     
-    
+def ntone_power_correction(ntones):
+    if ntones < 10:
+        return 20*np.log10(ntones)
+    else:
+        return 10*np.log10(ntones)+10    
 
 class RoachInterface(object):
     """
@@ -955,11 +959,11 @@ class RoachBasebandWide(RoachBaseband):
         self.wafer = wafer
         self.dac_ns = 2**16 # number of samples in the dac buffer
         self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
-        self.nfft = 2**12
+        self.nfft = 2**11
 #        self.boffile = 'bb2xpfb12mcr5_2013_Oct_29_1658.bof'
-        self.boffile = 'bb2xpfb12mcr7_2013_Oct_30_1842.bof'
+        self.boffile = 'bb2xpfb11mcr7_2013_Nov_04_1309.bof'
         self.bufname = 'ppout%d' % wafer
-        self._window_mag = compute_window(npfb = 2*self.nfft, taps= 4, wfunc = scipy.signal.flattop)
+        self._window_mag = compute_window(npfb = 2*self.nfft, taps= 8, wfunc = scipy.signal.flattop)
 
 
 def test_sweep(ri):
