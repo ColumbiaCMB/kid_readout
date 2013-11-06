@@ -28,12 +28,13 @@ class Resonator(object):
     def __init__(self, f, data, model=default_model, guess=default_guess, functions=default_functions):
         """
         Instantiate a resonator using our current best model.
-        Parameter model is a function S_21(params, f) that returns the modeled values of S_21.
-        Parameter guess is a function guess(f, data) that returns a good-enough initial guess at all of the fit parameters.
+        Parameter model is a function S_21(params, f) that returns the
+        modeled values of S_21.
+        Parameter guess is a function guess(f, data) that returns a
+        good-enough initial guess at all of the fit parameters.
         Parameter functions is a dictionary that maps keys that are
         valid Python variables to functions that take a Parameters
-        object as their only argument. This is used 
-
+        object as their only argument.
         """
         self.f = f
         self.data = data
