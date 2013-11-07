@@ -24,6 +24,7 @@ from kid_readout.utils.data_block import SweepData
 from kid_readout.utils import data_file
 from kid_readout.utils.PeakFind01 import peakdetect
 
+
 class SweepDialog(QDialog,Ui_SweepDialog):
     def __init__(self,  qApp, parent=None):
         super(SweepDialog, self).__init__(parent)
@@ -76,9 +77,11 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         self.total_subsweeps = 1
         self.current_subsweep = 0
         
+        self.line_dac_gain.setText("-2.0")
+        
         self.ri = kid_readout.utils.roach_interface.RoachBaseband()
-        self.ri.set_adc_attenuator(31)
-        self.ri.set_dac_attenuator(26)
+        #self.ri.set_adc_attenuator(31)
+        self.ri.set_dac_attenuator(36)
         
         self.abort_requested = False
         self.sweep_thread = None
@@ -135,11 +138,11 @@ class SweepDialog(QDialog,Ui_SweepDialog):
             idx = (np.abs(sweep_data.freqs - event.xdata)).argmin()
             self.selected_idx = idx
             self.axes2.cla()
-            NFFT = 2048
-            pxx,fr = plt.mlab.psd(sweep_data.blocks[idx].data,Fs=512e6/2**14,NFFT=NFFT,detrend=plt.mlab.detrend_mean)
+            NFFT = sweep_data.blocks[idx].data.shape[0]/2
+            pxx,fr = plt.mlab.psd(sweep_data.blocks[idx].data,Fs=256e6/2**14,NFFT=NFFT,detrend=plt.mlab.detrend_mean)
             self.axes2.semilogx(fr[fr>0],10*np.log10(pxx[fr>0]))
             self.axes2.semilogx(-fr[fr<0],10*np.log10(pxx[fr<0]))
-            self.axes2.semilogx(fr[fr>0][0],10*np.log10(np.abs(sweep_data.blocks[idx].data.mean())**2*NFFT/(512e6/2**14)), 'o', mew=2)
+            self.axes2.semilogx(fr[fr>0][0],10*np.log10(np.abs(sweep_data.blocks[idx].data.mean())**2*NFFT/(256e6/2**14)), 'o', mew=2)
             blk = sweep_data.blocks[idx]
             freq = blk.fs*blk.tone/float(blk.nsamp)
             self.axes2.text(0.95,0.95,('%.6f MHz' % freq), ha='right', va='top',
@@ -222,7 +225,9 @@ class SweepDialog(QDialog,Ui_SweepDialog):
 
                 self.canvas.draw()
             self.fresh = False
-                
+        
+        self.line_adc_atten.setText(str(self.ri.adc_atten))
+        self.line_dac_atten.setText(str(self.ri.dac_atten))
         self.progress_sweep.setValue(int(self.progress_value*100))
         QTimer.singleShot(1000, self.update_plot)
         
@@ -352,13 +357,35 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         if nsamp < 18:
             nsamp = 18
         self.total_subsweeps = nsubstep
+        base_freqs = np.arange(start,stop+1e-3,step)
+        ntones = base_freqs.shape[0]
+        ntones_corr = kid_readout.utils.roach_interface.ntone_power_correction(ntones)
+        try:
+            dac_gain = float(self.line_dac_gain.text())
+        except:
+            print "Could not parse DAC gain! Aborting sweep!"
+            return
+        desired_level = self.spin_dbm_per_tone.value()
+        total_level = desired_level + ntones_corr
+        atten_val = -(total_level - dac_gain)  #atten should be positive
+        print "Requested %.2f dBm per tone" % desired_level
+        print "%d tones requires a correction of %.1f dB" % (ntones,ntones_corr)
+        print "requiring %.1f dB of attenuation" % atten_val
+        
+        if atten_val < 0:
+            print "Warning! requested attenuation is less than 0, can't reach desired level. Setting to 0 dB"
+            atten_val = 0
+        if atten_val > 63:
+            print "Warning! requested attenuation is greater than 63, can't reach desired level. Setting to 63 dB"
+            atten_val = 63
+        self.ri.set_dac_attenuator(atten_val)
         for k in range(nsubstep):
             self.current_subsweep = k
             print "subsweep",k,"of",nsubstep
             if self.logfile:
                 self.logfile.log_hw_state(self.ri)
-            kid_readout.utils.sweeps.coarse_sweep(self.ri, freqs = np.arange(start,stop+1e-3,step) + k*substepspace, 
-                                                  nsamp = 2**nsamp, nchan_per_step=4, callback=self.sweep_callback, sweep_id=1)
+            kid_readout.utils.sweeps.coarse_sweep(self.ri, freqs = base_freqs + k*substepspace, 
+                                                  nsamp = 2**nsamp, nchan_per_step=8, callback=self.sweep_callback, sweep_id=1)
             if self.logfile:
                 self.logfile.log_adc_snap(self.ri)
             if self.abort_requested:
@@ -386,12 +413,37 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         flist = self.reslist
         offsets = np.linspace(-width/2,width/2,npts)
         self.total_subsweeps = len(offsets)
+        
+        ntones = flist.shape[0]
+        ntones_corr = kid_readout.utils.roach_interface.ntone_power_correction(ntones)
+        try:
+            dac_gain = float(self.line_dac_gain.text())
+        except:
+            print "Could not parse DAC gain! Aborting sweep!"
+            return
+        desired_level = self.spin_dbm_per_tone.value()
+        total_level = desired_level + ntones_corr
+        atten_val = -(total_level - dac_gain)  #atten should be positive
+        print "Requested %.2f dBm per tone" % desired_level
+        print "%d tones requires a correction of %.1f dB" % (ntones,ntones_corr)
+        print "requiring %.1f dB of attenuation" % atten_val
+        
+        if atten_val < 0:
+            print "Warning! requested attenuation is less than 0, can't reach desired level. Setting to 0 dB"
+            atten_val = 0
+        if atten_val > 63:
+            print "Warning! requested attenuation is greater than 63, can't reach desired level. Setting to 63 dB"
+            atten_val = 63
+        self.ri.set_dac_attenuator(atten_val)
+            
         for k,offs in enumerate(offsets):
             self.current_subsweep = k
             if self.logfile:
                 self.logfile.log_hw_state(self.ri)            
             kid_readout.utils.sweeps.coarse_sweep(self.ri, freqs = flist+offs, 
-                                              nsamp = 2**samps, callback=self.fine_sweep_callback, sweep_id=2)
+                                              nsamp = 2**samps, nchan_per_step=8, callback=self.fine_sweep_callback, sweep_id=2)
+            if self.abort_requested:
+                break
             if self.logfile:
                 self.logfile.log_adc_snap(self.ri)
         if self.logfile:
