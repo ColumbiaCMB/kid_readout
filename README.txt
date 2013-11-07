@@ -2,30 +2,37 @@ kid_readout
 ===========
 Code for the ROACH KID readout.
 
-=== structure ===
-The project structure is as follows:
-kid_readout/
-    apps/
-        gain_phase_characterization
-        ...
+=== Structure ===
+As of 2013-11-07, the project structure is as follows:
+repository_base/
+  kid_readout/
+    __init__.py
     utils/
-        single_pixel.py
-    output/
+      __init__.py
+      <almost everything lives here>
+    analysis/
+      __init__.py
+      <fitting libraries live here>
+    apps/
+      gain_phase_characterization
+      <scripts and non-library code>
+    ppc/
+      <Bjorn's timing code?>
 
-=== install ===
-To install the kid_readout package, you need to add the directory in which you cloned
-kid_readout to your PYTHONPATH environment variable, by adding this line to 
-your .bashrc file:
-export $PYTHONPATH:/path/to/kid
-To be more specific:
-if kid_readout lives in /home/user/git/kid_readout, 
-you should add the following line to .bashrc: 
-export $PYTHONPATH:/home/user/git
-notice that kid_readout is NOT in the directory.
+
+=== Install ===
+To install the kid_readout package, you need to add the directory in
+which you cloned this repository to your PYTHONPATH environment
+variable.  To be more specific, if the repository lives in
+/home/user/kid_readout.git,
+add this line to your .bash_profile (or .bashrc) file:
+export PYTHONPATH=$PYTHONPATH:/home/user/kid_readout.git
+Then, statements like
+from kid_readout.utils import whatever
+should work.
 
 
 === Proposed class structure ===
-
 (SinglePixel)Readout - abstract interface to FPGA readout hardware
 	provides functions to setup output waveforms and select FFT bins to read out, and eventually synchronization
 
