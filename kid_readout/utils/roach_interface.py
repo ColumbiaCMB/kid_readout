@@ -108,7 +108,7 @@ class RoachInterface(object):
         self.r.progdev(self.boffile)
         self.bof_pid = None
         self._update_bof_pid()
-        self.set_fft_gain(1)
+        self.set_fft_gain(2)
         self.r.write_int('dacctrl',0)
         self.r.write_int('dacctrl',1)
         estfs = self.measure_fs()
