@@ -226,7 +226,6 @@ class SweepDialog(QDialog,Ui_SweepDialog):
                 self.canvas.draw()
             self.fresh = False
         
-        self.line_adc_atten.setText(str(self.ri.adc_atten))
         self.line_dac_atten.setText(str(self.ri.dac_atten))
         self.progress_sweep.setValue(int(self.progress_value*100))
         QTimer.singleShot(1000, self.update_plot)
