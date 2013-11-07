@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'uis/basic_sweep.ui'
 #
-# Created: Thu Nov  7 11:56:21 2013
+# Created: Thu Nov  7 12:01:29 2013
 #      by: PyQt4 UI code generator 4.8.5
 #
 # WARNING! All changes made in this file will be lost!
@@ -195,7 +195,7 @@ class Ui_SweepDialog(object):
         self.spin_dbm_per_tone.setMinimum(-140.0)
         self.spin_dbm_per_tone.setMaximum(0.0)
         self.spin_dbm_per_tone.setSingleStep(0.5)
-        self.spin_dbm_per_tone.setProperty("value", -30.0)
+        self.spin_dbm_per_tone.setProperty("value", -50.0)
         self.spin_dbm_per_tone.setObjectName(_fromUtf8("spin_dbm_per_tone"))
         self.horizontalLayout_13.addWidget(self.spin_dbm_per_tone)
         self.verticalLayout_3.addLayout(self.horizontalLayout_13)
