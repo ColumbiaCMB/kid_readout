@@ -19,6 +19,11 @@ def compute_window(npfb=2**15,taps = 2, wfunc = scipy.signal.flattop):
     return mag
     
 def ntone_power_correction(ntones):
+    """
+    Power correction in dB relative to a single tone
+    
+    *ntones* : number of tones simultaneously output
+    """
     if ntones < 10:
         return 20*np.log10(ntones)
     else:
@@ -187,16 +192,31 @@ class RoachInterface(object):
         self.r.write_int(gpio_reg, 0x00)
         
     def set_adc_attenuator(self,attendb):
-        if attendb <0 or attendb > 31.5:
-            raise ValueError("ADC Attenuator must be between 0 and 31.5 dB. Value given was: %s" % str(attendb))
-        self.set_attenuator(attendb,le_bit=0x02)
-        self.adc_atten = int(attendb*2)/2.0
-
+        print "Warning! ADC attenuator is no longer adjustable. Value will be fixed at 31.5 dB"
+        self.adc_atten = 31.5
+#        if attendb <0 or attendb > 31.5:
+#            raise ValueError("ADC Attenuator must be between 0 and 31.5 dB. Value given was: %s" % str(attendb))
+#        self.set_attenuator(attendb,le_bit=0x02)
+#        self.adc_atten = int(attendb*2)/2.0
+        
     def set_dac_attenuator(self,attendb):
-        if attendb <0 or attendb > 31.5:
-            raise ValueError("DAC Attenuator must be between 0 and 31.5 dB. Value given was: %s" % str(attendb))
-        self.set_attenuator(attendb,le_bit=0x01)
+        if attendb <0 or attendb > 63:
+            raise ValueError("DAC Attenuator must be between 0 and 63 dB. Value given was: %s" % str(attendb))
+
+        if attendb > 31.5:
+            attena = 31.5
+            attenb = attendb - attena
+        else:
+            attena = attendb
+            attenb = 0
+        self.set_attenuator(attena,le_bit=0x01)
+        self.set_attenuator(attenb,le_bit=0x02)
         self.dac_atten = int(attendb*2)/2.0
+        
+    def self_dac_atten(self,attendb):
+        """ Alias for set_dac_attenuator """
+        return self.set_dac_attenuator(attendb)
+        
     
     def _set_fs(self,fs):
         """
@@ -961,9 +981,10 @@ class RoachBasebandWide(RoachBaseband):
         self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
         self.nfft = 2**11
 #        self.boffile = 'bb2xpfb12mcr5_2013_Oct_29_1658.bof'
-        self.boffile = 'bb2xpfb11mcr7_2013_Nov_04_1309.bof'
+        #self.boffile = 'bb2xpfb11mcr7_2013_Nov_04_1309.bof'
+        self.boffile = 'bb2xpfb11mcr8_2013_Nov_04_2151.bof'
         self.bufname = 'ppout%d' % wafer
-        self._window_mag = compute_window(npfb = 2*self.nfft, taps= 8, wfunc = scipy.signal.flattop)
+        self._window_mag = compute_window(npfb = 2*self.nfft, taps= 8, wfunc = scipy.signal.hamming)#scipy.signal.flattop)
 
 
 def test_sweep(ri):
