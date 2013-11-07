@@ -317,7 +317,7 @@
            <item>
             <widget class="QLabel" name="label_7">
              <property name="text">
-              <string>Not working yet:</string>
+              <string>Power level:</string>
              </property>
             </widget>
            </item>
@@ -448,36 +448,6 @@
                <width>50</width>
                <height>16777215</height>
               </size>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_19">
-           <item>
-            <widget class="QLabel" name="label_11">
-             <property name="text">
-              <string>ADC Atten (dB):</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLineEdit" name="line_adc_atten">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>50</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="readOnly">
-              <bool>true</bool>
              </property>
             </widget>
            </item>

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'uis/basic_sweep.ui'
 #
-# Created: Tue Nov  5 12:54:38 2013
+# Created: Thu Nov  7 11:56:21 2013
 #      by: PyQt4 UI code generator 4.8.5
 #
 # WARNING! All changes made in this file will be lost!
@@ -186,7 +186,7 @@ class Ui_SweepDialog(object):
         self.horizontalLayout_13 = QtGui.QHBoxLayout()
         self.horizontalLayout_13.setObjectName(_fromUtf8("horizontalLayout_13"))
         self.label_7 = QtGui.QLabel(SweepDialog)
-        self.label_7.setText(QtGui.QApplication.translate("SweepDialog", "Not working yet:", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_7.setText(QtGui.QApplication.translate("SweepDialog", "Power level:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_7.setObjectName(_fromUtf8("label_7"))
         self.horizontalLayout_13.addWidget(self.label_7)
         self.spin_dbm_per_tone = QtGui.QDoubleSpinBox(SweepDialog)
@@ -252,23 +252,6 @@ class Ui_SweepDialog(object):
         self.line_adc_gain.setObjectName(_fromUtf8("line_adc_gain"))
         self.horizontalLayout_15.addWidget(self.line_adc_gain)
         self.verticalLayout_3.addLayout(self.horizontalLayout_15)
-        self.horizontalLayout_19 = QtGui.QHBoxLayout()
-        self.horizontalLayout_19.setObjectName(_fromUtf8("horizontalLayout_19"))
-        self.label_11 = QtGui.QLabel(SweepDialog)
-        self.label_11.setText(QtGui.QApplication.translate("SweepDialog", "ADC Atten (dB):", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_11.setObjectName(_fromUtf8("label_11"))
-        self.horizontalLayout_19.addWidget(self.label_11)
-        self.line_adc_atten = QtGui.QLineEdit(SweepDialog)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.line_adc_atten.sizePolicy().hasHeightForWidth())
-        self.line_adc_atten.setSizePolicy(sizePolicy)
-        self.line_adc_atten.setMaximumSize(QtCore.QSize(50, 16777215))
-        self.line_adc_atten.setReadOnly(True)
-        self.line_adc_atten.setObjectName(_fromUtf8("line_adc_atten"))
-        self.horizontalLayout_19.addWidget(self.line_adc_atten)
-        self.verticalLayout_3.addLayout(self.horizontalLayout_19)
         self.horizontalLayout_16.addLayout(self.verticalLayout_3)
         self.verticalLayout = QtGui.QVBoxLayout()
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
