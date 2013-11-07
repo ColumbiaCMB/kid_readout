@@ -692,7 +692,7 @@ class RoachBaseband(RoachInterface):
         else:
             self.adc_valon = adc_valon
         
-        self.adc_atten = -1
+        self.adc_atten = 31.5
         self.dac_atten = -1
         self.bof_pid = None
         self.roachip = roachip
