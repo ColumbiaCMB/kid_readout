@@ -7,8 +7,8 @@ from lmfit import minimize
 # To use different defaults, change these three import statements.
 # Note that the current model doesn't include a cable delay, so feel
 # free to upgrade it to something better.
-from kid_readout.analysis.khalil import generic_s21 as default_model
-from kid_readout.analysis.khalil import generic_guess as default_guess
+from kid_readout.analysis.khalil import delayed_generic_s21 as default_model
+from kid_readout.analysis.khalil import delayed_generic_guess as default_guess
 from kid_readout.analysis.khalil import generic_functions as default_functions
 
 class Resonator(object):
@@ -69,17 +69,19 @@ class Resonator(object):
         instantiation. Parameter initial is a Parameters object
         containing initial values. It is modified by lmfit.
         """
-        self.result = minimize(self.residual, initial)
+        self.result = minimize(self.residual, initial,ftol=1e-6)
                                
     def residual(self, params):
         """
         This is the residual function used by lmfit.
+        Note that the residual needs to be purely real, and should *not* include abs.
+        The minimizer needs the signs of the residuals to properly evaluate the gradients.
         """
-        return np.abs(self.data - self.model(params))
+        return ((self.data - self.model(params)).view('float'))  # .view('float') will take a length N complex array and turn it into a length 2*N float array.
 
     def model(self, params=None, f=None):
         """
-        Return the model evaulated with the given parameters at the
+        Return the model evaluated with the given parameters at the
         given frequencies. Defaults are the fit-derived params and the
         frequencies corresponding to the data.
         """

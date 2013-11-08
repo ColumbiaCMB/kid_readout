@@ -11,7 +11,11 @@ def cable_delay(f, delay, phi):
     """
     This assumes that signals go as exp(i \omega t) so that a time
     delay corresponds to negative phase.
+    if *f* is in MHz, *delay* will be in microseconds
+    if *f* is in Hz, *delay* will be in seconds 
     """
+    f = f - f.min()  # subtract off the lowest frequency, otherwise phase at f.min() can essentially be arbitrary.
+                    # doing this seems to improve covariance between delay and A_phase term.
     return np.exp(-1j * (2 * np.pi * f * delay + phi))
 
 def generic_s21(params, f):
@@ -37,8 +41,13 @@ def delayed_generic_s21(params, f):
     generic model above.
     """
     delay = params['delay'].value
-    phi = params['phi'].value
-    return cable_delay(f, delay, phi) * generic(params, f)
+    phi = 0.0 #params['phi'].value # phase is already taken account in A_phase
+    return cable_delay(f, delay, phi) * generic_s21(params, f)
+
+def delayed_generic_guess(f, data):
+    p = generic_guess(f,data)
+    p.add('delay', value = 0.0, min = -10,max=10)
+    return p
 
 def generic_guess(f, data):
     """
@@ -47,12 +56,13 @@ def generic_guess(f, data):
     good way to approximate them without doing the full fit.
     """
     p = Parameters()
-    p.add('f_0', value=f[np.argmin(abs(data))], min=0)
-    p.add('A_mag', value=np.mean((np.abs(data[0]), np.abs(data[-1]))), min=0)
+    bw = f.max() - f.min()
+    p.add('f_0', value=f[np.argmin(abs(data))], min=f.min()-bw, max = f.max()+bw)  # Allow f_0 to vary by +/- the bandwidth over which we have data
+    p.add('A_mag', value=np.mean((np.abs(data[0]), np.abs(data[-1]))), min=0,max=1e6)
     p.add('A_phase', value=np.mean(np.angle(data)), min=-np.pi, max=np.pi)
-    p.add('Q', value=5e4, min=0)
-    p.add('Q_e_real', value=5e4)
-    p.add('Q_e_imag', value=0)
+    p.add('Q', value=5e4, min=0,max=1e7)
+    p.add('Q_e_real', value=4e4,min=0,max=1e6)
+    p.add('Q_e_imag', value=0,min=-1e6,max=1e6)
     return p
 
 def Q_i(params):
