@@ -14,7 +14,7 @@ def compute_window(npfb=2**15,taps = 2, wfunc = scipy.signal.flattop):
     wv = wfunc(npfb*taps)
     sc = np.sinc(np.arange(npfb*taps)/float(npfb) - taps/2.0)
     coeff = wv*sc
-    mag = np.abs(np.fft.fft(coeff,npfb*taps*2**5)[:2**6])
+    mag = np.abs(np.fft.fft(coeff,npfb*taps*2**5)[:2**7])
     mag = mag/mag.max()
     return mag
     
@@ -225,7 +225,7 @@ class RoachInterface(object):
         raise NotImplementedError
     
     def _window_response(self,fr):
-        res = np.interp(np.abs(fr)*2**6, np.arange(2**6), self._window_mag)
+        res = np.interp(np.abs(fr)*2**7, np.arange(2**7), self._window_mag)
         res = 1/res
         return res
 
