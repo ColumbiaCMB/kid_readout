@@ -3,29 +3,44 @@ import time
 
 from data_block import DataBlock, SweepData
 
-def fine_sweep(ri,freqs=np.linspace(10,200,384),offs=np.linspace(0,0.5,8),nsamp=2**15,nchan_per_step=4,reads_per_step=2):
-    tones = []
-    davgs = []
-    datas = []
-    chanids = []
-    for k,off in enumerate(offs):
-        tt,davg,data,chids = coarse_sweep(ri,freqs=freqs+off,nsamp=nsamp,nchan_per_step=nchan_per_step,reads_per_step=reads_per_step)
-        tones.append(tt)
-        davgs.append(davg)
-        datas.extend(data)
-        chanids.append(chids)
-        
-    tones = np.concatenate(tones)
-    chanids = np.concatenate(chanids)
-    order = tones.argsort()
-    davgs = np.concatenate(davgs)
-    davgs = davgs[order]
-    tones = tones[order]
-    return tones,davgs,datas,chanids
+default_segments_hz = [#np.arange(0,200e3,4e3)-450e3,
+                       #np.arange(200e3,300e3,2e3)-450e3,
+#                                  np.arange(300e3,400e3,1e3)-450e3,
+                                  np.arange(400e3,500e3,0.5e3)-450e3]
 
-def coarse_sweep(ri,freqs=np.linspace(10,200,384),nsamp=2**15,nchan_per_step=4,reads_per_step=2, callback = None, sweep_id = 1):
+default_segments_mhz = [x/1e6 for x in default_segments_hz]
+
+default_offsets_hz = np.concatenate(default_segments_hz)
+
+def segmented_fine_sweep(ri,center_freqs,segments=default_segments_mhz,nchan_per_step=4,reads_per_step=2,sweep_id=2):
+    swp = SweepData(sweep_id)
+    for k,offsets in enumerate(segments):
+        mindelta = np.abs(np.diff(offsets)).min()
+        nsamp = np.ceil(np.log2(ri.fs/mindelta))
+        print "segment",k,"log2(nsamp)",nsamp
+        for offs in offsets:
+            coarse_sweep(ri,center_freqs+offs,nsamp=2**nsamp,sweep_data = swp, nchan_per_step = nchan_per_step, reads_per_step=reads_per_step)
+    return swp
+    
+
+def fine_sweep(ri,center_freqs, sweep_width = 0.1,npoints =128,nsamp=2**20, sweep_data = None):
+    offsets = np.linspace(-sweep_width/2.0, sweep_width/2.0, npoints)
+    if sweep_data is not None:
+        swp = sweep_data
+    else:
+        swp = SweepData()
+        
+    for k,offset in enumerate(offsets):
+        print "subsweep",k,"of",npoints
+        coarse_sweep(ri, center_freqs + offset, nsamp=nsamp, nchan_per_step=4, reads_per_step=2, callback=None,sweep_id=k,sweep_data=swp)
+    return swp
+
+def coarse_sweep(ri,freqs=np.linspace(10,200,384),nsamp=2**15,nchan_per_step=4,reads_per_step=2, callback = None, sweep_id = 1, sweep_data = None):
     actual_freqs = ri.set_tone_freqs(freqs,nsamp=nsamp)
-    data = SweepData(sweep_id)
+    if sweep_data is not None:
+        data = sweep_data
+    else:
+        data = SweepData(sweep_id)
     ri.r.write_int('sync',0)
     ri.r.write_int('sync',1)
     ri.r.write_int('sync',0)
