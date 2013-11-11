@@ -231,7 +231,7 @@ class RoachInterface(object):
 
     
     ### Tried and true readout function
-    def _read_data(self,nread,bufname):
+    def _read_data(self,nread,bufname,verbose=False):
         """
         Low level data reading loop, common to both readouts
         """
@@ -265,7 +265,8 @@ class RoachInterface(object):
                     addr = self.r.read_uint(regname)
                     b = addr & 0x1000
                     idle += 1
-                print ("\r got %d" % n),
+                if verbose:
+                    print ("\r got %d" % n),
                 sys.stdout.flush()
         except Exception,e:
             print "read only partway because of error:"
@@ -279,7 +280,7 @@ class RoachInterface(object):
         return dout,addrs,chans
 
 
-    def _cont_read_data(self,callback,bufname):
+    def _cont_read_data(self,callback,bufname, verbose=False):
         """
         Low level data reading continuous loop, common to both readouts
         calls "callback" each time a chunk of data is ready
@@ -321,7 +322,8 @@ class RoachInterface(object):
                     addr = self.r.read_uint(regname)
                     b = addr & 0x1000
                     idle += 1
-                print ("\r got %d" % n),
+                if verbose:
+                    print ("\r got %d" % n),
                 sys.stdout.flush()
         except KeyboardInterrupt:
             pass
@@ -857,7 +859,7 @@ class RoachBaseband(RoachInterface):
             nfft = self.nfft
             ns = self.tone_nsamp
             foffs = (2*k*nfft - m*ns)/float(ns)
-            wc = self._window_response(foffs)*(self.tone_nsamp/2.0**18)
+            wc = self._window_response(foffs/2.0)*(self.tone_nsamp/2.0**18)
             demod[:,n] = wc*np.exp(sign*1j*(2*np.pi*foffs*t + phi0)) * data[:,n]
             if m >= self.nfft/2:
                 demod[:,n] = np.conjugate(demod[:,n])
@@ -891,7 +893,6 @@ class RoachBaseband(RoachInterface):
         nch = self.readout_selection.shape[0]
         dout = draw.reshape((-1,nch))
         shift = np.flatnonzero(self.fpga_fft_readout_indexes==(ch[0]-chan_offset))[0] - (nch-1)
-        print shift
         dout = np.roll(dout,shift,axis=1)
         if demod:
             dout = self.demodulate_data(dout)
@@ -986,6 +987,34 @@ class RoachBasebandWide(RoachBaseband):
         self.bufname = 'ppout%d' % wafer
         self._window_mag = compute_window(npfb = 2*self.nfft, taps= 8, wfunc = scipy.signal.hamming)#scipy.signal.flattop)
 
+    def demodulate_data(self,data):
+        """
+        Demodulate the data from the FFT bin
+        
+        This function assumes that self.select_fft_bins was called to set up the necessary class attributes
+        
+        data : array of complex data
+        
+        returns : demodulated data in an array of the same shape and dtype as *data*
+        """
+        demod = np.zeros_like(data)
+        t = np.arange(data.shape[0])
+        for n,ich in enumerate(self.readout_selection):
+            phi0 = self.phases[ich]
+            k = self.tone_bins[ich]
+            m = self.fft_bins[ich]
+            if m >= self.nfft/2:
+                sign = 1.0
+            else:
+                sign = -1.0
+            nfft = self.nfft
+            ns = self.tone_nsamp
+            foffs = (2*k*nfft - m*ns)/float(ns)
+            wc = self._window_response(2*foffs)*(self.tone_nsamp/2.0**18)
+            demod[:,n] = wc*np.exp(sign*1j*(2*np.pi*foffs*t + phi0)) * data[:,n]
+            if m >= self.nfft/2:
+                demod[:,n] = np.conjugate(demod[:,n])
+        return demod
 
 def test_sweep(ri):
     data = []
