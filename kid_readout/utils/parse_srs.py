@@ -14,11 +14,14 @@ def parse_srs_log(fname,sensor=2):
     temps = []
     times = []
     for line in lines:
-        parts = line.split(' ')
-        if int(parts[0]) != sensor:
-            continue
-        if len(parts) < 4:
-            continue
-        temps.append(float(parts[2]))
-        times.append(time.mktime(time.strptime(parts[3].strip(),'%Y%m%d-%H%M%S')))
+        try:
+            parts = line.split(' ')
+            if int(parts[0]) != sensor:
+                continue
+            if len(parts) < 4:
+                continue
+            temps.append(float(parts[2]))
+            times.append(time.mktime(time.strptime(parts[3].strip(),'%Y%m%d-%H%M%S')))
+        except ValueError:
+            print "failed to parse",repr(line),"skipping"
     return np.array(times),np.array(temps)
