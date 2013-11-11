@@ -5,7 +5,7 @@ import numpy as np
 from kid_readout.utils.valon import check_output
 
 class DataFile():
-    def __init__(self,base_dir='~/data'):
+    def __init__(self,base_dir='/home/data'):
         base_dir = os.path.expanduser(base_dir)
         if not os.path.exists(base_dir):
             try:
