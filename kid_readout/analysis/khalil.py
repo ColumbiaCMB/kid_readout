@@ -7,14 +7,14 @@ from __future__ import division
 import numpy as np
 from lmfit import Parameters
 
-def cable_delay(f, delay, phi):
+def cable_delay(f, delay, phi, f_low):
     """
     This assumes that signals go as exp(i \omega t) so that a time
     delay corresponds to negative phase.
     if *f* is in MHz, *delay* will be in microseconds
     if *f* is in Hz, *delay* will be in seconds 
     """
-    f = f - f.min()  # subtract off the lowest frequency, otherwise phase at f.min() can essentially be arbitrary.
+    f = f - f_low # subtract off the lowest frequency, otherwise phase at f.min() can essentially be arbitrary.
                     # doing this seems to improve covariance between delay and A_phase term.
     return np.exp(-1j * (2 * np.pi * f * delay + phi))
 
@@ -41,12 +41,14 @@ def delayed_generic_s21(params, f):
     generic model above.
     """
     delay = params['delay'].value
+    f_low = params['f_low'].value
     phi = 0.0 #params['phi'].value # phase is already taken account in A_phase
-    return cable_delay(f, delay, phi) * generic_s21(params, f)
+    return cable_delay(f, delay, phi, f_low) * generic_s21(params, f)
 
 def delayed_generic_guess(f, data):
     p = generic_guess(f,data)
     p.add('delay', value = 0.0, min = -10,max=10)
+    p.add('f_low', value = f.min(), vary = False)
     return p
 
 def generic_guess(f, data):
