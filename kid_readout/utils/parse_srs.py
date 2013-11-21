@@ -1,5 +1,19 @@
 import time
 import numpy as np
+import os
+import glob
+
+def get_all_temperature_data(logdir = '/home/heather/SRS'):
+    logs = glob.glob(os.path.join(logdir,'2013*.txt'))
+    logs.sort()
+    times = []
+    temps = []
+    for log in logs:
+        t0,temp0 = parse_srs_log(log)
+        times = times + t0.tolist()
+        temps = temps + temp0.tolist()
+    return times,temps
+        
 
 def parse_srs_log(fname,sensor=2):
     """
