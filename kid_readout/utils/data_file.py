@@ -80,6 +80,7 @@ class DataFile():
         nfft = dbg.createVariable('nfft',np.int32,('epoch',))
         dt = dbg.createVariable('dt',np.float64,('epoch',))
         fs = dbg.createVariable('fs',np.float64,('epoch',))
+        wavenorm = dbg.createVariable('wavenorm',np.float64,('epoch'))
         data = dbg.createVariable('data',self.cdf128,('epoch','sample'))
         sweep_index = dbg.createVariable('sweep_index',np.int32,('epoch'))
         
@@ -98,6 +99,7 @@ class DataFile():
         t0[:] = np.array([x.t0 for x in blocks])
         tone[:] = np.array([x.tone for x in blocks])
         nfft[:] = np.array([x.nfft for x in blocks])
+        wavenorm[:] = np.array([x.wavenorm for x in blocks])
         nsamp[:] = np.array([x.nsamp for x in blocks])
         dt[:] = np.array([x.dt for x in blocks])
         fftbin[:] = np.array([x.fftbin for x in blocks])
@@ -118,6 +120,7 @@ class DataFile():
             nfft = tsg.createVariable('nfft',np.int32,('epoch',))
             dt = tsg.createVariable('dt',np.float64,('epoch',))
             fs = tsg.createVariable('fs',np.float64,('epoch',))
+            wavenorm = tsg.createVariable('wavenorm',np.float64,('epoch'))
             data = tsg.createVariable('data',self.cdf128,('epoch','sample'))
         else:
             t0 = tsg.variables['epoch']
@@ -127,6 +130,7 @@ class DataFile():
             nfft = tsg.variables['nfft']
             dt = tsg.variables['dt']
             fs = tsg.variables['fs']
+            wavenorm = tsg.variables['wavenorm']
             data = tsg.variables['data']
         idx = len(tsg.dimensions['epoch'])
         data[idx] = block.data.astype('complex128').view(self.c128)
@@ -136,6 +140,7 @@ class DataFile():
         nsamp[idx] = block.nsamp
         fftbin[idx] = block.fftbin
         nfft[idx] = block.nfft
+        wavenorm[idx] = block.wavenorm
         dt[idx] = block.dt
         return tsg
     
