@@ -22,6 +22,9 @@ class Dataset(object):
         else:
             return match.pop()
 
+    def sweep_names(self):
+        return self.ds.groups['sweeps'].groups.keys()
+
        
 
 class Sweep(object):
@@ -32,7 +35,6 @@ class Coarse(Sweep):
     
     def __init__(self, f, s21, coarse_resolution, n_subsweeps):
         self.f = f
-
         self.s21 = s21
         self.coarse_resolution = coarse_resolution
         self.n_subsweeps = n_subsweeps
