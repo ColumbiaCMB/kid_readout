@@ -32,4 +32,4 @@ nosetests.xml
 
 # Miscellany
 *~
-.npy
+*.npy
