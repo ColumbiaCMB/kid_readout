@@ -5,8 +5,6 @@ import matplotlib.pyplot as plt
 from lmfit import minimize
 
 # To use different defaults, change these three import statements.
-# Note that the current model doesn't include a cable delay, so feel
-# free to upgrade it to something better.
 from kid_readout.analysis.khalil import delayed_generic_s21 as default_model
 from kid_readout.analysis.khalil import delayed_generic_guess as default_guess
 from kid_readout.analysis.khalil import generic_functions as default_functions
@@ -25,7 +23,7 @@ class Resonator(object):
     defaults.
     """
    
-    def __init__(self, f, data, model=default_model, guess=default_guess, functions=default_functions):
+    def __init__(self, f, data, model=default_model, guess=default_guess, functions=default_functions, mask=None):
         """
         Instantiate a resonator using our current best model.
         Parameter model is a function S_21(params, f) that returns the
@@ -35,12 +33,20 @@ class Resonator(object):
         Parameter functions is a dictionary that maps keys that are
         valid Python variables to functions that take a Parameters
         object as their only argument.
+        Parameter mask is a boolean array of the same length as f and
+        data; only points f[mask] and data[mask] are used to fit the
+        data. The default is to use all data. Use this to exclude
+        glitches or resonances other than the desired one.
         """
         self.f = f
         self.data = data
         self._model = model
         self._functions = functions
-        self.fit(guess(f, data))
+        if mask is None:
+            self.mask = np.ones_like(data).astype(np.bool)
+        else:
+            self.mask = mask
+        self.fit(guess(f[self.mask], data[self.mask]))
 
     def __getattr__(self, attr):
         """
@@ -77,7 +83,8 @@ class Resonator(object):
         Note that the residual needs to be purely real, and should *not* include abs.
         The minimizer needs the signs of the residuals to properly evaluate the gradients.
         """
-        return ((self.data - self.model(params)).view('float'))  # .view('float') will take a length N complex array and turn it into a length 2*N float array.
+        # .view('float') will take a length N complex array and turn it into a length 2*N float array.
+        return ((self.data[self.mask] - self.model(params)[self.mask]).view('float'))
 
     def model(self, params=None, f=None):
         """
@@ -102,9 +109,9 @@ class Resonator(object):
         fig = plt.figure()
         plt.plot(self.f, 20*np.log10(abs(self.data)), '.b', label='data')
         plt.plot(self.f, 20*np.log10(abs(model)), '-g', label='fit')
-        plt.plot(self.f_0, 20*np.log10(abs(model_0)), '.r', label=r'$f_0$')
+        plt.plot(self.f_0, 20*np.log10(abs(model_0)), '.r', label='resonance')
         plt.xlabel('frequency [Hz]')
-        plt.ylabel(r'$|S_{21}|$ [dB]')
+        plt.ylabel('|S_{21}| [dB]')
         plt.legend(loc='lower right')
         if interactive:
             plt.ion()
