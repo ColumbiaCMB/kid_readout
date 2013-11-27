@@ -102,9 +102,9 @@ class Resonator(object):
         fig = plt.figure()
         plt.plot(self.f, 20*np.log10(abs(self.data)), '.b', label='data')
         plt.plot(self.f, 20*np.log10(abs(model)), '-g', label='fit')
-        plt.plot(self.f_0, 20*np.log10(abs(model_0)), '.r', label='f_0')
+        plt.plot(self.f_0, 20*np.log10(abs(model_0)), '.r', label=r'$f_0$')
         plt.xlabel('frequency [Hz]')
-        plt.ylabel('|S_21| [dB]')
+        plt.ylabel(r'$|S_{21}|$ [dB]')
         plt.legend(loc='lower right')
         if interactive:
             plt.ion()

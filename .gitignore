@@ -29,3 +29,7 @@ nosetests.xml
 .project
 .pydevproject
 /.spyderproject
+
+# Miscellany
+*~
+*.npy

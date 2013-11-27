@@ -22,7 +22,7 @@ import kid_readout.utils.roach_interface
 import kid_readout.utils.sweeps
 from kid_readout.utils.data_block import SweepData
 from kid_readout.utils import data_file
-from kid_readout.utils.PeakFind01 import peakdetect
+#from kid_readout.utils.PeakFind01 import peakdetect
 
 
 class SweepDialog(QDialog,Ui_SweepDialog):

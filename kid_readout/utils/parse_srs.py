@@ -51,3 +51,34 @@ def parse_srs_log(fname,sensor=2):
         except ValueError:
             print "failed to parse",repr(line),"skipping"
     return np.array(times),np.array(temps)
+
+
+class SRSLogFile(object):
+    """
+    Usage example: log_file[1].R returns an array of resistances for
+    channel 1.
+    """
+
+    class Channel(object):
+
+        def __init__(self, time, R, T):
+            self.time = time
+            self.R = R
+            self.T = T
+
+    def __init__(self, filename):
+        self._channels = {}
+        channels, resistances, temperatures, times = np.loadtxt(filename,
+                                                                unpack=True,
+                                                                converters={3: self.convert_timestamp})
+        for channel in np.unique(channels.astype('int')):
+            mask = (channels == channel)
+            self._channels[channel] = self.Channel(times[mask],
+                                                   resistances[mask],
+                                                   temperatures[mask])
+
+    def __getitem__(self, item):
+        return self._channels[item]
+
+    def convert_timestamp(self, timestamp):
+        return time.mktime(time.strptime(timestamp.strip(),'%Y%m%d-%H%M%S'))
