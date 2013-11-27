@@ -69,6 +69,7 @@ def plot_f0(swps,nres=None):
         qiax.text(0.1,0.1,('%.6f MHz' % f0s[res]),ha='left',va='bottom',bbox=dict(color='w',alpha=0.9),transform = qiax.transAxes)
         f0ax.set_title(' ')
         f0ax.set_ylim(-200,10)
+
     f0axes[0].legend(loc='upper left',prop=dict(size='x-small'))
     f0axes[0].set_ylabel('(delta_f0)*1e6')
     f0axes[-1].set_xlabel('Temperature (K)')
@@ -101,7 +102,7 @@ def plot_mag_s21(swps):
             ax = axes[res]
             ax.text(0.1,0.1,('%.6f MHz' % f0s[res]),ha='left',va='bottom',bbox=dict(color='w',alpha=0.9),transform = ax.transAxes)
             ax.set_title(' ')
-            ax.set_xlim(-0.05,0.01)
+            ax.set_xlim(-0.01,0.01)
             ax.set_ylim(-5,1)
         axes[0].legend(loc='upper left',prop=dict(size='x-small'))
         powfig.text(0.5,0.9,('%.1f mK plotted: %s' % ((temp*1000),time.ctime())),ha='center',va='top',bbox=dict(alpha=0.9,color='w'))
@@ -140,8 +141,9 @@ def get_all_sweeps(fname):
             epoch = time.mktime(time.strptime(name,'sweep_%Y%m%d%H%M%S'))
             last_epoch = epoch
             
-        hwidx = bisect.bisect(nc.hw_state.epoch[:],epoch)
+        
         try:
+            hwidx = bisect.bisect(nc.hw_state.epoch[:],epoch)
             atten = nc.hw_state.dac_atten[hwidx]
         except:
             print "failed to find attenuator settings for",swp
@@ -175,7 +177,10 @@ def get_all_sweeps(fname):
                 flo = bisect.bisect(fr,fr.max()-0.3)
                 fr = fr[flo:]
                 s21 = s21[flo:]
-            rr = Resonator(fr,s21)    
+            try:
+                rr = Resonator(fr,s21)
+            except:
+                print "failed to create resonator for", name,rk,fr.mean()    
             rr.index = uniq[rk]
             rr.atten = atten
             rr.power_dbm = -2 - atten - 40
