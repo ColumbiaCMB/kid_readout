@@ -3,6 +3,10 @@ import numpy as np
 import os
 import glob
 
+_timecache = []
+_tempcache = []
+_lastupdate = -1
+
 def get_all_temperature_data(logdir = '/home/heather/SRS'):
     logs = glob.glob(os.path.join(logdir,'2013*.txt'))
     logs.sort()
@@ -14,6 +18,14 @@ def get_all_temperature_data(logdir = '/home/heather/SRS'):
         temps = temps + temp0.tolist()
     return times,temps
         
+def get_temperature_at(epoch):
+    global _timecache, _tempcache, _lastupdate
+    if time.time() - _lastupdate > 20*60:
+        _timecache, _tempcache = get_all_temperature_data()
+        _lastupdate = time.time()
+        print "get_temperature_at: updated cache"
+    temp = np.interp(epoch,_timecache,_tempcache)
+    return temp
 
 def parse_srs_log(fname,sensor=2):
     """
