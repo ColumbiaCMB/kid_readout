@@ -1015,6 +1015,79 @@ class RoachBasebandWide(RoachBaseband):
             if m >= self.nfft/2:
                 demod[:,n] = np.conjugate(demod[:,n])
         return demod
+    
+class RoachBasebandWide10(RoachBasebandWide):
+    def __init__(self,roach=None,wafer=0,roachip='roach',adc_valon=None):
+        """
+        Class to represent the baseband readout system (low-frequency (150 MHz), no mixers)
+        
+        roach: an FpgaClient instance for communicating with the ROACH. 
+                If not specified, will try to instantiate one connected to *roachip*
+        wafer: 0 or 1. 
+                In baseband mode, each of the two DAC and ADC connections can be used independantly to
+                readout a single wafer each. This parameter indicates which connection you want to use.
+        roachip: (optional). Network address of the ROACH if you don't want to provide an FpgaClient
+        adc_valon: a Valon class, a string, or None
+                Provide access to the Valon class which controls the Valon synthesizer which provides
+                the ADC and DAC sampling clock.
+                The default None value will use the valon.find_valon function to locate a synthesizer
+                and create a Valon class for you.
+                You can alternatively pass a string such as '/dev/ttyUSB0' to specify the port for the
+                synthesizer, which will then be used for creating a Valon class.
+                Finally, for test suites, you can directly pass a Valon class or a class with the same
+                interface.
+        """
+        if roach:
+            self.r = roach
+        else:
+            from corr.katcp_wrapper import FpgaClient
+            self.r = FpgaClient(roachip)
+            t1 = time.time()
+            timeout = 10
+            while not self.r.is_connected():
+                if (time.time()-t1) > timeout:
+                    raise Exception("Connection timeout to roach")
+                time.sleep(0.1)
+                
+        if adc_valon is None:
+            import valon
+            ports = valon.find_valons()
+            if len(ports) == 0:
+                self.adc_valon_port = None
+                self.adc_valon = None
+                print "Warning: No valon found!"
+            else:
+                for port in ports:
+                    try:
+                        self.adc_valon_port = port
+                        self.adc_valon = valon.Synthesizer(port)
+                        f = self.adc_valon.get_frequency_a()
+                        break
+                    except:
+                        pass
+        elif type(adc_valon) is str:
+            import valon
+            self.adc_valon_port = adc_valon
+            self.adc_valon = valon.Synthesizer(self.adc_valon_port)
+        else:
+            self.adc_valon = adc_valon
+        
+        self.adc_atten = -1
+        self.dac_atten = -1
+        self.bof_pid = None
+        self.roachip = roachip
+        try:
+            self.fs = self.adc_valon.get_frequency_a()
+        except:
+            print "warning couldn't get valon frequency, assuming 512 MHz"
+            self.fs = 512.0
+        self.wafer = wafer
+        self.dac_ns = 2**16 # number of samples in the dac buffer
+        self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
+        self.nfft = 2**10
+        self.boffile = 'bb2xpfb10mcr8_2013_Nov_18_0706.bof'
+        self.bufname = 'ppout%d' % wafer
+        self._window_mag = compute_window(npfb = 2*self.nfft, taps= 8, wfunc = scipy.signal.hamming)#scipy.signal.flattop)    
 
 def test_sweep(ri):
     data = []
