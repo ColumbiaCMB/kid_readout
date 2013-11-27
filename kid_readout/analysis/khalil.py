@@ -7,16 +7,19 @@ from __future__ import division
 import numpy as np
 from lmfit import Parameters
 
-def cable_delay(f, delay, phi, f_low):
+def cable_delay(params, f):
     """
     This assumes that signals go as exp(i \omega t) so that a time
-    delay corresponds to negative phase.
-    if *f* is in MHz, *delay* will be in microseconds
-    if *f* is in Hz, *delay* will be in seconds 
+    delay corresponds to negative phase. In our sweeps the phase
+    advances with frequency, so I think that currently either the
+    convention is reversed in the readout or we have a time lead.
+    If *f* is in MHz, *delay* will be in microseconds.
+    If *f* is in Hz, *delay* will be in seconds.
+    Parameter *phi* is the phase at f = f_min.
     """
-    f = f - f_low # subtract off the lowest frequency, otherwise phase at f.min() can essentially be arbitrary.
-                    # doing this seems to improve covariance between delay and A_phase term.
-    return np.exp(-1j * (2 * np.pi * f * delay + phi))
+    delay = params['delay'].value
+    phi = params['phi'].value
+    return np.exp(1j * (-2 * np.pi * (f - np.min(f)) * delay + phi))
 
 def generic_s21(params, f):
     """
@@ -33,22 +36,18 @@ def generic_s21(params, f):
     return A * (1 - (Q * Q_e**-1 /
                      (1 + 2j * Q * (f - f_0) / f_0)))
 
-# This needs a corresponding guess function. It's fine if it includes
-# magic numbers that we have measured.
 def delayed_generic_s21(params, f):
     """
     This adds a cable delay controlled by two parameters to the
     generic model above.
     """
-    delay = params['delay'].value
-    f_low = params['f_low'].value
-    phi = 0.0 #params['phi'].value # phase is already taken account in A_phase
-    return cable_delay(f, delay, phi, f_low) * generic_s21(params, f)
+    return cable_delay(params, f) * generic_s21(params, f)
 
 def delayed_generic_guess(f, data):
-    p = generic_guess(f,data)
-    p.add('delay', value = 0.0, min = -10,max=10)
-    p.add('f_low', value = f.min(), vary = False)
+    p = generic_guess(f, data)
+    slope, offset = np.polyfit(f, np.unwrap(np.angle(data)), 1)
+    p.add('delay', value = -slope / (2 * np.pi))
+    p.add('phi', value = np.angle(data[0]), vary = False)
     return p
 
 def generic_guess(f, data):
@@ -59,12 +58,16 @@ def generic_guess(f, data):
     """
     p = Parameters()
     bw = f.max() - f.min()
-    p.add('f_0', value=f[np.argmin(abs(data))], min=f.min()-bw, max = f.max()+bw)  # Allow f_0 to vary by +/- the bandwidth over which we have data
-    p.add('A_mag', value=np.mean((np.abs(data[0]), np.abs(data[-1]))), min=0,max=1e6)
-    p.add('A_phase', value=np.mean(np.angle(data)), min=-np.pi, max=np.pi)
-    p.add('Q', value=5e4, min=0,max=1e7)
-    p.add('Q_e_real', value=4e4,min=0,max=1e6)
-    p.add('Q_e_imag', value=0,min=-1e6,max=1e6)
+    # Allow f_0 to vary by +/- the bandwidth over which we have data
+    p.add('f_0', value = f[np.argmin(abs(data))],
+          min = f.min() - bw, max = f.max() + bw)
+    p.add('A_mag', value = np.mean((np.abs(data[0]), np.abs(data[-1]))),
+          min = 0, max = 1e6)
+    p.add('A_phase', value = np.mean(np.angle(data)),
+          min = -np.pi, max = np.pi)
+    p.add('Q', value = 5e4, min = 0, max = 1e7)
+    p.add('Q_e_real', value = 4e4, min = 0, max = 1e6)
+    p.add('Q_e_imag', value = 0, min = -1e6, max =1e6)
     return p
 
 def Q_i(params):
@@ -72,8 +75,41 @@ def Q_i(params):
     Return the internal Q of the resonator.
     """
     Q = params['Q'].value
-    Q_e = (params['Q_e_real'].value +
-           1j * params['Q_e_imag'].value)
-    return (Q**-1 - np.real(Q_e**-1))**-1
+    Qe = Q_e(params)
+    return (Q**-1 - np.real(Qe**-1))**-1
 
-generic_functions = {'Q_i': Q_i}
+def Q_e(params):
+    """
+    Return the external (coupling) Q of the resonator.
+    """
+    return (params['Q_e_real'].value +
+            1j * params['Q_e_imag'].value)
+    
+# Zmuidzinas doesn't say how to calculate the coupling coefficient
+# \chi_c when Q_e (what he calls Q_c) is complex, and I don't know
+# whether to use the real part or the norm of Q_e. It doesn't seem to
+# make much difference.
+def chi_c_real(params):
+    """
+    Calculate the coupling coefficient \chi_c
+    using the real part of Q_e.
+    """
+    Qi = Q_i(params)
+    Qc = params['Q_e_real'].value
+    return ((4 * Qc * Qi) /
+            (Qc + Qi)**2)
+
+def chi_c_norm(params):
+    """
+    Calculate the coupling coefficient \chi_c
+    using the norm of Q_e.
+    """
+    Qi = Q_i(params)
+    Qc = np.abs(Q_e(params))
+    return ((4 * Qc * Qi) /
+            (Qc + Qi)**2)
+
+generic_functions = {'Q_i': Q_i,
+                     'Q_e': Q_e,
+                     'chi_c_real': chi_c_real,
+                     'chi_c_norm': chi_c_norm}
