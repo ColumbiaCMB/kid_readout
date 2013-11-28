@@ -44,10 +44,16 @@ def delayed_generic_s21(params, f):
     return cable_delay(params, f) * generic_s21(params, f)
 
 def delayed_generic_guess(f, data):
+    """
+    The phase of A is fixed at 0 and the phase at lowest frequency is
+    incorporated into the cable delay term.
+    """
     p = generic_guess(f, data)
+    p['A_phase'].value = 0
+    p['A_phase'].vary = False
     slope, offset = np.polyfit(f, np.unwrap(np.angle(data)), 1)
     p.add('delay', value = -slope / (2 * np.pi))
-    p.add('phi', value = np.angle(data[0]), vary = False)
+    p.add('phi', value = np.angle(data[0]), min = -np.pi, max = np.pi)
     return p
 
 def generic_guess(f, data):
