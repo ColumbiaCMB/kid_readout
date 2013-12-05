@@ -19,6 +19,7 @@ import cPickle
 
 scale = 4.0/3.814e-6 #amplitude scaling between s21 and time series. Need to fix this in data files eventually
 phasecorr = 397.93/2.0 #radians per MHz correction
+
     
 def plot_noise_nc(fname,chip,**kwargs):
     nc = EasyNetCDF4(fname)
@@ -220,6 +221,11 @@ class NoiseMeasurement(object):
         ax1.set_title(title,size='small')
         return f1
         
+def load_noise_pkl(pklname):
+    fh = open(pklname,'r')
+    pkl = cPickle.load(fh)
+    fh.close()
+    return pkl
     
 def plot_noise(swg,tsg,hwg,chip,index=0,phasecorr=phasecorr,scale=scale,filtlen=2**16):
     
