@@ -51,7 +51,11 @@ def bifurcation_s21(params,f):
             cbrt(a/8 + y_0/12 + np.sqrt((y_0**3/27. + y_0/12 + a/8)**2 - (y_0**2/9 - 1/12.)**3) + y_0**3/27))
     x = y/Q
     s21 = A*(1 - (Q/Q_e)/(1+2j*Q*x))
-    return s21
+    msk = ~np.isfinite(s21)
+    s21_interp_real = np.interp(f[msk],f[msk==False],s21[msk==False].real)
+    s21_interp_imag = np.interp(f[msk],f[msk==False],s21[msk==False].imag)
+    s21new = s21_interp_real+1j*s21_interp_imag
+    return s21new
 
 def delayed_generic_s21(params, f):
     """
