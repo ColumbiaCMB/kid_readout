@@ -3,7 +3,7 @@ This module uses models from the Khalil paper.
 """
 
 from __future__ import division
-
+from scipy.special import cbrt
 import numpy as np
 from lmfit import Parameters
 
@@ -36,12 +36,34 @@ def generic_s21(params, f):
     return A * (1 - (Q * Q_e**-1 /
                      (1 + 2j * Q * (f - f_0) / f_0)))
 
+def bifurcation_s21(params,f):
+    A = (params['A_mag'].value *
+         np.exp(1j * params['A_phase'].value))
+    f_0 = params['f_0'].value
+    Q = params['Q'].value
+    Q_e = (params['Q_e_real'].value +
+           1j * params['Q_e_imag'].value)
+           
+    a = params['a'].value
+    y_0 = ((f - f_0)/f_0)*Q
+    y =  (y_0/3. + 
+            (y_0**2./9. - 1./12.)/cbrt(a/8 + y_0/12 + ((y_0**3/27 + y_0/12 + a/8)**2 - (y_0**2/9 - 1/12.)**3)**(1/2.) + y_0**3/27) + 
+            cbrt(a/8 + y_0/12 + np.sqrt((y_0**3/27. + y_0/12 + a/8)**2 - (y_0**2/9 - 1/12.)**3) + y_0**3/27))
+    x = y/Q
+    s21 = A*(1 - (Q/Q_e)/(1+2j*Q*x))
+    return s21
+
 def delayed_generic_s21(params, f):
     """
     This adds a cable delay controlled by two parameters to the
     generic model above.
     """
     return cable_delay(params, f) * generic_s21(params, f)
+    
+def bifurcation_guess(f, data):
+    p = delayed_generic_guess(f,data)
+    p.add('a',value=0,min=0,max=1)
+    return p
 
 def delayed_generic_guess(f, data):
     """
