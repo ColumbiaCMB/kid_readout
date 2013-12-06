@@ -99,7 +99,41 @@ def generic_guess(f, data):
           min = -np.pi, max = np.pi)
     p.add('Q', value = 5e4, min = 0, max = 1e7)
     p.add('Q_e_real', value = 4e4, min = 0, max = 1e6)
-    p.add('Q_e_imag', value = 0, min = -1e6, max =1e6)
+    p.add('Q_e_imag', value = 0, min = -1e6, max = 1e6)
+    return p
+
+def auto_guess(f, data):
+    """
+    Use the linewidth and the transmission ratio on and off resonance
+    to guess the initial Q values.  Estimate the linewidth by
+    smoothing then looking for the extrema of the first
+    derivative. This may fail if the resonance is very close to the
+    edge of the data.
+    """
+    p = Parameters()
+    bw = f.max() - f.min()
+    # Allow f_0 to vary by +/- the bandwidth over which we have data
+    p.add('f_0', value = f[np.argmin(abs(data))],
+          min = f.min() - bw, max = f.max() + bw)
+    off = np.mean((np.abs(data[0]), np.abs(data[-1])))
+    p.add('A_mag', value = off,
+          min = 0, max = 1e6)
+    p.add('A_phase', value = np.mean(np.angle(data)),
+          min = -np.pi, max = np.pi)
+    width = int(f.size / 10)
+    gaussian = np.exp(-np.linspace(-4, 4, width)**2)
+    gaussian /= np.sum(gaussian) # not necessary
+    smoothed = np.convolve(gaussian, abs(data), mode='same')
+    derivative = np.convolve(np.array([1, -1]), smoothed, mode='same')
+    # Exclude the edges, which are affected by zero padding.
+    linewidth = (f[np.argmax(derivative[width:-width])] -
+                 f[np.argmin(derivative[width:-width])])
+    p.add('Q', value = p['f_0'].value / linewidth,
+          min = 0, max = 1e7)
+    p.add('Q_e_real', value = (p['Q'].value /
+                               (1 - np.min(np.abs(data)) / off)),
+          min = 0, max = 1e6)
+    p.add('Q_e_imag', value = 0, min = -1e6, max = 1e6)
     return p
 
 def Q_i(params):
