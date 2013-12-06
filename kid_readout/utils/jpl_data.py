@@ -1,9 +1,8 @@
-from __future__ import division
-
-from os.path import join, split, splitext
 """
 This module contains functions to handle data from Peter Day.
 """
+from __future__ import division
+from os.path import join, split, splitext
 from glob import glob
 import numpy as np
 

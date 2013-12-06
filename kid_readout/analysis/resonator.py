@@ -79,7 +79,9 @@ class Resonator(object):
                                
     def residual(self, params):
         """
-        This is the residual function used by lmfit.
+        This is the residual function used by lmfit. Only data where
+        mask is True is used for the fit.
+        
         Note that the residual needs to be purely real, and should *not* include abs.
         The minimizer needs the signs of the residuals to properly evaluate the gradients.
         """
@@ -97,23 +99,3 @@ class Resonator(object):
         if f is None:
             f = self.f
         return self._model(params, f)
-
-    def plot(self):
-        """
-        Plot the data, fit, and f_0.
-        """
-        model = self.model(self.result.params, self.f)
-        model_0 = model[np.argmin(abs(self.f_0 - self.f))]
-        interactive = plt.isinteractive()
-        plt.ioff()
-        fig = plt.figure()
-        plt.plot(self.f, 20*np.log10(abs(self.data)), '.b', label='data')
-        plt.plot(self.f, 20*np.log10(abs(model)), '-g', label='fit')
-        plt.plot(self.f_0, 20*np.log10(abs(model_0)), '.r', label='resonance')
-        plt.xlabel('frequency [Hz]')
-        plt.ylabel('|S_{21}| [dB]')
-        plt.legend(loc='lower right')
-        if interactive:
-            plt.ion()
-            plt.show()
-        return fig
