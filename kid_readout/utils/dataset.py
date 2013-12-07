@@ -29,7 +29,7 @@ class Dataset(object):
 class CoarseSweep(object):
     """
     This interface is going to change soon -- it will figure out
-    everything from the netCDF group, like the Fine sweep.
+    everything from the netCDF group, like the FineSweep.
     """
     def __init__(self, f, s21, coarse_resolution, n_subsweeps):
         self.f = f
@@ -65,7 +65,7 @@ class FineSweep(OrderedDict):
     """
     
     def __init__(self, group, fit_subsweeps=False):
-        super(Fine, self).__init__()
+        super(FineSweep, self).__init__()
         self.group = group
         self.f = 1e6 * group.variables['frequency'][:]
         self.s21 = group.variables['s21'][:].view('complex128')
