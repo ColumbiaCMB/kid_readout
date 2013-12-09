@@ -37,6 +37,10 @@ def generic_s21(params, f):
                      (1 + 2j * Q * (f - f_0) / f_0)))
 
 def bifurcation_s21(params,f):
+    """
+    Swenson paper:
+        Equation: y = yo + A/(1+4*y**2)
+    """
     A = (params['A_mag'].value *
          np.exp(1j * params['A_phase'].value))
     f_0 = params['f_0'].value
@@ -47,15 +51,15 @@ def bifurcation_s21(params,f):
     a = params['a'].value
     y_0 = ((f - f_0)/f_0)*Q
     y =  (y_0/3. + 
-            (y_0**2./9. - 1./12.)/cbrt(a/8 + y_0/12 + ((y_0**3/27 + y_0/12 + a/8)**2 - (y_0**2/9 - 1/12.)**3)**(1/2.) + y_0**3/27) + 
-            cbrt(a/8 + y_0/12 + np.sqrt((y_0**3/27. + y_0/12 + a/8)**2 - (y_0**2/9 - 1/12.)**3) + y_0**3/27))
+            (y_0**2/9 - 1/12)/cbrt(a/8 + y_0/12 + np.sqrt((y_0**3/27 + y_0/12 + a/8)**2 - (y_0**2/9 - 1/12)**3) + y_0**3/27) + 
+            cbrt(a/8 + y_0/12 + np.sqrt((y_0**3/27 + y_0/12 + a/8)**2 - (y_0**2/9 - 1/12)**3) + y_0**3/27))
     x = y/Q
     s21 = A*(1 - (Q/Q_e)/(1+2j*Q*x))
-    msk = ~np.isfinite(s21)
-    s21_interp_real = np.interp(f[msk],f[msk==False],s21[msk==False].real)
-    s21_interp_imag = np.interp(f[msk],f[msk==False],s21[msk==False].imag)
+    msk = np.isfinite(s21)
+    s21_interp_real = np.interp(f,f[msk],s21[msk].real)
+    s21_interp_imag = np.interp(f,f[msk],s21[msk].imag)
     s21new = s21_interp_real+1j*s21_interp_imag
-    return s21new
+    return s21new*cable_delay(params,f)
 
 def delayed_generic_s21(params, f):
     """
@@ -66,7 +70,7 @@ def delayed_generic_s21(params, f):
     
 def bifurcation_guess(f, data):
     p = delayed_generic_guess(f,data)
-    p.add('a',value=0,min=0,max=1)
+    p.add('a',value=0,min=0,max=0.8)
     return p
 
 def delayed_generic_guess(f, data):
@@ -99,7 +103,7 @@ def generic_guess(f, data):
           min = -np.pi, max = np.pi)
     p.add('Q', value = 5e4, min = 0, max = 1e7)
     p.add('Q_e_real', value = 4e4, min = 0, max = 1e6)
-    p.add('Q_e_imag', value = 0, min = -1e6, max =1e6)
+    p.add('Q_e_imag', value = 0, min = -1e6, max =1e6) 
     return p
 
 def Q_i(params):
