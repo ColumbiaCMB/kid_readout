@@ -2,7 +2,8 @@ from __future__ import division
 
 import numpy as np
 import matplotlib.pyplot as plt
-from lmfit import minimize
+import lmfit
+minimize = lmfit.minimize
 
 # To use different defaults, change these three import statements.
 from kid_readout.analysis.khalil import delayed_generic_s21 as default_model
@@ -99,3 +100,21 @@ class Resonator(object):
         if f is None:
             f = self.f
         return self._model(params, f)
+
+def plot_covar(mzr,nsigma=8,nx=15):
+    params = mzr.params
+    pnames = [x for x in params.keys() if x != 'A_phase']
+    nparam = len(pnames)
+    f = plt.figure(figsize=(24,24))
+    for p1 in range(nparam):
+        for p2 in range(p1+1,nparam):
+            print pnames[p1],pnames[p2]
+            ax = f.add_subplot(nparam,nparam,nparam*p2+p1+1)
+            x0 = params[pnames[p1]].value
+            xerr = params[pnames[p1]].stderr*nsigma
+            y0 = params[pnames[p2]].value
+            yerr = params[pnames[p2]].stderr*nsigma
+            x,y,im = lmfit.conf_interval2d(mzr,pnames[p1],pnames[p2],limits=((x0-xerr,x0+xerr),(y0-yerr,y0+yerr)),nx=nx,ny=nx)
+            ax.contourf((x-x0)/abs(x0),(y-y0)/abs(y0),im,20)
+            ax.set_xlabel(pnames[p1])
+            ax.set_ylabel(pnames[p2])
