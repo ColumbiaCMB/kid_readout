@@ -19,7 +19,8 @@ def cable_delay(params, f):
     """
     delay = params['delay'].value
     phi = params['phi'].value
-    return np.exp(1j * (-2 * np.pi * (f - np.min(f)) * delay + phi))
+    f_min = params['f_phi'].value
+    return np.exp(1j * (-2 * np.pi * (f - f_min) * delay + phi))
 
 def generic_s21(params, f):
     """
@@ -80,6 +81,7 @@ def delayed_generic_guess(f, data):
     slope, offset = np.polyfit(f, np.unwrap(np.angle(data)), 1)
     p.add('delay', value = -slope / (2 * np.pi))
     p.add('phi', value = np.angle(data[0]), min = -np.pi, max = np.pi)
+    p.add('f_phi', value = f[0], vary=False)
     return p
 
 def generic_guess(f, data):
@@ -129,12 +131,19 @@ def auto_guess(f, data):
     linewidth = (f[np.argmax(derivative[width:-width])] -
                  f[np.argmin(derivative[width:-width])])
     p.add('Q', value = p['f_0'].value / linewidth,
-          min = 0, max = 1e7)
+          min = 1, max = 1e7) # This seems to stop an occasional failure mode.
     p.add('Q_e_real', value = (p['Q'].value /
                                (1 - np.min(np.abs(data)) / off)),
-          min = 0, max = 1e6)
+          min = 1, max = 1e6) # As above.
     p.add('Q_e_imag', value = 0, min = -1e6, max = 1e6)
     return p
+
+def delayed_auto_guess(f, data):
+    auto = auto_guess(f, data)
+    delayed = delayed_generic_guess(f, data)
+    delayed['Q'].value = auto['Q'].value
+    delayed['Q_e_real'].value = auto['Q_e_real'].value
+    return delayed
 
 def Q_i(params):
     """
