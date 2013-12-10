@@ -57,9 +57,12 @@ def bifurcation_s21(params,f):
     x = y/Q
     s21 = A*(1 - (Q/Q_e)/(1+2j*Q*x))
     msk = np.isfinite(s21)
-    s21_interp_real = np.interp(f,f[msk],s21[msk].real)
-    s21_interp_imag = np.interp(f,f[msk],s21[msk].imag)
-    s21new = s21_interp_real+1j*s21_interp_imag
+    if not np.all(msk):
+        s21_interp_real = np.interp(f,f[msk],s21[msk].real)
+        s21_interp_imag = np.interp(f,f[msk],s21[msk].imag)
+        s21new = s21_interp_real+1j*s21_interp_imag
+    else:
+        s21new = s21
     return s21new*cable_delay(params,f)
 
 def delayed_generic_s21(params, f):
