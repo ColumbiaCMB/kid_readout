@@ -3,10 +3,10 @@ import time
 
 from data_block import DataBlock, SweepData
 
-default_segments_hz = [np.arange(0,200e3,8e3)-490e3,
-                       np.arange(200e3,360e3,4e3)-490e3,
-                       np.arange(360e3,440e3,2e3)-490e3,
-                                  np.arange(440e3,480e3,1e3)-490e3,
+default_segments_hz = [#np.arange(0,200e3,8e3)-490e3,
+                       #np.arange(200e3,360e3,4e3)-490e3,
+                       #np.arange(360e3,440e3,2e3)-490e3,
+                       #           np.arange(440e3,480e3,1e3)-490e3,
                                   np.arange(480e3,500e3,0.5e3)-490e3]
 
 default_segments_mhz = [x/1e6 for x in default_segments_hz]
@@ -47,7 +47,7 @@ def coarse_sweep(ri,freqs=np.linspace(10,200,384),nsamp=2**15,nchan_per_step=4,r
     ri.r.write_int('sync',0)
     time.sleep(1)
     nchan = ri.fft_bins.shape[0]
-    nstep = np.ceil(nchan/float(nchan_per_step))
+    nstep = int(np.ceil(nchan/float(nchan_per_step)))
     toread = set(range(nchan))
     for k in range(nstep):
         if len(toread) == 0:

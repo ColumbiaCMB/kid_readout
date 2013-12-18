@@ -393,7 +393,7 @@ class SweepDialog(QDialog,Ui_SweepDialog):
             name = self.logfile.add_sweep(self.sweep_data)
             self.label_status.setText("saved %s" % name)
             
-        self.find_resonances()
+        #self.find_resonances()
         self.refresh_freq_table()
         self.abort_requested = False
         
