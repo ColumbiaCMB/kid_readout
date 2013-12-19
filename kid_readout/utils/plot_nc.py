@@ -4,6 +4,7 @@ import bisect
 from kid_readout.utils.easync import EasyNetCDF4
 from matplotlib import pyplot as plt
 from kid_readout.analysis.resonator import Resonator
+import kid_readout.analysis.khalil as khalil
 import kid_readout.utils.parse_srs
 
 def setup_axes(nres,figsize=(15,10)):
@@ -38,7 +39,7 @@ def plot_f0(swps,nres=None):
     
     data = []
     for swp in swps:
-        data.append((swp.index,swp.power_dbm,swp.init_temp,swp.f_0,swp.Q_i,20*np.log10(np.abs(swp.model(f=swp.f_0)/swp.A_mag))))
+        data.append((swp.index,swp.power_dbm,swp.init_temp,swp.f_0,swp.Q_i,20*np.log10(np.abs(swp.model(f=swp.f_0)/swp.A_mag)),swp.Q,swp.Q_e_real))
     data = np.array(data)
     # data is now (nswp,6) array
     f0fig,f0axes = setup_axes(nres)
@@ -58,22 +59,41 @@ def plot_f0(swps,nres=None):
             y = 1e6*(y-f0s[res])/f0s[res]
             f0ax.plot(x,y,'.-',color=color,markersize=4,label=('%.1f dBm' % power))
             
-            x = pdat[:,2]
-            order = x.argsort()
-            y = pdat[:,4]
-            x = x[order]
-            y = y[order]
-            qiax.plot(x,y,'.-',color=color,markersize=4,label=('%.1f dBm' % power))
+            if True:#power == powers[0]:
+                x = pdat[:,2]*1000
+                order = x.argsort()
+                qi = pdat[:,4]
+                qc = pdat[:,7]
+                y = 4*qc*qi/(qc+qi)**2
+                x = x[order]
+                y = y[order]
+                qiax.plot(x,y,'.-',color=color,markersize=4,label=('%.1f dBm' % power))
+#                x = pdat[:,2]
+#                order = x.argsort()
+#                y = pdat[:,6]
+#                x = x[order]
+#                y = y[order]
+#                qiax.plot(x,y,'o-',color=color,markersize=4,label=('%.1f dBm' % power))
+#                x = pdat[:,2]
+#                order = x.argsort()
+#                y = pdat[:,7]
+#                x = x[order]
+#                y = y[order]
+#                qiax.plot(x,y,'x-',color=color,markersize=4,label=('%.1f dBm' % power))
+            
         f0ax.text(0.1,0.1,('%.6f MHz' % f0s[res]),ha='left',va='bottom',bbox=dict(color='w',alpha=0.9),transform = f0ax.transAxes)
         #f0ax.set_xscale('log')
-        qiax.text(0.1,0.1,('%.6f MHz' % f0s[res]),ha='left',va='bottom',bbox=dict(color='w',alpha=0.9),transform = qiax.transAxes)
+        qiax.text(0.1,0.1,('%.6f MHz' % f0s[res]),ha='left',va='bottom',bbox=dict(color='w',alpha=0.4),transform = qiax.transAxes)
         f0ax.set_title(' ')
         f0ax.set_ylim(-200,10)
+        qiax.set_ylim(0,1)
 
     f0axes[0].legend(loc='upper left',prop=dict(size='x-small'))
     f0axes[0].set_ylabel('(delta_f0)*1e6')
     f0axes[-1].set_xlabel('Temperature (K)')
     f0fig.text(0.5,0.9,('plotted: %s' % (time.ctime())),ha='center',va='top',bbox=dict(alpha=0.9,color='w'))
+    qifig.text(0.5,0.9,(r"""Chi_c plotted: %s""" % (time.ctime())),ha='center',va='top',bbox=dict(alpha=0.9,color='w'))
+    qiaxes[-1].set_xlabel('Temperature (mK)')
 
 #        ax.set_xlim(-0.05,0.01)
 #        ax.set_ylim(-5,1)
@@ -102,8 +122,11 @@ def plot_mag_s21(swps):
             ax = axes[res]
             ax.text(0.1,0.1,('%.6f MHz' % f0s[res]),ha='left',va='bottom',bbox=dict(color='w',alpha=0.9),transform = ax.transAxes)
             ax.set_title(' ')
-            ax.set_xlim(-0.01,0.01)
-            ax.set_ylim(-5,1)
+            if temp < 0.39:
+                ax.set_xlim(-0.02,0.005)
+            else:
+                ax.set_xlim(-0.15,-0.05)
+            ax.set_ylim(-10,1)
         axes[0].legend(loc='upper left',prop=dict(size='x-small'))
         powfig.text(0.5,0.9,('%.1f mK plotted: %s' % ((temp*1000),time.ctime())),ha='center',va='top',bbox=dict(alpha=0.9,color='w'))
 
@@ -123,13 +146,19 @@ def plot_mag_s21(swps):
             ax.text(0.1,0.1,('%.6f MHz' % f0s[res]),ha='left',va='bottom',bbox=dict(color='w',alpha=0.9),transform = ax.transAxes)
             ax.set_title(' ')
             ax.set_xlim(-0.15,0.01)
-            ax.set_ylim(-5,1)
+            ax.set_ylim(-10,1)
         axes[0].legend(loc='upper left',prop=dict(size='x-small'))
         tempfig.text(0.5,0.9,('%.1f dBm plotted: %s' % (power,time.ctime())),ha='center',va='top',bbox=dict(alpha=0.9,color='w'))
                
     
 
-def get_all_sweeps(fname):
+def get_all_sweeps(fname,bif=False):
+    if bif:
+        model = khalil.bifurcation_s21
+        guess = khalil.bifurcation_guess
+    else:
+        model = khalil.delayed_generic_s21
+        guess = khalil.delayed_generic_guess
     times,temps = kid_readout.utils.parse_srs.get_all_temperature_data()
     nc = EasyNetCDF4(fname)
     sweeps = []
