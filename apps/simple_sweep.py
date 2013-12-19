@@ -390,6 +390,7 @@ class SweepDialog(QDialog,Ui_SweepDialog):
             if self.abort_requested:
                 break
         if self.logfile:
+            self.logfile.log_hw_state(self.ri)
             name = self.logfile.add_sweep(self.sweep_data)
             self.label_status.setText("saved %s" % name)
             
@@ -446,6 +447,7 @@ class SweepDialog(QDialog,Ui_SweepDialog):
             if self.logfile:
                 self.logfile.log_adc_snap(self.ri)
         if self.logfile:
+            self.logfile.log_hw_state(self.ri)
             name = self.logfile.add_sweep(self.fine_sweep_data)
             self.label_status.setText("saved %s" % name)
         self.abort_requested = False
