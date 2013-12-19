@@ -53,21 +53,21 @@ class FineSweep(OrderedDict):
     """
     A container class for a fine sweep.
 
-    This class assumes that the frequency data is in MHz and converts
-    it to Hz.
-
     Parameters:
     group -- a netCDF Group that contains fine sweep data.
 
     Keywords:
     fit_subsweeps -- if True, the class will attempt to fit the data
     correponding to each index using the current resonator defaults.
+    scale_frequency -- frequency values from the data are multiplied
+    by this number; the default of 1e6 assumes that the frequency is
+    stored in MHz and converts it to Hz.
     """
     
-    def __init__(self, group, fit_subsweeps=False):
+    def __init__(self, group, fit_subsweeps=False, scale_frequency=1e6):
         super(FineSweep, self).__init__()
         self.group = group
-        self.f = 1e6 * group.variables['frequency'][:]
+        self.f = scale_frequency * group.variables['frequency'][:]
         self.s21 = group.variables['s21'][:].view('complex128')
         # This allows the class to load old data without the subsweep
         # index. Use build_index() instead.
