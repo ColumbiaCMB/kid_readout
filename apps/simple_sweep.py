@@ -510,6 +510,7 @@ def main():
     app = QApplication(sys.argv)
     app.quitOnLastWindowClosed = True
     form = SweepDialog(app)
+    ri = form.ri
     form.setAttribute(Qt.WA_QuitOnClose)
     form.setAttribute(Qt.WA_DeleteOnClose)
     try:
