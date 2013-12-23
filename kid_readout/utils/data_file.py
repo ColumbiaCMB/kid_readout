@@ -17,7 +17,8 @@ class DataFile():
         self.filename = fn
         self.nc = netCDF4.Dataset(fn,mode='w')
         try:
-            gitinfo = check_output(("git log -1 %s" % __file__),shell=True)
+            dname = os.path.split(__file__)[0]
+            gitinfo = check_output(("cd %s; git log -1" % dname),shell=True)
         except:
             gitinfo = ''
         self.nc.gitinfo = gitinfo
@@ -29,6 +30,7 @@ class DataFile():
         self.hw_epoch = self.hw_state.createVariable('epoch',np.float64,dimensions=('time',))
         self.hw_adc_atten = self.hw_state.createVariable('adc_atten',np.float32,dimensions=('time',))
         self.hw_dac_atten = self.hw_state.createVariable('dac_atten',np.float32,dimensions=('time',))
+        self.hw_ntones = self.hw_state.createVariable('ntones',np.int32,dimensions=('time',))
         
         self.adc_snaps = self.nc.createGroup('adc_snaps')
         self.adc_snaps.createDimension('epoch', None)
@@ -50,6 +52,7 @@ class DataFile():
         self.hw_epoch[idx] = t0
         self.hw_adc_atten[idx] = ri.adc_atten
         self.hw_dac_atten[idx] = ri.dac_atten
+        self.hw_ntones[idx] = ri.tone_bins.shape[0]
         
     def log_adc_snap(self,ri):
         t0 = time.time()
