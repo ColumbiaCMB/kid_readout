@@ -38,4 +38,7 @@ def EasyNetCDF4(*args,**kwargs):
         fn = args[0]
     else:
         fn = kwargs['filename']
-    return EasyGroup(nc,fn)
+    enc =  EasyGroup(nc,fn)
+    enc.close = nc.close
+    enc.sync = nc.sync
+    return enc
