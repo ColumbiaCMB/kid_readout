@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 mlab = plt.mlab
 from kid_readout.utils.easync import EasyNetCDF4
 from kid_readout.analysis.resonator import Resonator
+from kid_readout.analysis import khalil
 import scipy.signal
 
 from kid_readout.utils.fftfilt import fftfilt
@@ -113,7 +114,7 @@ class NoiseMeasurement(object):
         self.s21 = swg.variables['s21'][:].view('complex128')*np.exp(-1j*self.fr*phasecorr)*scale
         self.fr = self.fr[idx==index][1:]
         self.s21 = self.s21[idx==index][1:]
-        rr = Resonator(self.fr,self.s21)
+        rr = Resonator(self.fr,self.s21,model=khalil.bifurcation_s21,guess=khalil.bifurcation_guess)
         self.Q_i = rr.Q_i
         self.params = rr.result.params
         
@@ -211,7 +212,8 @@ class NoiseMeasurement(object):
                 + ("Q: %.1f +/- %.1f\n" % (params['Q'].value,params['Q'].stderr))
                 + ("Re(Qe): %.1f +/- %.1f\n" % (params['Q_e_real'].value,params['Q_e_real'].stderr))
                 + ("|Qe|: %.1f\n" % (abs(params['Q_e_real'].value+1j*params['Q_e_imag'].value)))
-                + ("Qi: %.1f" % (self.Q_i))
+                + ("Qi: %.1f\n" % (self.Q_i))
+                + ("a: %.3g +/- %.3g" % (params['a'].value,params['a'].stderr))
                 )
         
         ax1.text(0.5,0.5,text,ha='center',va='center',bbox=dict(fc='white',alpha=0.6),transform = ax1.transAxes,
