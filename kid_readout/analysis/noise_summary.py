@@ -135,10 +135,10 @@ class NoiseMeasurement(object):
         self.tss = (self.tss_raw-self.s0) * np.exp(-1j*np.angle(self.ds0))
         self.tss = self.tss/np.abs(self.ds0)    
         
-        self.prr_fine,self.fr_fine = mlab.psd(self.tss.real,NFFT=2**18,window=mlab.window_none,Fs=self.fs*1e6/self.nfft)
-        self.pii_fine,fr = mlab.psd(self.tss.imag,NFFT=2**18,window=mlab.window_none,Fs=self.fs*1e6/self.nfft)
-        self.prr_coarse,self.fr_coarse = mlab.psd(self.tss.real,NFFT=2**12,window=mlab.window_none,Fs=self.fs*1e6/self.nfft)
-        self.pii_coarse,fr = mlab.psd(self.tss.imag,NFFT=2**12,window=mlab.window_none,Fs=self.fs*1e6/self.nfft)
+        self.prr_fine,self.fr_fine = mlab.psd(self.tss.real,NFFT=2**18,window=mlab.window_none,Fs=self.fs*1e6/(2*self.nfft))
+        self.pii_fine,fr = mlab.psd(self.tss.imag,NFFT=2**18,window=mlab.window_none,Fs=self.fs*1e6/(2*self.nfft))
+        self.prr_coarse,self.fr_coarse = mlab.psd(self.tss.real,NFFT=2**12,window=mlab.window_none,Fs=self.fs*1e6/(2*self.nfft))
+        self.pii_coarse,fr = mlab.psd(self.tss.imag,NFFT=2**12,window=mlab.window_none,Fs=self.fs*1e6/(2*self.nfft))
         
         self.tss_raw = self.tss_raw[:2048]
         self.tss = self.tss[:2048]
@@ -196,7 +196,7 @@ class NoiseMeasurement(object):
         
         tsl = (self.tsl_raw-self.s0)/self.ds0
         tsl = tsl - tsl.mean()
-        dtl = (self.filtlen/4)/(self.fs*1e6/self.nfft)
+        dtl = (self.filtlen/4)/(self.fs*1e6/(2*self.nfft))
         t = dtl*np.arange(len(tsl))
         ax3.plot(t,tsl.real,'b',lw=2,label = 'LPF timeseries real')
         ax3.plot(t,tsl.imag,'g',lw=2,label = 'LPF timeseries imag')
