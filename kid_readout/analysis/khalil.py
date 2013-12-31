@@ -37,6 +37,25 @@ def generic_s21(params, f):
     return A * (1 - (Q * Q_e**-1 /
                      (1 + 2j * Q * (f - f_0) / f_0)))
 
+def create_model(f_0 = 100e6, Q = 1e4, 
+                 Q_e = 2e4, A = 1.0,
+                 delay = 0.0, a = 0.0):
+    p = Parameters()
+    A_mag = np.abs(A)
+    phi = np.angle(A)
+    Q_e_real = np.real(Q_e)
+    Q_e_imag = np.imag(Q_e)
+    p.add('f_0', value = f_0)
+    p.add('Q', value = Q)
+    p.add('Q_e_real', value = Q_e_real)
+    p.add('Q_e_imag', value = Q_e_imag)
+    p.add('A_mag', value = A_mag)
+    p.add('A_phase',value=0)
+    p.add('phi', value = phi)
+    p.add('delay',value = delay)
+    p.add('f_phi',value = 0)
+    p.add('a',value = a)
+    return p
 def bifurcation_s21(params,f):
     """
     Swenson paper:
