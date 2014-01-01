@@ -708,7 +708,8 @@ class RoachBaseband(RoachInterface):
         self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
         self.nfft = 2**14
 #        self.boffile = 'bb2xpfb14mcr5_2013_Jul_31_1301.bof'
-        self.boffile = 'bb2xpfb14mcr7_2013_Oct_31_1332.bof'
+#        self.boffile = 'bb2xpfb14mcr7_2013_Oct_31_1332.bof'
+        self.boffile = 'bb2xpfb14mcr9_2013_Dec_05_1226.bof'
         self.bufname = 'ppout%d' % wafer
         self._window_mag = compute_window(npfb = 2*self.nfft, taps= 2, wfunc = scipy.signal.flattop)
 
@@ -729,7 +730,7 @@ class RoachBaseband(RoachInterface):
         self.r.write_int('dram_mask', data.shape[0]/4 - 1)
         self._load_dram(data,fast=fast)
         
-    def set_tone_freqs(self,freqs,nsamp,amps=None):
+    def set_tone_freqs(self,freqs,nsamp,amps=None,load=True,normfact = None):
         """
         Set the stimulus tones to generate
         
@@ -740,13 +741,14 @@ class RoachBaseband(RoachInterface):
         amps : optional array of floats, same length as freqs array
             specify the relative amplitude of each tone. Can set to zero to read out a portion
             of the spectrum with no stimulus tone.
+        load : bool (debug only). If false, don't actually load the waveform, just calculate it.
                     
         returns:
         actual_freqs : array of the actual frequencies after quantization based on nsamp
         """        
         bins = np.round((freqs/self.fs)*nsamp).astype('int')
         actual_freqs = self.fs*bins/float(nsamp)
-        self.set_tone_bins(bins, nsamp,amps=amps)
+        self.set_tone_bins(bins, nsamp,amps=amps,load=load,normfact=normfact)
         self.fft_bins = self.calc_fft_bins(bins, nsamp)
         if self.fft_bins.shape[0] > 8:
             readout_selection = range(8)
@@ -756,7 +758,7 @@ class RoachBaseband(RoachInterface):
         self.select_fft_bins(readout_selection)
         return actual_freqs
 
-    def set_tone_bins(self,bins,nsamp,amps=None):
+    def set_tone_bins(self,bins,nsamp,amps=None,load=True,normfact=None):
         """
         Set the stimulus tones by specific integer bins
         
@@ -767,6 +769,7 @@ class RoachBaseband(RoachInterface):
         amps : optional array of floats, same length as bins array
             specify the relative amplitude of each tone. Can set to zero to read out a portion
             of the spectrum with no stimulus tone.
+        load : bool (debug only). If false, don't actually load the waveform, just calculate it.
         """
         
         spec = np.zeros((nsamp/2+1,),dtype='complex')
@@ -780,9 +783,14 @@ class RoachBaseband(RoachInterface):
         spec[bins] = amps*np.exp(1j*phases)
         wave = np.fft.irfft(spec)
         self.wavenorm = np.abs(wave).max()
+        if normfact is not None:
+            wn = (2.0/normfact)*len(bins)/float(nsamp)
+            print "ratio of current wavenorm to optimal:",self.wavenorm/wn
+            self.wavenorm = wn
         qwave = np.round((wave/self.wavenorm)*(2**15-1024)).astype('>i2')
         self.qwave = qwave
-        self.load_waveform(qwave)
+        if load:
+            self.load_waveform(qwave)
         
     def calc_fft_bins(self,tone_bins,nsamp):
         """
