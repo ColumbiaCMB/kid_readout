@@ -213,7 +213,7 @@ class RoachInterface(object):
         self.set_attenuator(attenb,le_bit=0x02)
         self.dac_atten = int(attendb*2)/2.0
         
-    def self_dac_atten(self,attendb):
+    def set_dac_atten(self,attendb):
         """ Alias for set_dac_attenuator """
         return self.set_dac_attenuator(attendb)
         
