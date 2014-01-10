@@ -8,27 +8,26 @@ def pkl_mask(f,data):
     data_masked=data[index]
     return f_masked,data_masked
 
-def guess(A,B,alp,bet,fc,i):
+def guess(A,B,alpha,beta,fc,i,N_white=1e-3,va=True,vb=True,vi=True):
     p = Parameters()
     p.add('A', value = A, min =0)
     p.add('B',value = B,min =0)
-    p.add('N_white',value =1e-3,min =0, max=2e-2)
-    p.add('alpha',value = alp,min = -7, max =0)
-    p.add('beta',value = bet,min=-2, max =0)
+    p.add('N_white',value = N_white,min =0, max=2e-2)
+    p.add('alpha',value = alpha,min = -7, max =0,vary=va)
+    p.add('beta',value = beta,min=-2, max =0,vary=vb)
     p.add('fc',value = fc, min =1e3, max = 1e6)
-    p.add('i',value = i, min =0, max = 6)        # max value is significant
+    p.add('i',value = i, min =0, max = 6,vary=vi)        # max value is significant
     return p
 
 def model(f,p):
     A = p['A'].value
     B = p['B'].value
     N_white = p['N_white'].value
-    alp = p['alpha'].value
-    bet = p['beta'].value
+    alpha = p['alpha'].value
+    beta = p['beta'].value
     fc = p['fc'].value
     i = p['i'].value
-    P1 = A*f**alp
-    P2 = B*f**bet
+    P1 = A*f**alpha
+    P2 = B*f**beta
     P3 = (1/abs(1+1j*f/fc)**i)         
     return ((P1 + P2)*P3 + N_white)
-    
