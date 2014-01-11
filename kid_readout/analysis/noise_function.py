@@ -10,13 +10,13 @@ def pkl_mask(f,data):
 
 def guess(A,B,alpha,beta,fc,i,N_white=1e-3,va=True,vb=True,vi=True):
     p = Parameters()
-    p.add('A', value = A, min =0)
-    p.add('B',value = B,min =0)
-    p.add('N_white',value = N_white,min =0, max=2e-2)
-    p.add('alpha',value = alpha,min = -7, max =0,vary=va)
-    p.add('beta',value = beta,min=-2, max =0,vary=vb)
-    p.add('fc',value = fc, min =1e3, max = 1e6)
-    p.add('i',value = i, min =0, max = 6,vary=vi)        # max value is significant
+    p.add('A', value = A, min=0)
+    p.add('B',value = B,min=0)
+    p.add('N_white',value = N_white,min=0, max=1)#2e-2)
+    p.add('alpha',value = alpha,min = -7, max=0,vary=va)
+    p.add('beta',value = beta,min=-2, max=0,vary=vb)
+    p.add('fc',value = fc, min=1e3, max=1e6)
+    p.add('i',value = i, min=0, max=6,vary=vi)       
     return p
 
 def model(f,p):
@@ -30,4 +30,4 @@ def model(f,p):
     P1 = A*f**alpha
     P2 = B*f**beta
     P3 = (1/abs(1+1j*f/fc)**i)         
-    return ((P1 + P2)*P3 + N_white)
+    return ((P1 + P2)*P3 + N_white)   

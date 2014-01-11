@@ -1,7 +1,7 @@
 """
 va,vb,vi = True: values of alpha, beta, i params are variable respectively
 k=1: the module fits the noise 1 time. va,vb,vi will not be use.
-For all k!=1, the noise is fitted with va=True, vb=True, vi=True
+For all k!=1, the noise is first fitted with va=True, vb=True, vi=True
               second fit picks up values of params returned by first fit with 
               value of va,vb,vi depending on choices of users.
 """
@@ -9,11 +9,12 @@ For all k!=1, the noise is fitted with va=True, vb=True, vi=True
 from __future__ import division
 import numpy as np
 import matplotlib
-from matplotlib import pyplot as plt
-import cPickle
+from matplotlib import pyplot as plt 
+import cPickle# max value is significant
 from lmfit import minimize #,Parameters,report_errors
 matplotlib.rcParams['mathtext.fontset'] = 'stix'
 matplotlib.rcParams['font.size'] = 16.0
+import os
     
 from kid_readout.analysis.noise_function2 import pkl_mask as default_mask
 from kid_readout.analysis.noise_function2 import guess as default_guess
@@ -69,26 +70,26 @@ class Noise(object):
     def model(self,params):
         return self._model(self.f,params)
         
-def plot_pkl_noise(fns,A=4709632.149,B=1,alpha=-3,beta=-0.1,fc=2e3,i=3,N_white=1e-3,f_crop=2e4,
+def plot_pkl_noise(fns,A=4709632.149,B=1,alpha=-3,beta=-0.1,fc=2e3,i=3,N_white=1e-3,front_crop=1,end_crop=2e4,
                    guess_func=default_guess,model_func=default_model,mask_func=default_mask,
                    k=1,va=True,vb=True,vi=True):
-    
+
     params_dict = dict([('A',[]),('alpha',[]),('B',[]),('beta',[]),('fc',[]),('i',[]),('N_white',[])])
-    
+    fdir,fbase = os.path.split(fns)
     fh = open(fns)
     try:
         pkls = cPickle.load(fh)
     except EOFError:
         print "End of File Error"
     else:
-        fh.close() 
+        fh.close()            
         for el in range(np.size(pkls)):
             nm=pkls[el]
             f = nm.fr_coarse
             data = nm.prr_coarse
-            f = f[1:]
-            data = data[1:]
-            f =np.array([j for j in f if j<=f_crop])
+            f = f[front_crop:]    
+            data = data[front_crop:]
+            f =np.array([j for j in f if j<=end_crop])
             pxx = data[0:len(f)] 
             n = Noise(f,pxx,A,B,alpha,beta,fc,i,N_white=N_white,
                    guess_func=guess_func,model_func=model_func,mask_func=mask_func,
@@ -106,12 +107,12 @@ def plot_pkl_noise(fns,A=4709632.149,B=1,alpha=-3,beta=-0.1,fc=2e3,i=3,N_white=1
             ax = fig.add_subplot(111)
             ax.loglog(n.f,n.p,'g',lw=2)
             ax.loglog(n.f,n.model(n.result.params),'r',lw=2)
+            ax.set_title("%s, pkl no.%.0f" % (fbase,el),size='small')
             ax.set_xlim([n.f[0],n.f[-1]])
             ax.set_xlabel('Hz')
             ax.set_ylabel('Hz$^2$/Hz')
             ax.grid()
-            text = (("pkl no.: %.0f\n" % el)
-                    +("A: %.6f\n" % n.A)
+            text = (("A: %.6f\n" % n.A)
                     +("alpha: %.6f\n" % n.alpha)
                     +("B: %.6f\n" % n.B)
                     +("beta: %.6f\n" % n.beta)
