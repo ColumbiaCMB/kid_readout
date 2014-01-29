@@ -1,5 +1,42 @@
 import numpy as np
 import struct
+import socket
+from contextlib import closing
+
+def get_udp_packets(ri,npkts,streamid,stream_reg='streamid',addr=('192.168.1.1',12345)):
+    ri.r.write_int(stream_reg,0)
+    
+    with closing(socket.socket(socket.AF_INET,socket.SOCK_DGRAM)) as s:
+        s.bind(addr)
+        s.settimeout(0)
+        nstale = 0
+        try:
+            while s.recv(2000):
+                nstale +=1
+            if nstale:
+                print "flushed",nstale,"packets"
+        except:
+            pass
+        s.settimeout(1)
+        
+        ri.r.write_int(stream_reg,streamid)
+        pkts = []
+        while len(pkts) < npkts:
+            pkt = s.recv(2000)
+            if pkt:
+                pkts.append(pkt)
+            else:
+                print "breaking"
+                break
+        
+        ri.r.write_int(stream_reg,0)
+    
+    return pkts
+    
+def get_udp_data(ri,npkts,streamid,chans,nfft,stream_reg='streamid',addr=('192.168.1.1',12345)):
+    pkts = get_udp_packets(ri, npkts, streamid, stream_reg=stream_reg, addr=addr)
+    darray,seqnos = decode_packets(pkts,streamid,chans,nfft)
+    return darray,seqnos
 
 ptype = np.dtype([('idle','>i2'),
                   ('idx', '>i2'),
@@ -13,7 +50,7 @@ pkt_size = hdr_size + 1024
 null_pkt = "\0x00"*1024
 def decode_packets(plist,streamid,chans,nfft,pkts_per_chunk = 16):
     nchan = chans.shape[0]    
-    mcnt_inc = nfft*nchan*4    
+    mcnt_inc = nfft*2**12/nchan    
     next_seqno = None
     mcnt_top = 0
     dset = []
@@ -27,6 +64,7 @@ def decode_packets(plist,streamid,chans,nfft,pkts_per_chunk = 16):
             print "got packet size",len(pkt), "expected",pkt_size
             continue
         pidle,pidx,pstream,pchan,pmcnt = struct.unpack(hdr_fmt,pkt[:hdr_size])
+        #print pmcnt
         if pstream != streamid:
             print "got stream id",pstream,"expected",streamid
             continue            
@@ -35,11 +73,11 @@ def decode_packets(plist,streamid,chans,nfft,pkts_per_chunk = 16):
         else:
             if pmcnt < mcnt_inc:
                 if last_mcnt_ovf != pmcnt:
-#                    print "detected mcnt overflow",pmcnt,pidx,next_seqno,(mcnt_top/2**32),pnum
-                    mcnt_top += 2**26
+                    print "detected mcnt overflow",pmcnt,pidx,next_seqno,(mcnt_top/2**32),pnum,mcntoff
+                    mcnt_top += 2**32
                     last_mcnt_ovf = pmcnt
                 else:
-#                    print "continuation of previous mcnt overflow",pidx
+                    print "continuation of previous mcnt overflow",pidx
                     pass
             else:
                 last_mcnt_ovf = None
@@ -59,14 +97,14 @@ def decode_packets(plist,streamid,chans,nfft,pkts_per_chunk = 16):
         if pchan != chan0:
             print "warning! channel id changed from",chan0,"to",pchan 
         if seqno - next_seqno < 0:
-            print "seqno diff",(seqno-next_seqno)
+            print "seqno diff",(seqno-next_seqno),seqno,next_seqno
             continue # trying to go backwards
         if seqno == next_seqno:
             dset.append(pkt[hdr_size:])
             next_seqno += 1
         else:
             print "sequence number skip, expected:",next_seqno,"got",seqno,"inserting",(seqno-next_seqno),"null packets",pnum,pidx
-            for k in range(seqno - next_seqno):
+            for k in range(seqno - next_seqno+1):
                 dset.append(null_pkt)
                 next_seqno += 1
     dset = ''.join(dset)
@@ -74,4 +112,6 @@ def decode_packets(plist,streamid,chans,nfft,pkts_per_chunk = 16):
     dset = dset[:ns*(4*nchan)]
     darray = np.fromstring(dset,dtype='>i2').astype('float32').view('complex64')
     darray.shape = (ns,nchan)
-    return darray
+    shift = np.flatnonzero(chans==(chan0))[0] - (nchan-1)
+    darray = np.roll(darray,shift,axis=1)
+    return darray,np.array(seqnos)

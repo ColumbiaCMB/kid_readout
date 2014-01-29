@@ -384,7 +384,7 @@ class SweepDialog(QDialog,Ui_SweepDialog):
             if self.logfile:
                 self.logfile.log_hw_state(self.ri)
             kid_readout.utils.sweeps.coarse_sweep(self.ri, freqs = base_freqs + k*substepspace, 
-                                                  nsamp = 2**nsamp, nchan_per_step=8, callback=self.sweep_callback, sweep_id=1)
+                                                  nsamp = 2**nsamp, nchan_per_step=64, callback=self.sweep_callback, sweep_id=1)
             if self.logfile:
                 self.logfile.log_adc_snap(self.ri)
             if self.abort_requested:
@@ -441,7 +441,7 @@ class SweepDialog(QDialog,Ui_SweepDialog):
             if self.logfile:
                 self.logfile.log_hw_state(self.ri)            
             kid_readout.utils.sweeps.coarse_sweep(self.ri, freqs = flist+offs, 
-                                              nsamp = 2**samps, nchan_per_step=8, reads_per_step = 8, 
+                                              nsamp = 2**samps, nchan_per_step=16, reads_per_step = 8, 
                                               callback=self.fine_sweep_callback, sweep_id=2)
             if self.abort_requested:
                 break

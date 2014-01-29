@@ -7,6 +7,7 @@ import time
 import sys
 import os
 import borph_utils
+import udp_catcher
 
 import scipy.signal
 
@@ -94,7 +95,7 @@ class RoachInterface(object):
         self.fft_gain = gain
         self.r.write_int('fftshift',fftshift)
         
-    def initialize(self, fs=512.0):
+    def initialize(self, fs=512.0, start_udp=True):
         """
         Reprogram the ROACH and get things running
         
@@ -115,6 +116,9 @@ class RoachInterface(object):
         if np.abs(fs-estfs) > 2.0:
             print "Warning! FPGA clock may not be locked to sampling clock!"
         print "Requested sampling rate %.1f MHz. Estimated sampling rate %.1f MHz" % (fs,estfs)
+        if start_udp:
+            print "starting udp server process on PPC"
+            borph_utils.start_server(self.bof_pid)
         
     def measure_fs(self):
         """
@@ -872,8 +876,21 @@ class RoachBaseband(RoachInterface):
             if m >= self.nfft/2:
                 demod[:,n] = np.conjugate(demod[:,n])
         return demod
-                
-    def get_data(self,nread=10,demod=True):
+    
+    def get_data_udp(self,nread=2,demod=True):
+        chan_offset = 1
+        nch = self.fpga_fft_readout_indexes.shape[0]
+        data,seqnos = udp_catcher.get_udp_data(self, npkts=nread*16*nch, streamid=1, 
+                                        chans=self.fpga_fft_readout_indexes+chan_offset,
+                                        nfft=self.nfft) #, stream_reg, addr)
+        if demod:
+            data = self.demodulate_data(data)
+        return data,seqnos
+    
+    def get_data(self,nread=2,demod=True):
+        return self.get_data_udp(nread=nread,demod=demod)
+    
+    def get_data_katcp(self,nread=10,demod=True):
         """
         Get a chunk of data
         
