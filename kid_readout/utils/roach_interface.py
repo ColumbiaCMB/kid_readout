@@ -713,7 +713,7 @@ class RoachBaseband(RoachInterface):
         self.nfft = 2**14
 #        self.boffile = 'bb2xpfb14mcr5_2013_Jul_31_1301.bof'
 #        self.boffile = 'bb2xpfb14mcr7_2013_Oct_31_1332.bof'
-        self.boffile = 'bb2xpfb14mcr9_2013_Dec_05_1226.bof'
+        self.boffile = 'bb2xpfb14mcr11_2014_Jan_17_1721.bof'
         self.bufname = 'ppout%d' % wafer
         self._window_mag = compute_window(npfb = 2*self.nfft, taps= 2, wfunc = scipy.signal.flattop)
 
