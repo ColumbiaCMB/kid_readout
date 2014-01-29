@@ -40,7 +40,7 @@ class KIDModel(object):
         self.params.add('Tc',value=Tc,min=1,max=2)
         self.params.add('delta_loss',value=delta_loss,min=0,max=1e-1)
         self.nqp0 = nqp0
-        self.Tbase = Tbase
+#       self.Tbase = Tbase
         self.f0_nom = f0_nom
         self.ind_l_um = ind_l_um
         self.ind_w_um = ind_w_um
@@ -89,23 +89,23 @@ class KIDModel(object):
         return self.tau_star*self.nqp(T_star)/self.nqp(T)
     
     def mu_star(self,T):
-        return kBeV * self.Tbase * np.log(self.nqp(T)/(2*self.N0*np.sqrt(2*np.pi*kBeV*self.Tbase*self.Delta))) + self.Delta
+        return kBeV * T * np.log(self.nqp(T)/(2*self.N0*np.sqrt(2*np.pi*kBeV*T*self.Delta))) + self.Delta
     
     def xi(self,T):
         return (h*self.f0_nom)/(2*kB*T)
     
     def sigma1(self,T):
-        xi = self.xi(self.Tbase)
+        xi = self.xi(T)
         sigman = self.params['sigman'].value
         return ((sigman*(4*self.Delta*qC)/(h*self.f0_nom)) *
-                np.exp(-(self.Delta-self.mu_star(T))/(kBeV*self.Tbase)) *
+                np.exp(-(self.Delta-self.mu_star(T))/(kBeV*T)) *
                 np.sinh(xi) * scipy.special.k0(xi))
     
     def sigma2(self,T):
-        xi = self.xi(self.Tbase)
+        xi = self.xi(T)
         sigman = self.params['sigman'].value
         return ((sigman*(np.pi*self.Delta*qC)/(h*self.f0_nom)) *
-                (1 - (self.nqp(T)/(2*self.N0*self.Delta))*(1+np.sqrt((2*self.Delta)/(np.pi*kBeV*self.Tbase))*
+                (1 - (self.nqp(T)/(2*self.N0*self.Delta))*(1+np.sqrt((2*self.Delta)/(np.pi*kBeV*T))*
                                                            np.exp(-xi)*scipy.special.i0(xi))))
         
     def beta(self,T):
