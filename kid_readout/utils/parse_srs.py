@@ -8,12 +8,14 @@ _tempcache = []
 _lastupdate = -1
 
 def get_all_temperature_data(logdir = '/home/heather/SRS'):
-    logs = glob.glob(os.path.join(logdir,'2013*.txt'))
+    logs = glob.glob(os.path.join(logdir,'201*.txt'))
     logs.sort()
     times = []
     temps = []
     for log in logs:
         t0,temp0 = parse_srs_log(log)
+        if len(t0) == 0:
+            t0,temp0 = parse_srs_log(log,sensor=1)
         times = times + t0.tolist()
         temps = temps + temp0.tolist()
     return times,temps
