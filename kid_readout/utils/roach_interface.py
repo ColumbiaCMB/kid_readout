@@ -148,9 +148,20 @@ class RoachInterface(object):
         self.r.write_int('dram_rst',2)
     def _load_dram(self,data, fast=True):
         if fast:
-            self._load_dram_ssh(data)
+            load_dram = self._load_dram_ssh
         else:
-            self._load_dram_katcp(data)
+            load_dram = self._load_dram_katcp
+        nbytes = data.nbytes
+        bank_size = (64*2**20)  # PPC can only access 64MB at a time, so need to break the data into chunks of this size
+        nbanks = nbytes//bank_size 
+        if nbanks == 0:
+            nbanks = 1
+        bank_slice = data.size/nbanks
+        for bank in range(nbanks):
+            print "writing bank",bank
+            self.r.write_int('dram_controller', bank)
+            load_dram(data[bank*bank_slice:(bank+1)*bank_slice])
+        
     def _load_dram_katcp(self,data,tries=2):
         while tries > 0:
             try:
@@ -1008,9 +1019,10 @@ class RoachBasebandWide(RoachBaseband):
         self.nfft = 2**11
 #        self.boffile = 'bb2xpfb12mcr5_2013_Oct_29_1658.bof'
         #self.boffile = 'bb2xpfb11mcr7_2013_Nov_04_1309.bof'
-        self.boffile = 'bb2xpfb11mcr8_2013_Nov_04_2151.bof'
+        #self.boffile = 'bb2xpfb11mcr8_2013_Nov_04_2151.bof'
+        self.boffile = 'bb2xpfb11mcr11_2014_Feb_01_1106.bof'
         self.bufname = 'ppout%d' % wafer
-        self._window_mag = compute_window(npfb = 2*self.nfft, taps= 8, wfunc = scipy.signal.hamming)#scipy.signal.flattop)
+        self._window_mag = compute_window(npfb = 2*self.nfft, taps= 2, wfunc = scipy.signal.flattop)
 
     def demodulate_data(self,data):
         """
@@ -1035,7 +1047,7 @@ class RoachBasebandWide(RoachBaseband):
             nfft = self.nfft
             ns = self.tone_nsamp
             foffs = (2*k*nfft - m*ns)/float(ns)
-            wc = self._window_response(2*foffs)*(self.tone_nsamp/2.0**18)
+            wc = self._window_response(foffs/2)*(self.tone_nsamp/2.0**18)
             demod[:,n] = wc*np.exp(sign*1j*(2*np.pi*foffs*t + phi0)) * data[:,n]
             if m >= self.nfft/2:
                 demod[:,n] = np.conjugate(demod[:,n])
@@ -1110,10 +1122,39 @@ class RoachBasebandWide10(RoachBasebandWide):
         self.dac_ns = 2**16 # number of samples in the dac buffer
         self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
         self.nfft = 2**10
-        self.boffile = 'bb2xpfb10mcr8_2013_Nov_18_0706.bof'
+        #self.boffile = 'bb2xpfb10mcr8_2013_Nov_18_0706.bof'
+        self.boffile = 'bb2xpfb10mcr11_2014_Jan_20_1049.bof'
         self.bufname = 'ppout%d' % wafer
-        self._window_mag = compute_window(npfb = 2*self.nfft, taps= 8, wfunc = scipy.signal.hamming)#scipy.signal.flattop)    
-
+        self._window_mag = compute_window(npfb = 2*self.nfft, taps= 2, wfunc = scipy.signal.flattop)    
+    def demodulate_data(self,data):
+        """
+        Demodulate the data from the FFT bin
+        
+        This function assumes that self.select_fft_bins was called to set up the necessary class attributes
+        
+        data : array of complex data
+        
+        returns : demodulated data in an array of the same shape and dtype as *data*
+        """
+        demod = np.zeros_like(data)
+        t = np.arange(data.shape[0])
+        for n,ich in enumerate(self.readout_selection):
+            phi0 = self.phases[ich]
+            k = self.tone_bins[ich]
+            m = self.fft_bins[ich]
+            if m >= self.nfft/2:
+                sign = 1.0
+            else:
+                sign = -1.0
+            nfft = self.nfft
+            ns = self.tone_nsamp
+            foffs = (2*k*nfft - m*ns)/float(ns)
+            wc = self._window_response(foffs/2)*(self.tone_nsamp/2.0**18)
+            demod[:,n] = wc*np.exp(sign*1j*(2*np.pi*foffs*t + phi0)) * data[:,n]
+            if m >= self.nfft/2:
+                demod[:,n] = np.conjugate(demod[:,n])
+        return demod
+    
 def test_sweep(ri):
     data = []
     tones = []
