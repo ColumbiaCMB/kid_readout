@@ -31,11 +31,15 @@ def plot_noise_nc(fname,chip,**kwargs):
     nms = []
     for (k,((sname,swg),(tname,tsg))) in enumerate(zip(nc.sweeps.groups.items(),nc.timestreams.groups.items())):
         #fig = plot_noise(swg,tsg,hwg,chip,**kwargs)
-        nm = NoiseMeasurement(swg,tsg,hwg,chip,k,**kwargs)
-        nms.append(nm)
-        fig = nm.plot()
-        fig.suptitle(('%s %s' % (sname,tname)),fontsize='small')
-        pdf.savefig(fig,bbox_inches='tight')
+        indexes = np.unique(swg.variables['index'][:])
+        for index in indexes:
+            kwargs['index'] = index
+            nm = NoiseMeasurement(swg,tsg,hwg,chip,k,**kwargs)
+            nms.append(nm)
+            fig = nm.plot()
+            fig.suptitle(('%s %s' % (sname,tname)),fontsize='small')
+            pdf.savefig(fig,bbox_inches='tight')
+            plt.close(fig)
     pdf.close()
     nc.group.close()
     fh = open(os.path.join(fdir,'noise_' +fbase+'.pkl'),'w')
@@ -96,7 +100,10 @@ class NoiseMeasurement(object):
         self.index = index
         self.chip = chip
         self.phasecorr = phasecorr
-        self.scale = scale
+        if scale is None:
+            self.scale = 1/tsg.variables['wavenorm'][index]
+        else:
+            self.scale = scale
         self.filtlen = filtlen
         self.loss = loss
         
@@ -111,10 +118,13 @@ class NoiseMeasurement(object):
         
         idx = swg.variables['index'][:]
         self.fr = swg.variables['frequency'][:]
-        self.s21 = swg.variables['s21'][:].view('complex128')*np.exp(-1j*self.fr*phasecorr)*scale
-        self.fr = self.fr[idx==index][1:]
-        self.s21 = self.s21[idx==index][1:]
-        rr = Resonator(self.fr,self.s21,model=khalil.bifurcation_s21,guess=khalil.bifurcation_guess)
+        self.s21 = swg.variables['s21'][:].view('complex128')*np.exp(-1j*self.fr*phasecorr)*self.scale
+        self.fr = self.fr[idx==index][1:]#[4:-4]
+        self.s21 = self.s21[idx==index][1:]#[4:-4]
+        rr = Resonator(self.fr,self.s21)#,model=khalil.bifurcation_s21,guess=khalil.bifurcation_guess)
+        self.delay = rr.delay
+        self.s21 = self.s21*np.exp(2j*np.pi*rr.delay*self.fr)
+        rr = Resonator(self.fr,self.s21)#,model=khalil.bifurcation_s21,guess=khalil.bifurcation_guess)
         self.Q_i = rr.Q_i
         self.params = rr.result.params
         
@@ -124,7 +134,7 @@ class NoiseMeasurement(object):
         self.fs = tsg.variables['fs'][index]
         self.nfft = tsg.variables['nfft'][index]
         self.f0 = self.fs*self.ch/float(self.nsamp)
-        self.tss_raw = ts[index,:]*np.exp(-1j*self.f0*phasecorr)
+        self.tss_raw = ts[index,:]*np.exp(-1j*self.f0*phasecorr + 2j*np.pi*self.delay*self.f0)
         self.tsl_raw = fftfilt(scipy.signal.firwin(filtlen,1.0/filtlen), self.tss_raw)[filtlen:]
         
         self.s0 = rr.model(f=self.f0)
@@ -140,9 +150,9 @@ class NoiseMeasurement(object):
         self.prr_coarse,self.fr_coarse = mlab.psd(self.tss.real,NFFT=2**12,window=mlab.window_none,Fs=self.fs*1e6/(2*self.nfft))
         self.pii_coarse,fr = mlab.psd(self.tss.imag,NFFT=2**12,window=mlab.window_none,Fs=self.fs*1e6/(2*self.nfft))
         
-        self.tss_raw = self.tss_raw[:2048]
-        self.tss = self.tss[:2048]
-        self.tsl_raw = self.tsl_raw[::(filtlen/4)]
+        self.tss_raw = self.tss_raw[:2048].copy()
+        self.tss = self.tss[:2048].copy()
+        self.tsl_raw = self.tsl_raw[::(filtlen/4)].copy()
         
     def plot(self):
         f1 = plt.figure(figsize=(16,8))
@@ -196,7 +206,7 @@ class NoiseMeasurement(object):
         
         tsl = (self.tsl_raw-self.s0)/self.ds0
         tsl = tsl - tsl.mean()
-        dtl = (self.filtlen/4)/(self.fs*1e6/(2*self.nfft))
+        dtl = (self.filtlen/4)/(self.fs*1e6/(self.nfft))
         t = dtl*np.arange(len(tsl))
         ax3.plot(t,tsl.real,'b',lw=2,label = 'LPF timeseries real')
         ax3.plot(t,tsl.imag,'g',lw=2,label = 'LPF timeseries imag')
@@ -213,8 +223,10 @@ class NoiseMeasurement(object):
                 + ("Re(Qe): %.1f +/- %.1f\n" % (params['Q_e_real'].value,params['Q_e_real'].stderr))
                 + ("|Qe|: %.1f\n" % (abs(params['Q_e_real'].value+1j*params['Q_e_imag'].value)))
                 + ("Qi: %.1f\n" % (self.Q_i))
-                + ("a: %.3g +/- %.3g" % (params['a'].value,params['a'].stderr))
                 )
+        if params.has_key('a'):
+            text += ("a: %.3g +/- %.3g" % (params['a'].value,params['a'].stderr))
+
         
         ax1.text(0.5,0.5,text,ha='center',va='center',bbox=dict(fc='white',alpha=0.6),transform = ax1.transAxes,
                  fontdict=dict(size='x-small'))
