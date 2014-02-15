@@ -24,6 +24,66 @@ def segmented_fine_sweep(ri,center_freqs,segments=default_segments_mhz,nchan_per
     return swp
     
 
+def prepare_sweep(ri,center_freqs,offsets,nsamp=2**21):
+    if nsamp*4*len(offsets) > 2**29:
+        raise ValueError("total number of waveforms (%d) times number of samples (%d) exceeds DRAM capacity" % (len(offsets),nsamp))
+    freqs = center_freqs[None,:] + offsets[:,None]
+    return ri.set_tone_freqs(freqs,nsamp=nsamp)
+    
+def do_prepared_sweep(ri,nchan_per_step=8,reads_per_step=2,callback = None, sweep_data=None):
+    if sweep_data is not None:
+        swp = sweep_data
+    else:
+        swp = SweepData()
+    nbanks = ri.tone_bins.shape[0]
+    nsamp = ri.tone_nsamp
+    for bank in range(nbanks):
+        ri.select_bank(bank)
+        nchan = ri.fft_bins.shape[1]
+        nstep = int(np.ceil(nchan/float(nchan_per_step)))
+        toread = set(range(nchan))
+        for k in range(nstep):
+            if len(toread) == 0:
+                break
+            if len(toread) > nchan_per_step:
+                start = k
+                stop = k + (nchan//nstep)*nstep
+                selection = range(start,stop,nchan/nchan_per_step)[:nchan_per_step]
+                toread = toread.difference(set(selection))
+            else:
+                selection = list(toread)
+                toread = set()
+            selection.sort()
+            ri.select_fft_bins(selection)
+            ri.r.write_int('sync',0)
+            ri.r.write_int('sync',1)
+            ri.r.write_int('sync',0)
+    
+            time.sleep(0.2)
+            try:
+                dmod,addr = ri.get_data(reads_per_step)
+            except Exception,e:
+                print e
+                continue
+    #        dmod = dmod*ri.wavenorm
+            chids = ri.fpga_fft_readout_indexes+1
+            tones = ri.tone_bins[bank,ri.readout_selection]
+            abort = False
+            for m in range(len(chids)):
+                sweep_index = selection[m]# np.abs(actual_freqs - ri.fs*tones[m]/nsamp).argmin()
+                block = DataBlock(data = dmod[:,m], tone=tones[m], fftbin = chids[m], 
+                         nsamp = nsamp, nfft = ri.nfft, wavenorm = ri.wavenorm, t0 = time.time(), fs = ri.fs, sweep_index=sweep_index)
+                block.progress = (k+1)/float(nstep)
+                swp.add_block(block)
+                if callback:
+                    abort = callback(block)
+    
+            if abort:
+                break
+        
+    return swp
+        
+
 def fine_sweep(ri,center_freqs, sweep_width = 0.1,npoints =128,nsamp=2**20, sweep_data = None):
     offsets = np.linspace(-sweep_width/2.0, sweep_width/2.0, npoints)
     if sweep_data is not None:
@@ -46,7 +106,7 @@ def coarse_sweep(ri,freqs=np.linspace(10,200,384),nsamp=2**15,nchan_per_step=4,r
     ri.r.write_int('sync',1)
     ri.r.write_int('sync',0)
     time.sleep(1)
-    nchan = ri.fft_bins.shape[0]
+    nchan = ri.fft_bins.shape[1]
     nstep = int(np.ceil(nchan/float(nchan_per_step)))
     toread = set(range(nchan))
     for k in range(nstep):
@@ -68,15 +128,17 @@ def coarse_sweep(ri,freqs=np.linspace(10,200,384),nsamp=2**15,nchan_per_step=4,r
         time.sleep(0.2)
         try:
             dmod,addr = ri.get_data(reads_per_step)
-        except:
+        except Exception,e:
+            print e
             continue
 #        dmod = dmod*ri.wavenorm
         chids = ri.fpga_fft_readout_indexes+1
-        tones = ri.tone_bins[ri.readout_selection]
+        tones = ri.tone_bins[0,ri.readout_selection]
         abort = False
         for m in range(len(chids)):
+            sweep_index = selection[m] # np.abs(actual_freqs - ri.fs*tones[m]/nsamp).argmin()
             block = DataBlock(data = dmod[:,m], tone=tones[m], fftbin = chids[m], 
-                     nsamp = nsamp, nfft = ri.nfft, wavenorm = ri.wavenorm, t0 = time.time(), fs = ri.fs, sweep_index=selection[m])
+                     nsamp = nsamp, nfft = ri.nfft, wavenorm = ri.wavenorm, t0 = time.time(), fs = ri.fs, sweep_index=sweep_index)
             block.progress = (k+1)/float(nstep)
             data.add_block(block)
             if callback:
