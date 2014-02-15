@@ -77,7 +77,7 @@ def decode_packets(plist,streamid,chans,nfft,pkts_per_chunk = 16):
                     mcnt_top += 2**32
                     last_mcnt_ovf = pmcnt
                 else:
-                    print "continuation of previous mcnt overflow",pidx
+#                    print "continuation of previous mcnt overflow",pidx
                     pass
             else:
                 last_mcnt_ovf = None
@@ -90,7 +90,7 @@ def decode_packets(plist,streamid,chans,nfft,pkts_per_chunk = 16):
 #            print "found first packet",seqno,pidx
             next_seqno = seqno
             mcntoff = pmcntoff
-            print pchan
+#            print pchan
         if mcntoff != pmcntoff:
             print "mcnt offset jumped. Was",mcntoff,"now",pmcntoff,"dropping.."
             continue
