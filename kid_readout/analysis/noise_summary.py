@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib
+matplotlib.use('agg')
 matplotlib.rcParams['mathtext.fontset'] = 'stix'
 matplotlib.rcParams['font.size'] = 16.0
 from matplotlib import pyplot as plt
@@ -11,7 +12,11 @@ import scipy.signal
 
 from kid_readout.utils.fftfilt import fftfilt
 
-import kid_readout.utils.parse_srs
+import socket
+if socket.gethostname() == 'detectors':
+    from kid_readout.utils.hpd_temps import get_temperature_at
+else:
+    from kid_readout.utils.parse_srs import get_temperature_at
 import bisect
 import time
 import os
@@ -40,6 +45,7 @@ def plot_noise_nc(fname,chip,**kwargs):
             fig.suptitle(('%s %s' % (sname,tname)),fontsize='small')
             pdf.savefig(fig,bbox_inches='tight')
             plt.close(fig)
+        print fname,nm.start_temp,"K"
     pdf.close()
     nc.group.close()
     fh = open(os.path.join(fdir,'noise_' +fbase+'.pkl'),'w')
@@ -94,9 +100,9 @@ class NoiseMeasurement(object):
     def __init__(self,swg,tsg,hwg,chip,id,index=0,phasecorr=phasecorr,scale=scale,filtlen=2**16,loss = -42):
         self.id = id
         self.swp_epoch = swg.groups['datablocks'].variables['epoch'][0]
-        self.start_temp =  kid_readout.utils.parse_srs.get_temperature_at(self.swp_epoch)
+        self.start_temp =  get_temperature_at(self.swp_epoch)
         self.ts_epoch = tsg.variables['epoch'][:][-1]
-        self.end_temp = kid_readout.utils.parse_srs.get_temperature_at(self.ts_epoch)
+        self.end_temp = get_temperature_at(self.ts_epoch)
         self.index = index
         self.chip = chip
         self.phasecorr = phasecorr
@@ -128,13 +134,18 @@ class NoiseMeasurement(object):
         self.Q_i = rr.Q_i
         self.params = rr.result.params
         
-        ts = tsg.variables['data'][:].view('complex128')
-        self.ch = tsg.variables['tone'][index]
-        self.nsamp = tsg.variables['nsamp'][index]
-        self.fs = tsg.variables['fs'][index]
-        self.nfft = tsg.variables['nfft'][index]
+        tones = tsg.variables['tone'][:]
+        nsamp = tsg.variables['nsamp'][:]
+        fs = tsg.variables['fs'][:]
+        fmeas = fs*tones/nsamp
+        tone_index = np.argmin(abs(fmeas-rr.f_0))
+        ts = tsg.variables['data'][tone_index,:].view('complex128')
+        self.ch = tones[tone_index]
+        self.nsamp = nsamp[tone_index]
+        self.fs = fs[tone_index]
+        self.nfft = tsg.variables['nfft'][tone_index]
         self.f0 = self.fs*self.ch/float(self.nsamp)
-        self.tss_raw = ts[index,:]*np.exp(-1j*self.f0*phasecorr + 2j*np.pi*self.delay*self.f0)
+        self.tss_raw = ts*np.exp(-1j*self.f0*phasecorr + 2j*np.pi*self.delay*self.f0)
         self.tsl_raw = fftfilt(scipy.signal.firwin(filtlen,1.0/filtlen), self.tss_raw)[filtlen:]
         
         self.s0 = rr.model(f=self.f0)
@@ -244,9 +255,9 @@ def load_noise_pkl(pklname):
 def plot_noise(swg,tsg,hwg,chip,index=0,phasecorr=phasecorr,scale=scale,filtlen=2**16):
     
     swp_epoch = swg.groups['datablocks'].variables['epoch'][0]
-    start_temp =  kid_readout.utils.parse_srs.get_temperature_at(swp_epoch)
+    start_temp =  get_temperature_at(swp_epoch)
     ts_epoch = tsg.variables['epoch'][:][-1]
-    end_temp = kid_readout.utils.parse_srs.get_temperature_at(ts_epoch)
+    end_temp = get_temperature_at(ts_epoch)
     
     try:
         hwidx = bisect.bisect(hwg.variables['epoch'][:],swp_epoch)

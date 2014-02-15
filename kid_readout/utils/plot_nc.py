@@ -5,7 +5,11 @@ from kid_readout.utils.easync import EasyNetCDF4
 from matplotlib import pyplot as plt
 from kid_readout.analysis.resonator import Resonator
 import kid_readout.analysis.khalil as khalil
-import kid_readout.utils.parse_srs
+import socket
+if socket.gethostname() == 'detectors':
+    from kid_readout.utils.hpd_temps import get_temperature_at
+else:
+    from kid_readout.utils.parse_srs import get_temperature_at
 
 def setup_axes(nres,figsize=(15,10)):
     fig = plt.figure(figsize=figsize)
@@ -65,6 +69,7 @@ def plot_f0(swps,nres=None):
                 qi = pdat[:,4]
                 qc = pdat[:,7]
                 y = 4*qc*qi/(qc+qi)**2
+                y = qi
                 x = x[order]
                 y = y[order]
                 qiax.plot(x,y,'.-',color=color,markersize=4,label=('%.1f dBm' % power))
@@ -85,8 +90,8 @@ def plot_f0(swps,nres=None):
         #f0ax.set_xscale('log')
         qiax.text(0.1,0.1,('%.6f MHz' % f0s[res]),ha='left',va='bottom',bbox=dict(color='w',alpha=0.4),transform = qiax.transAxes)
         f0ax.set_title(' ')
-        f0ax.set_ylim(-200,10)
-        qiax.set_ylim(0,1)
+        f0ax.set_ylim(-100,10)
+        #qiax.set_ylim(0,1)
 
     f0axes[0].legend(loc='upper left',prop=dict(size='x-small'))
     f0axes[0].set_ylabel('(delta_f0)*1e6')
@@ -159,7 +164,7 @@ def get_all_sweeps(fname,bif=False):
     else:
         model = khalil.delayed_generic_s21
         guess = khalil.delayed_generic_guess
-    times,temps = kid_readout.utils.parse_srs.get_all_temperature_data()
+#    times,temps = kid_readout.utils.parse_srs.get_all_temperature_data()
     nc = EasyNetCDF4(fname)
     sweeps = []
     for (sk,(name,swp)) in enumerate(nc.sweeps.groups.items()):
@@ -178,15 +183,19 @@ def get_all_sweeps(fname,bif=False):
             print "failed to find attenuator settings for",swp
             atten = -1
             
-        tempidx = bisect.bisect(times,epoch)
-        init_temp_time = times[tempidx]
-        if abs(init_temp_time - epoch) > 11*60:
-            print "Warning, may be missing temperature data for sweep", name
-            print "closest value at", time.ctime(init_temp_time)
-        init_temp = temps[tempidx]
-        tempidx = bisect.bisect(times,last_epoch)
-        last_temp_time = times[tempidx]
-        last_temp = temps[tempidx]
+#        tempidx = bisect.bisect(times,epoch)
+#        init_temp_time = times[tempidx]
+#        if abs(init_temp_time - epoch) > 11*60:
+#            print "Warning, may be missing temperature data for sweep", name
+#            print "closest value at", time.ctime(init_temp_time)
+#        init_temp = temps[tempidx]
+#        tempidx = bisect.bisect(times,last_epoch)
+#        last_temp_time = times[tempidx]
+#        last_temp = temps[tempidx]
+        init_temp = get_temperature_at(epoch)
+        init_temp_time = epoch
+        last_temp = get_temperature_at(last_epoch)
+        last_temp_time = last_epoch
         try:
             idx = swp.variables['index'][:]
         except:
@@ -207,7 +216,7 @@ def get_all_sweeps(fname,bif=False):
                 fr = fr[flo:]
                 s21 = s21[flo:]
             try:
-                rr = Resonator(fr,s21)
+                rr = Resonator(fr,s21,model=model,guess=guess)
             except:
                 print "failed to create resonator for", name,rk,fr.mean()    
             rr.index = uniq[rk]
@@ -219,6 +228,8 @@ def get_all_sweeps(fname,bif=False):
             rr.init_temp = init_temp
             rr.last_temp_time = last_temp_time
             rr.last_temp = last_temp
+            rr.sweep_name = name
+            rr.filename = fname
             sweeps.append(rr)
     nc.group.close()
     del nc
