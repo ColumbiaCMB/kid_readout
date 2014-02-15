@@ -2,7 +2,7 @@ import subprocess
 
 # use this as check_output('ssh root@roach "pgrep -f bof$"',shell=True)
 
-def check_output(*popenargs, **kwargs):
+def _check_output(*popenargs, **kwargs):
     r"""Run command with arguments and return its output as a byte string.
 
     If the exit code was non-zero it raises a CalledProcessError.  The
@@ -36,6 +36,10 @@ def check_output(*popenargs, **kwargs):
         raise subprocess.CalledProcessError(retcode, cmd)
     return output
 
+try:
+    from subprocess import check_output
+except ImportError:
+    check_output = _check_output    
 def get_bof_pid():
     return int(check_output('ssh root@roach "pgrep -f bof$"', shell=True))
 
