@@ -48,6 +48,11 @@ class SweepData():
         freqs = self.freqs[msk]
         data = self.data[msk]
         return freqs,data
+
+    def select_by_freq(self,freq):
+        didx = np.argmin(abs(freq-self.freqs))
+        idx = self._sweep_indexes[didx]
+        return self.select_index(idx)
     
     @property
     def freqs(self):
