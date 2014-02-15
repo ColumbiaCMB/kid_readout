@@ -26,6 +26,8 @@ def get_temperature_at(epoch):
         _timecache, _tempcache = get_all_temperature_data()
         _lastupdate = time.time()
         print "get_temperature_at: updated cache"
+    if len(_tempcache) == 0:
+        return 0
     temp = np.interp(epoch,_timecache,_tempcache)
     return temp
 
