@@ -8,6 +8,7 @@ mlab = plt.mlab
 from kid_readout.utils.easync import EasyNetCDF4
 from kid_readout.analysis.resonator import Resonator
 from kid_readout.analysis import khalil
+from kid_readout.analysis import iqnoise
 import scipy.signal
 
 from kid_readout.utils.fftfilt import fftfilt
@@ -148,13 +149,21 @@ class NoiseMeasurement(object):
         self.tss_raw = ts*np.exp(-1j*self.f0*phasecorr + 2j*np.pi*self.delay*self.f0)
         self.tsl_raw = fftfilt(scipy.signal.firwin(filtlen,1.0/filtlen), self.tss_raw)[filtlen:]
         
-        self.s0 = rr.model(f=self.f0)
+        self.s0 = self.tss_raw.mean() #rr.model(f=self.f0)
         self.sres = rr.model(f=rr.f_0)
         self.ds0 = rr.model(f=self.f0+1e-6)-rr.model(f=self.f0)    
         self.s21m = rr.model(f=np.linspace(self.fr.min(),self.fr.max(),1000)) - self.s0
         
         self.tss = (self.tss_raw-self.s0) * np.exp(-1j*np.angle(self.ds0))
         self.tss = self.tss/np.abs(self.ds0)    
+        fr,S,evals,evects,angles,piq = iqnoise.pca_noise(self.tss, NFFT=2**14, Fs=self.fs*1e6/(2*self.nfft))
+        
+        self.pca_fr = fr
+        self.pca_S = S
+        self.pca_evals = evals
+        self.pca_evects = evects
+        self.pca_angles = angles
+        self.pca_piq = piq
         
         self.prr_fine,self.fr_fine = mlab.psd(self.tss.real,NFFT=2**18,window=mlab.window_none,Fs=self.fs*1e6/(2*self.nfft))
         self.pii_fine,fr = mlab.psd(self.tss.imag,NFFT=2**18,window=mlab.window_none,Fs=self.fs*1e6/(2*self.nfft))
@@ -179,6 +188,8 @@ class NoiseMeasurement(object):
         ax1.plot([self.sres.real-self.s0.real],[self.sres.imag-self.s0.imag],'kx',mew=2,markersize=20,label='model f0')
         ax1.plot(self.tss_raw.real[:1024]-self.s0,self.tss_raw.imag[:1024]-self.s0.imag,'k,',alpha=0.1,label='timeseries samples')
         ax1.plot(self.tsl_raw.real-self.s0.real,self.tsl_raw.imag-self.s0.imag,'r,') #uses proxy for label
+        ax1.plot(self.pca_evects[0,0,:100]*100,self.pca_evects[1,0,:100]*100,'y.')
+        ax1.plot(self.pca_evects[0,1,:100]*100,self.pca_evects[1,1,:100]*100,'k.')
         ax1.annotate("",xytext=(0,0),xy=(self.ds0.real*500,self.ds0.imag*500),arrowprops=dict(lw=2,color='orange',arrowstyle='->'),zorder=0)
         #proxies
         l = plt.Line2D([0,0.1],[0,0.1],color='orange',lw=2)

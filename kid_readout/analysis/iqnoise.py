@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 mlab = plt.mlab
 
-def pca_noise(d,NFFT=1024,Fs=256e6/2.**11,window = mlab.window_hanning):
+def pca_noise(d,NFFT=1024,Fs=256e6/2.**11,window = mlab.window_hanning,detrend=mlab.detrend_mean):
     pii,fr = mlab.psd(d.real,NFFT=NFFT,Fs=Fs,window=window)
     pqq,fr = mlab.psd(d.imag,NFFT=NFFT,Fs=Fs,window=window)
     piq,fr = mlab.csd(d.real,d.imag,NFFT=NFFT,Fs=Fs,window=window)
@@ -15,8 +15,8 @@ def pca_noise(d,NFFT=1024,Fs=256e6/2.**11,window = mlab.window_hanning):
         evals[:,k] = w
         evects[:,:,k] = v
     angles = np.zeros((2,nf))
-    angles[0,:] = np.arctan2(evects[0,0,:].real,evects[1,0,:].real)
-    angles[1,:] = np.arctan2(evects[0,1,:].real,evects[1,1,:].real)
+    angles[0,:] = np.mod(np.arctan2(evects[0,0,:].real,evects[1,0,:].real),np.pi)
+    angles[1,:] = np.mod(np.arctan2(evects[0,1,:].real,evects[1,1,:].real),np.pi)
     S = np.zeros((2,nf))
     v = evects[:,:,0]
     invv = np.linalg.inv(v)
@@ -25,4 +25,4 @@ def pca_noise(d,NFFT=1024,Fs=256e6/2.**11,window = mlab.window_hanning):
         ss = np.dot(np.dot(invv,m),v)
         S[0,k] = ss[0,0]
         S[1,k] = ss[1,1]
-    return fr,S,evals,evects,angles
+    return fr,S,evals,evects,angles,piq
