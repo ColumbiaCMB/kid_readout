@@ -46,6 +46,8 @@ class DataFile():
         
     def close(self):
         self.nc.close()        
+    def sync(self):
+        self.nc.sync()
     def log_hw_state(self,ri):
         idx = len(self.hw_state.dimensions['time'])
         t0 = time.time()
