@@ -44,8 +44,12 @@ def parse_srs_log(fname,sensor=2):
     temps = []
     times = []
     for line in lines:
+        parts = line.split(' ')
         try:
-            parts = line.split(' ')
+            if len(parts) >9:
+                times.append(time.mktime(time.strptime(parts[0].strip(),'%Y%m%d-%H%M%S')))
+                temps.append(float(parts[9]))
+                continue
             if int(parts[0]) != sensor:
                 continue
             if len(parts) < 4:
