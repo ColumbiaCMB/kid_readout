@@ -93,6 +93,7 @@ for atten in atten_list:
                          nsamp = nsamp, nfft = ri.nfft, wavenorm = ri.wavenorm, t0 = time.time(), fs = ri.fs)
                 tsg = df.add_block_to_timestream(block, tsg=tsg)
         df.sync()
+        print "elapsed time:", ((time.time()-start_time)/60), "minutes"
         time.sleep(30)
 
     sweep_data = sweeps.do_prepared_sweep(ri, nchan_per_step=atonce, reads_per_step=8)
