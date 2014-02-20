@@ -4,6 +4,7 @@ matplotlib.use('agg')
 matplotlib.rcParams['mathtext.fontset'] = 'stix'
 matplotlib.rcParams['font.size'] = 16.0
 from matplotlib import pyplot as plt
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 mlab = plt.mlab
 from kid_readout.utils.easync import EasyNetCDF4
 from kid_readout.analysis.resonator import Resonator
@@ -98,7 +99,7 @@ def plot_per_resonator(pkls):
             
     
 class NoiseMeasurement(object):
-    def __init__(self,swg,tsg,hwg,chip,id,index=0,phasecorr=phasecorr,scale=scale,filtlen=2**16,loss = -42):
+    def __init__(self,swg,tsg,hwg,chip,id,index=0,phasecorr=phasecorr,scale=scale,filtlen=2**16,loss = -42, use_bif=False):
         self.id = id
         self.swp_epoch = swg.groups['datablocks'].variables['epoch'][0]
         self.start_temp =  get_temperature_at(self.swp_epoch)
@@ -126,12 +127,22 @@ class NoiseMeasurement(object):
         idx = swg.variables['index'][:]
         self.fr = swg.variables['frequency'][:]
         self.s21 = swg.variables['s21'][:].view('complex128')*np.exp(-1j*self.fr*phasecorr)*self.scale
-        self.fr = self.fr[idx==index][1:]#[4:-4]
-        self.s21 = self.s21[idx==index][1:]#[4:-4]
-        rr = Resonator(self.fr,self.s21)#,model=khalil.bifurcation_s21,guess=khalil.bifurcation_guess)
+        self.fr = self.fr[idx==index]#[1:]#[4:-4]
+        self.s21 = self.s21[idx==index]#[1:]#[4:-4]
+        blkidx = swg.groups['datablocks'].variables['sweep_index'][:]
+        blks = swg.groups['datablocks'].variables['data'][blkidx==index,:].view('complex')
+        errors = blks.real.std(1) + 1j*blks.imag.std(1)
+        self.errors = errors
+        if use_bif:
+            rr = Resonator(self.fr,self.s21,model=khalil.bifurcation_s21,guess=khalil.bifurcation_guess,errors=errors)
+        else:
+            rr = Resonator(self.fr,self.s21,errors=errors)
         self.delay = rr.delay
         self.s21 = self.s21*np.exp(2j*np.pi*rr.delay*self.fr)
-        rr = Resonator(self.fr,self.s21)#,model=khalil.bifurcation_s21,guess=khalil.bifurcation_guess)
+        if use_bif:
+            rr = Resonator(self.fr,self.s21,model=khalil.bifurcation_s21,guess=khalil.bifurcation_guess,errors=errors)
+        else:
+            rr = Resonator(self.fr,self.s21,errors=errors)
         self.Q_i = rr.Q_i
         self.params = rr.result.params
         
@@ -152,7 +163,8 @@ class NoiseMeasurement(object):
         self.s0 = self.tss_raw.mean() #rr.model(f=self.f0)
         self.sres = rr.model(f=rr.f_0)
         self.ds0 = rr.model(f=self.f0+1e-6)-rr.model(f=self.f0)    
-        self.s21m = rr.model(f=np.linspace(self.fr.min(),self.fr.max(),1000)) - self.s0
+        self.frm = np.linspace(self.fr.min(),self.fr.max(),1000)
+        self.s21m = rr.model(f=self.frm) - self.s0
         
         self.tss = (self.tss_raw-self.s0) * np.exp(-1j*np.angle(self.ds0))
         self.tss = self.tss/np.abs(self.ds0)    
@@ -194,7 +206,6 @@ class NoiseMeasurement(object):
         #proxies
         l = plt.Line2D([0,0.1],[0,0.1],color='orange',lw=2)
         l2 = plt.Line2D([0,0.1],[0,0.1],color='r',lw=2)
-        
         ax1.text((self.s21-self.s0).real[0],(self.s21-self.s0).imag[0],('%.3f kHz' % ((self.fr[0]-self.f0)*1000)))
         ax1.text((self.s21-self.s0).real[-1],(self.s21-self.s0).imag[-1],('%.3f kHz' % ((self.fr[-1]-self.f0)*1000)))
         ax1.grid()
@@ -204,6 +215,11 @@ class NoiseMeasurement(object):
         handles.append(l2)
         labels.append('LPF timeseries')
         ax1.legend(handles,labels,prop=dict(size='xx-small'))
+        
+        ax1b = inset_axes(parent_axes=ax1, width="20%", height="20%", loc=4)
+        ax1b.plot(self.fr,20*np.log10(abs(self.s21)),'.-')
+        frm = np.linspace(self.fr.min(),self.fr.max(),1000)
+        ax1b.plot(frm,20*np.log10(abs(self.s21m+self.s0)))
                 
         ax2.loglog(self.fr_fine[1:],self.prr_fine[1:],'b',label='Srr')
         ax2.loglog(self.fr_fine[1:],self.pii_fine[1:],'g',label='Sii')
@@ -244,10 +260,10 @@ class NoiseMeasurement(object):
                 + ("Q: %.1f +/- %.1f\n" % (params['Q'].value,params['Q'].stderr))
                 + ("Re(Qe): %.1f +/- %.1f\n" % (params['Q_e_real'].value,params['Q_e_real'].stderr))
                 + ("|Qe|: %.1f\n" % (abs(params['Q_e_real'].value+1j*params['Q_e_imag'].value)))
-                + ("Qi: %.1f\n" % (self.Q_i))
+                + ("Qi: %.1f" % (self.Q_i))
                 )
         if params.has_key('a'):
-            text += ("a: %.3g +/- %.3g" % (params['a'].value,params['a'].stderr))
+            text += ("\na: %.3g +/- %.3g" % (params['a'].value,params['a'].stderr))
 
         
         ax1.text(0.5,0.5,text,ha='center',va='center',bbox=dict(fc='white',alpha=0.6),transform = ax1.transAxes,
