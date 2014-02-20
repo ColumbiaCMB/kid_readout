@@ -5,14 +5,18 @@ import numpy as np
 from kid_readout.utils.valon import check_output
 
 class DataFile():
-    def __init__(self,base_dir='/home/data'):
+    def __init__(self,base_dir='/home/data',suffix=''):
         base_dir = os.path.expanduser(base_dir)
         if not os.path.exists(base_dir):
             try:
                 os.mkdir(base_dir)
             except Exception, e:
                 raise Exception("Tried to make directory %s for data file but failed. Error was %s" % (base_dir,str(e)))
-        fn = time.strftime('%Y-%m-%d_%H%M%S.nc')
+        fn = time.strftime('%Y-%m-%d_%H%M%S')
+        if suffix:
+            suffix = suffix.replace(' ','_')
+            fn += ('_' + suffix)
+        fn += '.nc'
         fn = os.path.join(base_dir,fn)
         self.filename = fn
         self.nc = netCDF4.Dataset(fn,mode='w')
