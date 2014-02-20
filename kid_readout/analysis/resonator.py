@@ -97,7 +97,11 @@ class Resonator(object):
         if self.errors is None:
             return ((self.data[self.mask] - self.model(params)[self.mask]).view('float'))
         else:
-            return ((self.data[self.mask] - self.model(params)[self.mask]).view('float'))/self.errors[self.mask].view('float')
+            errors = self.errors[self.mask]
+            if not np.iscomplexobj(errors):
+                errors = errors + 1j*errors
+            return ((self.data[self.mask] - self.model(params)[self.mask]).view('float'))/errors.view('float')
+                
 
     def model(self, params=None, f=None):
         """
