@@ -10,6 +10,8 @@ import socket
 import borph_utils
 import udp_catcher
 
+from roach_utils import ntone_power_correction
+
 import scipy.signal
 
 def compute_window(npfb=2**15,taps = 2, wfunc = scipy.signal.flattop):
@@ -20,16 +22,6 @@ def compute_window(npfb=2**15,taps = 2, wfunc = scipy.signal.flattop):
     mag = mag/mag.max()
     return mag
     
-def ntone_power_correction(ntones):
-    """
-    Power correction in dB relative to a single tone
-    
-    *ntones* : number of tones simultaneously output
-    """
-    if ntones < 10:
-        return 20*np.log10(ntones)
-    else:
-        return 10*np.log10(ntones)+10    
 
 class RoachInterface(object):
     """
