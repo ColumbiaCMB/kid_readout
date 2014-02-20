@@ -24,7 +24,8 @@ class Resonator(object):
     defaults.
     """
    
-    def __init__(self, f, data, model=default_model, guess=default_guess, functions=default_functions, mask=None):
+    def __init__(self, f, data, model=default_model, guess=default_guess, functions=default_functions, 
+                 mask=None, errors=None):
         """
         Instantiate a resonator using our current best model.
         Parameter model is a function S_21(params, f) that returns the
@@ -44,9 +45,13 @@ class Resonator(object):
         self._model = model
         self._functions = functions
         if mask is None:
-            self.mask = np.ones_like(data).astype(np.bool)
+            if errors is None:
+                self.mask = np.ones_like(data).astype(np.bool)
+            else:
+                self.mask = abs(errors) < np.median(abs(errors))*3
         else:
             self.mask = mask
+        self.errors = errors
         self.fit(guess(f[self.mask], data[self.mask]))
 
     def __getattr__(self, attr):
@@ -86,8 +91,13 @@ class Resonator(object):
         Note that the residual needs to be purely real, and should *not* include abs.
         The minimizer needs the signs of the residuals to properly evaluate the gradients.
         """
-        # .view('float') will take a length N complex array and turn it into a length 2*N float array.
-        return ((self.data[self.mask] - self.model(params)[self.mask]).view('float'))
+        # in the following, .view('float') will take a length N complex array 
+        # and turn it into a length 2*N float array.
+        
+        if self.errors is None:
+            return ((self.data[self.mask] - self.model(params)[self.mask]).view('float'))
+        else:
+            return ((self.data[self.mask] - self.model(params)[self.mask]).view('float'))/self.errors[self.mask].view('float')
 
     def model(self, params=None, f=None):
         """
