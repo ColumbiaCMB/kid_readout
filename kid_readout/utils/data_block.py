@@ -55,7 +55,8 @@ class SweepData():
         msk = self.sweep_indexes == index
         freqs = self.freqs[msk]
         data = self.data[msk]
-        return freqs,data
+        errors = self.errors[msk]
+        return freqs,data,errors
 
     def select_by_freq(self,freq):
         didx = np.argmin(abs(freq-self.freqs))
