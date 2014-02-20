@@ -22,13 +22,21 @@ class DataBlock():
         self.t0 = t0
         self.sweep_index = sweep_index
         self._mean = None
+        self._std = None
         self._lpf_data = None
         
     def mean(self):
         if self._mean is None:
-            self._lpf_data = fftfilt.fftfilt(lpf,self.data)[len(lpf):]*self.wavenorm
+            if self._lpf_data is None:
+                self._lpf_data = fftfilt.fftfilt(lpf,self.data)[len(lpf):]*self.wavenorm
             self._mean = self._lpf_data.mean(0)
         return self._mean
+    def std(self):
+        if self._std is None:
+            if self._lpf_data is None:
+                self._lpf_data = fftfilt.fftfilt(lpf,self.data)[len(lpf):]*self.wavenorm
+            self._std = self._lpf_data.std(0)
+        return self._std
         
 class SweepData():
     def __init__(self,sweep_id=1):
@@ -63,3 +71,6 @@ class SweepData():
     @property
     def sweep_indexes(self):
         return np.array(self._sweep_indexes)
+    @property
+    def errors(self):
+        return np.array([x.std() for x in self.blocks])
