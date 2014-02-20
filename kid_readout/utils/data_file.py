@@ -54,7 +54,7 @@ class DataFile():
         self.hw_epoch[idx] = t0
         self.hw_adc_atten[idx] = ri.adc_atten
         self.hw_dac_atten[idx] = ri.dac_atten
-        self.hw_ntones[idx] = ri.tone_bins.shape[0]
+        self.hw_ntones[idx] = ri.tone_bins.shape[1]
         
     def log_adc_snap(self,ri):
         t0 = time.time()
