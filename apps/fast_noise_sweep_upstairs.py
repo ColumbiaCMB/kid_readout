@@ -3,23 +3,17 @@ matplotlib.use('agg')
 import numpy as np
 import time
 import sys
-from kid_readout.utils import data_block,roach_interface,data_file,sweeps
+from kid_readout.utils import roach_interface,data_file,sweeps
 from kid_readout.analysis.resonator import Resonator
-#from sim900 import sim900Client
 
 ri = roach_interface.RoachBasebandWide()
-#ri.initialize()
-ri.set_fft_gain(4)
-#sc = sim900Client.sim900Client()
-
-ri.set_dac_attenuator(19.5)  
 
 #f0s = np.load('/home/gjones/workspace/apps/f8_fit_resonances.npy')
 #f0s = np.load('/home/gjones/workspace/apps/first_pass_sc3x3_0813f9.npy')
 f0s = np.load('/home/gjones/workspace/apps/sc5x4_0813f10_first_pass.npy')#[:4]
 #f0s = np.load('/home/gjones/workspace/readout/apps/sc3x3_0813f9_2014-02-11.npy')
 f0s.sort()
-#f0s = f0s*0.99
+f0s = f0s*0.998
 
 nf = len(f0s)
 atonce = 4
@@ -29,7 +23,7 @@ if nf % atonce > 0:
 
 offsets = np.linspace(-4882.8125,4638.671875,20)
 offsets = np.concatenate(([-40e3,-20e3],offsets,[20e3,40e3]))/1e6
-offsets = offsets
+offsets = offsets*8
 
 print f0s
 print len(f0s)
@@ -50,9 +44,9 @@ for atten in atten_list:
     meas_cfs = []
     idxs = []
     for m in range(len(f0s)):
-        fr,s21 = sweep_data.select_by_freq(f0s[m])
+        fr,s21,errors = sweep_data.select_by_freq(f0s[m])
         thiscf = f0s[m]
-        res = Resonator(fr,s21)
+        res = Resonator(fr,s21,errors=errors)
         fmin = fr[np.abs(s21).argmin()]
         print "s21 fmin", fmin, "original guess",thiscf,"this fit", res.f_0
         if abs(res.f_0 - thiscf) > 0.1:
@@ -80,39 +74,12 @@ for atten in atten_list:
         ri.select_fft_bins(selection)
         ri._sync()
         time.sleep(0.2)
-        dmod,addr = ri.get_data(1024,demod=True)
-        chids = ri.fpga_fft_readout_indexes+1
-        tones = ri.tone_bins[ri.bank,ri.readout_selection]
-        nsamp = ri.tone_nsamp
-        print "saving data"
-        for m in range(len(chids)):
-            print m
-            block = data_block.DataBlock(data = dmod[:,m], tone=tones[m], fftbin = chids[m], 
-                     nsamp = nsamp, nfft = ri.nfft, wavenorm = ri.wavenorm, t0 = time.time(), fs = ri.fs)
-            tsg = df.add_block_to_timestream(block, tsg=tsg)
+        dmod,addr = ri.get_data_seconds(30,demod=True)
+        tsg = df.add_timestream_data(dmod, ri, tsg=tsg)
     df.sync()
 
     df.log_hw_state(ri)
-        #sc.fetchDict()
-        #df.add_cryo_data(sc.data)
     df.nc.sync()
     df.nc.close()
     
 print "completed in",((time.time()-start)/60.0),"minutes"
-#    raw_input("turn off pulse tube")
-#
-#    tsg = None
-#    dmod,addr = ri.get_data(2048,demod=True)
-#    chids = ri.fpga_fft_readout_indexes+1
-#    tones = ri.tone_bins[ri.readout_selection]
-#    nsamp = ri.tone_nsamp
-#    print "saving data"
-#    for m in range(len(chids)):
-#        print m
-#        block = data_block.DataBlock(data = dmod[:,m], tone=tones[m], fftbin = chids[m], 
-#                 nsamp = nsamp, nfft = ri.nfft, wavenorm = ri.wavenorm, t0 = time.time(), fs = ri.fs)
-#        tsg = df.add_block_to_timestream(block, tsg=tsg)
-#
-#    df.log_hw_state(ri)
-#    df.nc.sync()
-    
