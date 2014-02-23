@@ -3,12 +3,46 @@ from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 import lmfit
+import scipy.stats
 minimize = lmfit.minimize
 
 # To use different defaults, change these three import statements.
 from kid_readout.analysis.khalil import delayed_generic_s21 as default_model
 from kid_readout.analysis.khalil import delayed_generic_guess as default_guess
 from kid_readout.analysis.khalil import generic_functions as default_functions
+from kid_readout.analysis.khalil import bifurcation_s21, bifurcation_guess
+
+def fit_resonator(freq, s21, mask= None, errors=None, weight_by_errors=True, min_a = 0.1, fstat_thresh = 0.999):
+    rr = Resonator(freq, s21, mask=mask, errors=errors, weight_by_errors=weight_by_errors)
+    bif = Resonator(freq, s21, mask=mask, errors=errors, weight_by_errors=weight_by_errors, 
+                    guess = bifurcation_guess, model = bifurcation_s21)
+    fval = scipy.stats.f_value(np.sum(np.abs(rr.residual())**2),
+                                np.sum(np.abs(bif.residual())**2),
+                                rr.result.nfree, bif.result.nfree)
+    fstat = scipy.stats.distributions.f.cdf(fval,rr.result.nfree,bif.result.nfree)
+    aval = bif.result.params['a'].value
+    aerr = bif.result.params['a'].stderr
+    reasons = []
+    if aval <= aerr:
+        prefer_bif = False
+        reasons.append("Error on bifurcation parameter exceeds fitted value")
+    else:
+        if aval < min_a:
+            prefer_bif = False
+            reasons.append("Bifurcation parameter %f is less than minimum required %f" % (aval,min_a))
+        else:
+            if fstat < fstat_thresh:
+                prefer_bif = False
+                reasons.append("F-statistic %f is less than threshold %f" % (fstat,fstat_thresh))
+            else:
+                prefer_bif = True
+    if not prefer_bif:
+        print ','.join(reasons)
+    return rr,bif,prefer_bif
+    
+def fit_best_resonator(*args,**kwargs):
+    rr,bif,prefer_bif = fit_resonator(*args,**kwargs)
+    return (rr,bif)[prefer_bif]
 
 class Resonator(object):
     """
@@ -84,7 +118,7 @@ class Resonator(object):
         """
         self.result = minimize(self.residual, initial,ftol=1e-6)
                                
-    def residual(self, params):
+    def residual(self, params=None):
         """
         This is the residual function used by lmfit. Only data where
         mask is True is used for the fit.
@@ -95,6 +129,8 @@ class Resonator(object):
         # in the following, .view('float') will take a length N complex array 
         # and turn it into a length 2*N float array.
         
+        if params is None:
+            params = self.result.params
         if self.errors is None or not self.weight_by_errors:
             return ((self.data[self.mask] - self.model(params)[self.mask]).view('float'))
         else:
