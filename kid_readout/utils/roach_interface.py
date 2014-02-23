@@ -14,6 +14,8 @@ from roach_utils import ntone_power_correction
 
 import scipy.signal
 
+CONFIG_FILE_NAME = '/home/data/roach_config.npz'
+
 def compute_window(npfb=2**15,taps = 2, wfunc = scipy.signal.flattop):
     wv = wfunc(npfb*taps)
     sc = np.sinc(np.arange(npfb*taps)/float(npfb) - taps/2.0)
@@ -87,32 +89,79 @@ class RoachInterface(object):
         fftshift = (2**20 - 1) - (2**gain - 1)  #this expression puts downsifts at the earliest stages of the FFT
         self.fft_gain = gain
         self.r.write_int('fftshift',fftshift)
+        self.save_state()
+
         
-    def initialize(self, fs=512.0, start_udp=True):
+    def save_state(self):
+        np.savez(CONFIG_FILE_NAME,
+                 boffile = self.boffile,
+                 adc_atten = self.adc_atten,
+                 dac_atten = self.dac_atten,
+                 bof_pid = self.bof_pid,
+                 fft_bins = self.fft_bins,
+                 fft_gain = self.fft_gain,
+                 tone_nsamp = self.tone_nsamp,
+                 tone_bins = self.tone_bins,)
+        os.chmod(CONFIG_FILE_NAME, 0777)
+
+    def initialize(self, fs=512.0, start_udp=True, use_config=True):
         """
         Reprogram the ROACH and get things running
         
         fs: float
             Sampling frequency in MHz
         """
-        print "Deprogramming"
-        self.r.progdev('')
-        self._set_fs(fs)
-        print "Programming", self.boffile
-        self.r.progdev(self.boffile)
-        self.bof_pid = None
-        self._update_bof_pid()
-        self.set_fft_gain(2)
-        self.r.write_int('dacctrl',0)
-        self.r.write_int('dacctrl',1)
-        estfs = self.measure_fs()
-        if np.abs(fs-estfs) > 2.0:
-            print "Warning! FPGA clock may not be locked to sampling clock!"
-        print "Requested sampling rate %.1f MHz. Estimated sampling rate %.1f MHz" % (fs,estfs)
-        if start_udp:
-            print "starting udp server process on PPC"
-            borph_utils.start_server(self.bof_pid)
         
+        if use_config:
+            try:
+                state = np.load(CONFIG_FILE_NAME)
+                print "Loaded ROACH state from",CONFIG_FILE_NAME
+            except IOError:
+                print "Could not load previous state"
+                state = None
+        else:
+            state = None
+        if state is not None:
+            try:
+                self._update_bof_pid()
+            except Exception:
+                self.bof_pid = None
+            if self.bof_pid is None or self.bof_pid != state['bof_pid']:
+                print "ROACH configuration does not match saved state"
+                state = None
+        if state is None or state['boffile'] != self.boffile:
+            print "Reinitializing system"
+            print "Deprogramming"
+            self.r.progdev('')
+            self._set_fs(fs)
+            print "Programming", self.boffile
+            self.r.progdev(self.boffile)
+            self.bof_pid = None
+            self._update_bof_pid()
+            self.set_fft_gain(4)
+            self.r.write_int('dacctrl',0)
+            self.r.write_int('dacctrl',1)
+            estfs = self.measure_fs()
+            if np.abs(fs-estfs) > 2.0:
+                print "Warning! FPGA clock may not be locked to sampling clock!"
+            print "Requested sampling rate %.1f MHz. Estimated sampling rate %.1f MHz" % (fs,estfs)
+            if start_udp:
+                print "starting udp server process on PPC"
+                borph_utils.start_server(self.bof_pid)
+            self.adc_atten = 31.5
+            self.dac_atten = np.nan
+            self.fft_bins = None
+            self.tone_nsamp = None
+            self.tone_bins = None
+            self.save_state()
+        else:
+            self.adc_atten = state['adc_atten'][()]
+            self.dac_atten = state['dac_atten'][()]
+            self.fft_bins = state['fft_bins']
+            self.fft_gain = state['fft_gain'][()]
+            self.tone_nsamp = state['tone_nsamp'][()]
+            self.tone_bins = state['tone_bins']
+            
     def measure_fs(self):
         """
         Estimate the sampling rate
@@ -232,6 +281,7 @@ class RoachInterface(object):
         self.set_attenuator(attena,le_bit=0x01)
         self.set_attenuator(attenb,le_bit=0x02)
         self.dac_atten = int(attendb*2)/2.0
+        self.save_state()
         
     def set_dac_atten(self,attendb):
         """ Alias for set_dac_attenuator """
@@ -350,13 +400,9 @@ class RoachInterface(object):
         tot = time.time()-tic
         print "\rread %d in %.1f seconds, %.2f samples per second, idle %.2f per read" % (n, tot, (n*2**12/tot),idle/(n*1.0))
         
-
-
-
-
-
+        
 class RoachBaseband(RoachInterface):
-    def __init__(self,roach=None,wafer=0,roachip='roach',adc_valon=None,host_ip=None):
+    def __init__(self,roach=None,wafer=0,roachip='roach',adc_valon=None,host_ip=None,initialize=True):
         """
         Class to represent the baseband readout system (low-frequency (150 MHz), no mixers)
         
@@ -375,6 +421,10 @@ class RoachBaseband(RoachInterface):
                 synthesizer, which will then be used for creating a Valon class.
                 Finally, for test suites, you can directly pass a Valon class or a class with the same
                 interface.
+        host_ip: Override IP address to which the ROACH should send it's data. If left as None,
+                the host_ip will be set appropriately based on the hostname.
+        initialize: Default True, will call self.initialize() which will try to load state from saved config
+                Set to False if you don't want this to happen.
         """
         if roach:
             self.r = roach
@@ -420,8 +470,20 @@ class RoachBaseband(RoachInterface):
         self.host_ip= host_ip
         self.adc_atten = 31.5
         self.dac_atten = -1
+        self.fft_gain = 0
+        self.fft_bins = None
+        self.tone_nsamp = None
+        self.tone_bins = None
         self.bof_pid = None
         self.roachip = roachip
+#        self.boffile = 'bb2xpfb14mcr5_2013_Jul_31_1301.bof'
+#        self.boffile = 'bb2xpfb14mcr7_2013_Oct_31_1332.bof'
+        self.boffile = 'bb2xpfb14mcr11_2014_Jan_17_1721.bof'
+        
+        if initialize:
+            self.initialize()
+        else:
+            print "Not initializing"
         try:
             self.fs = self.adc_valon.get_frequency_a()
         except:
@@ -431,9 +493,6 @@ class RoachBaseband(RoachInterface):
         self.dac_ns = 2**16 # number of samples in the dac buffer
         self.raw_adc_ns = 2**12 # number of samples in the raw ADC buffer
         self.nfft = 2**14
-#        self.boffile = 'bb2xpfb14mcr5_2013_Jul_31_1301.bof'
-#        self.boffile = 'bb2xpfb14mcr7_2013_Oct_31_1332.bof'
-        self.boffile = 'bb2xpfb14mcr11_2014_Jan_17_1721.bof'
         self.bufname = 'ppout%d' % wafer
         self._window_mag = compute_window(npfb = 2*self.nfft, taps= 2, wfunc = scipy.signal.flattop)
         self.bank = self.get_current_bank()
@@ -505,6 +564,7 @@ class RoachBaseband(RoachInterface):
             
         self.select_bank(0)
         self.select_fft_bins(readout_selection)
+        self.save_state()
         return actual_freqs
     
     def add_tone_freqs(self,freqs,amps=None):
@@ -515,6 +575,7 @@ class RoachBaseband(RoachInterface):
         actual_freqs = self.fs*bins/float(nsamp)
         self.add_tone_bins(bins, amps=amps)
         self.fft_bins = np.vstack((self.fft_bins,self.calc_fft_bins(bins, nsamp)))
+        self.save_state()
         return actual_freqs
 
     def set_tone_bins(self,bins,nsamp,amps=None,load=True,normfact=None):
@@ -556,6 +617,7 @@ class RoachBaseband(RoachInterface):
         self.qwave = qwave
         if load:
             self.load_waveform(qwave)
+        self.save_state()
         
     def add_tone_bins(self,bins,amps=None):
         nsamp = self.tone_nsamp
@@ -572,6 +634,7 @@ class RoachBaseband(RoachInterface):
         #self.qwave = qwave  # TODO: Deal with this, if we ever use it
         start_offset = self.tone_bins.shape[0] - 1 
         self.load_waveform(qwave,start_offset=start_offset)      
+        self.save_state()
         
     def calc_fft_bins(self,tone_bins,nsamp):
         """
