@@ -1,6 +1,7 @@
 from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
+import lmfit
 
 def extract(r, scale):
     f = r.f[r.mask] * scale
