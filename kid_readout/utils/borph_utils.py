@@ -44,23 +44,15 @@ def get_bof_pid():
     return int(check_output('ssh root@roach "pgrep -f bof$"', shell=True))
 
 def start_server(bof_pid):
-    
-    # Kill existing processes
     try:
-    # Try/except block
         c = check_output('ssh root@roach pkill -f kid_ppc', shell=True)
         print 'process killed'
-    # Problem here: if there is no process to kill, the program ends in an error.
     except subprocess.CalledProcessError:
         pass
         
     
     # remote_command = 'ssh root@roach "/boffiles/udp/channel_pingpong_fileserver %s %s"' % (a,buff_name)
     #remote_command = 'nohup ssh root@roach "/boffiles/udp/channel_pingpong_fileserver %s %s" < /dev/null &> /dev/null &' % (a, buff_name)
-    remote_command = 'nohup ssh root@roach "/boffiles/udp/kid_ppc %s" < /dev/null &> /dev/null &' % (bof_pid,)
+    remote_command = 'ssh root@roach "nohup /boffiles/udp/kid_ppc %s < /dev/null &> /dev/null &"' % (bof_pid,)
     print remote_command
     b = check_output(remote_command, shell=True)
-    # The goal of the extra stuff is to not wait for a return. This doesn't seem to work.
-
-'''Check output sends commands to the terminal. The goal here is to write a 
-program that automatically starts up the roach, initializes channels, etc.'''
