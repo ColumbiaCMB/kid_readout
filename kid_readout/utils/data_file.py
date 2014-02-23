@@ -3,6 +3,7 @@ import time
 import os
 import numpy as np
 from kid_readout.utils.valon import check_output
+from kid_readout.utils import data_block
 
 class DataFile():
     def __init__(self,base_dir='/home/data',suffix=''):
@@ -115,8 +116,21 @@ class DataFile():
         sweep_index[:] = np.array([x.sweep_index for x in blocks])
         
         return name
-        
+    
+    def add_timestream_data(self, data, ri, tsg=None):
+        chids = ri.fpga_fft_readout_indexes+1
+        tones = ri.tone_bins[ri.bank,ri.readout_selection]
+        nsamp = ri.tone_nsamp
+        for m in range(len(chids)):
+            block = data_block.DataBlock(data = data[:,m], tone=tones[m], fftbin = chids[m], 
+                     nsamp = nsamp, nfft = ri.nfft, wavenorm = ri.wavenorm, t0 = time.time(), fs = ri.fs)
+            tsg = self.add_block_to_timestream(block, tsg=tsg)
+
     def add_block_to_timestream(self, block, tsg = None):
+        if tsg is not None and tsg.variables['data'].shape[1] != block.shape[0]:
+            print "Warning! Timestream data cannot be added to", tsg.path, "because dimension does not agree."
+            print "New timestream group will be created"
+            tsg = None
         if tsg is None:
             name = time.strftime('timestream_%Y%m%d%H%M%S')
             tsg = self.timestreams.createGroup(name)
