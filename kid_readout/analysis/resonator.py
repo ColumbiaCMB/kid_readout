@@ -25,7 +25,7 @@ class Resonator(object):
     """
    
     def __init__(self, f, data, model=default_model, guess=default_guess, functions=default_functions, 
-                 mask=None, errors=None):
+                 mask=None, errors=None, weight_by_errors=True):
         """
         Instantiate a resonator using our current best model.
         Parameter model is a function S_21(params, f) that returns the
@@ -52,6 +52,7 @@ class Resonator(object):
         else:
             self.mask = mask
         self.errors = errors
+        self.weight_by_errors = weight_by_errors
         self.fit(guess(f[self.mask], data[self.mask]))
 
     def __getattr__(self, attr):
@@ -94,7 +95,7 @@ class Resonator(object):
         # in the following, .view('float') will take a length N complex array 
         # and turn it into a length 2*N float array.
         
-        if self.errors is None:
+        if self.errors is None or not self.weight_by_errors:
             return ((self.data[self.mask] - self.model(params)[self.mask]).view('float'))
         else:
             errors = self.errors[self.mask]
