@@ -864,8 +864,12 @@ class RoachBasebandWide(RoachBaseband):
                 host_ip = '192.168.1.1'
 
         self.host_ip = host_ip
-        self.adc_atten = -1
+        self.adc_atten = 31.5
         self.dac_atten = -1
+        self.fft_gain = 0
+        self.fft_bins = None
+        self.tone_nsamp = None
+        self.tone_bins = None
         self.bof_pid = None
         self.roachip = roachip
         try:
