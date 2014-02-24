@@ -7,12 +7,13 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 mlab = plt.mlab
 from kid_readout.utils.easync import EasyNetCDF4
-from kid_readout.analysis.resonator import Resonator
+from kid_readout.analysis.resonator import Resonator,fit_best_resonator
 from kid_readout.analysis import khalil
 from kid_readout.analysis import iqnoise
 import scipy.signal
 
 from kid_readout.utils.fftfilt import fftfilt
+from kid_readout.utils.roach_utils import ntone_power_correction
 
 import socket
 if socket.gethostname() == 'detectors':
@@ -99,7 +100,8 @@ def plot_per_resonator(pkls):
             
     
 class NoiseMeasurement(object):
-    def __init__(self,swg,tsg,hwg,chip,id,index=0,phasecorr=phasecorr,scale=scale,filtlen=2**16,loss = -42, use_bif=False):
+    def __init__(self,swg,tsg,hwg,chip,id,index=0,phasecorr=phasecorr,scale=scale,filtlen=2**16,loss = -42, 
+                 ntones=None, use_bif=False):
         self.id = id
         self.swp_epoch = swg.groups['datablocks'].variables['epoch'][0]
         self.start_temp =  get_temperature_at(self.swp_epoch)
@@ -117,11 +119,15 @@ class NoiseMeasurement(object):
         
         try:
             hwidx = bisect.bisect(hwg.variables['epoch'][:],self.swp_epoch)
+            if hwidx == hwg.variables['epoch'].shape[0]:
+                hwidx = -1
+            if ntones is None:
+                ntones = hwg.variables['ntones'][hwidx]
             self.atten = hwg.variables['dac_atten'][hwidx]
-            self.power_dbm = loss - self.atten #this should be right for a single tone. Off by 6 dB for two tones
+            self.power_dbm = loss - self.atten - ntone_power_correction(ntones)
         except:
             print "failed to find attenuator settings"
-            self.atten = -1
+            self.atten = np.nan
             self.power_dbm = np.nan
         
         idx = swg.variables['index'][:]
@@ -139,10 +145,11 @@ class NoiseMeasurement(object):
             rr = Resonator(self.fr,self.s21,errors=errors)
         self.delay = rr.delay
         self.s21 = self.s21*np.exp(2j*np.pi*rr.delay*self.fr)
-        if use_bif:
-            rr = Resonator(self.fr,self.s21,model=khalil.bifurcation_s21,guess=khalil.bifurcation_guess,errors=errors)
-        else:
-            rr = Resonator(self.fr,self.s21,errors=errors)
+#        if use_bif:
+#            rr = Resonator(self.fr,self.s21,model=khalil.bifurcation_s21,guess=khalil.bifurcation_guess,errors=errors)
+#        else:
+#            rr = Resonator(self.fr,self.s21,mask=rr.mask)#errors=errors)
+        rr = fit_best_resonator(self.fr,self.s21,errors=errors)
         self.Q_i = rr.Q_i
         self.params = rr.result.params
         
@@ -162,13 +169,16 @@ class NoiseMeasurement(object):
         
         self.s0 = self.tss_raw.mean() #rr.model(f=self.f0)
         self.sres = rr.model(f=rr.f_0)
-        self.ds0 = rr.model(f=self.f0+1e-6)-rr.model(f=self.f0)    
+        self.ds0 = rr.model(f=self.f0+1e-6)-rr.model(f=self.f0)
+        #tsl_hz = np.real((self.tsl_raw - self.s0)/self.ds0)
+        #self.ds0s = rr.model(f=self.f0+(tsl_hz+1)*1e-6)-rr.model(f=self.f0+tsl_hz*1e-6)
         self.frm = np.linspace(self.fr.min(),self.fr.max(),1000)
         self.s21m = rr.model(f=self.frm) - self.s0
         
         self.tss = (self.tss_raw-self.s0) * np.exp(-1j*np.angle(self.ds0))
-        self.tss = self.tss/np.abs(self.ds0)    
-        fr,S,evals,evects,angles,piq = iqnoise.pca_noise(self.tss, NFFT=2**14, Fs=self.fs*1e6/(2*self.nfft))
+        self.tss = self.tss/np.abs(self.ds0)/(self.f0*1e6)
+        #self.tss = (self.tss_raw[:len(self.tsl_raw)] - self.tsl_raw)/self.ds0s
+        fr,S,evals,evects,angles,piq = iqnoise.pca_noise(self.tss, NFFT=2**12, Fs=self.fs*1e6/(2*self.nfft))
         
         self.pca_fr = fr
         self.pca_S = S
@@ -225,6 +235,7 @@ class NoiseMeasurement(object):
         ax2.loglog(self.fr_fine[1:],self.pii_fine[1:],'g',label='Sii')
         ax2.loglog(self.fr_coarse[1:],self.prr_coarse[1:],'y',lw=2)
         ax2.loglog(self.fr_coarse[1:],self.pii_coarse[1:],'m',lw=2)
+        ax2.loglog(self.pca_fr[1:],self.pca_evals[:,1:].T,'k',lw=2)
         
         n500 = self.prr_coarse[np.abs(self.fr_coarse-500).argmin()]
         ax2.annotate(("%.2g Hz$^2$/Hz @ 500 Hz" % n500),xy=(500,n500),xycoords='data',xytext=(5,20),textcoords='offset points',
@@ -235,16 +246,16 @@ class NoiseMeasurement(object):
     #    ax2b.set_xlim(ax2.get_xlim())
         ax2.grid()
         ax2b.grid(color='r')
-        ax2b.set_ylim(np.sqrt(ylim[0])/(self.f0*1e6),np.sqrt(ylim[1])/(self.f0*1e6))
+        ax2b.set_ylim(np.sqrt(ylim[0]),np.sqrt(ylim[1]))
         ax2.set_xlim(1,1e5)
-        ax2.set_ylabel('Hz$^2$/Hz')
+        ax2.set_ylabel('1/Hz')
         ax2.set_xlabel('Hz')
         ax2b.set_ylabel('1/Hz$^{1/2}$')
         ax2.legend(prop=dict(size='small'))
         
         tsl = (self.tsl_raw-self.s0)/self.ds0
         tsl = tsl - tsl.mean()
-        dtl = (self.filtlen/4)/(self.fs*1e6/(self.nfft))
+        dtl = (self.filtlen/4)/(self.fs*1e6/(2*self.nfft))
         t = dtl*np.arange(len(tsl))
         ax3.plot(t,tsl.real,'b',lw=2,label = 'LPF timeseries real')
         ax3.plot(t,tsl.imag,'g',lw=2,label = 'LPF timeseries imag')
@@ -255,7 +266,7 @@ class NoiseMeasurement(object):
         params = self.params
         text = (("measured at: %.6f MHz\n" % self.f0)
                 + ("temperature: %.1f - %.1f mK\n" %(self.start_temp*1000, self.end_temp*1000))
-                + ("power: ~%.1f dBm\n" %(self.power_dbm))
+                + ("power: ~%.1f dBm (%.1f dB att)\n" %(self.power_dbm,self.atten))
                 + ("fit f0: %.6f +/- %.6f MHz\n" % (params['f_0'].value,params['f_0'].stderr))
                 + ("Q: %.1f +/- %.1f\n" % (params['Q'].value,params['Q'].stderr))
                 + ("Re(Qe): %.1f +/- %.1f\n" % (params['Q_e_real'].value,params['Q_e_real'].stderr))
