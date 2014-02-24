@@ -125,9 +125,10 @@ class DataFile():
             block = data_block.DataBlock(data = data[:,m], tone=tones[m], fftbin = chids[m], 
                      nsamp = nsamp, nfft = ri.nfft, wavenorm = ri.wavenorm, t0 = time.time(), fs = ri.fs)
             tsg = self.add_block_to_timestream(block, tsg=tsg)
+        return tsg
 
     def add_block_to_timestream(self, block, tsg = None):
-        if tsg is not None and tsg.variables['data'].shape[1] != block.shape[0]:
+        if tsg is not None and tsg.variables['data'].shape[1] != block.data.shape[0]:
             print "Warning! Timestream data cannot be added to", tsg.path, "because dimension does not agree."
             print "New timestream group will be created"
             tsg = None
