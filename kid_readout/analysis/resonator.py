@@ -155,7 +155,7 @@ class Resonator(object):
             f = self.f
         return self._model(params, f)
     
-    def inverse(self, s21, params=None):
+    def inverse(self, s21, params=None,guess=None):
         """
         Find the frequencies that correspond to points in the complex plane as given by the model
         """
@@ -167,7 +167,10 @@ class Resonator(object):
         if isscalar:
             s21 = np.array([s21])
         def _find_inverse(s21):
-            x0 = self.f[np.argmin(np.abs(s21-self.data))]
+            if guess is None:
+                x0 = self.f[np.argmin(np.abs(s21-self.data))]
+            else:
+                x0 = guess
             return scipy.optimize.fsolve(resid,x0,args=(s21,))
         result = np.vectorize(_find_inverse)(s21)
         if isscalar:
