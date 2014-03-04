@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import lmfit
 import scipy.stats
+import scipy.optimize
 minimize = lmfit.minimize
 
 # To use different defaults, change these three import statements.
@@ -12,7 +13,7 @@ from kid_readout.analysis.khalil import delayed_generic_guess as default_guess
 from kid_readout.analysis.khalil import generic_functions as default_functions
 from kid_readout.analysis.khalil import bifurcation_s21, bifurcation_guess
 
-def fit_resonator(freq, s21, mask= None, errors=None, weight_by_errors=True, min_a = 0.1, fstat_thresh = 0.999):
+def fit_resonator(freq, s21, mask= None, errors=None, weight_by_errors=True, min_a = 0.08, fstat_thresh = 0.999):
     rr = Resonator(freq, s21, mask=mask, errors=errors, weight_by_errors=weight_by_errors)
     bif = Resonator(freq, s21, mask=mask, errors=errors, weight_by_errors=weight_by_errors, 
                     guess = bifurcation_guess, model = bifurcation_s21)
@@ -31,13 +32,14 @@ def fit_resonator(freq, s21, mask= None, errors=None, weight_by_errors=True, min
             prefer_bif = False
             reasons.append("Bifurcation parameter %f is less than minimum required %f" % (aval,min_a))
         else:
-            if fstat < fstat_thresh:
+            #not sure this is working right, so leave it out for now.
+            if False:#fstat < fstat_thresh:
                 prefer_bif = False
                 reasons.append("F-statistic %f is less than threshold %f" % (fstat,fstat_thresh))
             else:
                 prefer_bif = True
     if not prefer_bif:
-        print ','.join(reasons)
+        print "Not using bifurcation model because:",(','.join(reasons))
     return rr,bif,prefer_bif
     
 def fit_best_resonator(*args,**kwargs):
@@ -136,6 +138,7 @@ class Resonator(object):
         else:
             errors = self.errors[self.mask]
             if not np.iscomplexobj(errors):
+                errors = errors.astype('complex')
                 errors = errors + 1j*errors
             return ((self.data[self.mask] - self.model(params)[self.mask]).view('float'))/errors.view('float')
                 
@@ -151,3 +154,22 @@ class Resonator(object):
         if f is None:
             f = self.f
         return self._model(params, f)
+    
+    def inverse(self, s21, params=None):
+        """
+        Find the frequencies that correspond to points in the complex plane as given by the model
+        """
+        if params is None:
+            params = self.result.params
+        def resid(f,s21):
+            return np.abs(s21 - self._model(params, f))
+        isscalar = np.isscalar(s21)
+        if isscalar:
+            s21 = np.array([s21])
+        def _find_inverse(s21):
+            x0 = self.f[np.argmin(np.abs(s21-self.data))]
+            return scipy.optimize.fsolve(resid,x0,args=(s21,))
+        result = np.vectorize(_find_inverse)(s21)
+        if isscalar:
+            result = result[0]
+        return result
