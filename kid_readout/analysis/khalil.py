@@ -69,17 +69,25 @@ def bifurcation_s21(params,f):
            1j * params['Q_e_imag'].value)
            
     a = params['a'].value
-    y_0 = ((f - f_0)/f_0)*Q
+    
+    if np.isscalar(f):
+        fmodel = np.linspace(f*0.9999,f*1.0001,1000)
+        scalar = True
+    else:
+        fmodel = f
+        scalar = False
+    y_0 = ((fmodel - f_0)/f_0)*Q
     y =  (y_0/3. + 
             (y_0**2/9 - 1/12)/cbrt(a/8 + y_0/12 + np.sqrt((y_0**3/27 + y_0/12 + a/8)**2 - (y_0**2/9 - 1/12)**3) + y_0**3/27) + 
             cbrt(a/8 + y_0/12 + np.sqrt((y_0**3/27 + y_0/12 + a/8)**2 - (y_0**2/9 - 1/12)**3) + y_0**3/27))
     x = y/Q
     s21 = A*(1 - (Q/Q_e)/(1+2j*Q*x))
     msk = np.isfinite(s21)
-    if not np.all(msk):
-        s21_interp_real = np.interp(f,f[msk],s21[msk].real)
-        s21_interp_imag = np.interp(f,f[msk],s21[msk].imag)
+    if scalar or not np.all(msk):
+        s21_interp_real = np.interp(f,fmodel[msk],s21[msk].real)
+        s21_interp_imag = np.interp(f,fmodel[msk],s21[msk].imag)
         s21new = s21_interp_real+1j*s21_interp_imag
+    
     else:
         s21new = s21
     return s21new*cable_delay(params,f)
