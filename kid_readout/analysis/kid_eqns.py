@@ -13,7 +13,7 @@ kBeV = kB/qC
 def sigmas(fres,Tphys,Tc):
     wres = fres*2*np.pi
     xi = hbar*wres/(2*kB*Tphys)
-    Delta = 3.5*kB*Tc/2.0
+    Delta = 3.52*kB*Tc/2.0
     
     sigma1 = (((4*Delta) / (hbar*wres)) *
               np.exp(-Delta/(kB*Tphys)) *
@@ -199,3 +199,20 @@ class KIDModel(object):
         return np.concatenate((self.fit_f0_resid(params, T, f0,f0_err),self.fit_qi_resid(params, T, Qi,Qi_err)))
     def fit_f0_qi(self,T,f0,Qi,f0_err = None, Qi_err = None):
         self.result = lmfit.minimize(self.fit_f0_qi_resid,self.params,args=(T,f0,Qi,f0_err,Qi_err))
+        
+class DarkKIDModel(KIDModel):
+    def sigma1(self,T):
+        xi = self.xi(T)
+        sigman = self.params['sigman'].value
+        result = (sigman*(2*self.Delta*qC/(h*self.f0_nom)) *
+                  (self.nqp(T)/(self.N0*np.sqrt(2*np.pi*kBeV*T*self.Delta))) *
+                  np.sinh(xi) * scipy.special.k0(xi))
+        return result
+    
+    def sigma2(self,T):
+        xi = self.xi(T)
+        sigman = self.params['sigman'].value
+        return ((sigman*(np.pi*self.Delta*qC)/(h*self.f0_nom)) *
+                (1 - (self.nqp(T)/(2*self.N0*self.Delta))*(1+np.sqrt((2*self.Delta)/(np.pi*kBeV*T))*
+                                                           np.exp(-xi)*scipy.special.i0(xi))))
+    
