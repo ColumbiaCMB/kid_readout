@@ -11,7 +11,7 @@ class FunctionGenerator(object):
         self.send("OUTPUT:LOAD %d" % ohms)
         
     def set_dc_voltage(self,volts):
-        self.send("APPLY:DC DEF, DEF %f" % volts)
+        self.send("APPLY:DC DEF, DEF, %f" % volts)
         
     def enable_output(self,on):
         if on:
