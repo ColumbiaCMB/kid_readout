@@ -101,7 +101,8 @@ class RoachInterface(object):
                  fft_bins = self.fft_bins,
                  fft_gain = self.fft_gain,
                  tone_nsamp = self.tone_nsamp,
-                 tone_bins = self.tone_bins,)
+                 tone_bins = self.tone_bins,
+                 phases = self.phases)
         os.chmod(CONFIG_FILE_NAME, 0777)
 
     def initialize(self, fs=512.0, start_udp=True, use_config=True):
@@ -132,8 +133,8 @@ class RoachInterface(object):
         if state is None or state['boffile'] != self.boffile:
             print "Reinitializing system"
             print "Deprogramming"
-            self.r.progdev('')
             self._set_fs(fs)
+            self.r.progdev('')
             print "Programming", self.boffile
             self.r.progdev(self.boffile)
             self.bof_pid = None
@@ -153,6 +154,7 @@ class RoachInterface(object):
             self.fft_bins = None
             self.tone_nsamp = None
             self.tone_bins = None
+            self.phases = None
             self.save_state()
         else:
             self.adc_atten = state['adc_atten'][()]
@@ -161,6 +163,7 @@ class RoachInterface(object):
             self.fft_gain = state['fft_gain'][()]
             self.tone_nsamp = state['tone_nsamp'][()]
             self.tone_bins = state['tone_bins']
+            self.phases = state['phases']
             
     def measure_fs(self):
         """
@@ -474,6 +477,7 @@ class RoachBaseband(RoachInterface):
         self.fft_bins = None
         self.tone_nsamp = None
         self.tone_bins = None
+        self.phases = None
         self.bof_pid = None
         self.roachip = roachip
 #        self.boffile = 'bb2xpfb14mcr5_2013_Jul_31_1301.bof'
@@ -870,6 +874,7 @@ class RoachBasebandWide(RoachBaseband):
         self.fft_bins = None
         self.tone_nsamp = None
         self.tone_bins = None
+        self.phases = None
         self.bof_pid = None
         self.roachip = roachip
         try:
@@ -885,6 +890,7 @@ class RoachBasebandWide(RoachBaseband):
         #self.boffile = 'bb2xpfb11mcr7_2013_Nov_04_1309.bof'
         #self.boffile = 'bb2xpfb11mcr8_2013_Nov_04_2151.bof'
         self.boffile = 'bb2xpfb11mcr11_2014_Feb_01_1106.bof'
+        #self.boffile = 'bb2xpfb11mcr12_2014_Feb_26_1028.bof'
         self.bufname = 'ppout%d' % wafer
         self._window_mag = compute_window(npfb = 2*self.nfft, taps= 2, wfunc = scipy.signal.flattop)
 
