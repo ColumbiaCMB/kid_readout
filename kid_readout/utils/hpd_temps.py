@@ -11,6 +11,13 @@ import bisect
 import numpy as np
 import netCDF4
 
+rx102a_dat = np.loadtxt('/home/gjones/RX-102A.tbl')
+order = rx102a_dat[:,1].argsort()
+rx102a_dat = rx102a_dat[order,:]
+
+def rx102a_curve(R):
+    return np.interp(R,rx102a_dat[:,1],rx102a_dat[:,0])
+
 nc_dir = "/home/data/adc_mount"
 
 _filecache = {}
@@ -58,7 +65,9 @@ def get_temperature_from_nc(ncname):
             nc = netCDF4.Dataset(ncname)
             mjd = nc.variables['mjd_slow'][:]
             fridge = nc.groups['fridge']
-            temps = fridge.variables['bridge_temp_value'][:]
+            #temps = fridge.variables['bridge_temp_value'][:]
+            res = fridge.variables['bridge_res_value'][:]
+            temps = rx102a_curve(res)
             done = True
         except:
             print "retrying..."
