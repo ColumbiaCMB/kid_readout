@@ -5,7 +5,11 @@ matplotlib.rcParams['mathtext.fontset'] = 'stix'
 matplotlib.rcParams['font.size'] = 16.0
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_agg import FigureCanvasAgg
 mlab = plt.mlab
+
 from kid_readout.utils.easync import EasyNetCDF4
 from kid_readout.analysis.resonator import Resonator,fit_best_resonator
 from kid_readout.analysis import khalil
@@ -15,6 +19,8 @@ import scipy.signal
 from kid_readout.utils.fftfilt import fftfilt
 from kid_readout.utils.roach_utils import ntone_power_correction
 
+from kid_readout.utils.despike import deglitch_window
+
 import socket
 if socket.gethostname() == 'detectors':
     from kid_readout.utils.hpd_temps import get_temperature_at
@@ -23,37 +29,72 @@ else:
 import bisect
 import time
 import os
-from matplotlib.backends.backend_pdf import PdfPages
+import glob
+
 import cPickle
+import random
 
 scale = 4.0/3.814e-6 #amplitude scaling between s21 and time series. Need to fix this in data files eventually
 phasecorr = 397.93/2.0 #radians per MHz correction
 
     
-def plot_noise_nc(fname,chip,**kwargs):
-    nc = EasyNetCDF4(fname)
-    hwg = nc.hw_state.group
-    fdir,fbase = os.path.split(fname)
-    fbase,ext = os.path.splitext(fbase)
-    pdf = PdfPages('/home/data/plots/%s_%s.pdf' % (chip,fbase))
-    nms = []
-    for (k,((sname,swg),(tname,tsg))) in enumerate(zip(nc.sweeps.groups.items(),nc.timestreams.groups.items())):
-        #fig = plot_noise(swg,tsg,hwg,chip,**kwargs)
-        indexes = np.unique(swg.variables['index'][:])
-        for index in indexes:
-            kwargs['index'] = index
-            nm = NoiseMeasurement(swg,tsg,hwg,chip,k,**kwargs)
-            nms.append(nm)
-            fig = nm.plot()
-            fig.suptitle(('%s %s' % (sname,tname)),fontsize='small')
-            pdf.savefig(fig,bbox_inches='tight')
-            plt.close(fig)
-        print fname,nm.start_temp,"K"
-    pdf.close()
-    nc.group.close()
-    fh = open(os.path.join(fdir,'noise_' +fbase+'.pkl'),'w')
-    cPickle.dump(nms,fh,-1)
-    fh.close()
+def plot_noise_nc(fglob,chip,**kwargs):
+    if type(fglob) is str:
+        fnames = glob.glob(fglob)
+    else:
+        fnames = fglob
+    try:
+        plotall = kwargs.pop('plot_all')
+    except KeyError:
+        plotall = False
+    fnames.sort()
+    errors = {}
+    for fname in fnames:
+        try:
+            nc = EasyNetCDF4(fname)
+            hwg = nc.hw_state.group
+            fdir,fbase = os.path.split(fname)
+            fbase,ext = os.path.splitext(fbase)
+            chipfname = chip.replace(' ','_')
+            pdf = PdfPages('/home/data/plots/%s_%s.pdf' % (fbase,chipfname))
+            nms = []
+            for (k,((sname,swg),(tname,tsg))) in enumerate(zip(nc.sweeps.groups.items(),nc.timestreams.groups.items())):
+                #fig = plot_noise(swg,tsg,hwg,chip,**kwargs)
+                indexes = np.unique(swg.variables['index'][:])
+                for index in indexes:
+                    kwargs['index'] = index
+                    try:
+                        nm = NoiseMeasurement(swg,tsg,hwg,chip,k,**kwargs)
+                    except IndexError:
+                        print "failed to find index",index,"in",sname,tname
+                        continue
+                    if pdf is not None:
+                        if plotall or k == 0:
+                            fig = Figure(figsize=(16,8))
+                            title = ('%s %s' % (sname,tname))
+                            nm.plot(fig=fig,title=title)
+                            canvas = FigureCanvasAgg(fig)
+                            fig.set_canvas(canvas)
+                            pdf.savefig(fig,bbox_inches='tight')
+                        else:
+                            pdf.close()
+                            pdf = None
+                    del nm.fr_fine
+                    del nm.pii_fine
+                    del nm.prr_fine
+                    nms.append(nm)
+                    
+                print fname,nm.start_temp,"K"
+            if pdf is not None:
+                pdf.close()
+            nc.group.close()
+            fh = open(os.path.join(fdir,'noise_' +fbase+'.pkl'),'w')
+            cPickle.dump(nms,fh,-1)
+            fh.close()
+        except Exception,e:
+            raise
+            errors[fname] = e
+    return errors
     
 def plot_per_resonator(pkls):
     dlists = []
@@ -135,34 +176,48 @@ class NoiseMeasurement(object):
         self.s21 = swg.variables['s21'][:].view('complex128')*np.exp(-1j*self.fr*phasecorr)*self.scale
         self.fr = self.fr[idx==index]#[1:]#[4:-4]
         self.s21 = self.s21[idx==index]#[1:]#[4:-4]
+        
+        tones = tsg.variables['tone'][:]
+        nsamp = tsg.variables['nsamp'][:]
+        fs = tsg.variables['fs'][:]
+        fmeas = fs*tones/nsamp
+        tone_index = np.argmin(abs(fmeas-self.fr.mean()))
+        ts = tsg.variables['data'][tone_index,:].view('complex128')
+        self.fs = fs[tone_index]
+        self.nfft = tsg.variables['nfft'][tone_index]
+        window = int(2**np.ceil(np.log2(self.fs*1e6/(2*self.nfft))))
+        if window > ts.shape[0]:
+            window = ts.shape[0]//2
+        ts = deglitch_window(ts,window,thresh=5)
+        self.fr = np.hstack((self.fr,[fmeas[tone_index]]))
+        self.s21 = np.hstack((self.s21,[ts[:2048].mean()]))
+        
         blkidx = swg.groups['datablocks'].variables['sweep_index'][:]
         blks = swg.groups['datablocks'].variables['data'][blkidx==index,:].view('complex')
         errors = blks.real.std(1) + 1j*blks.imag.std(1)
         self.errors = errors
+        self.errors = np.hstack((self.errors,[ts[:2048].real.std()+ts[:2048].imag.std()]))
+        order = self.fr.argsort()
+        self.fr = self.fr[order]
+        self.s21 = self.s21[order]
+        self.errors = self.errors[order]
         if use_bif:
-            rr = Resonator(self.fr,self.s21,model=khalil.bifurcation_s21,guess=khalil.bifurcation_guess,errors=errors)
+            rr = Resonator(self.fr[2:-2],self.s21[2:-2],model=khalil.bifurcation_s21,guess=khalil.bifurcation_guess,errors=errors[2:-2])
         else:
-            rr = Resonator(self.fr,self.s21,errors=errors)
+            rr = Resonator(self.fr[2:-2],self.s21[2:-2],errors=errors[2:-2])
         self.delay = rr.delay
         self.s21 = self.s21*np.exp(2j*np.pi*rr.delay*self.fr)
 #        if use_bif:
 #            rr = Resonator(self.fr,self.s21,model=khalil.bifurcation_s21,guess=khalil.bifurcation_guess,errors=errors)
 #        else:
 #            rr = Resonator(self.fr,self.s21,mask=rr.mask)#errors=errors)
-        rr = fit_best_resonator(self.fr,self.s21,errors=errors)
+        rr = fit_best_resonator(self.fr,self.s21,errors=errors)#,min_a=0)
         self.Q_i = rr.Q_i
         self.params = rr.result.params
         
-        tones = tsg.variables['tone'][:]
-        nsamp = tsg.variables['nsamp'][:]
-        fs = tsg.variables['fs'][:]
-        fmeas = fs*tones/nsamp
-        tone_index = np.argmin(abs(fmeas-rr.f_0))
-        ts = tsg.variables['data'][tone_index,:].view('complex128')
+        
         self.ch = tones[tone_index]
         self.nsamp = nsamp[tone_index]
-        self.fs = fs[tone_index]
-        self.nfft = tsg.variables['nfft'][tone_index]
         self.f0 = self.fs*self.ch/float(self.nsamp)
         self.tss_raw = ts*np.exp(-1j*self.f0*phasecorr + 2j*np.pi*self.delay*self.f0)
         self.tsl_raw = fftfilt(scipy.signal.firwin(filtlen,1.0/filtlen), self.tss_raw)[filtlen:]
@@ -178,7 +233,7 @@ class NoiseMeasurement(object):
         self.tss = (self.tss_raw-self.s0) * np.exp(-1j*np.angle(self.ds0))
         self.tss = self.tss/np.abs(self.ds0)/(self.f0*1e6)
         #self.tss = (self.tss_raw[:len(self.tsl_raw)] - self.tsl_raw)/self.ds0s
-        fr,S,evals,evects,angles,piq = iqnoise.pca_noise(self.tss, NFFT=2**12, Fs=self.fs*1e6/(2*self.nfft))
+        fr,S,evals,evects,angles,piq = iqnoise.pca_noise(self.tss, NFFT=None, Fs=self.fs*1e6/(2*self.nfft))
         
         self.pca_fr = fr
         self.pca_S = S
@@ -196,8 +251,11 @@ class NoiseMeasurement(object):
         self.tss = self.tss[:2048].copy()
         self.tsl_raw = self.tsl_raw[::(filtlen/4)].copy()
         
-    def plot(self):
-        f1 = plt.figure(figsize=(16,8))
+    def plot(self,fig=None,title=''):
+        if fig is None:
+            f1 = plt.figure(figsize=(16,8))
+        else:
+            f1 = fig
         ax1 = f1.add_subplot(121)
         ax2 = f1.add_subplot(222)
         ax2b = ax2.twinx()
@@ -236,21 +294,19 @@ class NoiseMeasurement(object):
         ax2.loglog(self.fr_coarse[1:],self.prr_coarse[1:],'y',lw=2)
         ax2.loglog(self.fr_coarse[1:],self.pii_coarse[1:],'m',lw=2)
         ax2.loglog(self.pca_fr[1:],self.pca_evals[:,1:].T,'k',lw=2)
+        ax2.set_title(title,fontdict=dict(size='small'))
         
         n500 = self.prr_coarse[np.abs(self.fr_coarse-500).argmin()]
         ax2.annotate(("%.2g Hz$^2$/Hz @ 500 Hz" % n500),xy=(500,n500),xycoords='data',xytext=(5,20),textcoords='offset points',
                      arrowprops=dict(arrowstyle='->'))
         
-        ylim = ax2.get_ylim()
         ax2b.set_xscale('log')
     #    ax2b.set_xlim(ax2.get_xlim())
         ax2.grid()
         ax2b.grid(color='r')
-        ax2b.set_ylim(np.sqrt(ylim[0]),np.sqrt(ylim[1]))
-        ax2.set_xlim(1,1e5)
+        ax2.set_xlim(self.pca_fr[1],self.pca_fr[-1])
         ax2.set_ylabel('1/Hz')
         ax2.set_xlabel('Hz')
-        ax2b.set_ylabel('1/Hz$^{1/2}$')
         ax2.legend(prop=dict(size='small'))
         
         tsl = (self.tsl_raw-self.s0)/self.ds0
@@ -264,17 +320,33 @@ class NoiseMeasurement(object):
         ax3.legend(prop=dict(size='xx-small'))
         
         params = self.params
+        amp_noise_voltsrthz = np.sqrt(4*1.38e-23*4.0*50)
+        vread = np.sqrt(50*10**(self.power_dbm/10.0)*1e-3)
+        alpha = 1.0
+        Qe = abs(params['Q_e_real'].value+1j*params['Q_e_imag'].value)
+        f0_dVdf = 4*vread*alpha*params['Q'].value**2/Qe
+        expected_amp_noise = (amp_noise_voltsrthz/f0_dVdf)**2 
         text = (("measured at: %.6f MHz\n" % self.f0)
                 + ("temperature: %.1f - %.1f mK\n" %(self.start_temp*1000, self.end_temp*1000))
                 + ("power: ~%.1f dBm (%.1f dB att)\n" %(self.power_dbm,self.atten))
                 + ("fit f0: %.6f +/- %.6f MHz\n" % (params['f_0'].value,params['f_0'].stderr))
                 + ("Q: %.1f +/- %.1f\n" % (params['Q'].value,params['Q'].stderr))
                 + ("Re(Qe): %.1f +/- %.1f\n" % (params['Q_e_real'].value,params['Q_e_real'].stderr))
-                + ("|Qe|: %.1f\n" % (abs(params['Q_e_real'].value+1j*params['Q_e_imag'].value)))
-                + ("Qi: %.1f" % (self.Q_i))
+                + ("|Qe|: %.1f\n" % (Qe))
+                + ("Qi: %.1f\n" % (self.Q_i))
+                + ("Eamp: %.2g 1/Hz" % expected_amp_noise)
                 )
+        if expected_amp_noise > 0:
+            ax2.axhline(expected_amp_noise,linewidth=2,color='m')
+            ax2.text(10,expected_amp_noise,r"expected amp noise",va='top',ha='left',fontdict=dict(size='small'))
+#        ax2.axhline(expected_amp_noise*4,linewidth=2,color='m')
+#        ax2.text(10,expected_amp_noise*4,r"$\alpha = 0.5$",va='top',ha='left',fontdict=dict(size='small'))
         if params.has_key('a'):
             text += ("\na: %.3g +/- %.3g" % (params['a'].value,params['a'].stderr))
+
+        ylim = ax2.get_ylim()
+        ax2b.set_ylim(ylim[0]*(self.f0*1e6)**2,ylim[1]*(self.f0*1e6)**2)
+        ax2b.set_ylabel('$Hz^2/Hz$')
 
         
         ax1.text(0.5,0.5,text,ha='center',va='center',bbox=dict(fc='white',alpha=0.6),transform = ax1.transAxes,
