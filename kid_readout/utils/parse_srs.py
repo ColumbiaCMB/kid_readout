@@ -46,6 +46,13 @@ def parse_srs_log(fname,sensor=2):
     for line in lines:
         parts = line.split(' ')
         try:
+            if len(parts) == 15:
+                try:
+                    times.append(time.mktime(time.strptime(parts[0].strip(),'%Y%m%d-%H%M%S,')))
+                except:
+                    times.append(time.mktime(time.strptime(parts[0].strip(),'%Y%m%d-%H%M%S')))
+                temps.append(float(parts[11].strip().strip(',')))
+                continue
             if len(parts) >9:
                 times.append(time.mktime(time.strptime(parts[0].strip(),'%Y%m%d-%H%M%S')))
                 temps.append(float(parts[9]))
@@ -56,8 +63,9 @@ def parse_srs_log(fname,sensor=2):
                 continue
             temps.append(float(parts[2]))
             times.append(time.mktime(time.strptime(parts[3].strip(),'%Y%m%d-%H%M%S')))
-        except ValueError:
-            print "failed to parse",repr(line),"skipping"
+        except ValueError,e:
+            pass
+            #print "failed to parse",repr(line),"skipping",str(e)
     return np.array(times),np.array(temps)
 
 
