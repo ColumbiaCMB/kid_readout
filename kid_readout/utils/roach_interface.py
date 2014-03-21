@@ -103,7 +103,10 @@ class RoachInterface(object):
                  tone_nsamp = self.tone_nsamp,
                  tone_bins = self.tone_bins,
                  phases = self.phases)
-        os.chmod(CONFIG_FILE_NAME, 0777)
+        try:
+            os.chmod(CONFIG_FILE_NAME, 0777)
+        except:
+            pass
 
     def initialize(self, fs=512.0, start_udp=True, use_config=True):
         """
