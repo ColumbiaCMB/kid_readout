@@ -5,8 +5,16 @@ import numpy as np
 from kid_readout.utils.valon import check_output
 from kid_readout.utils import data_block
 
+import socket
+#readout has run out of disk space on /home/data, so we start storing data in /home/data2
+if socket.gethostname() == 'readout':
+    BASE_DATA_DIR = '/home/data2'
+else:
+    BASE_DATA_DIR = '/home/data'
+
+
 class DataFile():
-    def __init__(self,base_dir='/home/data',suffix=''):
+    def __init__(self, base_dir=BASE_DATA_DIR, suffix=''):
         base_dir = os.path.expanduser(base_dir)
         if not os.path.exists(base_dir):
             try:
