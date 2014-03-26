@@ -10,15 +10,18 @@ from collections import defaultdict
 import kid_readout.analysis.noise_archive
 import kid_readout.analysis.noise_summary
 
-    
+
+diode_index = 2    
 def convtime(tstr):
     return time.mktime(time.strptime(tstr,'%Y%m%d-%H%M%S'))
 tdata = np.loadtxt('/home/heather/SRS/20140301-131320.txt',delimiter=',',converters={0:convtime},skiprows=1)
 load_time = tdata[:,0]
-load_temp = tdata[:,2]
-tdata = np.loadtxt('/home/heather/SRS/20140305-213554.txt',delimiter=',',converters={0:convtime},skiprows=1)
-load_time = np.concatenate((load_time,tdata[:,0]))
-load_temp = np.concatenate((load_temp,tdata[:,2]))
+load_temp = tdata[:,diode_index]
+tdata2 = np.loadtxt('/home/heather/SRS/20140305-213554.txt',delimiter=',',converters={0:convtime},skiprows=1)
+tdata3 = np.loadtxt('/home/heather/SRS/20140321-222308.txt',delimiter=',',converters={0:convtime},skiprows=1)
+load_time = np.concatenate((load_time,tdata2[:,0],tdata3[:,0]))
+load_temp = np.concatenate((load_temp,tdata2[:,diode_index],tdata3[:,diode_index]))
+far_temp = np.concatenate((tdata[:,1],tdata2[:,1],tdata3[:,1]))
 
 if not globals().has_key('arch'):
     arch = kid_readout.analysis.noise_archive.load_archive('/home/data/archive/StarCryo_5x4_0813f10_LPF_Horns_NET_1.npy')
@@ -35,13 +38,13 @@ def load_net_pkl(pkl):
     nms = kid_readout.analysis.noise_summary.load_noise_pkl(pkl)
     for nm in nms:
         nm.ts_temp = np.interp(nm.ts_epoch,load_time,load_temp)
+        nm.ts_far_temp = np.interp(nm.ts_epoch,load_time,far_temp)
     tstart = nms[0].ts_temp
     tend = nms[-1].ts_temp
     print "Start: %.3f K, End: %.3f K, difference %.3f K" % (tstart,tend,tend-tstart)
     return nms
 
-def plot_all_net():
-    pkls = glob.glob('/home/data/noise_2014-03-*.pkl')
+def plot_all_net_2014_03_cu_pkg(pkls= glob.glob('/home/data/noise_2014-03-*.pkl')):
     pkls.sort()
     res = defaultdict(list)
     for pkl in pkls:
@@ -72,6 +75,8 @@ def plot_all_net():
 
         df0=(f0s-f0s[T<5.5].min())*1e6
         msk = (f0errs < 0.00005) & (Tphys < 0.22) & (Tphys > 0.18)
+        if msk.sum() < 2:
+            continue
         df0 = df0[msk]
         f0s = f0s[msk]
         f0errs = f0errs[msk]
@@ -145,6 +150,127 @@ def plot_all_net():
     allpdf.close()
 
 
+def plot_all_net_2014_03_al_pkg(pkls= glob.glob('/home/data/noise_2014-03-2*.pkl')):
+    pkls.sort()
+    res = defaultdict(list)
+    for pkl in pkls:
+        print pkl
+        nms = load_net_pkl(pkl)
+        if True: #nms[0].atten == 10.0:
+            for idx in range(20):
+                thisidx = [nm for nm in nms if nm.index == idx]
+                #print "index",idx,"records",len(thisidx)
+                if len(thisidx):
+                    res[idx].append(thisidx[0])
+    print "loaded all data"
+    chipfname = res[0][0].chip.replace(' ','_')
+    allpdf = PdfPages('/home/data/plots/summary_net_%s.pdf' % (chipfname))
+    for ridx in range(20):
+        print "processing resonator",ridx
+        res0 = res[ridx]
+        chipfname = res0[0].chip.replace(' ','_')
+        pdf = PdfPages('/home/data/plots/summary_net_%s_%02d.pdf' % (chipfname,ridx))
+        npzname = '/home/data/archive/summary_net_%s_%02d.npz' % (chipfname,ridx)
+        T = np.array([nm.ts_temp for nm in res0])
+        far_temp = np.array([nm.ts_far_temp for nm in res0])
+        Q = np.array([nm.params['Q'].value for nm in res0])
+        Qi = np.array([nm.Q_i for nm in res0])
+        Tphys = np.array([nm.end_temp for nm in res0])
+        f0s= np.array([nm.params['f_0'].value for nm in res0])
+        f0errs= np.array([nm.params['f_0'].stderr for nm in res0])
+        
+        title = '%s\n%02d - %f' % (res0[0].chip, ridx, np.median(f0s))
+
+        if ((T<8.5).sum()) <2:
+            continue
+        df0=(f0s-f0s[T<8.5].min())*1e6
+        msk = (f0errs < 0.00005) & (Tphys < 0.22) & (Tphys > 0.18)
+        if msk.sum() < 2:
+            continue
+        df0 = df0[msk]
+        f0s = f0s[msk]
+        f0errs = f0errs[msk]
+        T = T[msk]
+        Tphys = Tphys[msk]
+        Q = Q[msk]
+        Qi = Qi[msk]
+        far_temp = far_temp[msk]
+        pp = np.polyfit(T[T<8],df0[T<8],1)
+        Hz_per_K = abs(pp[0])
+        print Hz_per_K,"Hz/K"
+        pp_far = np.polyfit(far_temp[far_temp<8],df0[far_temp<8],1)
+        Hz_per_K_far = abs(pp_far[0])
+
+        fig = Figure(figsize=(11,8))
+        ax = fig.add_subplot(221)
+        fig.suptitle(title,size='small')
+        ax.errorbar(T,df0,yerr = f0errs*1e6,linestyle='none',marker='.')
+        ax.errorbar(far_temp,df0,yerr = f0errs*1e6,linestyle='none',marker='.')
+        Tm = np.linspace(3,12,100)
+        ax.plot(Tm,np.polyval(pp,Tm),label=('%.1f Hz/K copper'% pp[0]))
+        ax.plot(Tm,np.polyval(pp_far,Tm),label=('%.1f Hz/K absorber side'% pp_far[0]))
+        ax.set_xlabel('$T_{load}$ [K]')
+        ax.set_ylabel('Frequency shift [Hz]')
+        ax.legend(loc='upper right',prop=dict(size='x-small'))
+
+        ax3 = fig.add_subplot(223)
+        ax3.plot(T,Qi,'o',label='Qi')
+        ax3.plot(T,Q,'x',mew=2,label='Qr')
+        ax3.set_ylim(0,3e5)
+        ax3.set_ylabel('Quality factor')
+        ax3.set_xlabel('$T_{load}$ [K]')
+        ax3.legend(loc='upper right',prop=dict(size='small'))
+
+
+        ax = fig.add_subplot(222)
+        ax2 = fig.add_subplot(224,sharex=ax)
+        Tn = []
+        dev_noise = []
+        amp_noise = []
+        for k,nm in enumerate(res0):
+            if msk[k]:
+                idx = (nm.pca_fr > 150)&(nm.pca_fr < 240)
+                dev = (np.sqrt(nm.pca_evals[1,idx])*nm.f0*1e6).mean()
+                amp = (np.sqrt(nm.pca_evals[1,-10:])*nm.f0*1e6).mean()
+                Tn.append(nm.ts_temp)
+                dev_noise.append(dev)
+                amp_noise.append(amp)
+                ax.plot(nm.ts_temp,dev,'b.')
+                ax.plot(nm.ts_temp,amp,'r.')
+                ax.plot(nm.ts_temp,dev-amp,'g.')
+                uKrtHz = (dev*1e6/Hz_per_K)
+                uKrts = uKrtHz/np.sqrt(2)
+                uKrtHz_far = (dev*1e6/Hz_per_K_far)
+                uKrts_far = uKrtHz_far/np.sqrt(2)
+                
+                ax2.plot(nm.ts_temp,uKrts,'b.')
+                ax2.plot(nm.ts_far_temp,uKrts_far,'rx',mew=2)
+        ax.set_ylim(0,0.6)
+        ax2.plot(T.min(),-1,'b.',label='Copper temp')
+        ax2.plot(T.min(),-1,'rx',mew=2,label='Absorb temp')
+        ax2.set_ylim(0,100)
+        ax2.legend(loc='upper right',prop=dict(size='x-small'))
+        ax.plot(T.min(),0,'b.',label='Device @ 150 Hz')
+        ax.plot(T.min(),0,'r.',label='Amp')
+        ax.plot(T.min(),0,'g.',label='Dev-Amp')
+        #ax.set_xlim(3,T.max())
+        ax.legend(loc='upper right',prop=dict(size='x-small'))
+        ax2.grid()
+        ax.grid()
+        ax.set_ylabel('$Hz/\sqrt{Hz}$')
+        ax2.set_ylabel('NET $\mu$K$\sqrt{s}$')
+        ax2.set_xlabel('$T_{load}$ [K]')
+        ax.set_title('Noise')
+        ax2.set_title('NET')
+        canvas = FigureCanvasAgg(fig)
+        pdf.savefig(fig,bbox_inches='tight')
+        allpdf.savefig(fig,bbox_inches='tight')
+        pdf.close()
+        np.savez(npzname, T=T,Tphys=Tphys, f0s = f0s,f0errs=f0errs,Hz_per_K=Hz_per_K,
+                 Tn = np.array(Tn), dev_noise = np.array(dev_noise), amp_noise = np.array(amp_noise),
+                 Q = Q, Qi = Qi)
+    allpdf.close()
+    return res
 
     
 def plot_net_set(pkl_glob,expname):
@@ -196,7 +322,7 @@ def plot_net_set(pkl_glob,expname):
                 resfigs3[idx] = Figure(figsize=(16,8))
                 resfigs3[idx].add_subplot(111)
             ax = resfigs[idx].axes[0]
-            if abs(K_per_Hz) > 0:
+            if np.isfinite(K_per_Hz) and abs(K_per_Hz) > 0:
                 ax.semilogx(nm0.pca_fr,np.sqrt(nm0.pca_evals[1,:])*1e6*nm0.f0*abs(K_per_Hz)*1e6/np.sqrt(2),label=('%.3f K' % nm0.ts_temp),color=colors[tidx])
                 ax.set_ylim(0,100)
                 ax.grid(True)
