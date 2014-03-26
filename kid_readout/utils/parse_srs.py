@@ -1,4 +1,5 @@
 import time
+import datetime
 import numpy as np
 import os
 import glob
@@ -30,6 +31,13 @@ def get_temperature_at(epoch):
         return 0
     temp = np.interp(epoch,_timecache,_tempcache)
     return temp
+
+def convtime(tstr):
+    return time.mktime(time.strptime(tstr,'%Y%m%d-%H%M%S'))
+def get_load_log(fname):
+    tdata = np.loadtxt(fname,delimiter=',',converters={0:convtime},skiprows=1)
+    dt = [datetime.datetime.fromtimestamp(x) for x in tdata[:,0]]
+    return dt,tdata
 
 def parse_srs_log(fname,sensor=2):
     """
