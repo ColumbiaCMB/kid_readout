@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib
 matplotlib.use('agg')
-matplotlib.rcParams['mathtext.fontset'] = 'stix'
+#matplotlib.rcParams['mathtext.fontset'] = 'stix'
 matplotlib.rcParams['font.size'] = 16.0
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -88,7 +88,7 @@ def plot_noise_nc(fglob,chip,**kwargs):
             if pdf is not None:
                 pdf.close()
             nc.group.close()
-            fh = open(os.path.join(fdir,'noise_' +fbase+'.pkl'),'w')
+            fh = open(os.path.join('/home/data','noise_' +fbase+'.pkl'),'w')
             cPickle.dump(nms,fh,-1)
             fh.close()
         except Exception,e:
@@ -142,7 +142,7 @@ def plot_per_resonator(pkls):
     
 class NoiseMeasurement(object):
     def __init__(self,swg,tsg,hwg,chip,id,index=0,phasecorr=phasecorr,scale=scale,filtlen=2**16,loss = -42, 
-                 ntones=None, use_bif=False):
+                 ntones=None, use_bif=False, delay_estimate = -7.11):
         self.id = id
         self.swp_epoch = swg.groups['datablocks'].variables['epoch'][0]
         self.start_temp =  get_temperature_at(self.swp_epoch)
@@ -188,12 +188,12 @@ class NoiseMeasurement(object):
         window = int(2**np.ceil(np.log2(self.fs*1e6/(2*self.nfft))))
         if window > ts.shape[0]:
             window = ts.shape[0]//2
-        ts = deglitch_window(ts,window,thresh=5)
+        ts = deglitch_window(ts,window,thresh=6)
         self.fr = np.hstack((self.fr,[fmeas[tone_index]]))
         self.s21 = np.hstack((self.s21,[ts[:2048].mean()]))
         
         blkidx = swg.groups['datablocks'].variables['sweep_index'][:]
-        blks = swg.groups['datablocks'].variables['data'][blkidx==index,:].view('complex')
+        blks = swg.groups['datablocks'].variables['data'][:][blkidx==index,:].view('complex')
         errors = blks.real.std(1) + 1j*blks.imag.std(1)
         self.errors = errors
         self.errors = np.hstack((self.errors,[ts[:2048].real.std()+ts[:2048].imag.std()]))
@@ -201,10 +201,18 @@ class NoiseMeasurement(object):
         self.fr = self.fr[order]
         self.s21 = self.s21[order]
         self.errors = self.errors[order]
+        def delay_guess(*args):
+            if use_bif:
+                p = khalil.bifurcation_guess(*args)
+            else:
+                p = khalil.delayed_generic_guess(*args)
+            p['delay'].value = delay_estimate
+            return p
+        
         if use_bif:
-            rr = Resonator(self.fr[2:-2],self.s21[2:-2],model=khalil.bifurcation_s21,guess=khalil.bifurcation_guess,errors=errors[2:-2])
+            rr = Resonator(self.fr[2:-2],self.s21[2:-2],model=khalil.bifurcation_s21,guess=delay_guess,errors=errors[2:-2])
         else:
-            rr = Resonator(self.fr[2:-2],self.s21[2:-2],errors=errors[2:-2])
+            rr = Resonator(self.fr[2:-2],self.s21[2:-2],errors=errors[2:-2],guess=delay_guess)
         self.delay = rr.delay
         self.s21 = self.s21*np.exp(2j*np.pi*rr.delay*self.fr)
 #        if use_bif:
@@ -268,8 +276,8 @@ class NoiseMeasurement(object):
         ax1.plot([self.sres.real-self.s0.real],[self.sres.imag-self.s0.imag],'kx',mew=2,markersize=20,label='model f0')
         ax1.plot(self.tss_raw.real[:1024]-self.s0,self.tss_raw.imag[:1024]-self.s0.imag,'k,',alpha=0.1,label='timeseries samples')
         ax1.plot(self.tsl_raw.real-self.s0.real,self.tsl_raw.imag-self.s0.imag,'r,') #uses proxy for label
-        ax1.plot(self.pca_evects[0,0,:100]*100,self.pca_evects[1,0,:100]*100,'y.')
-        ax1.plot(self.pca_evects[0,1,:100]*100,self.pca_evects[1,1,:100]*100,'k.')
+        #ax1.plot(self.pca_evects[0,0,:100]*100,self.pca_evects[1,0,:100]*100,'y.')
+        #ax1.plot(self.pca_evects[0,1,:100]*100,self.pca_evects[1,1,:100]*100,'k.')
         ax1.annotate("",xytext=(0,0),xy=(self.ds0.real*500,self.ds0.imag*500),arrowprops=dict(lw=2,color='orange',arrowstyle='->'),zorder=0)
         #proxies
         l = plt.Line2D([0,0.1],[0,0.1],color='orange',lw=2)
@@ -349,7 +357,7 @@ class NoiseMeasurement(object):
         ax2b.set_ylabel('$Hz^2/Hz$')
 
         
-        ax1.text(0.5,0.5,text,ha='center',va='center',bbox=dict(fc='white',alpha=0.6),transform = ax1.transAxes,
+        ax1.text(0.02,0.95,text,ha='left',va='top',bbox=dict(fc='white',alpha=0.6),transform = ax1.transAxes,
                  fontdict=dict(size='x-small'))
         
         title = ("%s\nmeasured %s\nplotted %s" % (self.chip,time.ctime(self.swp_epoch),time.ctime()))
