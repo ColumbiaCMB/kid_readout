@@ -15,8 +15,10 @@ def medmadmask(ts,thresh=8,axis=0):
     return mask
 
 def deglitch_block(ts,thresh=5):
-    tsl = np.roll(np.abs(fftfilt(scipy.signal.firwin(256,1/256.),ts)),-256)
+    tsl = np.roll(np.abs(fftfilt(scipy.signal.firwin(16,1/16.),ts)),-16)
     mask = medmadmask(tsl,thresh=thresh)
+    mask[:-50] = mask[:-50] | mask[50:]
+    mask[50:] = mask[50:] | mask[:-50]
     nmask = mask.sum()
     print "rejecting",nmask/float(ts.shape[0])
     out = ts.copy()
