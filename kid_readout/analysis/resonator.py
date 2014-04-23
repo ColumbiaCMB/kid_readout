@@ -7,6 +7,8 @@ import scipy.stats
 import scipy.optimize
 minimize = lmfit.minimize
 
+from fitter import Fitter
+
 # To use different defaults, change these three import statements.
 from kid_readout.analysis.khalil import delayed_generic_s21 as default_model
 from kid_readout.analysis.khalil import delayed_generic_guess as default_guess
@@ -46,7 +48,7 @@ def fit_best_resonator(*args,**kwargs):
     rr,bif,prefer_bif = fit_resonator(*args,**kwargs)
     return (rr,bif)[prefer_bif]
 
-class Resonator(object):
+class Resonator(Fitter):
     """
     This class represents a single resonator. All of the
     model-dependent behavior is contained in functions that are
@@ -76,103 +78,6 @@ class Resonator(object):
         data. The default is to use all data. Use this to exclude
         glitches or resonances other than the desired one.
         """
-        self.f = f
-        self.data = data
-        self._model = model
-        self._functions = functions
-        if mask is None:
-            if errors is None:
-                self.mask = np.ones_like(data).astype(np.bool)
-            else:
-                self.mask = abs(errors) < np.median(abs(errors))*3
-        else:
-            self.mask = mask
-        self.errors = errors
-        self.weight_by_errors = weight_by_errors
-        self.fit(guess(f[self.mask], data[self.mask]))
+        super(Resonator,self).__init__(f,data,model=model,guess=guess,functions=functions,mask=mask,
+                                       errors=errors,weight_by_errors=weight_by_errors)
 
-    def __getattr__(self, attr):
-        """
-        Return a fit parameter or value derived from the fit
-        parameters. This allows syntax like r.Q_i after a fit has been
-        performed.
-        """
-        try:
-            return self.result.params[attr].value
-        except KeyError:
-            pass
-        try:
-            return self._functions[attr](self.result.params)
-        except KeyError:
-            raise AttributeError("'{0}' object has no attribute '{1}'".format(self.__class__.__name__, attr))
-
-    def __dir__(self):
-        return (dir(super(Resonator, self)) +
-                self.__dict__.keys() +
-                self.result.params.keys() +
-                self._functions.keys())
-    
-    def fit(self, initial):
-        """
-        Fit S_21 using the data and model given at
-        instantiation. Parameter initial is a Parameters object
-        containing initial values. It is modified by lmfit.
-        """
-        self.result = minimize(self.residual, initial,ftol=1e-6)
-                               
-    def residual(self, params=None):
-        """
-        This is the residual function used by lmfit. Only data where
-        mask is True is used for the fit.
-        
-        Note that the residual needs to be purely real, and should *not* include abs.
-        The minimizer needs the signs of the residuals to properly evaluate the gradients.
-        """
-        # in the following, .view('float') will take a length N complex array 
-        # and turn it into a length 2*N float array.
-        
-        if params is None:
-            params = self.result.params
-        if self.errors is None or not self.weight_by_errors:
-            return ((self.data[self.mask] - self.model(params)[self.mask]).view('float'))
-        else:
-            errors = self.errors[self.mask]
-            if not np.iscomplexobj(errors):
-                errors = errors.astype('complex')
-                errors = errors + 1j*errors
-            return ((self.data[self.mask] - self.model(params)[self.mask]).view('float'))/errors.view('float')
-                
-
-    def model(self, params=None, f=None):
-        """
-        Return the model evaluated with the given parameters at the
-        given frequencies. Defaults are the fit-derived params and the
-        frequencies corresponding to the data.
-        """
-        if params is None:
-            params = self.result.params
-        if f is None:
-            f = self.f
-        return self._model(params, f)
-    
-    def inverse(self, s21, params=None,guess=None):
-        """
-        Find the frequencies that correspond to points in the complex plane as given by the model
-        """
-        if params is None:
-            params = self.result.params
-        def resid(f,s21):
-            return np.abs(s21 - self._model(params, f))
-        isscalar = np.isscalar(s21)
-        if isscalar:
-            s21 = np.array([s21])
-        def _find_inverse(s21):
-            if guess is None:
-                x0 = self.f[np.argmin(np.abs(s21-self.data))]
-            else:
-                x0 = guess
-            return scipy.optimize.fsolve(resid,x0,args=(s21,))
-        result = np.vectorize(_find_inverse)(s21)
-        if isscalar:
-            result = result[0]
-        return result
