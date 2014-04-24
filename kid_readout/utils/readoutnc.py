@@ -15,6 +15,8 @@ class TimestreamGroup(object):
         self.nfft = ncgroup.variables['nfft'][:]
 #        self.dt = ncgroup.variables['dt'][:] # the dt property is actually misleading at this point, so leaving it out
         self.fs = ncgroup.variables['fs'][:]
+        self.measurement_freq = self.fs*self.tonebin/(1.0*self.tone_nsamp)
+        self.sample_rate = self.fs*1e6/(2*self.nfft)
         if ncgroup.variables.has_key('wavenorm'):
             self.wavenorm = ncgroup.variables['wavenorm'][:]
         else:
