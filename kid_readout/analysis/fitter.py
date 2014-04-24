@@ -133,6 +133,16 @@ class Fitter(object):
             x = self.x_data
         return self._model(params, x)
     
+    def approx_gradient(self,x,params=None):
+        if params is None:
+            params = self.result.params
+        dx = x/1e9  # this should be OK for many purposes
+        x1 = x+dx
+        y = self.model(params=params,x=x)
+        y1 = self.model(params=params,x=x1)
+        gradient = (y1-y)/dx
+        return gradient
+    
     def inverse(self, y, params=None,guess=None):
         """
         Find the frequencies that correspond to points in the complex plane as given by the model
