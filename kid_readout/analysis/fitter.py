@@ -3,7 +3,7 @@ from __future__ import division
 import numpy as np
 import lmfit
 import scipy.optimize
-minimize = lmfit.minimize
+
 
 def line_model(params,x):
     slope = params['slope'].value
@@ -96,7 +96,7 @@ class Fitter(object):
         instantiation. Parameter initial is a Parameters object
         containing initial values. It is modified by lmfit.
         """
-        self.result = minimize(self.residual, initial,ftol=1e-6)
+        self.result = lmfit.minimize(self.residual, initial,ftol=1e-6)
                                
     def residual(self, params=None):
         """
