@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 Filter data with an FIR filter using the overlap-add method.
 """
