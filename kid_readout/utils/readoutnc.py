@@ -2,6 +2,7 @@ import numpy as np
 import netCDF4
 import types
 import bisect
+import warnings
 from collections import OrderedDict
 from kid_readout.utils.roach_utils import ntone_power_correction
 
@@ -14,9 +15,9 @@ class TimestreamGroup(object):
         self.fftbin = ncgroup.variables['fftbin'][:]
         self.nfft = ncgroup.variables['nfft'][:]
 #        self.dt = ncgroup.variables['dt'][:] # the dt property is actually misleading at this point, so leaving it out
-        self.fs = ncgroup.variables['fs'][:]
-        self.measurement_freq = self.fs*self.tonebin/(1.0*self.tone_nsamp)
-        self.sample_rate = self.fs*1e6/(2*self.nfft)
+        self.adc_sampling_freq = ncgroup.variables['fs'][:]
+        self.measurement_freq = self.adc_sampling_freq*self.tonebin/(1.0*self.tone_nsamp)
+        self.sample_rate = self.adc_sampling_freq*1e6/(2*self.nfft)
         if ncgroup.variables.has_key('wavenorm'):
             self.wavenorm = ncgroup.variables['wavenorm'][:]
         else:
@@ -27,17 +28,29 @@ class TimestreamGroup(object):
             self.sweep_index = None
             
         self._data = ncgroup.variables['data']
+        self.num_data_samples = self._data.shape[1]
+        self.data_len_seconds = self.num_data_samples/self.sample_rate
         self._datacache = None
         
     @property
     def data(self):
         if self._datacache is None:
-            self._datacache = self._data[:].view(self._data.datatype.name)*self.wavenorm[:,None]
+            if self.wavenorm is None:
+                wavenorm = 1.0
+                warnings.warn("wave normalization not found, time series will not match sweep")
+            else:
+                wavenorm = self.wavenorm[:,None]
+            self._datacache = self._data[:].view(self._data.datatype.name)*wavenorm
         return self._datacache
     
     def get_data_index(self,index):
         if self._datacache is None:
-            return self._data[index].view(self._data.datatype.name)*self.wavenorm[index]
+            if self.wavenorm is None:
+                wavenorm = 1.0
+                warnings.warn("wave normalization not found, time series will not match sweep")
+            else:
+                wavenorm = self.wavenorm[index]            
+            return self._data[index].view(self._data.datatype.name)*wavenorm
         else:
             return self._datacache[index]
         
@@ -77,13 +90,13 @@ class ReadoutNetCDF(object):
         self.filename = filename
         self.ncroot = netCDF4.Dataset(filename,mode='r')
         hwgroup = self.ncroot.groups['hw_state']
-        self.hwepoch = hwgroup.variables['epoch'][:]
+        self.hardware_state_epoch = hwgroup.variables['epoch'][:]
         self.adc_atten = hwgroup.variables['adc_atten'][:]
         self.dac_atten = hwgroup.variables['dac_atten'][:]
         if hwgroup.variables.has_key('ntones'):
-            self.ntones = hwgroup.variables['ntones'][:]
+            self.num_tones = hwgroup.variables['ntones'][:]
         else:
-            self.ntones = None
+            self.num_tones = None
         try:
             self.gitinfo = self.ncroot.gitinfo
         except AttributeError:
@@ -103,10 +116,11 @@ class ReadoutNetCDF(object):
     def get_effective_dac_atten_at(self,epoch):
         index = bisect.bisect_left(self.hwepoch, epoch) # find the index of the epoch immediately preceding the desired epoch
         dac_atten = self.dac_atten[index]
-        if self.ntones is not None:
-            ntones = self.ntones[index]
+        if self.num_tones is not None:
+            ntones = self.num_tones[index]
         else:
             ntones = 1
+            warnings.warn("ntones parameter not found in data file %s, assuming 1. The effective power level may be wrong" % self.filename)
         total = dac_atten + ntone_power_correction(ntones)
         return total
     
