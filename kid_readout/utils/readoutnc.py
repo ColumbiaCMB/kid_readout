@@ -32,12 +32,12 @@ class TimestreamGroup(object):
     @property
     def data(self):
         if self._datacache is None:
-            self._datacache = self._data[:].view(self._data.datatype.name)
+            self._datacache = self._data[:].view(self._data.datatype.name)*self.wavenorm[:,None]
         return self._datacache
     
     def get_data_index(self,index):
         if self._datacache is None:
-            return self._data[index].view(self._data.datatype.name)
+            return self._data[index].view(self._data.datatype.name)*self.wavenorm[index]
         else:
             return self._datacache[index]
         
@@ -63,7 +63,9 @@ class SweepGroup(object):
 
     def select_by_index(self,index):
         mask = self.index == index
-        return self.frequency[mask], self.s21[mask], self.errors[mask]
+        freq,s21,errors = self.frequency[mask], self.s21[mask], self.errors[mask]
+        order = freq.argsort()
+        return freq[order], s21[order], errors[order]
     
     def select_by_frequency(self,freq):
         findex = np.argmin(abs(self.frequency - freq))
