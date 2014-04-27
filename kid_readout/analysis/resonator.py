@@ -44,9 +44,11 @@ def fit_resonator(freq, s21, mask= None, errors=None, weight_by_errors=True, min
         print "Not using bifurcation model because:",(','.join(reasons))
     return rr,bif,prefer_bif
     
+    
 def fit_best_resonator(*args,**kwargs):
     rr,bif,prefer_bif = fit_resonator(*args,**kwargs)
     return (rr,bif)[prefer_bif]
+
 
 class Resonator(Fitter):
     """
@@ -91,16 +93,16 @@ class Resonator(Fitter):
         """
         return the complex factor that removes the arbitrary amplitude, cable delay, and phase from the resonator fit
         
-        *freq* : float or array of floats
+        freq : float or array of floats
             frequency in same units as the model was built with, at which normalization should be computed
             
-        *remove_amplitude* : bool, default True
+        remove_amplitude : bool, default True
             include arbitrary amplitude correction
             
-        *remove_delay* : bool, default True
+        remove_delay : bool, default True
             include cable delay correction
         
-        *remove_phase* : bool, default True
+        remove_phase : bool, default True
             include arbitrary phase offset correction
         """
         normalization = 1.0
@@ -121,10 +123,10 @@ class Resonator(Fitter):
         """
         Normalize s21 data, removing arbitrary ampltude, delay, and phase terms
         
-        *freq* : float or array of floats
+        freq : float or array of floats
             frequency in same units as the model was built with, at which normalization should be computed
             
-        *s21_raw* : complex or array of complex
+        s21_raw : complex or array of complex
             raw s21 data which should be normalized
         """
         normalization = self.get_normalization(freq, remove_amplitude=remove_amplitude, remove_delay=remove_delay, 
@@ -135,7 +137,7 @@ class Resonator(Fitter):
         """
         Evaluate the model, removing arbitrary ampltude, delay, and phase terms
         
-        *freq* : float or array of floats
+        freq : float or array of floats
             frequency in same units as the model was built with, at which normalized model should be evaluated
         """
         return self.normalize(freq, self.model(x=freq),remove_amplitude=remove_amplitude, remove_delay=remove_delay, 
@@ -147,7 +149,7 @@ class Resonator(Fitter):
         
         The units will be S21 / Hz
         
-        *freq* : float or array of floats
+        freq : float or array of floats
             frequency in same units as the model was built with, at which normalized gradient should be evaluated
         """
         if self.freq_units_MHz:
@@ -168,13 +170,13 @@ class Resonator(Fitter):
         This results in complex data with the real part projected along the frequency direction (in Hz) and the 
         imaginary part projected along the dissipation direction (also in pseudo-Hz).
         
-        *freq* : float
+        freq : float
             frequency in same units as the model was built with, at which the S21 data was measured.
         
-        *s21* : complex or array of complex
+        s21 : complex or array of complex
             Raw S21 data measured at the indicated frequency
         
-        *use_data_mean* : bool
+        use_data_mean : bool
             if true, center the data on the mean of the data before projecting.
             if false, center the data on the value of the model evaluated at the measurement frequency.
         """
@@ -193,10 +195,10 @@ class Resonator(Fitter):
         
         The result of this is the same as Re(S21/(dS21/df)), so the same as self.project_s21_to_delta_freq().real
         
-        *freq* : float
+        freq : float
             frequency in same units as the model was built with, at which the S21 data was measured.
         
-        *s21* : complex or array of complex
+        s21 : complex or array of complex
             Raw S21 data measured at the indicated frequency         
         """
         normalized_s21 = self.normalize(freq,s21)
