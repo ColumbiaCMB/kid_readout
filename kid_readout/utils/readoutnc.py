@@ -114,7 +114,7 @@ class ReadoutNetCDF(object):
         self.timestreams = self.timestreams_dict.values()
         
     def get_effective_dac_atten_at(self,epoch):
-        index = bisect.bisect_left(self.hwepoch, epoch) # find the index of the epoch immediately preceding the desired epoch
+        index = bisect.bisect_left(self.hardware_state_epoch, epoch) # find the index of the epoch immediately preceding the desired epoch
         dac_atten = self.dac_atten[index]
         if self.num_tones is not None:
             ntones = self.num_tones[index]
@@ -122,5 +122,5 @@ class ReadoutNetCDF(object):
             ntones = 1
             warnings.warn("ntones parameter not found in data file %s, assuming 1. The effective power level may be wrong" % self.filename)
         total = dac_atten + ntone_power_correction(ntones)
-        return total
+        return dac_atten, total
     
