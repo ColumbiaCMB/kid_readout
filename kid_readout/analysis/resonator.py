@@ -15,10 +15,27 @@ from kid_readout.analysis.khalil import delayed_generic_guess as default_guess
 from kid_readout.analysis.khalil import generic_functions as default_functions
 from kid_readout.analysis.khalil import bifurcation_s21, bifurcation_guess
 
-def fit_resonator(freq, s21, mask= None, errors=None, weight_by_errors=True, min_a = 0.08, fstat_thresh = 0.999):
-    rr = Resonator(freq, s21, mask=mask, errors=errors, weight_by_errors=weight_by_errors)
+def fit_resonator(freq, s21, mask= None, errors=None, weight_by_errors=True, min_a = 0.08, fstat_thresh = 0.999,
+                  delay_estimate = None):
+    if delay_estimate is not None:
+        def my_default_guess(f,data):
+            params = default_guess(f,data)
+            params['delay'].value = delay_estimate
+            return params
+    else:
+        my_default_guess = default_guess
+    rr = Resonator(freq, s21, mask=mask, errors=errors, weight_by_errors=weight_by_errors,guess=my_default_guess)
+    
+    if delay_estimate is not None:
+        def my_bifurcation_guess(f,data):
+            params = bifurcation_guess(f,data)
+            params['delay'].value = delay_estimate
+            return params
+    else:
+        my_bifurcation_guess = bifurcation_guess
+    
     bif = Resonator(freq, s21, mask=mask, errors=errors, weight_by_errors=weight_by_errors, 
-                    guess = bifurcation_guess, model = bifurcation_s21)
+                    guess = my_bifurcation_guess, model = bifurcation_s21)
     fval = scipy.stats.f_value(np.sum(np.abs(rr.residual())**2),
                                 np.sum(np.abs(bif.residual())**2),
                                 rr.result.nfree, bif.result.nfree)
@@ -162,7 +179,7 @@ class Resonator(Fitter):
         gradient = y1-y  # division by 1 Hz is implied.
         return gradient
 
-    def project_s21_to_delta_freq(self,freq,s21,use_data_mean=True):
+    def project_s21_to_delta_freq(self,freq,s21,use_data_mean=True,s21_already_normalized=False):
         """
         Project s21 data onto the orthogonal vectors tangent and perpendicular to the resonance circle at the 
         measurement frequency
@@ -176,11 +193,18 @@ class Resonator(Fitter):
         s21 : complex or array of complex
             Raw S21 data measured at the indicated frequency
         
-        use_data_mean : bool
+        use_data_mean : bool, default True
             if true, center the data on the mean of the data before projecting.
             if false, center the data on the value of the model evaluated at the measurement frequency.
+            
+        s21_already_normalized : bool, default False
+            if true, the s21 data has already been normalized
+            if false, first normalize the s21 data
         """
-        normalized_s21 = self.normalize(freq,s21)
+        if s21_already_normalized:
+            normalized_s21 = s21
+        else:
+            normalized_s21 = self.normalize(freq,s21)
         if use_data_mean:
             mean_ = normalized_s21.mean()
         else:
