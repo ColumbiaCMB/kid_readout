@@ -153,7 +153,7 @@ class DataFile():
             dt = tsg.createVariable('dt',np.float64,('epoch',))
             fs = tsg.createVariable('fs',np.float64,('epoch',))
             wavenorm = tsg.createVariable('wavenorm',np.float64,('epoch'))
-            data = tsg.createVariable('data',self.cdf128,('epoch','sample'))
+            data = tsg.createVariable('data',self.cdf64,('epoch','sample'))
         else:
             t0 = tsg.variables['epoch']
             tone = tsg.variables['tone']
@@ -165,7 +165,7 @@ class DataFile():
             wavenorm = tsg.variables['wavenorm']
             data = tsg.variables['data']
         idx = len(tsg.dimensions['epoch'])
-        data[idx] = block.data.astype('complex128').view(self.c128)
+        data[idx] = block.data.astype('complex64').view(self.c64)
         t0[idx] = block.t0
         fs[idx] = block.fs
         tone[idx] = block.tone
