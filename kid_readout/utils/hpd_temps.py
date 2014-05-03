@@ -50,6 +50,37 @@ def get_nc_list():
 
 epochs,ncs = get_nc_list()
 
+def get_temperatures_at(t,get_load_temp=False):
+    global epochs
+    global ncs
+    global _filecache
+    
+    if np.isscalar(t):
+        start_time = t
+        end_time = t
+    else:
+        start_time = t.min()
+        end_time = t.max()
+
+    idx = bisect.bisect_right(epochs,start_time)
+    idx = idx - 1
+    if idx < 0:
+        idx = 0
+    ncname = ncs[idx]
+    if _filecache.has_key(ncname) and (time.time()-end_time) > 1*3600: #if we're looking for data from more than 1 hours ago, look in the cache
+        times,temps,load = _filecache[ncname]
+    else:
+        times,temps,load = get_temperature_from_nc(ncname)
+        _filecache[ncname] = (times,temps,load)
+        
+    if end_time > times[-1]:
+        print "Warning: requested times may span more than one log file, so results may not be as intended"
+        print "log file is: %s, last requested time is %s" % (ncname, time.ctime(end_time))
+
+    load_temperature = np.interp(t,times,load)
+    package_temperature = np.interp(t,times,temps)
+    return package_temperature,None,load_temperature,None
+
 def get_temperature_at(t,get_load_temp=False):
     global epochs
     global ncs
@@ -60,7 +91,7 @@ def get_temperature_at(t,get_load_temp=False):
     if idx < 0:
         idx = 0
     ncname = ncs[idx]
-    if _filecache.has_key(ncname):# and (time.time()-t) > 1*3600: #if we're looking for data from moret han 30 hours ago, look in the cache
+    if _filecache.has_key(ncname) and (time.time()-t) > 1*3600: #if we're looking for data from more than 1 hours ago, look in the cache
         times,temps,load = _filecache[ncname]
     else:
         times,temps,load = get_temperature_from_nc(ncname)
@@ -76,7 +107,7 @@ def mjd_to_unix(mjd):
 def get_temperature_from_nc(ncname):
     tic = time.time()
     done = False
-    while (not done) and (time.time() - tic < 10):
+    while (not done) and (time.time() - tic < 30):
         try:
             nc = netCDF4.Dataset(ncname)
             if ncname.find('garbage_cooldown_logs') >= 0:
@@ -98,4 +129,6 @@ def get_temperature_from_nc(ncname):
             print "retrying..."
             nc.close()
             time.sleep(0.1)
+    if not done:
+        raise IOError("Timed out while trying to read temperature from %s" % ncname)
     return unix,temps,load
