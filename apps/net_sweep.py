@@ -46,7 +46,7 @@ print offsets*1e6
 print len(f0s)
 
 #heater_voltages = 0.4*np.sqrt(np.arange(1,11))
-heater_voltages = [0.2,0.0,0.4,0.0,0.3,0.0]
+heater_voltages = [0.2,0.3,0.4,0.5,0.6,0.8]
 #heater_voltages = np.hstack(([0.0],heater_voltages))
 
 fg.set_dc_voltage(0.0)
