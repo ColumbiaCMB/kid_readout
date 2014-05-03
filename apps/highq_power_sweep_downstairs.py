@@ -6,9 +6,7 @@ import sys
 from kid_readout.utils import roach_interface,data_file,sweeps
 from kid_readout.analysis.resonator import Resonator
 from kid_readout.analysis.resonator import fit_best_resonator
-from kid_readout.equipment.agilent_33220 import FunctionGenerator
 
-fg = FunctionGenerator()
 ri = roach_interface.RoachBasebandWide()
 ri.initialize()
 #ri.set_fft_gain(6)
@@ -16,10 +14,10 @@ ri.initialize()
 #f0s = np.load('/home/gjones/workspace/apps/first_pass_sc3x3_0813f9.npy')
 #f0s = np.load('/home/gjones/workspace/apps/sc5x4_0813f10_first_pass.npy')#[:4]
 #f0s = np.load('/home/gjones/workspace/readout/apps/sc3x3_0813f9_2014-02-11.npy')
-#f0s = np.load('/home/gjones/workspace/readout/apps/sc3x3_0813f5_2014-02-27.npy')
-f0s = np.load('/home/gjones/workspace/apps/sc5x4_0813f12.npy')
+f0s = np.load('/home/gjones/workspace/readout/apps/sc3x3_0813f5_2014-04-15.npy')
+#f0s = np.load('/home/gjones/workspace/apps/sc5x4_0813f12.npy')
 f0s.sort()
-#f0s = f0s*(1-4e-5)
+f0s = f0s*0.9992
 
 nf = len(f0s)
 atonce = 4
@@ -45,27 +43,22 @@ print f0s
 print offsets*1e6
 print len(f0s)
 
-#heater_voltages = 0.4*np.sqrt(np.arange(1,11))
-heater_voltages = [0.2,0.0,0.4,0.0,0.3,0.0]
-#heater_voltages = np.hstack(([0.0],heater_voltages))
 
-fg.set_dc_voltage(0.0)
-#time.sleep(60*10)
-
-if True:
+if False:
     from kid_readout.utils.parse_srs import get_all_temperature_data
     while True:
         temp = get_all_temperature_data()[1][-1]
         print "mk stage at", temp
-        if temp < 0.205:
+        if temp > 0.348:
             break
         time.sleep(300)
-    time.sleep(120)
+    time.sleep(600)
 start = time.time()
 
-ri.set_dac_attenuator(39.0)
-
-for heater_voltage in heater_voltages:
+attenlist = [40,43,46,49] #np.linspace(43,45,6)
+for atten in attenlist:
+    print "setting attenuator to",atten
+    ri.set_dac_attenuator(atten)
     measured_freqs = sweeps.prepare_sweep(ri,f0binned,offsets,nsamp=nsamp)
     print "loaded waveforms in", (time.time()-start),"seconds"
     
@@ -119,10 +112,9 @@ for heater_voltage in heater_voltages:
     time.sleep(1)
     
 
-#for heater_voltage in heater_voltages:
-    df = data_file.DataFile(suffix='net')
+    df = data_file.DataFile() #(suffix='led')
     df.log_hw_state(ri)
-    sweep_data = sweeps.do_prepared_sweep(ri, nchan_per_step=atonce, reads_per_step=8,sweep_data = orig_sweep_data)
+    sweep_data = sweeps.do_prepared_sweep(ri, nchan_per_step=atonce, reads_per_step=8)#, sweep_data=orig_sweep_data)
     df.add_sweep(sweep_data)
     meas_cfs = []
     idxs = []
@@ -150,6 +142,9 @@ for heater_voltage in heater_voltages:
     ri.select_bank(ri.tone_bins.shape[0]-1)
     ri._sync()
     time.sleep(0.5)
+    
+    #raw_input("Turn on source and press enter to begin collecting data")
+    
     df.log_hw_state(ri)
     nsets = len(meas_cfs)/atonce
     tsg = None
@@ -164,38 +159,6 @@ for heater_voltage in heater_voltages:
         tsg = df.add_timestream_data(dmod, ri, t0, tsg=tsg)
     df.sync()
     
-    print "finished baseline data collection"
-    print "Setting heater to ",heater_voltage
-    fg.set_dc_voltage(heater_voltage)
-    heat_start = time.time()
-    while time.time() - heat_start < 1800.0:
-        df.log_hw_state(ri)
-        print "making sweep"
-        sweep_data = sweeps.do_prepared_sweep(ri, nchan_per_step=atonce, reads_per_step=8)
-        df.add_sweep(sweep_data)
-        ri.select_bank(ri.tone_bins.shape[0]-1)
-        ri._sync()
-        nsets = len(meas_cfs)/atonce
-        tsg = None
-        for iset in range(nsets):
-            selection = range(len(meas_cfs))[iset::nsets]
-            ri.select_fft_bins(selection)
-            ri._sync()
-            time.sleep(0.2)
-            t0 = time.time()
-            dmod,addr = ri.get_data_seconds(4,demod=True)
-            print nsets,iset,tsg
-            tsg = df.add_timestream_data(dmod, ri, t0, tsg=tsg)
-        df.sync()
-        print "sleeping for 120 seconds"
-        time.sleep(120*2)
-
-
-
-    df.log_hw_state(ri)
-    df.nc.sync()
     df.nc.close()
     
-print "turning heater to 0.0"
-fg.set_dc_voltage(0.0)
 print "completed in",((time.time()-start)/60.0),"minutes"

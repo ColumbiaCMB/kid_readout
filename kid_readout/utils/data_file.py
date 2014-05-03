@@ -125,13 +125,13 @@ class DataFile():
         
         return name
     
-    def add_timestream_data(self, data, ri, tsg=None):
+    def add_timestream_data(self, data, ri, t0, tsg=None):
         chids = ri.fpga_fft_readout_indexes+1
         tones = ri.tone_bins[ri.bank,ri.readout_selection]
         nsamp = ri.tone_nsamp
         for m in range(len(chids)):
             block = data_block.DataBlock(data = data[:,m], tone=tones[m], fftbin = chids[m], 
-                     nsamp = nsamp, nfft = ri.nfft, wavenorm = ri.wavenorm, t0 = time.time(), fs = ri.fs)
+                     nsamp = nsamp, nfft = ri.nfft, wavenorm = ri.wavenorm, t0 = t0, fs = ri.fs)
             tsg = self.add_block_to_timestream(block, tsg=tsg)
         return tsg
 

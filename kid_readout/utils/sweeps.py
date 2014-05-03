@@ -60,6 +60,7 @@ def do_prepared_sweep(ri,nchan_per_step=8,reads_per_step=2,callback = None, swee
             ri.r.write_int('sync',0)
     
             time.sleep(0.2)
+            epoch = time.time()
             try:
                 dmod,addr = ri.get_data(reads_per_step)
             except Exception,e:
@@ -72,7 +73,8 @@ def do_prepared_sweep(ri,nchan_per_step=8,reads_per_step=2,callback = None, swee
             for m in range(len(chids)):
                 sweep_index = selection[m]# np.abs(actual_freqs - ri.fs*tones[m]/nsamp).argmin()
                 block = DataBlock(data = dmod[:,m], tone=tones[m], fftbin = chids[m], 
-                         nsamp = nsamp, nfft = ri.nfft, wavenorm = ri.wavenorm, t0 = time.time(), fs = ri.fs, sweep_index=sweep_index)
+                         nsamp = nsamp, nfft = ri.nfft, wavenorm = ri.wavenorm, t0 = epoch, fs = ri.fs, 
+                         sweep_index=sweep_index)
                 block.progress = (k+1)/float(nstep)
                 swp.add_block(block)
                 if callback:
