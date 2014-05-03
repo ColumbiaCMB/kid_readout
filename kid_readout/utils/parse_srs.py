@@ -35,7 +35,7 @@ def get_temperature_at(epoch):
 def convtime(tstr):
     return time.mktime(time.strptime(tstr,'%Y%m%d-%H%M%S'))
 def get_load_log(fname):
-    tdata = np.loadtxt(fname,delimiter=',',converters={0:convtime},skiprows=1)
+    tdata = np.genfromtxt(fname,delimiter=',',converters={0:convtime},skiprows=1,invalid_raise=False)
     dt = [datetime.datetime.fromtimestamp(x) for x in tdata[:,0]]
     return dt,tdata
 
