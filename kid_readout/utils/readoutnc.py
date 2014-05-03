@@ -112,6 +112,8 @@ class ReadoutNetCDF(object):
             self.timestreams_dict[name] = TimestreamGroup(group)
             self.__setattr__(name,self.timestreams_dict[name])
         self.timestreams = self.timestreams_dict.values()
+    def close(self):
+        self.ncroot.close()
         
     def get_effective_dac_atten_at(self,epoch):
         index = bisect.bisect_left(self.hardware_state_epoch, epoch) # find the index of the epoch immediately preceding the desired epoch
