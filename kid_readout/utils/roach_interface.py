@@ -555,7 +555,8 @@ class RoachBaseband(RoachInterface):
         amps : optional array of floats, same length as freqs array
             specify the relative amplitude of each tone. Can set to zero to read out a portion
             of the spectrum with no stimulus tone.
-        load : bool (debug only). If false, don't actually load the waveform, just calculate it.
+        load : bool (debug only). 
+            If false, don't actually load the waveform, just calculate it.
                     
         returns:
         actual_freqs : array of the actual frequencies after quantization based on nsamp
