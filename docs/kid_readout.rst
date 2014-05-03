@@ -1,18 +1,19 @@
-kid_readout Package
+kid_readout package
 ===================
-
-:mod:`kid_readout` Package
---------------------------
-
-.. automodule:: kid_readout.__init__
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 Subpackages
 -----------
 
 .. toctree::
 
+    kid_readout.analysis
+    kid_readout.equipment
     kid_readout.utils
 
+Module contents
+---------------
+
+.. automodule:: kid_readout
+    :members:
+    :undoc-members:
+    :show-inheritance:
