@@ -16,7 +16,7 @@ from kid_readout.analysis.khalil import generic_functions as default_functions
 from kid_readout.analysis.khalil import bifurcation_s21, bifurcation_guess
 
 def fit_resonator(freq, s21, mask= None, errors=None, weight_by_errors=True, min_a = 0.08, fstat_thresh = 0.999,
-                  delay_estimate = None):
+                  delay_estimate = None, verbose=False):
     if delay_estimate is not None:
         def my_default_guess(f,data):
             params = default_guess(f,data)
@@ -57,7 +57,7 @@ def fit_resonator(freq, s21, mask= None, errors=None, weight_by_errors=True, min
                 reasons.append("F-statistic %f is less than threshold %f" % (fstat,fstat_thresh))
             else:
                 prefer_bif = True
-    if not prefer_bif:
+    if verbose and not prefer_bif:
         print "Not using bifurcation model because:",(','.join(reasons))
     return rr,bif,prefer_bif
     
