@@ -37,10 +37,7 @@ def plot_noise_nc(fglob,**kwargs):
         fnames = glob.glob(fglob)
     else:
         fnames = fglob
-    try:
-        plotall = kwargs.pop('plot_all')
-    except KeyError:
-        plotall = False
+    plotall = kwargs.pop('plot_all',False)
     fnames.sort()
     errors = {}
     pdf = None
@@ -60,6 +57,7 @@ def plot_noise_nc(fglob,**kwargs):
                     except IndexError:
                         print "failed to find index",index,"in",sname,tname
                         continue
+                    
 
                     if plotall or k == 0:
                         if pdf is None:
@@ -76,6 +74,7 @@ def plot_noise_nc(fglob,**kwargs):
                         if pdf is not None:
                             pdf.close()
                             pdf = None
+                    nm._fractional_fluctuation_timeseries = None
                     nms.append(nm)
                     
                 print fname,nm.start_temp,"K"
@@ -97,18 +96,22 @@ class SweepNoiseMeasurement(object):
                  deglitch_threshold=5, cryostat=None):
         
         self.sweep_filename = sweep_filename
-        self.timestream_filename = timestream_filename
+        if timestream_filename:
+            self.timestream_filename = timestream_filename
+        else:
+            self.timestream_filename = self.sweep_filename
         self.sweep_group_index = sweep_group_index
         self.timestream_group_index = timestream_group_index
-        self._open_netcdf_files()
+        self._sweep_file = None
+        self._timestream_file = None
         
         self.sweep_epoch = self.sweep.start_epoch
         pkg1,pkg2,load1,load2 = get_temperatures_at(self.sweep.start_epoch)
-        self.primary_package_temperature_during_sweep = pkg1
-        self.secondary_package_temperature_during_sweep = pkg2
-        self.primary_load_temperature_during_sweep = load1
-        self.secondary_load_temperature_during_sweep = load2
-        self.start_temp = self.primary_package_temperature_during_sweep
+        self.sweep_primary_package_temperature = pkg1
+        self.sweep_secondary_package_temperature = pkg2
+        self.sweep_primary_load_temperature = load1
+        self.sweep_secondary_load_temperature = load2
+        self.start_temp = self.sweep_primary_package_temperature
         self.resonator_index = resonator_index
         
         description,is_dark,optical_load = experiments.get_experiment_info_at(self.sweep_epoch, cryostat=cryostat)
@@ -118,7 +121,7 @@ class SweepNoiseMeasurement(object):
         self.dac_chain_gain = dac_chain_gain
         
         try:
-            self.atten, self.total_dac_atten = self.sweep_file.get_effective_dac_atten_at(self.sweep_epoch)
+            self.atten, self.total_dac_atten = self._sweep_file.get_effective_dac_atten_at(self.sweep_epoch)
             self.power_dbm = dac_chain_gain - self.total_dac_atten
         except:
             print "failed to find attenuator settings"
@@ -137,21 +140,21 @@ class SweepNoiseMeasurement(object):
         self.adc_sampling_freq_MHz = self.timestream.adc_sampling_freq[timestream_index]
         self.noise_measurement_freq_MHz = self.timestream.measurement_freq[timestream_index]
         self.nfft = self.timestream.nfft[timestream_index]
-        self.timeseries_sample_rate_Hz = self.timestream.sample_rate[timestream_index]
+        self.timeseries_sample_rate = self.timestream.sample_rate[timestream_index]
         
         self.timestream_epoch = self.timestream.epoch[timestream_index]
-        self.timestream_duration = original_timeseries.shape[0]/self.timeseries_sample_rate_Hz
+        self.timestream_duration = original_timeseries.shape[0]/self.timeseries_sample_rate
         # The following hack helps fix a long standing timing bug which was recently fixed/improved
         if self.timestream_epoch < 1399089567:
             self.timestream_epoch -= self.timestream_duration
         # end hack
         self.timestream_temperatures_sample_times = np.arange(self.timestream_duration)
         pkg1,pkg2,load1,load2 = get_temperatures_at(self.timestream_epoch + self.timestream_temperatures_sample_times)
-        self.primary_package_temperature_during_timestream = pkg1
-        self.secondary_package_temperature_during_timestream = pkg2
-        self.primary_load_temperature_during_timestream = load1
-        self.secondary_load_temperature_during_timestream = load2
-        self.end_temp = self.primary_package_temperature_during_timestream[-1]
+        self.timestream_primary_package_temperature = pkg1
+        self.timestream_secondary_package_temperature = pkg2
+        self.timestream_primary_load_temperature = load1
+        self.timestream_secondary_load_temperature = load2
+        self.end_temp = self.timestream_primary_package_temperature[-1]
 
         
         # We can use the timestream measurement as an additional sweep point.
@@ -173,10 +176,10 @@ class SweepNoiseMeasurement(object):
         self.Q_i = rr.Q_i
         self.fit_params = rr.result.params
         
-        decimation_factor = self.timeseries_sample_rate_Hz/low_pass_cutoff_Hz
+        decimation_factor = self.timeseries_sample_rate/low_pass_cutoff_Hz
         normalized_timeseries = rr.normalize(self.noise_measurement_freq_MHz,original_timeseries)
         self.low_pass_normalized_timeseries = low_pass_fir(normalized_timeseries, num_taps=1024, cutoff=low_pass_cutoff_Hz, 
-                                                          nyquist_freq=self.timeseries_sample_rate_Hz, decimate_by=decimation_factor)
+                                                          nyquist_freq=self.timeseries_sample_rate, decimate_by=decimation_factor)
         self.normalized_timeseries_mean = normalized_timeseries.mean()
 
         projected_timeseries = rr.project_s21_to_delta_freq(self.noise_measurement_freq_MHz,normalized_timeseries,
@@ -184,7 +187,7 @@ class SweepNoiseMeasurement(object):
         
         # calculate the number of samples for the deglitching window.
         # the following will be the next power of two above 1 second worth of samples
-        window = int(2**np.ceil(np.log2(self.timeseries_sample_rate_Hz)))
+        window = int(2**np.ceil(np.log2(self.timeseries_sample_rate)))
         # reduce the deglitching window if we don't have enough samples
         if window > projected_timeseries.shape[0]:
             window = projected_timeseries.shape[0]//2
@@ -194,8 +197,8 @@ class SweepNoiseMeasurement(object):
         
         
         self.low_pass_projected_timeseries = low_pass_fir(deglitched_timeseries, num_taps=1024, cutoff=low_pass_cutoff_Hz, 
-                                                nyquist_freq=self.timeseries_sample_rate_Hz, decimate_by=decimation_factor)
-        self.low_pass_timestep = decimation_factor/self.timeseries_sample_rate_Hz
+                                                nyquist_freq=self.timeseries_sample_rate, decimate_by=decimation_factor)
+        self.low_pass_timestep = decimation_factor/self.timeseries_sample_rate
         
         self.normalized_model_s21_at_meas_freq = rr.normalized_model(self.noise_measurement_freq_MHz)
         self.normalized_model_s21_at_resonance = rr.normalized_model(rr.f_0)
@@ -210,18 +213,19 @@ class SweepNoiseMeasurement(object):
         fractional_fluctuation_timeseries = deglitched_timeseries / (self.noise_measurement_freq_MHz*1e6)
         self._fractional_fluctuation_timeseries = fractional_fluctuation_timeseries
         fr,S,evals,evects,angles,piq = iqnoise.pca_noise(fractional_fluctuation_timeseries, 
-                                                         NFFT=None, Fs=self.timeseries_sample_rate_Hz)
+                                                         NFFT=None, Fs=self.timeseries_sample_rate)
         
         self.pca_freq = fr
         self.pca_S = S
-        self.pca_evals = evals
-        self.pca_evects = evects
+        self.pca_eigvals = evals
+        self.pca_eigvects = evects
         self.pca_angles = angles
         self.pca_piq = piq
         
         self.freqs_coarse,self.prr_coarse,self.pii_coarse = self.get_projected_fractional_fluctuation_spectra(NFFT=2**12)
         
         self._normalized_timeseries = normalized_timeseries[:2048].copy()
+        self._close_files()
         
     @property
     def original_timeseries(self):
@@ -245,7 +249,7 @@ class SweepNoiseMeasurement(object):
     def get_deglitched_timeseries(self,window_in_seconds=1.0, thresh=None):
         # calculate the number of samples for the deglitching window.
         # the following will be the next power of two above 1 second worth of samples
-        window = int(2**np.ceil(np.log2(window_in_seconds*self.timeseries_sample_rate_Hz)))
+        window = int(2**np.ceil(np.log2(window_in_seconds*self.timeseries_sample_rate)))
         # reduce the deglitching window if we don't have enough samples
         projected_timeseries = self.projected_timeseries
         if window > projected_timeseries.shape[0]:
@@ -259,43 +263,59 @@ class SweepNoiseMeasurement(object):
     
     def get_projected_fractional_fluctuation_spectra(self,NFFT=2**12,window=mlab.window_none):
         prr,freqs = mlab.psd(self.fractional_fluctuation_timeseries.real,NFFT=NFFT,
-                                                           window=window,Fs=self.timeseries_sample_rate_Hz)
+                                                           window=window,Fs=self.timeseries_sample_rate)
         pii,freqs = mlab.psd(self.fractional_fluctuation_timeseries.imag,NFFT=NFFT,
-                                                           window=window,Fs=self.timeseries_sample_rate_Hz)
+                                                           window=window,Fs=self.timeseries_sample_rate)
         return freqs,prr,pii
 
+    @property
+    def sweep(self):
+        self._open_sweep_file()
+        return self._sweep_file.sweeps[self.sweep_group_index]
+    
+    @property
+    def timestream(self):
+        self._open_timestream_file()
+        return self._timestream_file.timestreams[self.timestream_group_index]
     
     def __getstate__(self):
+        self._close_files()
         d = self.__dict__.copy()
-        del d['sweep_file']
-        del d['timestream_file']
-        del d['sweep']
-        del d['timestream']
+#        del d['_sweep_file']
+#        del d['_timestream_file']
+#        del d['sweep']
+#        del d['timestream']
         del d['resonator_model']
         d['_fractional_fluctuation_timeseries'] = None
         return d
         
     def __setstate__(self,state):
         self.__dict__ = state
-        try:
-            self._open_netcdf_files()
-        except IOError:
-            print "Warning: could not open associated NetCDF datafiles when unpickling."
-            print "Some features of the class will not be available"
+#        try:
+#            self._open_netcdf_files()
+#        except IOError:
+#            print "Warning: could not open associated NetCDF datafiles when unpickling."
+#            print "Some features of the class will not be available"
         try:
             self._restore_resonator_model()
         except Exception, e:
             print "error while restoring resonator model:",e
             
-    def _open_netcdf_files(self):
-        self.sweep_file = readoutnc.ReadoutNetCDF(self.sweep_filename)
-        if self.timestream_filename is not None:
-            self.timestream_file = readoutnc.ReadoutNetCDF(self.timestream_filename)
-        else:
-            self.timestream_file = self.sweep_file
-        self.sweep = self.sweep_file.sweeps[self.sweep_group_index]
-        self.timestream = self.timestream_file.timestreams[self.timestream_group_index]  
+    def _open_sweep_file(self):
+        if self._sweep_file is None:
+            self._sweep_file = readoutnc.ReadoutNetCDF(self.sweep_filename)
+    def _open_timestream_file(self):
+        if self._timestream_file is None:
+            self._timestream_file = readoutnc.ReadoutNetCDF(self.timestream_filename)
         
+    def _close_files(self):
+        if self._sweep_file:
+            self._sweep_file.close()
+            self._sweep_file = None
+        if self._timestream_file:
+            self._timestream_file.close()
+            self._timestream_file = None
+
     def _restore_resonator_model(self):
         self.resonator_model = fit_best_resonator(self.sweep_freqs_MHz,self.sweep_s21,errors=self.sweep_errors,
                                                   delay_estimate=self.fit_params['delay'].value)
@@ -318,8 +338,6 @@ class SweepNoiseMeasurement(object):
         ax1.plot([self.normalized_timeseries_mean.real],[self.normalized_timeseries_mean.imag],'m+',mew=2,markersize=20,label='timeseries mean')
         ax1.plot(self._normalized_timeseries.real[:128],self._normalized_timeseries.imag[:128],'k,',alpha=1,label='timeseries samples')
         ax1.plot(self.low_pass_normalized_timeseries.real,self.low_pass_normalized_timeseries.imag,'r,') #uses proxy for label
-        #ax1.plot(self.pca_evects[0,0,:100]*100,self.pca_evects[1,0,:100]*100,'y.')
-        #ax1.plot(self.pca_evects[0,1,:100]*100,self.pca_evects[1,1,:100]*100,'k.')
         x1 = self.normalized_model_s21_at_meas_freq.real
         y1 = self.normalized_model_s21_at_meas_freq.imag
         x2 = x1 + self.normalized_ds21_df_at_meas_freq.real*100
@@ -350,7 +368,7 @@ class SweepNoiseMeasurement(object):
         ax2.loglog(freqs_fine[1:],pii_fine[1:],'g',label='Sii')
         ax2.loglog(self.freqs_coarse[1:],self.prr_coarse[1:],'y',lw=2)
         ax2.loglog(self.freqs_coarse[1:],self.pii_coarse[1:],'m',lw=2)
-        ax2.loglog(self.pca_freq[1:],self.pca_evals[:,1:].T,'k',lw=2)
+        ax2.loglog(self.pca_freq[1:],self.pca_eigvals[:,1:].T,'k',lw=2)
         ax2.set_title(title,fontdict=dict(size='small'))
         
         n500 = self.prr_coarse[np.abs(self.freqs_coarse-500).argmin()]*(self.noise_measurement_freq_MHz*1e6)**2
@@ -372,7 +390,7 @@ class SweepNoiseMeasurement(object):
         t = dtl*np.arange(len(tsl))
         ax3.plot(t,tsl.real,'b',lw=2,label = 'LPF timeseries real')
         ax3.plot(t,tsl.imag,'g',lw=2,label = 'LPF timeseries imag')
-        load_fluctuations_mK = (self.primary_load_temperature_during_timestream - self.primary_load_temperature_during_timestream.mean())*1000.0
+        load_fluctuations_mK = (self.timestream_primary_load_temperature - self.timestream_primary_load_temperature.mean())*1000.0
         ax3.plot(self.timestream_temperatures_sample_times,load_fluctuations_mK,'r',lw=2)
         ax3.set_ylabel('Hz')
         ax3.set_xlabel('seconds')
