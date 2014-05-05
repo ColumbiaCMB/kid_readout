@@ -33,6 +33,17 @@ import cPickle
 
 
 def plot_noise_nc(fglob,**kwargs):
+    """
+    Create noise measurements from all noise sweeps in a netcdf file, make plots, and pickle the noise measurements
+    
+    fglob : string or list
+        filename glob. Can be either a filename, which can contain * or ? wildcards, or a list of files
+    
+    plot_all : bool (default False)
+        if True, plot all sweeps, otherwise just plot the first one for each resonator
+        
+    **kwargs are passed to the noise measurement class
+    """
     if type(fglob) is str:
         fnames = glob.glob(fglob)
     else:
@@ -92,8 +103,48 @@ def plot_noise_nc(fglob,**kwargs):
 class SweepNoiseMeasurement(object):
     def __init__(self,sweep_filename,sweep_group_index=0,timestream_filename=None,timestream_group_index=0,
                  resonator_index=0,low_pass_cutoff_Hz=4.0,
-                 dac_chain_gain = -52, ntones=None, use_bifurcation=False, delay_estimate=-7.29,
+                 dac_chain_gain = -52, delay_estimate=-7.29,
                  deglitch_threshold=5, cryostat=None):
+        """
+        sweep_filename : str
+            NetCDF4 file with at least the sweep data. By default, this is also used for the timestream data.
+            
+        sweep_group_index : int (default 0)
+            Index of the sweep group to process
+            
+        timestream_filename : str or None (optional)
+            If None, use sweep_filename for the timestream data
+            otherwise, this is the NetCDF4 file with the timestream data
+            
+        timestream_group_index : int (default 0)
+            Index of the timestream group to process
+        
+        resonator_index : int (default 0)
+            index of the resonator to process data for
+            
+        low_pass_cutoff_Hz : float
+            Cutoff frequency used for low pass filtering the timeseries for display
+            
+        dac_chain_gain : float
+            Estimate of the gain from output of DAC to device. 
+            Default value of -52 represents -2 dB loss intrinsic to analog signal conditioning
+            board, 10 dB attenuator at output of signal conditioning board, and 40 dB total cold
+            attenuation.
+        
+        delay_estimate : float
+            Estimate of basic cable delay to help fitting proceed more smoothly. Default value
+            is appropriate for the wideband noise firmware
+            
+        deglitch_threshold : float
+            Threshold for glitch detection in units of median absolute deviation.
+            
+        cryostat : str
+            (Optional) Override the cryostat used to take this data. By default, the cryostat
+            is guessed based on the machine you are processing data on. The guess is made by
+            the get_experiment_info_at function
+            
+            
+        """
         
         self.sweep_filename = sweep_filename
         if timestream_filename:
@@ -229,24 +280,47 @@ class SweepNoiseMeasurement(object):
         
     @property
     def original_timeseries(self):
+        """
+        get the original demodulated timeseries
+        """
         return self.timestream.get_data_index(self.timestream_index)
     
     @property
     def normalized_timeseries(self):
+        """
+        get the timeseries after normalizing it to remove the arbitrary amplitude, phase, and delay corrections
+        determined by the resonator fit
+        """
         return self.resonator_model.normalize(self.noise_measurement_freq_MHz,self.original_timeseries)
     
     @property
     def projected_timeseries(self):
+        """
+        get the timeseries after projecting it into the dissipation and frequency directions (in units of Hz)
+        determined by the resonator fit
+        """
         return self.resonator_model.project_s21_to_delta_freq(self.noise_measurement_freq_MHz,self.normalized_timeseries,
                                                             s21_already_normalized=True)
     
     @property
     def fractional_fluctuation_timeseries(self):
+        """
+        get the fractional fluctuation timeseries (projected divided by resonant frequency)
+        """
         if self._fractional_fluctuation_timeseries is None:
             self._fractional_fluctuation_timeseries = self.get_deglitched_timeseries()/(self.noise_measurement_freq_MHz*1e6)
         return self._fractional_fluctuation_timeseries
         
     def get_deglitched_timeseries(self,window_in_seconds=1.0, thresh=None):
+        """
+        Get the deglitched, projected timeseries
+        
+        window_in_seconds : float
+            deglitching window duration
+            
+        thresh : float
+            threshold in median absoute deviations.
+        """
         # calculate the number of samples for the deglitching window.
         # the following will be the next power of two above 1 second worth of samples
         window = int(2**np.ceil(np.log2(window_in_seconds*self.timeseries_sample_rate)))
@@ -262,6 +336,26 @@ class SweepNoiseMeasurement(object):
         return deglitched_timeseries
     
     def get_projected_fractional_fluctuation_spectra(self,NFFT=2**12,window=mlab.window_none):
+        """
+        Calculate the PSD of the fractional fluctuation timeseries using mlab.psd.
+        
+        NFFT : int
+            length of the FFT to compute. Sets freuqency resolution.
+            
+        window : function
+            windowing function. i.e. mlab.window_hamming etc.
+        
+        Returns: freqs,prr,pii
+        
+        freqs : float array
+            Frequencies in Hz
+        
+        prr : float array
+            dissipation spectrum. Units are 1/sqrt(Hz)
+            
+        pii : float array
+            frequency fluctuation spectrum. Units are 1/sqrt(Hz)
+        """
         prr,freqs = mlab.psd(self.fractional_fluctuation_timeseries.real,NFFT=NFFT,
                                                            window=window,Fs=self.timeseries_sample_rate)
         pii,freqs = mlab.psd(self.fractional_fluctuation_timeseries.imag,NFFT=NFFT,
@@ -270,15 +364,24 @@ class SweepNoiseMeasurement(object):
 
     @property
     def sweep(self):
+        """
+        Get the sweep group from the netcdf file
+        """
         self._open_sweep_file()
         return self._sweep_file.sweeps[self.sweep_group_index]
     
     @property
     def timestream(self):
+        """
+        Get the timestream group from the netcdf file
+        """
         self._open_timestream_file()
         return self._timestream_file.timestreams[self.timestream_group_index]
     
     def __getstate__(self):
+        """
+        For pickling, make sure we get rid of everything unpicklable and large
+        """
         self._close_files()
         d = self.__dict__.copy()
 #        del d['_sweep_file']
@@ -290,6 +393,9 @@ class SweepNoiseMeasurement(object):
         return d
         
     def __setstate__(self,state):
+        """
+        Restore from pickling
+        """
         self.__dict__ = state
 #        try:
 #            self._open_netcdf_files()
@@ -321,6 +427,9 @@ class SweepNoiseMeasurement(object):
                                                   delay_estimate=self.fit_params['delay'].value)
 
     def plot(self,fig=None,title=''):
+        """
+        Make standard plot of noise sweep
+        """
         if fig is None:
             f1 = plt.figure(figsize=(16,8))
         else:
