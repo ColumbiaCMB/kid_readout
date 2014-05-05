@@ -351,10 +351,10 @@ class SweepNoiseMeasurement(object):
             Frequencies in Hz
         
         prr : float array
-            dissipation spectrum. Units are 1/sqrt(Hz)
+            dissipation spectrum. Units are 1/Hz
             
         pii : float array
-            frequency fluctuation spectrum. Units are 1/sqrt(Hz)
+            frequency fluctuation spectrum. Units are 1/Hz
         """
         prr,freqs = mlab.psd(self.fractional_fluctuation_timeseries.real,NFFT=NFFT,
                                                            window=window,Fs=self.timeseries_sample_rate)
