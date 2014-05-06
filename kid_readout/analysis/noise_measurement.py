@@ -103,7 +103,7 @@ def plot_noise_nc(fglob,**kwargs):
 class SweepNoiseMeasurement(object):
     def __init__(self,sweep_filename,sweep_group_index=0,timestream_filename=None,timestream_group_index=0,
                  resonator_index=0,low_pass_cutoff_Hz=4.0,
-                 dac_chain_gain = -52, delay_estimate=-7.29,
+                 dac_chain_gain = -42, delay_estimate=-7.29,
                  deglitch_threshold=5, cryostat=None):
         """
         sweep_filename : str
@@ -127,8 +127,8 @@ class SweepNoiseMeasurement(object):
             
         dac_chain_gain : float
             Estimate of the gain from output of DAC to device. 
-            Default value of -52 represents -2 dB loss intrinsic to analog signal conditioning
-            board, 10 dB attenuator at output of signal conditioning board, and 40 dB total cold
+            Default value of -42 represents -2 dB loss intrinsic to analog signal conditioning
+            board and 40 dB total cold
             attenuation.
         
         delay_estimate : float
