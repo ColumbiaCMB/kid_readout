@@ -73,7 +73,12 @@ def plot_noise_nc(fglob,**kwargs):
                     if plotall or k == 0:
                         if pdf is None:
                             chipfname = nm.chip_name.replace(' ','_').replace(',','')
-                            pdf = PdfPages('/home/data/plots/%s_%s.pdf' % (fbase,chipfname))
+                            pdfname = '/home/data/plots/%s_%s.pdf' % (fbase,chipfname)
+                            pdf = PdfPages(pdfname)
+                            try:
+                                os.chmod(pdfname,0666)
+                            except OSError:
+                                print "could not change permissions of",pdfname
 
                         fig = Figure(figsize=(16,8))
                         title = ('%s %s' % (sname,tname))
@@ -92,9 +97,14 @@ def plot_noise_nc(fglob,**kwargs):
             if pdf is not None:
                 pdf.close()
             rnc.close()
-            fh = open(os.path.join('/home/data','noise_sweeps_' +fbase+'.pkl'),'w')
+            pklname = os.path.join('/home/data','noise_sweeps_' +fbase+'.pkl')
+            fh = open(pklname,'w')
             cPickle.dump(nms,fh,-1)
             fh.close()
+            try:
+                os.chmod(pklname,0666)
+            except OSError:
+                print "could not change permissions of", pklname
         except Exception,e:
             raise
             errors[fname] = e
@@ -103,7 +113,7 @@ def plot_noise_nc(fglob,**kwargs):
 class SweepNoiseMeasurement(object):
     def __init__(self,sweep_filename,sweep_group_index=0,timestream_filename=None,timestream_group_index=0,
                  resonator_index=0,low_pass_cutoff_Hz=4.0,
-                 dac_chain_gain = -42, delay_estimate=-7.29,
+                 dac_chain_gain = -49, delay_estimate=-7.29,
                  deglitch_threshold=5, cryostat=None):
         """
         sweep_filename : str
@@ -127,8 +137,8 @@ class SweepNoiseMeasurement(object):
             
         dac_chain_gain : float
             Estimate of the gain from output of DAC to device. 
-            Default value of -42 represents -2 dB loss intrinsic to analog signal conditioning
-            board and 40 dB total cold
+            Default value of -49 represents -2 dB loss intrinsic to analog signal conditioning
+            board, 7 dB misc cable loss and 40 dB total cold
             attenuation.
         
         delay_estimate : float
