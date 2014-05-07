@@ -122,7 +122,7 @@ def build_noise_archive(info, force_rebuild=False):
     avals = []
     aerrs = []
     for nm in nms:
-        if nm.params.has_key('a'):
+        if nm.fit_params.has_key('a'):
             avals.append(nm.fit_params['a'].value)
             aerrs.append(nm.fit_params['a'].stderr)
         else:
@@ -132,25 +132,30 @@ def build_noise_archive(info, force_rebuild=False):
     data['a_err'] = aerrs
     attrs = nms[0].__dict__.keys()
     attrs.remove('fit_params')
-    attrs.remove('index')
+    attrs.remove('resonator_model')
     private = [x for x in attrs if x.startswith('_')]
     for private_var in private:
         attrs.remove(private_var)
     for pn in attrs:
         data[pn] = [getattr(nm,pn) for nm in nms]
     pca_fr = data['pca_freq'][0]
-    mask150 = (pca_fr > 100) & (pca_fr < 200)
-    mask30k = (pca_fr > 20e3) & (pca_fr < 40e3)
-    data['noise_150_hz'] = [nm.pca_eigvals[1,mask150].mean() for nm in nms]
-    data['noise_30_khz'] = [nm.pca_eigvals[1,mask30k].mean() for nm in nms]
-    data['resonator_index'] = [info['index_to_resnum'][nm.index] for nm in nms]
+    noise150 = []
+    noise30k = []
+    for nm in nms:
+        mask150 = (nm.pca_freq > 100) & (nm.pca_freq < 200)
+        mask30k = (nm.pca_freq > 20e3) & (nm.pca_freq < 40e3)
+        noise150.append(nm.pca_eigvals[1,mask150].mean())
+        noise30k.append(nm.pca_eigvals[1,mask30k].mean())
+    data['noise_150_Hz'] = noise150
+    data['noise_30_kHz'] = noise30k
+    data['resonator_id'] = [info['index_to_resnum'][nm.resonator_index] for nm in nms]
     
     lgs = []
     cgs = []
     for nm in nms:
         try:
-            lg = lg_5x4[info['index_to_resnum'][nm.index]]
-            cg = cap_5x4[info['index_to_resnum'][nm.index]]
+            lg = lg_5x4[info['index_to_resnum'][nm.resonator_index]]
+            cg = cap_5x4[info['index_to_resnum'][nm.resonator_index]]
         except IndexError:
             lg = np.nan
             cg = np.nan
@@ -162,7 +167,11 @@ def build_noise_archive(info, force_rebuild=False):
     data['Cg'] = cgs
     df = pd.DataFrame(data)
     df['round_temp'] = np.round(df['end_temp']*1000/10)*10
-    np.save(archname,df.to_records())
+    
+    try:
+        np.save(archname,df.to_records())
+    except Exception,e:
+        print "failed to pickle",e
     return df
 
 def load_archive(fn):
