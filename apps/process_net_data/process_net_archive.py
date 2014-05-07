@@ -48,7 +48,7 @@ def plot_s21(data,ax=None,min_load_temp=4,max_load_temp=8):
     ax.set_xlim(0,1.1)
     ax.set_ylim(-0.5,0.5)
     
-def plot_load_vs_freq_shift(all_data,axs=None,min_load_temp=4,max_load_temp=8,anchor_threshold=30):       
+def plot_load_vs_freq_shift(all_data,axs=None,min_load_temp=4,max_load_temp=8,anchor_range = (30,100)):       
     """
     Plot shift in resonance frequency as a function of load temperature
     """
@@ -63,10 +63,13 @@ def plot_load_vs_freq_shift(all_data,axs=None,min_load_temp=4,max_load_temp=8,an
     y = np.polyval(polynomial,x)
     fractional = slope/(all_data.f_0_max.iat[0])
 
+    anchors = all_data[(all_data.timestream_duration>anchor_range[0]) & 
+                    (all_data.timestream_duration<anchor_range[1])]
+
     for name,marker,color,data in zip(['in transition','steady'],
                                 ['.','o'],
                                 ['b','r'],
-                                [all_data,all_data[all_data.timestream_duration > anchor_threshold]]):
+                                [all_data,anchors]):
         load_temp = data.sweep_primary_load_temperature #data.timestream_primary_load_temperature.apply(np.mean) 
         ax1.errorbar(load_temp,data.delta_f_0_Hz,yerr=data.f_0_err*1e6,marker=marker,linestyle='none',label=name,color=color)
         ax2.errorbar(load_temp,data.delta_f_0_Hz-np.polyval(polynomial,data.sweep_primary_load_temperature),
@@ -150,7 +153,7 @@ def plot_noise(data,axs=None,min_load_temp=4,max_load_temp=8,max_uK=100):
     ax2.set_xlabel('Load Temperature (K)')
     
     
-def plot_resonator_net(data,resonator_index=0,fig = None,axs=None,anchor_threshold=30,min_load_temp=4, max_load_temp=8,max_uK=70):
+def plot_resonator_net(data,resonator_index=0,fig = None,axs=None,anchor_range=(30,100),min_load_temp=4, max_load_temp=8,max_uK=70):
     """
     Make complete plot for a given resonator (including S21 sweep, responsivity, Q's, and noise)
     """
@@ -158,10 +161,11 @@ def plot_resonator_net(data,resonator_index=0,fig = None,axs=None,anchor_thresho
         fig,axs = plt.subplots(ncols=4,nrows=2,figsize=(20,10))
         fig.subplots_adjust(wspace=.3)
     data = data[data.resonator_index == resonator_index]
-    anchors = data[data.timestream_duration>anchor_threshold]
+    anchors = data[(data.timestream_duration>anchor_range[0]) & 
+                    (data.timestream_duration<anchor_range[1])]
     plot_s21(anchors, ax=axs[1,0], min_load_temp=min_load_temp, max_load_temp=max_load_temp)
     plot_load_vs_freq_shift(data, axs=[axs[0,1],axs[1,1],axs[0,2],axs[1,2]], min_load_temp=min_load_temp, max_load_temp=max_load_temp, 
-                            anchor_threshold=anchor_threshold)
+                            anchor_range=anchor_range)
     plot_noise(anchors, axs=[axs[0,3],axs[1,3]], min_load_temp=min_load_temp, max_load_temp=max_load_temp, max_uK=max_uK)
     axs[0,0].set_visible(False)
     info = data.chip_name.iat[0].replace(', ','\n')
