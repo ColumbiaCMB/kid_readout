@@ -46,10 +46,11 @@ print offsets*1e6
 print len(f0s)
 
 #heater_voltages = 0.4*np.sqrt(np.arange(1,11))
-heater_voltages = [0.2,0.3,0.4,0.5,0.6,0.8]
+#heater_voltages = [0.2,0.3,0.4,0.5,0.6,0.8]
+heater_voltages = [1, 1.2, 1.4]
 #heater_voltages = np.hstack(([0.0],heater_voltages))
 
-fg.set_dc_voltage(0.0)
+fg.set_dc_voltage(0.8)
 #time.sleep(60*10)
 
 if False:
@@ -63,7 +64,7 @@ if False:
     time.sleep(120)
 start = time.time()
 
-ri.set_dac_attenuator(39.0)
+ri.set_dac_attenuator(33.0)
 
 for heater_voltage in heater_voltages:
     measured_freqs = sweeps.prepare_sweep(ri,f0binned,offsets,nsamp=nsamp)
@@ -164,7 +165,7 @@ for heater_voltage in heater_voltages:
         ri._sync()
         time.sleep(0.2)
         t0 = time.time()
-        dmod,addr = ri.get_data_seconds(30,demod=True)
+        dmod,addr = ri.get_data_seconds(8,demod=True)
         print nsets,iset,tsg
         tsg = df.add_timestream_data(dmod, ri, t0, tsg=tsg)
     print "done taking data"
@@ -191,7 +192,7 @@ for heater_voltage in heater_voltages:
             ri._sync()
             time.sleep(0.2)
             t0 = time.time()
-            dmod,addr = ri.get_data_seconds(4,demod=True)
+            dmod,addr = ri.get_data_seconds(8,demod=True)
             print nsets,iset,tsg
             tsg = df.add_timestream_data(dmod, ri, t0, tsg=tsg)
         df.sync()
