@@ -24,6 +24,12 @@ def sigmas(fres,Tphys,Tc):
                - 2 * np.exp(-Delta/(kB*Tphys)) * np.exp(-xi) * scipy.special.i0(xi)))
     return sigma1,sigma2 
               
+def s1s2(Tphys,Tc,fread):
+    xi = h*fread/(2*kB*Tphys)
+    Delta = 3.52*kB*Tc/2.0
+    S1 = (2/np.pi)*np.sqrt(2*Delta/(np.pi*kB*Tphys))*np.sinh(xi)*scipy.special.k0(xi)
+    S2 = 1 + np.sqrt(2*Delta/(np.pi*kB*Tphys))*np.exp(-xi)*scipy.special.i0(xi)
+    return S1,S2
 
 class KIDModel(object):
     def __init__(self,Tc=1.46, nqp0=5000, Tbase=0.25, f0_nom = 150e6,
@@ -39,16 +45,16 @@ class KIDModel(object):
         self.params.add('T_star',value=T_star,min=.1,max=1)
         self.params.add('Tc',value=Tc,min=1,max=2)
         self.params.add('delta_loss',value=delta_loss,min=0,max=1e-1)
+        self.params.add('Lg',value = Lg,min=0,max=100)
+        self.params.add('cap',value = cap,min=0,max=100)
         self.nqp0 = nqp0
 #       self.Tbase = Tbase
         self.f0_nom = f0_nom
         self.ind_l_um = ind_l_um
         self.ind_w_um = ind_w_um
         self.ind_h_nm = ind_h_nm
-        self._Lg = Lg
         self.N0 = N0
         self.Qc = Qc
-        self.cap = cap
         self.tau_star = tau_star
         self.P_read = P_read
         self.T_noise = T_noise
@@ -62,7 +68,10 @@ class KIDModel(object):
     @property
     def Lg(self):
         # can upgrade this later to some sort of estimate
-        return self._Lg
+        return self.params['Lg'].value*1e-9
+    @property
+    def cap(self):
+        return self.params['cap'].value*1e-12
     
     @property
     def ind_nsq(self):
@@ -215,4 +224,20 @@ class DarkKIDModel(KIDModel):
         return ((sigman*(np.pi*self.Delta*qC)/(h*self.f0_nom)) *
                 (1 - (self.nqp(T)/(2*self.N0*self.Delta))*(1+np.sqrt((2*self.Delta)/(np.pi*kBeV*T))*
                                                            np.exp(-xi)*scipy.special.i0(xi))))
+
+class DarkKIDModel2(KIDModel):
+    def sigma1(self,T):
+        xi = self.xi(T)
+        sigman = self.params['sigman'].value
+        result = (sigman*(2*self.Delta*qC/(h*self.f0_nom)) *
+                  (self.nqp(T)/(self.N0*np.sqrt(2*np.pi*kBeV*T*self.Delta))) *
+                  np.sinh(xi) * scipy.special.k0(xi))
+        return result
     
+    def sigma2(self,T):
+        xi = self.xi(T)
+        sigman = self.params['sigman'].value
+        return ((sigman*(np.pi*self.Delta*qC)/(h*self.f0_nom)) *
+                (1 - (self.nqp(T)/(2*self.N0*self.Delta))*(1+np.sqrt((2*self.Delta)/(np.pi*kBeV*T))*
+                                                           np.exp(-xi)*scipy.special.i0(xi))))
+        
