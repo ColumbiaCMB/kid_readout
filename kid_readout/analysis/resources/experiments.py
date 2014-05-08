@@ -1,7 +1,5 @@
 import bisect
 import socket
-from kid_readout.analysis.resources.hpd_experiments import _unix_time_index,\
-    by_unix_time_table
 if socket.gethostname() == 'detectors':
     default_cryostat = 'HPD'
 else:
