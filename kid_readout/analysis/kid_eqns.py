@@ -185,15 +185,18 @@ class KIDModel(object):
     def total_Qi(self,T):
         return 1/(1/self.Qi(T) + self.params['F_TLS'].value*self.delta_tls(T))
     
+    def total_fres(self,T):
+        return self.f_res(T)*(1+self.tls_shift(T))
+    
     def fit_f0_resid(self,params,T,f0,f0_err=None):
         if f0_err is None:
-            return (f0 - self.f_res(T)*(1+self.tls_shift(T)))/self.f0_nom
+            return (f0 - self.total_fres(T))/self.f0_nom
         else:
-            return (f0 - self.f_res(T)*(1+self.tls_shift(T)))/f0_err
-    def fit_f0(self,T,f0):
+            return (f0 - self.total_fres(T))/f0_err
+    def fit_f0(self,T,f0,f0_err=None):
         self.params['F_TLS'].value = 1.0
         self.params['F_TLS'].vary = False
-        self.result = lmfit.minimize(self.fit_f0_resid,self.params,args=(T,f0))
+        self.result = lmfit.minimize(self.fit_f0_resid,self.params,args=(T,f0,f0_err))
         
     def fit_qi_resid(self,params,T,Qi,Qi_err=None):
         if Qi_err is None:
@@ -224,6 +227,43 @@ class DarkKIDModel(KIDModel):
         return ((sigman*(np.pi*self.Delta*qC)/(h*self.f0_nom)) *
                 (1 - (self.nqp(T)/(2*self.N0*self.Delta))*(1+np.sqrt((2*self.Delta)/(np.pi*kBeV*T))*
                                                            np.exp(-xi)*scipy.special.i0(xi))))
+
+class DarkKIDModelFractional(DarkKIDModel):
+    def __init__(self,Tc=1.46, nqp0=5000, f0_nom=100e6,
+                 sigman=5e5, alpha=.66,
+                 Qc=1e5, P_read=-106, T_noise=4.0, delta_0 = 1e-3, F_TLS=1.0,
+                 N0 = 1.72e10,
+                 delta_loss=1e-5):
+        self.params = lmfit.Parameters()
+        self.params.add('nqp0',value = nqp0, min = 0,max=1e5)
+        self.params.add('delta_0',value = delta_0, min = 0,max=1)
+        self.params.add('F_TLS',value=F_TLS,vary=False)
+#        self.params.add('sigman',value=sigman,min=1e4,max=1e6)
+        self.params.add('Tc',value=Tc,min=1,max=2)
+        self.params.add('delta_loss',value=delta_loss,min=0,max=1e-1)
+        self.params.add('alpha',value = alpha,min=0.1,max=1)
+        self.nqp0 = nqp0
+#       self.Tbase = Tbase
+        self.N0 = N0
+        self.Qc = Qc
+        self.P_read = P_read
+        self.T_noise = T_noise
+        self.f0_nom = f0_nom
+        
+    @property
+    def alpha(self):
+        return self.params['alpha'].value
+    
+    def f_res(self, T):
+        s1,s2 = s1s2(T, self.Tc, self.f0_nom)
+        delta_f = (self.alpha * s2 * self.nqp(T)) / (4 * self.N0 * self.Delta)
+        return -delta_f
+    
+    def Qi(self,T):
+        s1,s2 = s1s2(T, self.Tc, self.f0_nom)
+        return (2*self.N0*self.Delta)/(self.alpha*s1*self.nqp(T))
+    
+    
 
 class DarkKIDModel2(KIDModel):
     def sigma1(self,T):
