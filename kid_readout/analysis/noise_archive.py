@@ -100,6 +100,7 @@ def build_noise_archive(info, force_rebuild=False):
     if not force_rebuild and os.path.exists(archname):
         try:
             df = load_archive(archname)
+            print "Loaded noise archive from:",archname
             return df
         except:
             pass
