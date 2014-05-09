@@ -34,7 +34,19 @@ def plot_mattis_bardeen(data,axs=None):
     Qis = np.array(data.Q_i)
     fractional_freq = np.array(data.fractional_delta_f_0)
     
-
+def apply_limits(data,limits_dict):
+    for name,limits in limits_dict.items():
+        if name in data.columns:
+            try:
+                low,high = limits
+            except (TypeError, ValueError) as e:
+                raise ValueError("Invalid limits specified for parameter %s. Error was %s" % (name,str(e)))
+            if low is not None:
+                data = data[data[name]>=low]
+            if high is not None:
+                data = data[data[name]<=high]
+    return data
+                
 
 def refine_dataset(original_data,settings):
     """
