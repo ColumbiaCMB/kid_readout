@@ -27,7 +27,7 @@ if nf % atonce > 0:
     print "extending list of resonators to make a multiple of ",atonce
     f0s = np.concatenate((f0s,np.arange(1,1+atonce-(nf%atonce))+f0s.max()))
 
-offsets = np.linspace(-4882.8125,4638.671875,20)#[5:15]
+offsets = np.linspace(-4882.8125,4638.671875,20)*2
 offsets = offsets
 #offsets = np.concatenate(([-40e3,-20e3],offsets,[20e3,40e3]))/1e6
 offsets = np.concatenate(([-40e3],offsets,[40e3]))/1e6
@@ -47,7 +47,8 @@ print len(f0s)
 
 #heater_voltages = 0.4*np.sqrt(np.arange(1,11))
 #heater_voltages = [0.2,0.3,0.4,0.5,0.6,0.8]
-heater_voltages = [1.5, 2.0, 2.5, 3, 4]
+heater_voltages = [.8, 1.2, 1.6, 2]
+#heater_voltages = [2.5, 3, 3.5]
 #heater_voltages = np.hstack(([0.0],heater_voltages))
 
 fg.set_dc_voltage(0)
