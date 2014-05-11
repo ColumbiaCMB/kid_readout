@@ -1,5 +1,6 @@
 import bisect
 import socket
+import time
 if socket.gethostname() == 'detectors':
     default_cryostat = 'HPD'
 else:
@@ -19,8 +20,9 @@ def get_experiment_info_at(unix_time,cryostat=None):
         _unix_time_index = starcryo_experiments._unix_time_index
         by_unix_time_table = starcryo_experiments.by_unix_time_table
     index = bisect.bisect(_unix_time_index,unix_time)
-    if index == len(_unix_time_index):
-        index -= 1
+    index = index - 1
+    if index < 0:
+        raise Exception("No experiment found for timestamp %s" % time.ctime(unix_time))
     date_string,description,optical_load = by_unix_time_table[index]
     if optical_load == 'dark':
         is_dark = True
