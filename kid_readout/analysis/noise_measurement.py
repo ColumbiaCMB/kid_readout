@@ -224,7 +224,7 @@ class SweepNoiseMeasurement(object):
         self.sweep_s21 = np.hstack((self.sweep_s21,[original_timeseries[:2048].mean()]))
         self.sweep_errors = np.hstack((self.sweep_errors,
                                            [original_timeseries[:2048].real.std()/np.sqrt(2048)
-                                            +original_timeseries[:2048].imag.std()/np.sqrt(2048)]))
+                                            +1j*original_timeseries[:2048].imag.std()/np.sqrt(2048)]))
         
         # Now put all the sweep data in increasing frequency order so it plots nicely
         order = self.sweep_freqs_MHz.argsort()
