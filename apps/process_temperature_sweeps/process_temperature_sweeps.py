@@ -8,6 +8,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 matplotlib.rcParams['font.size'] = 16.0
+import lmfit
 
 from kid_readout.analysis import kid_eqns
 
@@ -16,7 +17,7 @@ default_settings = dict(fractional_f_0_err_limit = 1e-6,
                         valid_Q_range = (5000,1e6),
                         max_package_temp_deviation = None,
                         )
-settings = dict(valid_load_temp_range = (4,8.0),
+settings = dict(valid_load_temp_range = (0,8.0),
                 f_0_max_temp_limit = 5.0,
                 )
 
@@ -24,15 +25,69 @@ all_settings = dict()
 all_settings.update(default_settings)
 all_settings.update(settings)
 
-def plot_mattis_bardeen(data,axs=None):
+from kid_readout.analysis import kid_eqns
+reload(kid_eqns)
+import itertools
+def plot_mattis_bardeen(data,axs=None,min_fit_temp=0,error_factor=100.0):
     if axs is None:
-        fig,(ax1,ax2,ax3,ax4) = plt.subplots(nrows=4,figsize=(8,12),sharex=True,squeeze=True)
+        fig,(ax1,ax2,ax3,ax4) = plt.subplots(ncols=4,figsize=(10,6),sharex=True,squeeze=True)
     else:
         ax1,ax2,ax3,ax4 = axs
         
     temps = np.array(data.sweep_primary_package_temperature)
     Qis = np.array(data.Q_i)
     fractional_freq = np.array(data.fractional_delta_f_0)
+    Qi_err = np.array(data.Q_err)
+    Qi_err[Qi_err <= 0] = np.median(Qi_err)
+    Qi_err = Qi_err/error_factor
+    f0_err = np.array(data.f_0_err/data.f_0)
+    f0_err[f0_err <= 0] = np.median(f0_err)
+    ax1.plot(temps,fractional_freq,'o')
+    ax2.plot(temps,fractional_freq,'o')    
+    ax3.plot(temps,1/Qis,'o')
+    ax4.plot(temps,1/Qis,'o')
+    
+    T = np.linspace(0.1,0.38,1000)
+    
+    optional_params = ['nqp0','delta_0','delta_loss']
+    param_sets = [[]]
+    for k in range(len(optional_params)):
+        param_sets.extend(itertools.combinations(optional_params,k+1))
+    colors = plt.cm.jet(np.linspace(0,1,len(param_sets)))
+    for color,param_set in zip(colors,param_sets):
+        km = kid_eqns.DarkKIDModelFractional()
+        for name in optional_params:
+            km.params[name].vary = False
+        for name in param_set:
+            km.params[name].vary = True
+        km.fit_f0(temps,fractional_freq,f0_err)
+        print "fitting only f0 and varying", param_set
+        lmfit.report_fit(km.params)
+        print km.result.message
+        ax1.plot(T,km.total_fres(T),color=color,label=('f0 %s' % ','.join(param_set)))
+        ax2.plot(T,km.total_fres(T),color=color,label=('f0 %s' % ','.join(param_set)))
+        ax3.plot(T,1/km.total_Qi(T),color=color,label=('f0 %s' % ','.join(param_set)))
+        ax4.plot(T,1/km.total_Qi(T),color=color,label=('f0 %s' % ','.join(param_set)))
+        
+        km = kid_eqns.DarkKIDModelFractional()
+        for name in optional_params:
+            km.params[name].vary = False
+        for name in param_set:
+            km.params[name].vary = True
+        km.fit_f0_qi(temps,fractional_freq,Qis,f0_err=f0_err,Qi_err=Qi_err)
+        print "fitting f0 and Qi and varying", param_set
+        lmfit.report_fit(km.params)
+        print km.result.message
+        ax1.plot(T,km.total_fres(T),'--',color=color,lw=1.5,label=('%s' % ','.join(param_set)))
+        ax2.plot(T,km.total_fres(T),'--',color=color,lw=1.5,label=('%s' % ','.join(param_set)))
+        ax3.plot(T,1/km.total_Qi(T),'--',color=color,lw=1.5,label=('%s' % ','.join(param_set)))
+        ax4.plot(T,1/km.total_Qi(T),'--',color=color,lw=1.5,label=('%s' % ','.join(param_set)))
+    
+    ax1.set_ylim(fractional_freq.min(),0)
+    ax2.set_ylim(-1e-5,0)
+    ax3.set_ylim(1/Qis.max(),1/Qis.min())
+    ax4.set_ylim(0,1e-5)
+    ax2.legend(loc='lower left',prop=dict(size='xx-small'))
     
 def apply_limits(data,limits_dict):
     for name,limits in limits_dict.items():
