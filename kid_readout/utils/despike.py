@@ -22,7 +22,10 @@ def deglitch_block(ts,thresh=5):
     nmask = mask.sum()
     print "rejecting",nmask/float(ts.shape[0])
     out = ts.copy()
-    out[mask] = np.array(random.sample(ts[~mask],nmask))
+    try:
+        out[mask] = np.array(random.sample(ts[~mask],nmask))
+    except ValueError:
+        print "more masked values than samples to draw from!"    
     return out
 
 def deglitch_window(data, window_length, thresh=6):
