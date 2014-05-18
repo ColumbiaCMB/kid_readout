@@ -29,14 +29,14 @@ def convert_to_lmfit_params(raw_params,base_params):
 
 
 class MCMCFitter(Fitter):
-    def get_param_bounds_by_index(self,index):
+    def get_param_bounds_by_index(self,index,error_factor=10.0):
         name = parameter_list[index]
         if not self.result.params[name].vary:
             raise Exception("Non varying parameter found %s" % name) 
         err = self.result.params[name].stderr
         value = self.result.params[name].value
-        min = value - 10*err
-        max = value + 10*err
+        min = value - error_factor*err
+        max = value + error_factor*err
         if min < self.result.params[name].min:
             min = self.result.params[name].min
         if max > self.result.params[name].max:
@@ -52,7 +52,7 @@ class MCMCFitter(Fitter):
     
     def basic_loglikelihood(self,params):
         model = self.model(params = convert_to_lmfit_params(params,self.result.params))
-        return (-np.log(self.errors)
+        return (-np.log(np.abs(self.errors))
                 - 0.5*abs((self.y_data-model)/self.errors)**2)
     def basic_logprob(self,params):
         if np.isinf(self.uniform_logprior(params)):
@@ -66,7 +66,7 @@ class MCMCResonator(Resonator,MCMCFitter):
             ndim -= 1
         self.initial = np.zeros((nwalkers,ndim))
         for dim in range(ndim):
-            min,max = self.get_param_bounds_by_index(dim)
+            min,max = self.get_param_bounds_by_index(dim,error_factor=10)
             self.initial[:,dim] = np.random.uniform(min,max,size=nwalkers)
         self.sampler = emcee.EnsembleSampler(nwalkers,ndim,self.basic_logprob)
         
