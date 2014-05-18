@@ -86,16 +86,17 @@ def plot_noise_nc(fglob,**kwargs):
                         canvas = FigureCanvasAgg(fig)
                         fig.set_canvas(canvas)
                         pdf.savefig(fig,bbox_inches='tight')
-                    else:
-                        if pdf is not None:
-                            pdf.close()
-                            pdf = None
+#                    else:
+#                        if pdf is not None:
+#                            pdf.close()
+#                            pdf = None
                     nm._fractional_fluctuation_timeseries = None
                     nms.append(nm)
                     
                 print fname,nm.start_temp,"K"
             if pdf is not None:
                 pdf.close()
+                pdf = None
             rnc.close()
             pklname = os.path.join('/home/data','noise_sweeps_' +fbase+'.pkl')
             fh = open(pklname,'w')
@@ -106,7 +107,7 @@ def plot_noise_nc(fglob,**kwargs):
             except OSError:
                 print "could not change permissions of", pklname
         except Exception,e:
-            raise
+#            raise
             errors[fname] = e
     return errors
 
@@ -233,7 +234,7 @@ class SweepNoiseMeasurement(object):
         self.sweep_errors = self.sweep_errors[order]
         
         rr = fit_best_resonator(self.sweep_freqs_MHz,self.sweep_s21,errors=self.sweep_errors,delay_estimate=delay_estimate)
-        self.resonator_model = rr
+        self._resonator_model = rr
         self.Q_i = rr.Q_i
         self.fit_params = rr.result.params
         
@@ -388,6 +389,12 @@ class SweepNoiseMeasurement(object):
         self._open_timestream_file()
         return self._timestream_file.timestreams[self.timestream_group_index]
     
+    @property
+    def resonator_model(self):
+        if self._resonator_model is None:
+            self._restore_resonator_model()
+        return self._resonator_model
+    
     def __getstate__(self):
         """
         For pickling, make sure we get rid of everything unpicklable and large
@@ -398,7 +405,7 @@ class SweepNoiseMeasurement(object):
 #        del d['_timestream_file']
 #        del d['sweep']
 #        del d['timestream']
-        del d['resonator_model']
+        d['_resonator_model'] = None
         d['_fractional_fluctuation_timeseries'] = None
         return d
         
@@ -412,10 +419,10 @@ class SweepNoiseMeasurement(object):
 #        except IOError:
 #            print "Warning: could not open associated NetCDF datafiles when unpickling."
 #            print "Some features of the class will not be available"
-        try:
-            self._restore_resonator_model()
-        except Exception, e:
-            print "error while restoring resonator model:",e
+#        try:
+#            self._restore_resonator_model()
+#        except Exception, e:
+#            print "error while restoring resonator model:",e
             
     def _open_sweep_file(self):
         if self._sweep_file is None:
@@ -433,7 +440,7 @@ class SweepNoiseMeasurement(object):
             self._timestream_file = None
 
     def _restore_resonator_model(self):
-        self.resonator_model = fit_best_resonator(self.sweep_freqs_MHz,self.sweep_s21,errors=self.sweep_errors,
+        self._resonator_model = fit_best_resonator(self.sweep_freqs_MHz,self.sweep_s21,errors=self.sweep_errors,
                                                   delay_estimate=self.fit_params['delay'].value)
 
     def plot(self,fig=None,title=''):

@@ -133,7 +133,8 @@ def build_noise_archive(info, force_rebuild=False):
     data['a_err'] = aerrs
     attrs = nms[0].__dict__.keys()
     attrs.remove('fit_params')
-    attrs.remove('resonator_model')
+    if '_resonator_model' in attrs:
+        attrs.remove('_resonator_model')
     private = [x for x in attrs if x.startswith('_')]
     for private_var in private:
         attrs.remove(private_var)
