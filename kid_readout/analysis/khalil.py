@@ -7,6 +7,44 @@ from scipy.special import cbrt
 import numpy as np
 from lmfit import Parameters
 
+def qi_error(Q,Q_err,Q_e_real,Q_e_real_err,Q_e_imag,Q_e_imag_err):
+    """
+    Compute error on Qi
+    
+    Khalil et al defines Qi as 1/Qi = 1/Qr - Real(1/Qe), where Qe is
+    the complex coupling Q. This can be rewritten as:
+    
+    $$ Qi = 1/(1/Q_r - \frac{Q_{e,real}}{Q_{e,real}^2 - Q_{e,imag}^2} $$
+    
+    Assuming the errors are independent (which they seem to mostly be),
+    the error on Qi will then be:
+    
+    $$ \Delta Q_i = \sqrt( (\Delta Q \diff{Qi}{Q})^2 + (\Delta Q_{e,real} \diff{Qi}{Q_{e,real}})^2 + (\Delta Q_{e,imag} \diff{Qi}{Q_{e,imag}})^2 )$$
+    
+    The derivatives are:
+    
+    $$ \diff{Qi}{Q} = \frac{(Qer^2-Qei^2)^2}{(Q Qer - Qer^2 + Qei^2)^2} $$
+    
+    $$ \diff{Qi}{Qer} = -\frac{Qe^2(Qer^2 + Qei^2)}{(Q Qer - Qer^2 + Qei^2)^2} $$
+    
+    $$ \diff{Qi}{Qei} = \frac{2 Q^2 Qer Qei}{(Q Qer - Qer^2 + Qei^2)^2} $$
+    
+    """
+
+    dQ = Q_err
+    Qer = Q_e_real
+    dQer = Q_e_real_err
+    Qei = Q_e_imag
+    dQei = Q_e_imag_err
+    denom = (Q*Qer - Qer**2 + Qei**2)**2
+    
+    dQi_dQ = (Qer**2 - Qei**2)**2 / denom
+    dQi_dQer = (Q**2 * (Qer**2 + Qei**2)) / denom
+    dQi_dQei = (2 * Q**2 * Qer * Qei) / denom
+    
+    dQi = np.sqrt((dQ * dQi_dQ)**2 + (dQer * dQi_dQer)**2 + (dQei * dQi_dQei)**2)
+    return dQi
+
 def cable_delay(params, f):
     """
     This assumes that signals go as exp(i \omega t) so that a time
