@@ -72,7 +72,7 @@ class SweepGroup(object):
         real_err = self.timestream_group.data.real.std(1)
         imag_err = self.timestream_group.data.imag.std(1)
         nsamp = self.timestream_group.data.shape[1]
-        return (real_err + 1j*imag_err)*wavenorm/np.sqrt(nsamp)
+        return (real_err + 1j*imag_err)/np.sqrt(nsamp)
 
     def select_by_index(self,index):
         mask = self.index == index
