@@ -2,6 +2,10 @@ kid_readout
 ===========
 Code for the ROACH KID readout.
 
+FPGA designs
+============
+  * Currently kept here: https://github.com/gitj/kid_readout_fpga
+
 === Libraries used  which should be installed ===
 
 Currently running on CentOS 6.5
