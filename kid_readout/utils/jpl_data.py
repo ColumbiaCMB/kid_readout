@@ -46,11 +46,10 @@ def JPL_2014_May_light_blackbody_temperature(directory):
     contents of the file Log0522JAlSKIP20_bbT_sweep.zip, which is
     posted on the SKIP wiki.
 
-    Return a dictionary with keys that are integers from 0
-    through 13 and values that are lists of 14 Resonators fitted to
-    frequency sweeps taken at blackbody temperatures from 40 K to 4.2
-    K, in descending order. Each list contains data for a single
-    detector.
+    Return a dictionary with keys that are integers from 0 through 13
+    and values that are lists of 14 Resonators fitted to frequency
+    sweeps taken at blackbody temperatures from 4.2 K to 40 K in
+    ascending order. Each list contains data for a single detector.
 
     The fits must include cable delay as a free parameter because it
     has not been removed.
@@ -58,15 +57,18 @@ def JPL_2014_May_light_blackbody_temperature(directory):
     The frequency data in the files is in Hz and is converted to MHz
     here to match our data.
 
-    There are 150 sweeps, with indices ranging from 203 through 352,
-    taken at ten different temperatures between 40 K and 4.2 K. There
-    are 14 working resonators. Each group of sweeps contains one sweep
-    of the entire frequency range then 14 sweeps of individual
-    resonators in order of increasing resonance frequency. The groups
-    of sweeps are taken in order of decreasing temperature. Sweep 203
-    thus contains a sweep of the entire band at the highest
-    temperature of 40 K, and sweep 352 covers the resonator with
-    highest resonance frequency at the lowest temperature of 4.2 K.
+    The original data directory contains 150 sweeps, with indices
+    ranging from 203 through 352, taken at ten different temperatures
+    between 40 K and 4.2 K. There are 14 working resonators. Each
+    group of sweeps contains one sweep of the entire frequency range
+    then 14 sweeps of individual resonators in order of increasing
+    resonance frequency. Sweep 203 thus contains a sweep of the entire
+    band at the highest temperature of 40 K, and sweep 352 covers the
+    resonator with highest resonance frequency at the lowest
+    temperature of 4.2 K.
+
+    Note that each list in the returned dictionary contains sweeps in
+    order of increasing black body temperature.
     """
     log = path.join(directory, 'Log0522JAlSKIP20_bbT_sweep.txt')
     sweeps_per_group = 15
@@ -91,7 +93,7 @@ def JPL_2014_May_light_blackbody_temperature(directory):
             r.T_bath = 0.2 # The device temperature, as listed in the header.
             r.T_bb = bb_temp_K[n]
             r.P_readout = readout_power_dBm[n]
-            resonators[(n % sweeps_per_group) - 1].append(r)
+            resonators[(n % sweeps_per_group) - 1].insert(0, r) # Insert in ascending order
     return resonators
 
 
