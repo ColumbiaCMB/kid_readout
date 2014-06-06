@@ -14,9 +14,11 @@ from os import path
 from glob import glob
 from collections import OrderedDict
 import numpy as np
+
 from kid_readout.analysis.resonator import Resonator
 from kid_readout.analysis.khalil import generic_guess, generic_s21
 from kid_readout.analysis.khalil import delayed_generic_s21, delayed_generic_guess
+
 
 def read_sweep(filename):
     """
@@ -25,6 +27,7 @@ def read_sweep(filename):
     """
     f, I, Q = np.loadtxt(filename, unpack=True)
     return f, I + 1j * Q
+
 
 def read_all_sweeps(directory, pattern='tr*.txt'):
     """
@@ -36,12 +39,24 @@ def read_all_sweeps(directory, pattern='tr*.txt'):
         sweeps[int(path.splitext(path.split(filename)[1])[0][2:])] = read_sweep(filename)
     return sweeps
 
+
 def JPL_2014_May_light_blackbody_temperature(directory):
     """
-    Return a dictionary with keys that are strings representing
-    blackbody temperatures and values that are lists of 14 Resonators
-    fitted to frequency sweeps taken at that blackbody temperature
-    with the detectors at 0.2 K.
+    Parameter directory is a string that is the path to the unzipped
+    contents of the file Log0522JAlSKIP20_bbT_sweep.zip, which is
+    posted on the SKIP wiki.
+
+    Return a dictionary with keys that are integers from 0
+    through 13 and values that are lists of 14 Resonators fitted to
+    frequency sweeps taken at blackbody temperatures from 40 K to 4.2
+    K, in descending order. Each list contains data for a single
+    detector.
+
+    The fits must include cable delay as a free parameter because it
+    has not been removed.
+    
+    The frequency data in the files is in Hz and is converted to MHz
+    here to match our data.
 
     There are 150 sweeps, with indices ranging from 203 through 352,
     taken at ten different temperatures between 40 K and 4.2 K. There
@@ -52,95 +67,89 @@ def JPL_2014_May_light_blackbody_temperature(directory):
     thus contains a sweep of the entire band at the highest
     temperature of 40 K, and sweep 352 covers the resonator with
     highest resonance frequency at the lowest temperature of 4.2 K.
-
-    The returned black body temperatures are rounded to 100 mK, but
-    this temperature is actually regulated to a few mK.
-
-    The fits must include cable delay as a free parameter because it
-    has not been removed.
-    
-    The frequency data in the files is in Hz and is converted to MHz
-    here to match our data.    """
+    """
     log = path.join(directory, 'Log0522JAlSKIP20_bbT_sweep.txt')
     sweeps_per_group = 15
-    first_sweep = 203
-    numbers, readout_powers, bb_temps = np.loadtxt(log,
-                                                    usecols=(0, 5, 9),
-                                                    delimiter=' ',
-                                                    skiprows=15,
-                                                    unpack=True,
-                                                    converters={0: lambda s: path.splitext(s)[0][2:]}) # extract XX from trXX.txt
+    # Each element of sweep_number is the XX in trXX.txt
+    sweep_number, readout_power_dBm, bb_temp_K = np.loadtxt(log,
+                                                            usecols=(0, 5, 9),
+                                                            delimiter=' ',
+                                                            skiprows=15,
+                                                            unpack=True,
+                                                            converters={0: lambda s: path.splitext(s)[0][2:]})
     sweeps = read_all_sweeps(directory)
-    unique_rounded_bb_temps = sorted(set([round(t, 1) for t in bb_temps]), reverse=True)
-    bb_temp_strings = ["{:.1f}".format(t) for t in unique_rounded_bb_temps]
-    resonators = {}
-    for group, temp_string in enumerate(bb_temp_strings):
-        resonators[temp_string] = []
-        # Skip the first sweep in each group, which is the entire band.
-        for index in range(group * sweeps_per_group + 1,
-                           (group + 1) * sweeps_per_group):
-            sweep_index = first_sweep + index
-            r = Resonator(sweeps[sweep_index][0] / 1e6, sweeps[sweep_index][1], # Hz to MHz
+    first_sweep = min(sweeps.keys())
+    #unique_rounded_bb_temps = sorted(set([round(t, 1) for t in bb_temps]), reverse=True)
+    #bb_temp_strings = ["{:.1f}".format(t) for t in unique_rounded_bb_temps]
+    resonators = dict([(n, []) for n in range(sweeps_per_group - 1)])
+    for n in range(len(sweeps)):
+        if (n % sweeps_per_group) == 0: # skip the first sweep in each group
+            continue
+        else:
+            r = Resonator(sweeps[n + first_sweep][0] / 1e6, sweeps[n + first_sweep][1], # Hz to MHz
                           guess = delayed_generic_guess, model = delayed_generic_s21)
-            r.T = 0.2 # The device temperature, as listed in the header.
-            r.T_bb = bb_temps[index]
-            r.P_readout = readout_powers[index]
-            resonators[temp_string].append(r)
+            r.T_bath = 0.2 # The device temperature, as listed in the header.
+            r.T_bb = bb_temp_K[n]
+            r.P_readout = readout_power_dBm[n]
+            resonators[(n % sweeps_per_group) - 1].append(r)
     return resonators
+
 
 def JPL_2014_May_light_bath_temperature(directory):
     """
-    Return a dictionary with keys that are strings representing bath
-    temperatures and values that are lists of 14 Resonators fitted to
-    frequency sweeps taken at that bath temperature, with the black
-    body source at 4.2 K.
+    Parameter directory is a string that is the path to the unzipped
+    contents of the file Log0522JAlSKIP20_Tsweep.zip, which is
+    posted on the SKIP wiki.
 
-    There are 300 sweeps, with indices ranging from 1218 through 1517,
-    taken at ten different bath temperatures between 0.02 K and 0.4 K
-    in steps of 0.02 K. There are 14 working resonators. Each group of
-    sweeps contains one sweep of the entire frequency range then 14
-    sweeps of individual resonators in order of increasing resonance
-    frequency.
+    Return a dictionary with keys that are integers from 0 through 13
+    and values that are lists of 14 Resonators fitted to frequency
+    sweeps taken at bath temperatures from 0.02 K to 0.4 K, in
+    ascending order. Each list contains data for a single detector.
 
-    The groups of sweeps are taken in order of increasing bath
-    temperature.  Sweep 1218 thus contains a sweep of the entire band
-    at the lowest temperature of 0.02 K, and sweep 1517 covers the
-    resonator with highest resonance frequency at the highest
-    temperature of 0.4 K.
 
     The fits must include cable delay as a free parameter because it
     has not been removed.
 
     The frequency data in the files is in Hz and is converted to MHz
     here to match our data.
+    
+    The data file contains 300 sweeps, with indices ranging from 1218
+    through 1517, taken at ten different bath temperatures between
+    0.02 K and 0.4 K in steps of 0.02 K. There are 14 working
+    resonators. Each group of sweeps contains one sweep of the entire
+    frequency range then 14 sweeps of individual resonators in order
+    of increasing resonance frequency. The groups of sweeps are taken
+    in order of increasing bath temperature.  Sweep 1218 thus contains
+    a sweep of the entire band at the lowest temperature of 0.02 K,
+    and sweep 1517 covers the resonator with highest resonance
+    frequency at the highest temperature of 0.4 K.
     """
     log = path.join(directory, 'Log0522JAlSKIP20_Tsweep.txt')
     sweeps_per_group = 15
-    first_sweep = 1218
-    numbers, readout_powers, kid_temps = np.loadtxt(log,
-                                                    usecols=(0, 5, 9),
-                                                    delimiter=' ',
-                                                    skiprows=15,
-                                                    unpack=True,
-                                                    converters={0: lambda s: path.splitext(s)[0][2:]}) # extract XX from trXX.txt
+    # Each element of sweep_number is the XX in trXX.txt
+    sweep_number, readout_power_dBm, kid_temp_K = np.loadtxt(log,
+                                                             usecols=(0, 5, 9),
+                                                             delimiter=' ',
+                                                             skiprows=15,
+                                                             unpack=True,
+                                                             converters={0: lambda s: path.splitext(s)[0][2:]})
     sweeps = read_all_sweeps(directory)
-    unique_rounded_kid_temps = sorted(set([round(t, 2) for t in kid_temps]))
-    kid_temp_strings = ["{:.2f}".format(t) for t in unique_rounded_kid_temps]
-    resonators = {}
-    for group, temp_string in enumerate(kid_temp_strings):
-        resonators[temp_string] = []
-        # Skip the first sweep in each group, which is the entire band.
-        for index in range(group * sweeps_per_group + 1,
-                           (group + 1) * sweeps_per_group):
-            sweep_index = first_sweep + index
-            r = Resonator(sweeps[sweep_index][0] / 1e6, sweeps[sweep_index][1], # Hz to MHz
+    first_sweep = min(sweeps.keys())
+    #unique_rounded_bb_temps = sorted(set([round(t, 1) for t in bb_temps]), reverse=True)
+    #bb_temp_strings = ["{:.1f}".format(t) for t in unique_rounded_bb_temps]
+    resonators = dict([(n, []) for n in range(sweeps_per_group - 1)])
+    for n in range(len(sweeps)):
+        if (n % sweeps_per_group) == 0: # skip the first sweep in each group
+            continue
+        else:
+            r = Resonator(sweeps[n + first_sweep][0] / 1e6, sweeps[n + first_sweep][1], # Hz to MHz
                           guess = delayed_generic_guess, model = delayed_generic_s21)
-            r.T = kid_temps[index]
+            r.T_bath = kid_temp_K[n]
             r.T_bb = 4.2 # The black body temperature, as reported by Peter.
-            r.P_readout = readout_powers[index]
-            resonators[temp_string].append(r)
+            r.P_readout = readout_power_dBm[n]
+            resonators[(n % sweeps_per_group) - 1].append(r)
     return resonators
-    
+
 
 def JPL_2013_August_dark(directory):
     """
@@ -183,9 +192,9 @@ def JPL_2013_August_dark_bath_temperature(directory):
                                     converters={0: lambda s: path.splitext(s)[0][2:]}) # extract XX from trXX.txt
     sweeps = read_all_sweeps(directory)
     resonators = []
-    for n, T in zip(numbers, temp_list):
+    for n, T_bath in zip(numbers, temp_list):
         r = Resonator(sweeps[n][0], sweeps[n][1], guess = generic_guess, model = generic_s21)
-        r.T = T
+        r.T_bath = T_bath
         resonators.append(r)
     return resonators
 
