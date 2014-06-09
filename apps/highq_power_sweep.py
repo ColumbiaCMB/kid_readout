@@ -19,6 +19,8 @@ f0s = np.load('/home/gjones/workspace/apps/sc5x4_0813f12.npy')
 f0s.sort()
 #f0s = f0s*(0.9995)
 
+suffix = "power"
+
 nf = len(f0s)
 atonce = 4
 if nf % atonce > 0:
@@ -31,13 +33,14 @@ offsets = offsets
 offsets = np.concatenate(([-40e3],offsets,[40e3]))/1e6
 #offsets = offsets*4
 
-nsamp = 2**20
+nsamp = 2**18
 step = 1
+nstep = 80
 f0binned = np.round(f0s*nsamp/512.0)*512.0/nsamp
-offset_bins = np.arange(-21,21)*step
+offset_bins = np.arange(-(nstep+1),(nstep+1))*step
 
 offsets = offset_bins*512.0/nsamp
-offsets = np.concatenate(([-20e-3,],offsets,[20e-3]))
+offsets = np.concatenate(([offsets.min()-20e-3,],offsets,[offsets.max()+20e-3]))
 
 print f0s
 print offsets*1e6
@@ -55,7 +58,8 @@ if False:
     time.sleep(600)
 start = time.time()
 
-attenlist = np.linspace(33,45,5)
+attenlist = np.linspace(33,45,5)-6
+attenlist = attenlist[:4]
 for atten in attenlist:
     print "setting attenuator to",atten
     ri.set_dac_attenuator(atten)
@@ -112,7 +116,7 @@ for atten in attenlist:
     time.sleep(1)
     
 
-    df = data_file.DataFile(suffix="compressor_onoff")
+    df = data_file.DataFile(suffix=suffix)
     df.log_hw_state(ri)
     sweep_data = sweeps.do_prepared_sweep(ri, nchan_per_step=atonce, reads_per_step=8, sweep_data=orig_sweep_data)
     df.add_sweep(sweep_data)
