@@ -95,6 +95,24 @@ def amplitude_and_phase(r, title="", xlabel='frequency [MHz]', amp_label='$|S_{2
         plt.show()
     return fig
 
+def IQ_circle(r, title="", xlabel=r"Re $S_{21}$", ylabel=r"Im $S_{21}$", plot_masked=True, **kwds):
+    interactive = plt.isinteractive()
+    plt.ioff()
+    fig, ax = plt.subplots()
+    extracted = plot_resonator.extract(r, **kwds)
+    ax.plot(extracted['data'].real, extracted['data'].imag, linestyle='None', marker='.', color='blue', label='data')
+    if plot_masked and extracted['masked'].size:
+        ax.plot(extracted['masked'].real, extracted['masked'].imag, linestyle='None', marker='.', color='gray', label='masked')
+    ax.plot(extracted['model'].real, extracted['model'].imag, linestyle='-', linewidth=0.5, color='brown', label='fit')
+    ax.plot(extracted['model_0'].real, extracted['model_0'].imag, linestyle='None', marker='.', color='brown', label='$f_0$')
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    fig.suptitle(title)
+    if interactive:
+        plt.ion()
+        plt.show()
+    return fig
+
 def five_by_four(resonators, title="", xlabel='frequency [MHz]', ylabel='$|S_{21}|$ [dB]', sort=False, **kwds):
     if sort:
         resonators.sort(key = lambda r: r.f_0)
