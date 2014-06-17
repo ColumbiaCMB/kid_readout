@@ -26,10 +26,10 @@ def extract(r, normalize_s21=False, freq_scale=1, points=1e3):
             'f_model': freq_model * freq_scale,
             'model_0': s21_model_0}
 
-def _plot_amplitude_on_axis(extracted, axis):
+def _plot_amplitude_on_axis(extracted, axis, plot_masked):
     axis.plot(extracted['f'], 20*np.log10(np.abs(extracted['data'])),
               linestyle='None', marker='.', markersize=2, color='blue', label='data')
-    if extracted['masked'].size:
+    if plot_masked and extracted['masked'].size:
         axis.plot(extracted['f_masked'], 20*np.log10(np.abs(extracted['masked'])),
                   linestyle='None', marker='.', markersize=2, color='gray', label='masked')
     axis.plot(extracted['f_model'], 20*np.log10(np.abs(extracted['model'])),
@@ -37,18 +37,22 @@ def _plot_amplitude_on_axis(extracted, axis):
     axis.plot(extracted['f_0'], 20*np.log10(np.abs(extracted['model_0'])),
               linestyle='None', marker = '.', markersize=3, color='brown', label='$f_0$')
 
-def _plot_phase_on_axis(extracted, axis):
-    axis.plot(extracted['f'], np.unwrap(np.angle(extracted['data'])),
+def _plot_phase_on_axis(extracted, axis, plot_masked):
+#    axis.plot(extracted['f'], np.unwrap(np.angle(extracted['data'])),
+    axis.plot(extracted['f'], np.angle(extracted['data']),
               linestyle='None', marker='.', markersize=2, color='blue', label='data')
-    if extracted['masked'].size:
-        axis.plot(extracted['f_masked'], np.unwrap(np.angle(extracted['masked'])),
+    if plot_masked and extracted['masked'].size:
+#        axis.plot(extracted['f_masked'], np.unwrap(np.angle(extracted['masked'])),
+        axis.plot(extracted['f_masked'], np.angle(extracted['masked']),
                   linestyle='None', marker='.', markersize=2, color='gray', label='masked')
-    axis.plot(extracted['f_model'], np.unwrap(np.angle(extracted['model'])),
+#    axis.plot(extracted['f_model'], np.unwrap(np.angle(extracted['model'])),
+    axis.plot(extracted['f_model'], np.angle(extracted['model']),
               linestyle='-', linewidth=0.5, marker='None', color='brown', label='fit')
     axis.plot(extracted['f_0'], np.angle(extracted['model_0']),
               linestyle='None', marker = '.', markersize=3, color='brown', label='$f_0$')
 
-def amplitude(r, title="", xlabel='frequency [MHz]', ylabel='$|S_{21}|$ [dB]', **kwds):
+def amplitude(r, title="", xlabel='frequency [MHz]', ylabel='$|S_{21}|$ [dB]',
+              plot_masked=True, **kwds):
     """
     Plot the data, fit, and f_0.
     """
@@ -70,13 +74,14 @@ def amplitude(r, title="", xlabel='frequency [MHz]', ylabel='$|S_{21}|$ [dB]', *
         plt.show()
     return fig
 
-def amplitude_and_phase(r, title="", xlabel='frequency [MHz]', amp_label='$|S_{21}|$ [dB]', phase_label='phase [rad]', **kwds):
+def amplitude_and_phase(r, title="", xlabel='frequency [MHz]', amp_label='$|S_{21}|$ [dB]', phase_label='phase [rad]',
+                        plot_masked=True, **kwds):
     interactive = plt.isinteractive()
     plt.ioff()
     fig, axes = plt.subplots(2, 1, sharex=True)
     extracted = extract(r, **kwds)
-    _plot_phase_on_axis(extracted, axes[0])
-    _plot_amplitude_on_axis(extracted, axes[1])
+    _plot_phase_on_axis(extracted, axes[0], plot_masked)
+    _plot_amplitude_on_axis(extracted, axes[1], plot_masked)
     axes[0].set_ylabel(phase_label)
     axes[1].set_ylabel(amp_label)
     axes[1].set_xlabel(xlabel)

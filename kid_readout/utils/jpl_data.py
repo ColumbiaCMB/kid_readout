@@ -81,8 +81,6 @@ def JPL_2014_May_light_blackbody_temperature(directory):
                                                             converters={0: lambda s: path.splitext(s)[0][2:]})
     sweeps = read_all_sweeps(directory)
     first_sweep = min(sweeps.keys())
-    #unique_rounded_bb_temps = sorted(set([round(t, 1) for t in bb_temps]), reverse=True)
-    #bb_temp_strings = ["{:.1f}".format(t) for t in unique_rounded_bb_temps]
     resonators = dict([(n, []) for n in range(sweeps_per_group - 1)])
     for n in range(len(sweeps)):
         if (n % sweeps_per_group) == 0: # skip the first sweep in each group
@@ -137,8 +135,6 @@ def JPL_2014_May_light_bath_temperature(directory):
                                                              converters={0: lambda s: path.splitext(s)[0][2:]})
     sweeps = read_all_sweeps(directory)
     first_sweep = min(sweeps.keys())
-    #unique_rounded_bb_temps = sorted(set([round(t, 1) for t in bb_temps]), reverse=True)
-    #bb_temp_strings = ["{:.1f}".format(t) for t in unique_rounded_bb_temps]
     resonators = dict([(n, []) for n in range(sweeps_per_group - 1)])
     for n in range(len(sweeps)):
         if (n % sweeps_per_group) == 0: # skip the first sweep in each group
