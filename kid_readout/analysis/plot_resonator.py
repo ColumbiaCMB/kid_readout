@@ -99,7 +99,7 @@ def IQ_circle(r, title="", xlabel=r"Re $S_{21}$", ylabel=r"Im $S_{21}$", plot_ma
     interactive = plt.isinteractive()
     plt.ioff()
     fig, ax = plt.subplots()
-    extracted = plot_resonator.extract(r, **kwds)
+    extracted = extract(r, **kwds)
     ax.plot(extracted['data'].real, extracted['data'].imag, linestyle='None', marker='.', color='blue', label='data')
     if plot_masked and extracted['masked'].size:
         ax.plot(extracted['masked'].real, extracted['masked'].imag, linestyle='None', marker='.', color='gray', label='masked')
