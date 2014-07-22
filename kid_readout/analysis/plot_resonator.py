@@ -84,11 +84,11 @@ def five_by_four(resonators, title="", xlabel='frequency [MHz]', ylabel='$|S_{21
         plt.show()
     return fig
 
-def covar(mzr,nsigma=8,nx=15):
+def covar(mzr,nsigma=8,nx=15,figsize=(8,8)):
     params = mzr.params
     pnames = [x for x in params.keys() if x != 'A_phase']
     nparam = len(pnames)
-    f = plt.figure(figsize=(24,24))
+    f = plt.figure(figsize=figsize)
     for p1 in range(nparam):
         for p2 in range(p1+1,nparam):
             print pnames[p1],pnames[p2]
