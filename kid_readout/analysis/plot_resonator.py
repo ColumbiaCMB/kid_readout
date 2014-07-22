@@ -3,46 +3,68 @@ import numpy as np
 import matplotlib.pyplot as plt
 import lmfit
 
-def extract(r, scale):
-    f = r.f[r.mask] * scale
-    f_masked = r.f[~r.mask] * scale
-    f_0 = r.f_0 * scale
-    data = r.data[r.mask]
-    masked = r.data[~r.mask]
-    f_model = np.linspace(r.f.min(), r.f.max(), 1e3)
-    model = r.model(f = f_model)
-    f_model *= scale
-    model_0 = model[np.argmin(np.abs(f_model - f_0))]
-    return {'f': f,
-            'f_masked': f_masked,
-            'f_0': f_0,
-            'data': data,
-            'masked': masked,
-            'model': model,
-            'f_model': f_model,
-            'model_0': model_0}
+# Calculate everything in the resonator units, then scale the
+# frequency at the end. Too complicated otherwise.
+def extract(r, normalize_s21=False, freq_scale=1, points=1e3):
+    freq_model = np.linspace(r.freq_data.min(), r.freq_data.max(), points)
+    s21_data = r.s21_data[r.mask]
+    s21_masked = r.s21_data[~r.mask]
+    s21_model = r.model(x = freq_model)
+    s21_model_0 = s21_model[np.argmin(np.abs(freq_model - r.f_0))]
+    if normalize_s21:
+        s21_data *= r.get_normalization(r.freq_data[r.mask])
+        s21_masked *= r.get_normalization(r.freq_data[~r.mask])
+        model_normalization = r.get_normalization(freq_model)
+        s21_model *= model_normalization
+        s21_model_0 *= model_normalization[np.argmin(np.abs(freq_model - r.f_0))]
+    return {'f': r.freq_data[r.mask] * freq_scale,
+            'f_masked': r.freq_data[~r.mask] * freq_scale,
+            'f_0': r.f_0 * freq_scale,
+            'data': s21_data,
+            'masked': s21_masked,
+            'model': s21_model,
+            'f_model': freq_model * freq_scale,
+            'model_0': s21_model_0}
 
-def _plot_on_axis(e, axis):
-    axis.plot(e['f'], 20*np.log10(np.abs(e['data'])), linestyle='None', marker='.', markersize=2, color='blue', label='data')
-    if e['masked'].size:
-        axis.plot(e['f_masked'], 20*np.log10(np.abs(e['masked'])), linestyle='None', marker='.', markersize=2, color='gray', label='masked')
+def _plot_amplitude_on_axis(extracted, axis, plot_masked):
+    axis.plot(extracted['f'], 20*np.log10(np.abs(extracted['data'])),
+              linestyle='None', marker='.', markersize=2, color='blue', label='data')
+    if plot_masked and extracted['masked'].size:
+        axis.plot(extracted['f_masked'], 20*np.log10(np.abs(extracted['masked'])),
+                  linestyle='None', marker='.', markersize=2, color='gray', label='masked')
+    axis.plot(extracted['f_model'], 20*np.log10(np.abs(extracted['model'])),
+              linestyle='-', linewidth=0.5, marker='None', color='brown', label='fit')
+    axis.plot(extracted['f_0'], 20*np.log10(np.abs(extracted['model_0'])),
+              linestyle='None', marker = '.', markersize=3, color='brown', label='$f_0$')
 
-    axis.plot(e['f_model'], 20*np.log10(np.abs(e['model'])), linestyle='-', linewidth=0.5, marker='None', color='brown', label='fit')
-    axis.plot(e['f_0'], 20*np.log10(np.abs(e['model_0'])), linestyle='None', marker = '.', markersize=3, color='brown', label='$f_0$')
+def _plot_phase_on_axis(extracted, axis, plot_masked):
+#    axis.plot(extracted['f'], np.unwrap(np.angle(extracted['data'])),
+    axis.plot(extracted['f'], np.angle(extracted['data']),
+              linestyle='None', marker='.', markersize=2, color='blue', label='data')
+    if plot_masked and extracted['masked'].size:
+#        axis.plot(extracted['f_masked'], np.unwrap(np.angle(extracted['masked'])),
+        axis.plot(extracted['f_masked'], np.angle(extracted['masked']),
+                  linestyle='None', marker='.', markersize=2, color='gray', label='masked')
+#    axis.plot(extracted['f_model'], np.unwrap(np.angle(extracted['model'])),
+    axis.plot(extracted['f_model'], np.angle(extracted['model']),
+              linestyle='-', linewidth=0.5, marker='None', color='brown', label='fit')
+    axis.plot(extracted['f_0'], np.angle(extracted['model_0']),
+              linestyle='None', marker = '.', markersize=3, color='brown', label='$f_0$')
 
-def one(r, title="", xlabel='frequency [MHz]', ylabel='$|S_{21}|$ [dB]', scale=1e-6, normalize=False): # normalization not implemented
+def amplitude(r, title="", xlabel='frequency [MHz]', ylabel='$|S_{21}|$ [dB]',
+              plot_masked=True, **kwds):
     """
     Plot the data, fit, and f_0.
     """
     interactive = plt.isinteractive()
     plt.ioff()
     fig = plt.figure()
-    e = extract(r, scale)
+    extracted = extract(r, **kwds)
     axis = fig.add_subplot(1, 1, 1)
-    _plot_on_axis(e, axis)
+    _plot_on_axis(extracted, axis)
     axis.set_xlabel(xlabel)
     axis.set_ylabel(ylabel)
-    xticks = [e['f_model'].min(), e['f_0'], e['f_model'].max()]
+    xticks = [extracted['f_model'].min(), extracted['f_0'], extracted['f_model'].max()]
     axis.set_xticks(xticks)
     axis.set_xticklabels(['{:.3f}'.format(tick) for tick in xticks])
     plt.legend(loc='best')
@@ -52,14 +74,53 @@ def one(r, title="", xlabel='frequency [MHz]', ylabel='$|S_{21}|$ [dB]', scale=1
         plt.show()
     return fig
 
-def five_by_four(resonators, title="", xlabel='frequency [MHz]', ylabel='$|S_{21}|$ [dB]', scale=1e-6, normalize=False, sort=False): # normalization not implemented
+def amplitude_and_phase(r, title="", xlabel='frequency [MHz]', amp_label='$|S_{21}|$ [dB]', phase_label='phase [rad]',
+                        plot_masked=True, **kwds):
+    interactive = plt.isinteractive()
+    plt.ioff()
+    fig, axes = plt.subplots(2, 1, sharex=True)
+    extracted = extract(r, **kwds)
+    _plot_phase_on_axis(extracted, axes[0], plot_masked)
+    _plot_amplitude_on_axis(extracted, axes[1], plot_masked)
+    axes[0].set_ylabel(phase_label)
+    axes[1].set_ylabel(amp_label)
+    axes[1].set_xlabel(xlabel)
+    xticks = [extracted['f_model'].min(), extracted['f_0'], extracted['f_model'].max()]
+    axes[1].set_xticks(xticks)
+    axes[1].set_xticklabels(['{:.3f}'.format(tick) for tick in xticks])
+    #plt.legend(loc='best')
+    fig.suptitle(title)
+    if interactive:
+        plt.ion()
+        plt.show()
+    return fig
+
+def IQ_circle(r, title="", xlabel=r"Re $S_{21}$", ylabel=r"Im $S_{21}$", plot_masked=True, **kwds):
+    interactive = plt.isinteractive()
+    plt.ioff()
+    fig, ax = plt.subplots()
+    extracted = extract(r, **kwds)
+    ax.plot(extracted['data'].real, extracted['data'].imag, linestyle='None', marker='.', color='blue', label='data')
+    if plot_masked and extracted['masked'].size:
+        ax.plot(extracted['masked'].real, extracted['masked'].imag, linestyle='None', marker='.', color='gray', label='masked')
+    ax.plot(extracted['model'].real, extracted['model'].imag, linestyle='-', linewidth=0.5, color='brown', label='fit')
+    ax.plot(extracted['model_0'].real, extracted['model_0'].imag, linestyle='None', marker='.', color='brown', label='$f_0$')
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    fig.suptitle(title)
+    if interactive:
+        plt.ion()
+        plt.show()
+    return fig
+
+def five_by_four(resonators, title="", xlabel='frequency [MHz]', ylabel='$|S_{21}|$ [dB]', sort=False, **kwds):
     if sort:
         resonators.sort(key = lambda r: r.f_0)
     interactive = plt.isinteractive()
     plt.ioff()
     fig = plt.figure(figsize=(4, 3))
     for n, r in enumerate(resonators):
-        e = extract(r, scale)
+        e = extract(r, **kwds)
         axis = fig.add_subplot(4, 5, n+1)
         _plot_on_axis(e, axis)
         axis.set_xlabel("")
