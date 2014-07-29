@@ -1,6 +1,13 @@
 kid_readout
 ===========
-Code for the ROACH KID readout.
+Code for the ROACH CUKIDS readout and analysis.
+
+Disclaimer
+----------
+This code is provided in the hope that it may be useful to others, but is still very much a work in progress.
+If you are interested in replicating this readout system, it is recommended to wait a few months for it to mature into
+a more readily usable state.
+
 
 FPGA designs
 ============
@@ -13,7 +20,7 @@ Currently running on CentOS 6.5
 
     ./configure –prefix=/home/local
     create /etc/ld.so.conf.d/python27.conf with /home/local/lib in it
-    Arg forgot to make sure tcl tk headers were installed (they weren't). Use package manager to get tcl-devel and tk-devel packages
+    Make sure tcl tk headers were installed (they weren't). Use package manager to get tcl-devel and tk-devel packages
     do same ./configure –prefix=/home/local
     make install
 
@@ -121,7 +128,7 @@ sympy 0.7.4
 
 
 === Structure ===
-As of 2013-11-07, the project structure is as follows:
+The project structure is as follows:
 repository_base/
   kid_readout/
     __init__.py
@@ -131,11 +138,14 @@ repository_base/
     analysis/
       __init__.py
       <fitting libraries live here>
+      resources/
+        <experiment info>
     apps/
-      gain_phase_characterization
-      <scripts and non-library code>
+        scripts for taking and analyzing data
     ppc/
-      <Bjorn's timing code?>
+        ROACH PPC code
+    equipment/
+        <misc routines for talking to test equipment>
 
 
 === Install ===
@@ -148,23 +158,3 @@ export PYTHONPATH=$PYTHONPATH:/home/user/kid_readout.git
 Then, statements like
 from kid_readout.utils import whatever
 should work.
-
-
-=== Proposed class structure ===
-(SinglePixel)Readout - abstract interface to FPGA readout hardware
-	provides functions to setup output waveforms and select FFT bins to read out, and eventually synchronization
-
-Coordinator - class to tie everything together and maintain system state. 
-	Inherits from (SinglePixel)(Baseband) to provide FPGA access and system state
-	Provides functions such as:
-		start_recording - set up a data file and start recording data to it
-		stop_recording - 
-		subscribe - add subscription for data products
-	Has attributes of:
-		catcher - gets data from FPGA, either with Katcp or UDP
-		writer - a disk writing class
-		aggregator - processes the raw data and creates higher order data products. sends full rate data to writer.
-			sends higher order products to any subscribers
-		
-A viewer or controller application can then grab a Pyro proxy of the Coordinator, subscribe to the desired 
-data products and then use functions to configure and start recording.
