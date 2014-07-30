@@ -16,6 +16,21 @@ usbre = re.compile(r"usb (?P<port>\d*-\d*)")
 
 
 def find_valons():
+    by_id = find_valons_by_id()
+    if by_id is not None:
+        return [by_id]
+    print "couldn't find valons by id, trying dmesg"
+    return find_valons_with_dmesg()
+
+def find_valons_by_id():
+    basepath = '/dev/serial/by-id/'
+    serial_ports = os.listdir(basepath)
+    for port in serial_ports:
+        if port.find('usb-FTDI_FT232R_USB_UART') >= 0:
+            return os.path.realpath(os.path.join(basepath,port))
+    return None
+
+def find_valons_with_dmesg():
     """
     Find /dev/ttyUSB* ports with FTDI chips which are probably Valons
     
