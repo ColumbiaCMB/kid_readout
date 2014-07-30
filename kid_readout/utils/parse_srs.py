@@ -35,8 +35,28 @@ def get_temperature_at(epoch):
 def convtime(tstr):
     return time.mktime(time.strptime(tstr,'%Y%m%d-%H%M%S'))
 def get_load_log(fname):
-    tdata = np.genfromtxt(fname,delimiter=',',converters={0:convtime},skiprows=1,invalid_raise=False)
-    dt = [datetime.datetime.fromtimestamp(x) for x in tdata[:,0]]
+    try:
+        tdata = np.genfromtxt(fname,delimiter=',',converters={0:convtime},skiprows=1,invalid_raise=False)
+        dt = [datetime.datetime.fromtimestamp(x) for x in tdata[:,0]]
+    except:
+        from pandas import read_table
+        df = read_table(fname,sep='[ ,]+',skiprows=1,converters={0:convtime},header=None)
+        dt = [datetime.datetime.fromtimestamp(x) for x in df[0]]
+        tdata = np.zeros((len(df),15))
+        tdata[:,0] = np.array(df[0])
+        tdata[:,1] = np.array(df[1])
+        tdata[:,2] = np.array(df[2])
+        tdata[:,11] = np.array(df[9])
+        tdata[:,12] = np.array(df[10])
+        tdata[:,13] = np.array(df[11])
+        tdata[:,14] = np.array(df[12])
+
+
+#    if tdata[0] is np.nan: # special case for earlier files, at least 2014-02
+#        tdata = np.genfromtxt(fname,delimiter=' ',converters={3:convtime},skiprows=1,invalid_raise=False)
+#        dt = [datetime.datetime.fromtimestamp(x) for x in tdata[:,3]]
+#    else:
+
     return dt,tdata
 
 def parse_srs_log(fname,sensor=2):
