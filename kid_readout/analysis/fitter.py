@@ -1,32 +1,34 @@
 from __future__ import division
-
 import numpy as np
 import lmfit
 import scipy.optimize
 
 
-def line_model(params,x):
+def line_model(params, x):
     slope = params['slope'].value
     offset = params['offset'].value
     return slope*x + offset
 
-def line_guess(x,y):
+
+def line_guess(x, y):
     offset_guess = y[abs(x).argmin()]
     slope_guess = y.ptp()/x.ptp()
     params = lmfit.Parameters()
-    params.add('offset',value=offset_guess)
-    params.add('slope',value=slope_guess)
+    params.add('offset', value=offset_guess)
+    params.add('slope', value=slope_guess)
     return params
 
-def _x_intercept(params):
+
+def x_intercept(params):
     slope = params['slope'].value
     offset = params['offset'].value
     return -offset/slope
+
     
 default_functions = {}
 
 # Example use of default_functions functionality:
-# default_functions = {"x_intercept": _x_intercept}
+# default_functions = {"x_intercept": x_intercept}
 
 class Fitter(object):
     """
@@ -35,24 +37,27 @@ class Fitter(object):
     supplied to the class. There is a little bit of Python magic that
     allows for easy access to the fit parameters and functions of only
     the fit parameters.
-
     """
    
-    def __init__(self, x_data, y_data, model=line_model, guess=line_guess, functions=default_functions, 
+    def __init__(self, x_data, y_data,
+                 model=line_model, guess=line_guess, functions=default_functions, 
                  mask=None, errors=None, weight_by_errors=True):
         """
-        Instantiate a resonator using our current best model.
-        Parameter model is a function S_21(params, f) that returns the
-        modeled values of S_21.
-        Parameter guess is a function guess(f, data) that returns a
+        Arguments:
+        model: a function y(params, x) that returns the modeled values.
+        guess: a function guess(x_data, y_data) that returns a
         good-enough initial guess at all of the fit parameters.
-        Parameter functions is a dictionary that maps keys that are
-        valid Python variables to functions that take a Parameters
-        object as their only argument.
-        Parameter mask is a boolean array of the same length as f and
-        data; only points f[mask] and data[mask] are used to fit the
-        data. The default is to use all data. Use this to exclude
-        glitches or resonances other than the desired one.
+        functions: a dictionary that maps keys that are valid Python
+        variables to functions that take a Parameters object as their
+        only argument.
+        mask: a boolean array of the same length as f and data; only
+        points x_data[mask] and y_data[mask] are used to fit the
+        data, and the default is to use all data.
+        errors: an array of the same size as y_data with the
+        corresponding error values.
+
+        Returns:
+        A new Fitter using the given data and model.
         """
         self.x_data = x_data
         self.y_data = y_data
@@ -96,7 +101,7 @@ class Fitter(object):
         instantiation. Parameter initial is a Parameters object
         containing initial values. It is modified by lmfit.
         """
-        self.result = lmfit.minimize(self.residual, initial,ftol=1e-6)
+        self.result = lmfit.minimize(self.residual, initial, ftol=1e-6)
                                
     def residual(self, params=None):
         """
@@ -118,14 +123,14 @@ class Fitter(object):
             if np.iscomplexobj(self.y_data) and not np.iscomplexobj(errors):
                 errors = errors.astype('complex')
                 errors = errors + 1j*errors
-            return ((self.y_data[self.mask] - self.model(params)[self.mask]).view('float'))/errors.view('float')
-                
+            return ((self.y_data[self.mask].view('float') - self.model(params)[self.mask].view('float')) /
+                    errors.view('float'))
 
     def model(self, params=None, x=None):
         """
         Return the model evaluated with the given parameters at the
-        given frequencies. Defaults are the fit-derived params and the
-        frequencies corresponding to the data.
+        given x-values. Defaults are the fit-derived params and the
+        x-values corresponding to the data.
         """
         if params is None:
             params = self.result.params
@@ -133,33 +138,39 @@ class Fitter(object):
             x = self.x_data
         return self._model(params, x)
     
-    def approx_gradient(self,x,params=None):
-        if params is None:
-            params = self.result.params
-        dx = x/1e9  # this should be OK for many purposes
-        x1 = x+dx
-        y = self.model(params=params,x=x)
-        y1 = self.model(params=params,x=x1)
-        gradient = (y1-y)/dx
+    def approx_gradient(self, x, params=None):
+        """
+        Estimate the model gradient dy/dx at the given x-values using
+        a two-point approximation.
+
+        Note that this is currently written to use a fixed fractional
+        step size in x, not a fixed step size, so be careful if x
+        spans a large range of values or includes zero.
+        """
+        dx = x / 1e9  # this should be OK for many purposes
+        x1 = x + dx
+        y = self.model(params, x)
+        y1 = self.model(params, x1)
+        gradient = (y1 - y) / dx
         return gradient
     
-    def inverse(self, y, params=None,guess=None):
+    def inverse(self, y, params=None, guess=None):
         """
-        Find the frequencies that correspond to points in the complex plane as given by the model
+        Find the modeled x-values that correspond to the given y-values.
         """
         if params is None:
             params = self.result.params
-        def resid(x,y):
+        def resid(x, y):
             return np.abs(y - self._model(params, x))
         isscalar = np.isscalar(y)
         if isscalar:
             y = np.array([y])
         def _find_inverse(y):
             if guess is None:
-                x0 = self.x_data[np.argmin(np.abs(y-self.y_data))]
+                x0 = self.x_data[np.argmin(np.abs(y - self.y_data))]
             else:
                 x0 = guess
-            return scipy.optimize.fsolve(resid,x0,args=(y,))
+            return scipy.optimize.fsolve(resid, x0, args=(y,))
         result = np.vectorize(_find_inverse)(y)
         if isscalar:
             result = result[0]
