@@ -97,6 +97,8 @@ class Resonator(Fitter):
         data. The default is to use all data. Use this to exclude
         glitches or resonances other than the desired one.
         """
+        if not np.iscomplexobj(data):
+            raise TypeError("Resonator data should always be complex, but got real values")
         if errors is not None:
             if not np.iscomplexobj(errors):
                 errors = errors*(1+1j)  # ensure errors is complex

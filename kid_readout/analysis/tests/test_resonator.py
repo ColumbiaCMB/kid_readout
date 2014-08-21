@@ -13,19 +13,12 @@ def test_dtype_agreement():
             y_data = y_data.astype(dtype1)
             errors = errors.astype(dtype2)
             x_data = np.linspace(100,110,10)
-            if np.iscomplexobj(y_data) and np.iscomplexobj(errors):
-                kid_readout.analysis.resonator.fit_best_resonator(freq=x_data,s21=y_data,errors=errors)
-                print "didn't fail"
-            elif (not np.iscomplexobj(y_data)) and (not np.iscomplexobj(errors)):
-                try:
-                    kid_readout.analysis.resonator.fit_best_resonator(freq=x_data,s21=y_data,errors=errors)
-                except TypeError:
-                    print "failed as expected"
-                    pass
-            elif np.iscomplexobj(y_data) and not np.iscomplexobj(errors):
+            if np.iscomplexobj(y_data):
+                # if the data is complex, the errors will automatically be coerced to match, so this shouldn't fail
                 kid_readout.analysis.resonator.fit_best_resonator(freq=x_data,s21=y_data,errors=errors)
                 print "didn't fail"
             else:
+                # data is real, so it should fail in any case
                 try:
                     kid_readout.analysis.resonator.fit_best_resonator(freq=x_data,s21=y_data,errors=errors)
                 except TypeError:
