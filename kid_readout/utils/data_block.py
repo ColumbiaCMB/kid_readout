@@ -29,7 +29,7 @@ class DataBlock():
         if self._mean is None:
             if self._lpf_data is None:
                 self._lpf_data = fftfilt.fftfilt(lpf,self.data)[len(lpf):]*self.wavenorm
-            self._mean = self._lpf_data.mean(0)
+            self._mean = self._lpf_data.mean(0,dtype='complex')
         return self._mean
     def std(self):
         if self._std is None:
