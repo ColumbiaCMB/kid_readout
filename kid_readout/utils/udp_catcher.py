@@ -2,6 +2,8 @@ import numpy as np
 import struct
 import socket
 from contextlib import closing
+import time
+import cPickle
 
 def get_udp_packets(ri,npkts,streamid,stream_reg='streamid',addr=('192.168.1.1',12345)):
     ri.r.write_int(stream_reg,0)
@@ -104,6 +106,13 @@ def decode_packets(plist,streamid,chans,nfft,pkts_per_chunk = 16):
             next_seqno += 1
         else:
             print "sequence number skip, expected:",next_seqno,"got",seqno,"inserting",(seqno-next_seqno),"null packets",pnum,pidx
+            if seqno-next_seqno == 32768:
+                print "caught special case, writing to disk"
+                fname = time.strftime("udp_skip_%Y-%m-%d_%H%M%S.pkl")
+                fh = open(fname,'w')
+                cPickle.dump(dset,fh,cPickle.HIGHEST_PROTOCOL)
+                fh.close()
+                print "wrote data to:",fname
             for k in range(seqno - next_seqno+1):
                 dset.append(null_pkt)
                 next_seqno += 1
