@@ -14,6 +14,11 @@ from roach_utils import ntone_power_correction
 
 import scipy.signal
 
+try:
+    import numexpr
+    have_numexpr = True
+except ImportError:
+    have_numexpr = False
 CONFIG_FILE_NAME = '/home/data/roach_config.npz'
 
 def compute_window(npfb=2**15,taps = 2, wfunc = scipy.signal.flattop):
@@ -923,9 +928,16 @@ class RoachBasebandWide(RoachBaseband):
             ns = self.tone_nsamp
             foffs = (2*k*nfft - m*ns)/float(ns)
             wc = self._window_response(foffs/2)*(self.tone_nsamp/2.0**18)
-            demod[:,n] = wc*np.exp(sign*1j*(2*np.pi*foffs*t + phi0)) * data[:,n]
-            if m >= self.nfft/2:
-                demod[:,n] = np.conjugate(demod[:,n])
+            if have_numexpr:
+                pi = np.pi
+                this_data = data[:,n]
+                demod[:,n] = numexpr.evaluate('wc*exp(sign*1j*(2*pi*foffs*t + phi0)) * this_data')
+                if m >= self.nfft/2:
+                    np.conj(demod[:,n],out=demod[:,n])
+            else:
+                demod[:,n] = wc*np.exp(sign*1j*(2*np.pi*foffs*t + phi0)) * data[:,n]
+                if m >= self.nfft/2:
+                    demod[:,n] = np.conjugate(demod[:,n])
         return demod
     
 class RoachBasebandWide10(RoachBasebandWide):
