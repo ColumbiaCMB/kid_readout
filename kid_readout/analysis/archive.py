@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import os
 from kid_readout.utils.plot_nc import get_all_sweeps
+import glob
 
 lg_5x4 = 54e-9*np.ones((20,))
 cap_5x4 = np.array([27.57,
@@ -39,6 +40,7 @@ sc5x4_0813f8_info = dict(chip_name = 'StarCryo_5x4_0813f8',
                          index_to_resnum = range(18) + [19,np.nan]
                          )
 
+
 jpl5x4_info = dict(chip_name='JPL_5x4_0',
                    dark = True,
                    files = ['/home/data/2013-11-11_174636.nc',
@@ -50,6 +52,32 @@ jpl5x4_info = dict(chip_name='JPL_5x4_0',
                              '/home/data/2013-11-12_170617.nc',
                              '/home/data/2013-11-12_185013.nc'],
                    index_to_resnum = [1,2,3,6,8,9,12,13,14,15,17,19])
+
+sc3x3_0813f5_info = dict(
+                    files = ['/home/data/2013-12-18_220115.nc',
+                             '/home/data/2013-12-18_222044.nc',
+                             '/home/data/2013-12-18_224109.nc',
+                             '/home/data/2013-12-19_093516.nc',
+                             '/home/data/2013-12-19_095615.nc',
+                             '/home/data/2013-12-19_101850.nc',
+                             '/home/data/2013-12-19_104000.nc',
+                             '/home/data/2013-12-19_110042.nc',
+                             '/home/data/2013-12-19_112555.nc',
+                             '/home/data/2013-12-19_224905.nc',
+                             '/home/data/2013-12-20_155053.nc'
+                             ],
+                        index_to_resnum=range(8)
+                        )
+
+files = glob.glob('/home/data/2014-02-13*.nc') + glob.glob('/home/data/2014-02-14*.nc')
+files.sort()
+sc3x3_0813f5_dark_info = dict(chip_name='StarCryo_3x3_0813f5',
+                   dark = True,
+                   
+                   files = files,
+                   index_to_resnum=range(8)
+                              )
+            #index_to_resnum = [1,2,3,6,8,9,12,13,14,15,17,19])
 def build_archive(info, use_bifurcation = False, force_rebuild=False):
     archname = '/home/data/archive/%s.npy' % info['chip_name']
     df = None
@@ -62,7 +90,10 @@ def build_archive(info, use_bifurcation = False, force_rebuild=False):
      
     swps = []
     for fname in info['files']:
-        swps.extend(get_all_sweeps(fname, bif = use_bifurcation))
+        try:
+            swps.extend(get_all_sweeps(fname, bif = use_bifurcation))
+        except Exception,e:
+            print "couldn't get sweeps from",fname,"error was:",e
     pnames = swps[0].result.params.keys()
     data = {}
     for pn in pnames:
@@ -99,6 +130,12 @@ def load_archive(fn):
     df = pd.DataFrame.from_records(npa)
     return df
 
-
-sc5x4_0813f8_data = build_archive(sc5x4_0813f8_info,force_rebuild=True)
-jpl5x4_data = build_archive(jpl5x4_info,force_rebuild=True)
+try:
+    sc5x4_0813f8_data = build_archive(sc5x4_0813f8_info,force_rebuild=True)
+except Exception, e:
+    print "could not build or load archive for sc5x4_0813f8",e
+try:
+    jpl5x4_data = build_archive(jpl5x4_info,force_rebuild=True)
+except Exception, e:
+    print "could not build or load archive for jpl5x4",e
+    

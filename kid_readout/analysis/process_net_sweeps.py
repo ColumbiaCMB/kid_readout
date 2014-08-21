@@ -19,9 +19,14 @@ load_time = tdata[:,0]
 load_temp = tdata[:,diode_index]
 tdata2 = np.loadtxt('/home/heather/SRS/20140305-213554.txt',delimiter=',',converters={0:convtime},skiprows=1)
 tdata3 = np.loadtxt('/home/heather/SRS/20140321-222308.txt',delimiter=',',converters={0:convtime},skiprows=1)
-load_time = np.concatenate((load_time,tdata2[:,0],tdata3[:,0]))
-load_temp = np.concatenate((load_temp,tdata2[:,diode_index],tdata3[:,diode_index]))
-far_temp = np.concatenate((tdata[:,1],tdata2[:,1],tdata3[:,1]))
+tdata4 = np.loadtxt('/home/heather/SRS/20140331-085747.txt',delimiter=',',converters={0:convtime},skiprows=1)
+tdata5 = np.loadtxt('/home/heather/SRS/20140404-170807.txt',delimiter=',',converters={0:convtime},skiprows=1)
+tdata6 = np.loadtxt('/home/heather/SRS/20140411-145108.txt',delimiter=',',converters={0:convtime},skiprows=1)
+tdata7 = np.loadtxt('/home/heather/SRS/20140417-092823.txt',delimiter=',',converters={0:convtime},skiprows=1)
+load_time = np.concatenate((load_time,tdata2[:,0],tdata3[:,0],tdata4[:,0],tdata5[:,0],tdata6[:,0],tdata7[:,0]))
+far_temp = np.concatenate((load_temp,tdata2[:,diode_index],tdata3[:,diode_index],tdata4[:,diode_index],tdata5[:,diode_index],
+                            tdata6[:,diode_index],tdata7[:,diode_index]))
+load_temp = np.concatenate((tdata[:,1],tdata2[:,1],tdata3[:,1],tdata4[:,1],tdata5[:,1],tdata6[:,1],tdata7[:,1]))
 
 if not globals().has_key('arch'):
     arch = kid_readout.analysis.noise_archive.load_archive('/home/data/archive/StarCryo_5x4_0813f10_LPF_Horns_NET_1.npy')
@@ -181,11 +186,12 @@ def plot_all_net_2014_03_al_pkg(pkls= glob.glob('/home/data/noise_2014-03-2*.pkl
         
         title = '%s\n%02d - %f' % (res0[0].chip, ridx, np.median(f0s))
 
-        if ((T<8.5).sum()) <2:
+        if ((T<8).sum()) <1:
             continue
-        df0=(f0s-f0s[T<8.5].min())*1e6
-        msk = (f0errs < 0.00005) & (Tphys < 0.22) & (Tphys > 0.18)
-        if msk.sum() < 2:
+        f0 = f0s[T<8.5].min()
+        df0=(f0s-f0)*1e6
+        msk = (f0errs < 0.00005) & (Tphys < 0.32) & (Tphys > 0.18)
+        if msk.sum() < 1:
             continue
         df0 = df0[msk]
         f0s = f0s[msk]
@@ -195,7 +201,10 @@ def plot_all_net_2014_03_al_pkg(pkls= glob.glob('/home/data/noise_2014-03-2*.pkl
         Q = Q[msk]
         Qi = Qi[msk]
         far_temp = far_temp[msk]
-        pp = np.polyfit(T[T<8],df0[T<8],1)
+        try:
+            pp = np.polyfit(T[T<8],df0[T<8],1)
+        except:
+            continue
         Hz_per_K = abs(pp[0])
         print Hz_per_K,"Hz/K"
         pp_far = np.polyfit(far_temp[far_temp<8],df0[far_temp<8],1)
@@ -328,8 +337,8 @@ def plot_net_set(pkl_glob,expname):
                 ax.grid(True)
                 spectra[idx].append((nm0.pca_fr,np.sqrt(nm0.pca_evals[1,:])*1e6*nm0.f0*abs(K_per_Hz)*1e6/np.sqrt(2)))
             ax = resfigs2[idx].axes[0]
-            ax.plot(nms[idx].frm,20*np.log10(nms[idx].s21m+nms[idx].s0),color=plt.cm.spectral(nms[idx].ts_temp/10.0))
-            ax.plot(nms[idx].fr,20*np.log10(nms[idx].s21),'.',color=plt.cm.spectral(nms[idx].ts_temp/10.0))
+            ax.plot(nms[idx].frm,20*np.log10(abs(nms[idx].s21m+nms[idx].s0)),color=plt.cm.spectral(nms[idx].ts_temp/10.0))
+            ax.plot(nms[idx].fr,20*np.log10(abs(nms[idx].s21)),'.',color=plt.cm.spectral(nms[idx].ts_temp/10.0))
             ax = resfigs3[idx].axes[0]
             ax.semilogx(nm0.pca_fr,np.sqrt(nm0.pca_evals[1,:])*1e6*nm0.f0,label=('%.3f K' % nm0.ts_temp),color=colors[tidx])
             ax.set_ylim(0,0.5)
@@ -380,7 +389,8 @@ def plot_net_sweep(nms,fig = None):
     for k,nm in enumerate(nms):
         ax2.loglog(nm.pca_fr,np.sqrt(nm.pca_evals[1,:]*1e12*nm.f0**2),color=colors[k],label=("%.3f K" % nm.ts_temp))
         ax2.loglog(nm.pca_fr,np.sqrt(nm.pca_evals[0,:]*1e12*nm.f0**2),':',color=colors[k])
-        ax3.errorbar(nm.ts_temp,(nm.params['f_0'].value-nms[0].params['f_0'].value)*1e6,nm.params['f_0'].stderr*1e6,color=colors[k],mew=2)
+        if nm.params['f_0'].stderr*1e6 < 100:
+            ax3.errorbar(nm.ts_temp,(nm.params['f_0'].value-nms[0].params['f_0'].value)*1e6,nm.params['f_0'].stderr*1e6,color=colors[k],mew=2)
         tslc = nm.tsl_raw*np.exp(-2j*np.pi*(nm.delay*nm.f0 - nms[0].delay*nms[0].f0))
         hz = nms[0].frm[abs(s21m-tslc.mean()).argmin()]
         hz = rr0.inverse(tslc.mean(), params=nms[0].params,guess = hz)
