@@ -60,18 +60,37 @@ class Fitter(object):
         A new Fitter using the given data and model.
         """
         self.x_data = x_data
+        if np.iscomplexobj(y_data):
+            y_data = y_data.astype('complex') # promote data to complex128 if needed
+            if errors is not None:
+                if not np.iscomplexobj(errors):
+                    raise TypeError("y_data and errors must both be complex or real, but got complex data with real errors.")
+                errors = errors.astype('complex')
+        else:  # data is real
+            y_data = y_data.astype('float')  # promote data to float64 if needed
+            if errors is not None:
+                if np.iscomplexobj(errors):
+                    raise TypeError("y_data and errors must both be complex or real, but got real data with complex errors.")
+                errors = errors.astype('float')
+
         self.y_data = y_data
         self._model = model
         self._functions = functions
         if mask is None:
             if errors is None:
-                self.mask = np.ones_like(x_data).astype(np.bool)
+                self.mask = np.ones(x_data.shape, dtype=np.bool)
             else:
                 self.mask = abs(errors) < np.median(abs(errors))*3
         else:
             self.mask = mask
         self.errors = errors
         self.weight_by_errors = weight_by_errors
+
+        if errors is None:
+            self.residual = self._residual_without_errors
+        else:
+            self.residual = self._residual_with_errors
+
         self.fit(guess(x_data[self.mask], y_data[self.mask]))
 
     def __getattr__(self, attr):
@@ -103,7 +122,7 @@ class Fitter(object):
         """
         self.result = lmfit.minimize(self.residual, initial, ftol=1e-6)
                                
-    def residual(self, params=None):
+    def _residual_without_errors(self, params=None):
         """
         This is the residual function used by lmfit. Only data where
         mask is True is used for the fit.
@@ -113,18 +132,27 @@ class Fitter(object):
         """
         # in the following, .view('float') will take a length N complex array 
         # and turn it into a length 2*N float array.
-        
+
         if params is None:
             params = self.result.params
-        if self.errors is None or not self.weight_by_errors:
-            return ((self.y_data[self.mask] - self.model(params)[self.mask]).view('float'))
-        else:
-            errors = self.errors[self.mask]
-            if np.iscomplexobj(self.y_data) and not np.iscomplexobj(errors):
-                errors = errors.astype('complex')
-                errors = errors + 1j*errors
-            return ((self.y_data[self.mask].view('float') - self.model(params)[self.mask].view('float')) /
-                    errors.view('float'))
+        return (self.y_data[self.mask] - self.model(params)[self.mask]).view('float')
+
+    def _residual_with_errors(self, params=None):
+        """
+        This is the residual function used by lmfit. Only data where
+        mask is True is used for the fit.
+
+        Note that the residual needs to be purely real, and should *not* include abs.
+        The minimizer needs the signs of the residuals to properly evaluate the gradients.
+        """
+        # in the following, .view('float') will take a length N complex array
+        # and turn it into a length 2*N float array.
+
+        if params is None:
+            params = self.result.params
+        errors = self.errors[self.mask]
+        return ((self.y_data[self.mask].view('float') - self.model(params)[self.mask].view('float')) /
+                errors.view('float'))
 
     def model(self, params=None, x=None):
         """
