@@ -31,6 +31,17 @@ def s1s2(Tphys,Tc,fread):
     S2 = 1 + np.sqrt(2*Delta/(np.pi*kB*Tphys))*np.exp(-xi)*scipy.special.i0(xi)
     return S1,S2
 
+def T_nqp_equals_nqp0(Delta,N0,nqp0):
+    """
+    Find the temperature at which the thermally generated QP density equals the given nqp0
+    
+    Delta : eV
+    Formula found by asking Wolfram Alpha to solve nqp(T) == nqp0 for T
+    """
+    
+    return np.real((2*Delta) /
+            (kBeV * scipy.special.lambertw(16 * Delta**2 * N0**2 * np.pi / nqp0)))
+
 class KIDModel(object):
     def __init__(self,Tc=1.46, nqp0=5000, Tbase=0.25, f0_nom = 150e6,
                  sigman=5e5, ind_l_um=46750.0, ind_w_um=2.0, ind_h_nm=20, Lg=7e-8,
@@ -47,6 +58,7 @@ class KIDModel(object):
         self.params.add('delta_loss',value=delta_loss,min=0,max=1e-1)
         self.params.add('Lg',value = Lg,min=0,max=100)
         self.params.add('cap',value = cap,min=0,max=100)
+        self.params.add('foffset',value=0,min=-1e-4,max=1e-4)
         self.nqp0 = nqp0
 #       self.Tbase = Tbase
         self.f0_nom = f0_nom
@@ -59,6 +71,9 @@ class KIDModel(object):
         self.P_read = P_read
         self.T_noise = T_noise
         
+    @property
+    def foffset(self):
+        return self.params['foffset'].value
     @property
     def delta_0(self):
         return self.params['delta_0'].value        
@@ -186,7 +201,8 @@ class KIDModel(object):
         return 1/(1/self.Qi(T) + self.params['F_TLS'].value*self.delta_tls(T))
     
     def total_fres(self,T):
-        return self.f_res(T)*(1+self.tls_shift(T))
+        #return (1+self.f_res(T))*(1+self.tls_shift(T))-1
+        return self.f_res(T)+self.tls_shift(T)+self.foffset
     
     def fit_f0_resid(self,params,T,f0,f0_err=None):
         if f0_err is None:
@@ -202,7 +218,7 @@ class KIDModel(object):
         if Qi_err is None:
             return (Qi - self.total_Qi(T))/1e7
         else:
-            return (Qi - self.total_Qi(T))/Qi_err
+            return abs(Qi - self.total_Qi(T))/Qi_err
     
     def fit_qi(self,T,Qi,Qi_err=None):
         self.result = lmfit.minimize(self.fit_qi_resid,self.params,args=(T,Qi,Qi_err))
@@ -229,20 +245,20 @@ class DarkKIDModel(KIDModel):
                                                            np.exp(-xi)*scipy.special.i0(xi))))
 
 class DarkKIDModelFractional(DarkKIDModel):
-    def __init__(self,Tc=1.46, nqp0=5000, f0_nom=100e6,
+    def __init__(self,Tc=1.46, nqp0=0, f0_nom=100e6,
                  sigman=5e5, alpha=.66,
-                 Qc=1e5, P_read=-106, T_noise=4.0, delta_0 = 1e-3, F_TLS=1.0,
+                 Qc=1e5, P_read=-106, T_noise=4.0, delta_0 = 0, F_TLS=1.0,
                  N0 = 1.72e10,
-                 delta_loss=1e-5):
+                 delta_loss=0.0):
         self.params = lmfit.Parameters()
-        self.params.add('nqp0',value = nqp0, min = 0,max=1e5)
-        self.params.add('delta_0',value = delta_0, min = 0,max=1)
+        self.params.add('nqp0',value = nqp0, min = 0,max=1e5,vary=False)
+        self.params.add('delta_0',value = delta_0, min = 0,max=.1)
         self.params.add('F_TLS',value=F_TLS,vary=False)
 #        self.params.add('sigman',value=sigman,min=1e4,max=1e6)
-        self.params.add('Tc',value=Tc,min=1,max=2)
+        self.params.add('Tc',value=Tc,min=1,max=2,vary=False)
         self.params.add('delta_loss',value=delta_loss,min=0,max=1e-1)
-        self.params.add('alpha',value = alpha,min=0.1,max=1)
-        self.nqp0 = nqp0
+        self.params.add('alpha',value = alpha,min=0.1,max=1,vary=True)
+        self.params.add('foffset',value=0,min=-1e-4,max=1e-4)
 #       self.Tbase = Tbase
         self.N0 = N0
         self.Qc = Qc
@@ -254,14 +270,29 @@ class DarkKIDModelFractional(DarkKIDModel):
     def alpha(self):
         return self.params['alpha'].value
     
+    @property
+    def nqp0(self):
+        return self.params['nqp0'].value
+    
     def f_res(self, T):
         s1,s2 = s1s2(T, self.Tc, self.f0_nom)
+        #T0 = T_nqp_equals_nqp0(self.Delta, self.N0, self.nqp0)
         delta_f = (self.alpha * s2 * self.nqp(T)) / (4 * self.N0 * self.Delta)
-        return -delta_f
+        delta_f0 = 0#(self.alpha * s2 * (2*self.nqp0)) / (4 * self.N0 * self.Delta)
+        return -(delta_f-delta_f0)
     
     def Qi(self,T):
         s1,s2 = s1s2(T, self.Tc, self.f0_nom)
         return (2*self.N0*self.Delta)/(self.alpha*s1*self.nqp(T))
+    
+    def invQi(self,T):
+        return 1/self.Qi(T)
+    
+    def total_delta_invQi(self,T):
+        delta_TLS_loss = self.delta_tls(T)
+        invQi = self.invQi(T)
+        return invQi + delta_TLS_loss
+        
     
     
 

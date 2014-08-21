@@ -6,10 +6,10 @@ import io
 import sys 
 
 class sim900():
-    def __init__(self):
+    def __init__(self,port="/dev/ttyUSB1"):
         #open port, connect to sim900
         #self.ser = serial.Serial(0, baudrate = 9600, timeout = 2)
-        self.ser = serial.Serial(port="/dev/ttyUSB1", baudrate=9600, timeout=2)
+        self.ser = serial.Serial(port=port, baudrate=9600, timeout=2)
         self.setup_sim900()
     def setup_sim900(self):
         #flush all port butters

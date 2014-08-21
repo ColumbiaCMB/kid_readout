@@ -71,21 +71,24 @@ def plot_noise_nc(fglob,**kwargs):
                     
 
                     if plotall or k == 0:
-                        if pdf is None:
-                            chipfname = nm.chip_name.replace(' ','_').replace(',','')
-                            pdfname = '/home/data/plots/%s_%s.pdf' % (fbase,chipfname)
-                            pdf = PdfPages(pdfname)
-                            try:
-                                os.chmod(pdfname,0666)
-                            except OSError:
-                                print "could not change permissions of",pdfname
-
-                        fig = Figure(figsize=(16,8))
-                        title = ('%s %s' % (sname,tname))
-                        nm.plot(fig=fig,title=title)
-                        canvas = FigureCanvasAgg(fig)
-                        fig.set_canvas(canvas)
-                        pdf.savefig(fig,bbox_inches='tight')
+                        try:
+                            if pdf is None:
+                                chipfname = nm.chip_name.replace(' ','_').replace(',','')
+                                pdfname = '/home/data/plots/%s_%s.pdf' % (fbase,chipfname)
+                                pdf = PdfPages(pdfname)
+                                try:
+                                    os.chmod(pdfname,0666)
+                                except OSError:
+                                    print "could not change permissions of",pdfname
+    
+                            fig = Figure(figsize=(16,8))
+                            title = ('%s %s' % (sname,tname))
+                            nm.plot(fig=fig,title=title)
+                            canvas = FigureCanvasAgg(fig)
+                            fig.set_canvas(canvas)
+                            pdf.savefig(fig,bbox_inches='tight')
+                        except Exception:
+                            print "failed to plot",k,index,sname,tname,fname
 #                    else:
 #                        if pdf is not None:
 #                            pdf.close()
@@ -106,6 +109,8 @@ def plot_noise_nc(fglob,**kwargs):
                 os.chmod(pklname,0666)
             except OSError:
                 print "could not change permissions of", pklname
+        except KeyboardInterrupt:
+            raise
         except Exception,e:
 #            raise
             errors[fname] = e
@@ -115,7 +120,7 @@ class SweepNoiseMeasurement(object):
     def __init__(self,sweep_filename,sweep_group_index=0,timestream_filename=None,timestream_group_index=0,
                  resonator_index=0,low_pass_cutoff_Hz=4.0,
                  dac_chain_gain = -49, delay_estimate=-7.29,
-                 deglitch_threshold=5, cryostat=None):
+                 deglitch_threshold=5, cryostat=None, mask_sweep_indicies=None):
         """
         sweep_filename : str
             NetCDF4 file with at least the sweep data. By default, this is also used for the timestream data.
@@ -232,8 +237,13 @@ class SweepNoiseMeasurement(object):
         self.sweep_freqs_MHz = self.sweep_freqs_MHz[order]
         self.sweep_s21 = self.sweep_s21[order]
         self.sweep_errors = self.sweep_errors[order]
-        
-        rr = fit_best_resonator(self.sweep_freqs_MHz,self.sweep_s21,errors=self.sweep_errors,delay_estimate=delay_estimate)
+
+        if mask_sweep_indicies is None:
+            rr = fit_best_resonator(self.sweep_freqs_MHz,self.sweep_s21,errors=self.sweep_errors,delay_estimate=delay_estimate)
+        else:
+            mask = np.ones(self.sweep_s21.shape,dtype=np.bool)
+            mask[mask_sweep_indicies] = False
+            rr = fit_best_resonator(self.sweep_freqs_MHz[mask],self.sweep_s21[mask],errors=self.sweep_errors[mask],delay_estimate=delay_estimate)
         self._resonator_model = rr
         self.Q_i = rr.Q_i
         self.fit_params = rr.result.params
