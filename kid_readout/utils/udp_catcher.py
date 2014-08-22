@@ -49,7 +49,7 @@ ptype = np.dtype([('idle','>i2'),
 hdr_fmt = ">4HI"
 hdr_size = struct.calcsize(hdr_fmt)
 pkt_size = hdr_size + 1024
-null_pkt = "\0x00"*1024
+null_pkt = "\x00"*1024
 def decode_packets(plist,streamid,chans,nfft,pkts_per_chunk = 16):
     nchan = chans.shape[0]    
     mcnt_inc = nfft*2**12/nchan    
@@ -106,11 +106,12 @@ def decode_packets(plist,streamid,chans,nfft,pkts_per_chunk = 16):
             next_seqno += 1
         else:
             print "sequence number skip, expected:",next_seqno,"got",seqno,"inserting",(seqno-next_seqno),"null packets",pnum,pidx
-            if seqno-next_seqno == 32768:
+            if True: #seqno-next_seqno == 32768:
                 print "caught special case, writing to disk"
                 fname = time.strftime("udp_skip_%Y-%m-%d_%H%M%S.pkl")
                 fh = open(fname,'w')
-                cPickle.dump(dset,fh,cPickle.HIGHEST_PROTOCOL)
+                cPickle.dump(dict(plist=plist,dset=dset,pnum=pnum,pkt=pkt,streamid=streamid,chans=chans,nfft=nfft),
+                             fh,cPickle.HIGHEST_PROTOCOL)
                 fh.close()
                 print "wrote data to:",fname
             for k in range(seqno - next_seqno+1):
