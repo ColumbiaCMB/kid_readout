@@ -50,7 +50,7 @@ hdr_fmt = ">4HI"
 hdr_size = struct.calcsize(hdr_fmt)
 pkt_size = hdr_size + 1024
 null_pkt = "\x00"*1024
-def decode_packets(plist,streamid,chans,nfft,pkts_per_chunk = 16):
+def decode_packets(plist,streamid,chans,nfft,pkts_per_chunk = 16,capture_failures=True):
     nchan = chans.shape[0]    
     mcnt_inc = nfft*2**12/nchan    
     next_seqno = None
@@ -72,10 +72,11 @@ def decode_packets(plist,streamid,chans,nfft,pkts_per_chunk = 16):
             continue            
         if next_seqno is None:
             mcnt_top = 0
+            last_mcnt_ovf = pmcnt
         else:
             if pmcnt < mcnt_inc:
                 if last_mcnt_ovf != pmcnt:
-                    print "detected mcnt overflow",pmcnt,pidx,next_seqno,(mcnt_top/2**32),pnum,mcntoff
+                    print "detected mcnt overflow",last_mcnt_ovf,pmcnt,pidx,next_seqno,(mcnt_top/2**32),pnum,mcntoff
                     mcnt_top += 2**32
                     last_mcnt_ovf = pmcnt
                 else:
@@ -83,8 +84,10 @@ def decode_packets(plist,streamid,chans,nfft,pkts_per_chunk = 16):
                     pass
             else:
                 last_mcnt_ovf = None
-        chunkno,pmcntoff = divmod(pmcnt+mcnt_top,mcnt_inc)            
+        chunkno,pmcntoff = divmod(pmcnt+mcnt_top,mcnt_inc)
+        #print chunkno,pmcnt,pmcntoff,pidx
         seqno = (chunkno)*pkts_per_chunk + pidx
+        #print seqno
         seqnos.append(seqno)
         nextseqnos.append(next_seqno)
         if next_seqno is None:
@@ -106,7 +109,7 @@ def decode_packets(plist,streamid,chans,nfft,pkts_per_chunk = 16):
             next_seqno += 1
         else:
             print "sequence number skip, expected:",next_seqno,"got",seqno,"inserting",(seqno-next_seqno),"null packets",pnum,pidx
-            if True: #seqno-next_seqno == 32768:
+            if capture_failures: #seqno-next_seqno == 32768:
                 print "caught special case, writing to disk"
                 fname = time.strftime("udp_skip_%Y-%m-%d_%H%M%S.pkl")
                 fh = open(fname,'w')
