@@ -41,7 +41,7 @@ class Fitter(object):
    
     def __init__(self, x_data, y_data,
                  model=line_model, guess=line_guess, functions=default_functions, 
-                 mask=None, errors=None, weight_by_errors=True):
+                 mask=None, errors=None, weight_by_errors=True, method='leastsq'):
         """
         Arguments:
         model: a function y(params, x) that returns the modeled values.
@@ -76,6 +76,7 @@ class Fitter(object):
         self.y_data = y_data
         self._model = model
         self._functions = functions
+        self.method = method
         if mask is None:
             if errors is None:
                 self.mask = np.ones(x_data.shape, dtype=np.bool)
@@ -120,7 +121,7 @@ class Fitter(object):
         instantiation. Parameter initial is a Parameters object
         containing initial values. It is modified by lmfit.
         """
-        self.result = lmfit.minimize(self.residual, initial, ftol=1e-6)
+        self.result = lmfit.minimize(self.residual, initial, method=self.method)
                                
     def _residual_without_errors(self, params=None):
         """

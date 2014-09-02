@@ -1,13 +1,14 @@
 import socket
-import time
 
-class HittiteController():
+class hittiteController():
     def __init__(self, addr='192.168.000.070', port=50000, terminator='\r'):
         self.address=(addr,port)
         self.terminator=terminator
+        self.connect()
         
     def connect(self):
         s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
         s.connect(self.address)
         s.settimeout(0.5)
         self.s = s
@@ -16,14 +17,15 @@ class HittiteController():
         self.s.close()
         
     def send(self,msg):
-        self.connect()
+        #self.connect()
         try:
             self.s.send(msg+self.terminator)
         except Exception,e:
             print e
             raise e
         finally:
-            self.disconnect()
+            pass
+        #    self.disconnect()
             
     def send_and_receive(self,msg):
         self.connect()
@@ -40,17 +42,14 @@ class HittiteController():
             
     def on(self):
         self.send('OUTP ON')
-        time.sleep(0.1)
     def off(self):
         self.send('OUTP OFF')
-        time.sleep(0.1)
     def set_freq(self,freq):
         msg='FREQ %f'%(freq)
         self.send(msg)
     def set_power(self,power):
         msg='POW %f'%(power)
         self.send(msg)
-        time.sleep(0.1)
             
     '''def on(self):
         self.connect()

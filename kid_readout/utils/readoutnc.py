@@ -9,23 +9,35 @@ from kid_readout.utils.roach_utils import ntone_power_correction
 
 class TimestreamGroup(object):
     def __init__(self,ncgroup):
-        self.epoch = ncgroup.variables['epoch'][:]
+        keys = ncgroup.variables.keys()
+        keys.remove('data')
+        keys.remove('dt')
+        keys.remove('fs')
+        keys.remove('tone')
+        keys.remove('nsamp')
+        for key in keys:
+            setattr(self,key,ncgroup.variables[key][:])
+        required_keys = ['wavenorm', 'sweep_index']
+        for key in required_keys:
+            if key not in keys:
+                setattr(self,key,None)
+#        self.epoch = ncgroup.variables['epoch'][:]
         self.tonebin = ncgroup.variables['tone'][:]
         self.tone_nsamp = ncgroup.variables['nsamp'][:]
-        self.fftbin = ncgroup.variables['fftbin'][:]
-        self.nfft = ncgroup.variables['nfft'][:]
+#        self.fftbin = ncgroup.variables['fftbin'][:]
+#        self.nfft = ncgroup.variables['nfft'][:]
 #        self.dt = ncgroup.variables['dt'][:] # the dt property is actually misleading at this point, so leaving it out
         self.adc_sampling_freq = ncgroup.variables['fs'][:]
         self.measurement_freq = self.adc_sampling_freq*self.tonebin/(1.0*self.tone_nsamp)
         self.sample_rate = self.adc_sampling_freq*1e6/(2*self.nfft)
-        if ncgroup.variables.has_key('wavenorm'):
-            self.wavenorm = ncgroup.variables['wavenorm'][:]
-        else:
-            self.wavenorm = None
-        if ncgroup.variables.has_key('sweep_index'):
-            self.sweep_index = ncgroup.variables['sweep_index'][:]
-        else:
-            self.sweep_index = None
+#        if ncgroup.variables.has_key('wavenorm'):
+#            self.wavenorm = ncgroup.variables['wavenorm'][:]
+#        else:
+#            self.wavenorm = None
+#        if ncgroup.variables.has_key('sweep_index'):
+#            self.sweep_index = ncgroup.variables['sweep_index'][:]
+#        else:
+#            self.sweep_index = None
             
         self._data = ncgroup.variables['data']
         self.num_data_samples = self._data.shape[1]

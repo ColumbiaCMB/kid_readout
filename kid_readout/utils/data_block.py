@@ -10,7 +10,8 @@ lpf = scipy.signal.firwin(256,1/256.)
 class DataBlock():
     def __init__(self, data, tone, fftbin, 
                      nsamp, nfft, wavenorm, t0 = 0, fs = 512e6,
-                     sweep_index = 0):
+                     sweep_index = 0, mmw_source_freq=0.0, mmw_source_modulation_freq=0.0,
+                     zbd_power_dbm=0.0, zbd_voltage=0.0):
         self.data = data
         self.tone = tone
         self.fftbin = fftbin
@@ -21,6 +22,10 @@ class DataBlock():
         self.fs = fs
         self.t0 = t0
         self.sweep_index = sweep_index
+        self.mmw_source_freq = mmw_source_freq
+        self.mmw_source_modulation_freq = mmw_source_modulation_freq
+        self.zbd_voltage = zbd_voltage
+        self.zbd_power_dbm = zbd_power_dbm
         self._mean = None
         self._std = None
         self._lpf_data = None

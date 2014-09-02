@@ -125,13 +125,16 @@ class DataFile():
         
         return name
     
-    def add_timestream_data(self, data, ri, t0, tsg=None):
+    def add_timestream_data(self, data, ri, t0, tsg=None, mmw_source_freq=0.0, mmw_source_modulation_freq=0.0,
+                            zbd_voltage=0.0, zbd_power_dbm=0.0):
         chids = ri.fpga_fft_readout_indexes+1
         tones = ri.tone_bins[ri.bank,ri.readout_selection]
         nsamp = ri.tone_nsamp
         for m in range(len(chids)):
             block = data_block.DataBlock(data = data[:,m], tone=tones[m], fftbin = chids[m], 
-                     nsamp = nsamp, nfft = ri.nfft, wavenorm = ri.wavenorm, t0 = t0, fs = ri.fs)
+                     nsamp = nsamp, nfft = ri.nfft, wavenorm = ri.wavenorm, t0 = t0, fs = ri.fs,
+                     mmw_source_freq=mmw_source_freq, mmw_source_modulation_freq=mmw_source_modulation_freq,
+                     zbd_voltage=zbd_voltage, zbd_power_dbm=zbd_power_dbm)
             tsg = self.add_block_to_timestream(block, tsg=tsg)
         return tsg
 
@@ -153,6 +156,10 @@ class DataFile():
             dt = tsg.createVariable('dt',np.float64,('epoch',))
             fs = tsg.createVariable('fs',np.float64,('epoch',))
             wavenorm = tsg.createVariable('wavenorm',np.float64,('epoch'))
+            mmw_source_freq = tsg.createVariable('mmw_source_freq',np.float64,('epoch'))
+            mmw_source_modulation_freq = tsg.createVariable('mmw_source_modulation_freq',np.float64,('epoch'))
+            zbd_voltage = tsg.createVariable('zbd_voltage',np.float64,('epoch'))
+            zbd_power_dbm = tsg.createVariable('zbd_power_dbm',np.float64,('epoch'))
             data = tsg.createVariable('data',self.cdf64,('epoch','sample'))
         else:
             t0 = tsg.variables['epoch']
@@ -163,6 +170,10 @@ class DataFile():
             dt = tsg.variables['dt']
             fs = tsg.variables['fs']
             wavenorm = tsg.variables['wavenorm']
+            mmw_source_freq = tsg.variables['mmw_source_freq']
+            mmw_source_modulation_freq = tsg.variables['mmw_source_modulation_freq']
+            zbd_voltage = tsg.variables['zbd_voltage']
+            zbd_power_dbm = tsg.variables['zbd_power_dbm']
             data = tsg.variables['data']
         idx = len(tsg.dimensions['epoch'])
         data[idx] = block.data.astype('complex64').view(self.c64)
@@ -174,6 +185,10 @@ class DataFile():
         nfft[idx] = block.nfft
         wavenorm[idx] = block.wavenorm
         dt[idx] = block.dt
+        mmw_source_freq[idx] = block.mmw_source_freq
+        mmw_source_modulation_freq[idx] = block.mmw_source_modulation_freq
+        zbd_power_dbm[idx] = block.zbd_power_dbm
+        zbd_voltage[idx] = block.zbd_voltage
         return tsg
     
     def add_cryo_data(self,cryod):
