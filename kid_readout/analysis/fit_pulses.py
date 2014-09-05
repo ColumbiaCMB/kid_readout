@@ -84,7 +84,7 @@ def find_high_low(x, use_fraction=0.25, debug=False):
         low_indexes = wrap_period(raw_indexes[(raw_indexes > low_start) & (raw_indexes < low_end)], period)
         high = np.median(x[high_indexes].real) + 1j * np.median(x[high_indexes].imag)
         low = np.median(x[low_indexes].real) + 1j * np.median(x[low_indexes].imag)
-        if np.abs(high)/np.abs(low) > 1.1:
+        if np.abs(high)/np.abs(low) > 1.:
             break
         else:
             if debug:
