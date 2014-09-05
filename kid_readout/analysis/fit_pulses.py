@@ -56,9 +56,9 @@ def find_rising_edge(x):
     above = (x > mid)
     nonz = np.flatnonzero((above[1:] & ~above[:-1]))
     if len(nonz)==0:
-        return 0
+        return np.array([0])
     else:
-        return nonz[0]
+        return nonz
 
 
 def wrap_period(val, period):
@@ -69,20 +69,29 @@ def wrap_period(val, period):
 
 def find_high_low(x, use_fraction=0.25, debug=False):
     period = len(x)
-    rising_edge = find_rising_edge(x)
-    falling_edge = (rising_edge + period / 2)
+    rising_edges = find_rising_edge(x)
+    for rising_edge in rising_edges:
+        falling_edge = (rising_edge + period / 2)
 
-    high_start = rising_edge + (period * 0.5) * (1 - use_fraction) / 2.0
-    high_end = high_start + period * 0.5 * use_fraction
+        high_start = rising_edge + (period * 0.5) * (1 - use_fraction) / 2.0
+        high_end = high_start + period * 0.5 * use_fraction
 
-    low_start = falling_edge + (period * 0.5) * (1 - use_fraction) / 2.0
-    low_end = low_start + period * 0.5 * use_fraction
+        low_start = falling_edge + (period * 0.5) * (1 - use_fraction) / 2.0
+        low_end = low_start + period * 0.5 * use_fraction
 
-    raw_indexes = np.arange(period * 2)
-    high_indexes = wrap_period(raw_indexes[(raw_indexes > high_start) & (raw_indexes < high_end)], period)
-    low_indexes = wrap_period(raw_indexes[(raw_indexes > low_start) & (raw_indexes < low_end)], period)
-    high = np.median(x[high_indexes].real) + 1j * np.median(x[high_indexes].imag)
-    low = np.median(x[low_indexes].real) + 1j * np.median(x[low_indexes].imag)
+        raw_indexes = np.arange(period * 2)
+        high_indexes = wrap_period(raw_indexes[(raw_indexes > high_start) & (raw_indexes < high_end)], period)
+        low_indexes = wrap_period(raw_indexes[(raw_indexes > low_start) & (raw_indexes < low_end)], period)
+        high = np.median(x[high_indexes].real) + 1j * np.median(x[high_indexes].imag)
+        low = np.median(x[low_indexes].real) + 1j * np.median(x[low_indexes].imag)
+        if np.abs(high)/np.abs(low) > 1.1:
+            break
+        else:
+            if debug:
+                print ("at rising edge candidate:",rising_edge,
+                       "found high",abs(high),"low",abs(low),"ratio",abs(high)/abs(low))
+
+
 
     if debug:
         fig, (ax1, ax2) = plt.subplots(ncols=1, nrows=2)
@@ -92,11 +101,16 @@ def find_high_low(x, use_fraction=0.25, debug=False):
         ax1.plot(t[low_indexes], x.real[low_indexes], 'k.')
         ax1.axhline(np.real(high), linewidth=2, color='y')
         ax1.axhline(np.real(low), linewidth=2, color='y')
+        for rising_edge in rising_edges:
+            ax1.axvline(rising_edge)
 
         ax2.plot(t, x.imag, 'b')
         ax2.plot(t[high_indexes], x.imag[high_indexes], 'r.')
         ax2.plot(t[low_indexes], x.imag[low_indexes], 'k.')
         ax2.axhline(np.imag(high), linewidth=2, color='y')
         ax2.axhline(np.imag(low), linewidth=2, color='y')
+        for rising_edge in rising_edges:
+            ax2.axvline(rising_edge)
+
     return high, low
     
