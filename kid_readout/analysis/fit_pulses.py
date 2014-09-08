@@ -52,6 +52,9 @@ def fit_complex_square_wave(y, period=125):
 
 def find_rising_edge(x):
     x = np.abs(x)
+    y = np.convolve(x,np.ones((10,))/10.0,mode='valid')
+    y = y[:x[10:-10].shape[0]]
+    x[10:-10] = y
     mid = (x.max() + x.min()) / 2.
     above = (x > mid)
     nonz = np.flatnonzero((above[1:] & ~above[:-1]))
@@ -65,6 +68,7 @@ def wrap_period(val, period):
     wrapped = np.round(val).astype('int') % period
     wrapped[wrapped == period] = 0
     return wrapped
+
 
 
 def find_high_low(x, use_fraction=0.25, debug=False):
@@ -94,7 +98,7 @@ def find_high_low(x, use_fraction=0.25, debug=False):
 
 
     if debug:
-        fig, (ax1, ax2) = plt.subplots(ncols=1, nrows=2)
+        fig, (ax1, ax2, ax3) = plt.subplots(ncols=1, nrows=3)
         t = np.arange(period)
         ax1.plot(t, x.real, 'b')
         ax1.plot(t[high_indexes], x.real[high_indexes], 'r.')
@@ -111,6 +115,14 @@ def find_high_low(x, use_fraction=0.25, debug=False):
         ax2.axhline(np.imag(low), linewidth=2, color='y')
         for rising_edge in rising_edges:
             ax2.axvline(rising_edge)
+        y = np.convolve(x,np.ones((10,))/10.0,mode='valid')
+        y = y[:x[10:-10].shape[0]]
+        x[10:-10] = y
+
+        ax3.plot(t,np.abs(x))
+        for rising_edge in rising_edges:
+            ax3.axvline(rising_edge)
+
 
     return high, low
     
