@@ -225,12 +225,13 @@ class SweepNoiseMeasurement(object):
 
         
         # We can use the timestream measurement as an additional sweep point.
-        # We average only the first 2048 points of the timeseries to avoid any drift. 
-        self.sweep_freqs_MHz = np.hstack((self.sweep_freqs_MHz,[self.noise_measurement_freq_MHz]))
-        self.sweep_s21 = np.hstack((self.sweep_s21,[original_timeseries[:2048].mean()]))
-        self.sweep_errors = np.hstack((self.sweep_errors,
-                                           [original_timeseries[:2048].real.std()/np.sqrt(2048)
-                                            +1j*original_timeseries[:2048].imag.std()/np.sqrt(2048)]))
+        # We average only the first 2048 points of the timeseries to avoid any drift.
+        if False:
+            self.sweep_freqs_MHz = np.hstack((self.sweep_freqs_MHz,[self.noise_measurement_freq_MHz]))
+            self.sweep_s21 = np.hstack((self.sweep_s21,[original_timeseries[:2048].mean()]))
+            self.sweep_errors = np.hstack((self.sweep_errors,
+                                               [original_timeseries[:2048].real.std()/np.sqrt(2048)
+                                                +1j*original_timeseries[:2048].imag.std()/np.sqrt(2048)]))
         
         # Now put all the sweep data in increasing frequency order so it plots nicely
         order = self.sweep_freqs_MHz.argsort()

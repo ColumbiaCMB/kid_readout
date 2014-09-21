@@ -124,5 +124,5 @@ def find_high_low(x, use_fraction=0.25, debug=False):
             ax3.axvline(rising_edge)
 
 
-    return high, low
+    return high, low, rising_edge
     
