@@ -25,7 +25,7 @@ def get_temperature_log_file_list():
     log_filenames = glob.glob(os.path.join(temperature_log_file_dir,'2*.txt'))
     log_filenames.sort()
     if len(log_filenames) == 0:
-        raise Exception("Could not find any temperature log files in %s" % temperature_log_file_dir)
+        print("Could not find any temperature log files in %s" % temperature_log_file_dir)
     epochs = []
     for filename in log_filenames:
         base,fname = os.path.split(filename)
@@ -50,6 +50,13 @@ def get_temperatures_at(t):
     global epochs
     global temperature_log_filenames
     global _filecache
+
+    if len(temperature_log_filenames) == 0:
+        if np.isscalar(t):
+            results = np.nan
+        else:
+            results = np.nan*np.ones(t.shape)
+        return results,results,results,results
     
     if np.isscalar(t):
         start_time = t
