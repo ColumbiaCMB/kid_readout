@@ -266,7 +266,10 @@ class SweepNoiseMeasurement(object):
             window = projected_timeseries.shape[0]//2
         self.deglitch_window = window
         self.deglitch_threshold = deglitch_threshold
-        deglitched_timeseries = deglitch_window(projected_timeseries,window,thresh=deglitch_threshold)
+        if deglitch_threshold:
+            deglitched_timeseries = deglitch_window(projected_timeseries,window,thresh=deglitch_threshold)
+        else:
+            deglitched_timeseries = projected_timeseries
         
         
         self.low_pass_projected_timeseries = low_pass_fir(deglitched_timeseries, num_taps=1024, cutoff=low_pass_cutoff_Hz, 
