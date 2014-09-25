@@ -44,19 +44,20 @@ class AdcPlotDialog(QDialog,Ui_AdcPlotDialog):
         
         self.pause_update = False
         
-        self.ri = kid_readout.utils.roach_interface.RoachBaseband()
-        self.ri.set_tone_freqs(np.array([111.111]),nsamp=2**18)
+        self.ri = kid_readout.utils.roach_interface.RoachBasebandWide()
+        self.ri.set_tone_freqs(np.array([77.915039]),nsamp=2**22)
         
 #        self.adc_atten_spin.editingFinished.connect(self.on_adc_atten)
 #        self.dac_atten_spin.editingFinished.connect(self.on_dac_atten)
         self.push_apply_atten.clicked.connect(self.apply_atten)
+        self.push_tone.clicked.connect(self.onpush_set_tone)
         QTimer.singleShot(1000, self.update_all)
  
     @pyqtSlot()
     def onpush_set_tone(self):
         frq = float(self.line_tone_freq.text())
         self.pause_update = True
-        self.ri.set_tone_freqs(np.array([frq]),nsamp=2**18)
+        self.ri.set_tone_freqs(np.array([frq]),nsamp=2**20)
         self.pause_update = False
     @pyqtSlot()       
     def apply_atten(self):
@@ -86,9 +87,11 @@ class AdcPlotDialog(QDialog,Ui_AdcPlotDialog):
         fr = fr/1e6
         pxx = 10*np.log10(pxx)
         t = np.arange(len(x))/self.ri.fs
-        d,addr = self.ri.get_data(2,demod=False)
+        demod = self.check_demod.isChecked()
+        d,addr = self.ri.get_data(2,demod=demod)
         print d.shape
-        dpxx,dfr = matplotlib.mlab.psd(d[:,0],NFFT=1024,Fs=self.ri.fs*1e6/2.**15,scale_by_freq=True)
+        nfft = np.min((1024*32,d.shape[0]/16))
+        dpxx,dfr = matplotlib.mlab.psd(d[:,0],NFFT=nfft,Fs=self.ri.fs*1e6/(2.0*self.ri.nfft),scale_by_freq=True)
         dpxx = 10*np.log10(dpxx)
         if self.line:
 #            xlim = self.axes.get_xlim()
@@ -101,8 +104,9 @@ class AdcPlotDialog(QDialog,Ui_AdcPlotDialog):
         else:
             self.line, = self.axes.plot(fr,pxx)
             self.line2, = self.axes2.plot(t,x)
-            self.line3, = self.axes3.plot(d[:,0].real,d[:,0].imag,',')
+            self.line3, = self.axes3.plot(d[:,0].real,d[:,0].imag,'.')
             self.line4, = self.axes4.plot(dfr,dpxx)
+            self.axes4.set_xscale('symlog')
             self.axes.set_xlabel('MHz')
             self.axes.set_ylabel('dB/Hz')
             self.axes.grid(True)
@@ -112,6 +116,8 @@ class AdcPlotDialog(QDialog,Ui_AdcPlotDialog):
             self.axes4.set_ylabel('dB/Hz')
             self.axes3.set_xlim(-2.**15,2**15)
             self.axes3.set_ylim(-2.**15,2**15)
+            self.axes3.hlines([-2**15,2**15],-2**15,2**15)
+            self.axes3.vlines([-2**15,2**15],-2**15,2**15)
 
         self.canvas.draw()
     

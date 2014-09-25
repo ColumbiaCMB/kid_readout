@@ -46,10 +46,10 @@ print offsets*1e6
 print len(f0s)
 
 #heater_voltages = 0.4*np.sqrt(np.arange(1,11))
-heater_voltages = [2.5,3.0,3.5,4.0,4.5,5.0]
+heater_voltages = np.concatenate(([0.0],np.linspace(2,4,10),np.linspace(0.1,1,10)))
 #heater_voltages = np.hstack(([0.0],heater_voltages))
 
-fg.set_dc_voltage(2.0)
+fg.set_dc_voltage(0.0)
 #time.sleep(60*10)
 
 if True:
@@ -66,6 +66,9 @@ start = time.time()
 ri.set_dac_attenuator(39.0)
 
 for heater_voltage in heater_voltages:
+    print "Setting LED to ",heater_voltage
+    fg.set_dc_voltage(heater_voltage)
+
     measured_freqs = sweeps.prepare_sweep(ri,f0binned,offsets,nsamp=nsamp)
     print "loaded waveforms in", (time.time()-start),"seconds"
     
@@ -120,8 +123,9 @@ for heater_voltage in heater_voltages:
     
 
 #for heater_voltage in heater_voltages:
-    df = data_file.DataFile(suffix='net')
+    df = data_file.DataFile(suffix='led')
     df.log_hw_state(ri)
+    df.nc.led_voltage = ('%.3f V' % heater_voltage)
     sweep_data = sweeps.do_prepared_sweep(ri, nchan_per_step=atonce, reads_per_step=8,sweep_data = orig_sweep_data)
     df.add_sweep(sweep_data)
     meas_cfs = []
@@ -164,34 +168,7 @@ for heater_voltage in heater_voltages:
         tsg = df.add_timestream_data(dmod, ri, t0, tsg=tsg)
     df.sync()
     
-    print "finished baseline data collection"
-    print "Setting heater to ",heater_voltage
-    fg.set_dc_voltage(heater_voltage)
-    heat_start = time.time()
-    while time.time() - heat_start < 35*60.0:
-        df.log_hw_state(ri)
-        print "making sweep"
-        sweep_data = sweeps.do_prepared_sweep(ri, nchan_per_step=atonce, reads_per_step=8)
-        df.add_sweep(sweep_data)
-        ri.select_bank(ri.tone_bins.shape[0]-1)
-        ri._sync()
-        nsets = len(meas_cfs)/atonce
-        tsg = None
-        for iset in range(nsets):
-            selection = range(len(meas_cfs))[iset::nsets]
-            ri.select_fft_bins(selection)
-            ri._sync()
-            time.sleep(0.2)
-            t0 = time.time()
-            dmod,addr = ri.get_data_seconds(4,demod=True)
-            print nsets,iset,tsg
-            tsg = df.add_timestream_data(dmod, ri, t0, tsg=tsg)
-        df.sync()
-        print "sleeping for 120 seconds"
-        time.sleep(120*2)
-
-
-
+    print "data collection"
     df.log_hw_state(ri)
     df.nc.sync()
     df.nc.close()
