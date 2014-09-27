@@ -4,6 +4,60 @@ from matplotlib import pyplot as plt
 
 from kid_readout.analysis import fitter
 
+def fred(t,tau,amp,offset,t_on,t_rise):
+    result = np.empty_like(t)
+    before = t < t_on
+    result[before] = offset
+    on = (t >= t_on) & (t < (t_on+t_rise))
+    t_during_rise = (t - t_on)[on]
+    result[on] = t_during_rise*amp/t_rise + offset
+    after = t>= (t_on+t_rise)
+    result[after] = amp*np.exp(-(t[after]-(t_on+t_rise))/tau)+offset
+    return result
+
+def fred_model(params,x):
+    return fred(x,params['tau'].value,
+                params['amp'].value,
+                params['offset'].value,
+                params['t_on'].value,
+                params['t_rise'].value)
+
+def fred_guess(x,y):
+    params = lmfit.Parameters()
+    peak_at = abs(y-y.mean()).argmax()
+    peak = y[peak_at]
+    offset = y.mean()
+    tau_guess = x.ptp()/100.0
+    params.add('tau',value=tau_guess,min=0,max=x.ptp()*10)
+    params.add('amp',value=peak-offset,min=-y.ptp(),max=y.ptp())
+    params.add('offset',value=offset,min=y.min()-y.ptp(),max=y.max()+y.ptp())
+    params.add('t_on',value=x[peak_at],min=x.min(),max=x.max())
+    params.add('t_rise',value=tau_guess/10.0,min=0,max=x.ptp()*10)
+    print "initial guess:",params
+    return params
+
+
+def exponential(t,tau,amp,offset,t0=0):
+    result = np.empty_like(t)
+    before = t < t0
+    result[before] = amp+offset
+    result[~before] = amp*np.exp(-(t[~before]-t0)/tau)+offset
+    return result
+
+def exponential_model(params,x):
+    return exponential(x,params['tau'].value,params['amp'].value, params['offset'].value, params['t0'].value)
+
+def exponential_guess(x,y):
+    params = lmfit.Parameters()
+    midval = (y.max()+y.min())/2.0
+    midpoint = x[np.abs(y-midval).argmin()]
+    tau_guess = x.ptp()/10.0
+    params.add('tau',value=tau_guess,min=0,max=x.ptp()*10)
+    params.add('amp',value=midval,min=-y.ptp(),max=y.ptp())
+    params.add('offset',value=midval,min=y.min()-y.ptp(),max=y.max()+y.ptp())
+    params.add('t0',value=midpoint,min=x.min(),max=x.max())
+    print "initial guess:",params
+    return params
 
 def square_wave(num_points, period, low_level, high_level, phase, dtype='float'):
     index = np.arange(num_points)
