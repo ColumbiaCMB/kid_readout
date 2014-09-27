@@ -4,7 +4,8 @@ import os
 import kid_readout.utils.plot_nc
 
 all_ncs = (glob.glob('/home/readout/data/*.nc') +
-           glob.glob('/home/gjones/data/*.nc'))
+           glob.glob('/home/gjones/data/*.nc') +
+           glob.glob('/home/data/*.nc'))
 
 all_ncs.sort()
 

@@ -30,64 +30,99 @@ reload(kid_eqns)
 import itertools
 def plot_mattis_bardeen(data,axs=None,min_fit_temp=0,error_factor=100.0):
     if axs is None:
-        fig,(ax1,ax2,ax3,ax4) = plt.subplots(ncols=4,figsize=(10,6),sharex=True,squeeze=True)
+        fig,(ax1,ax2,ax3) = plt.subplots(ncols=3,figsize=(20,6),squeeze=True)
     else:
-        ax1,ax2,ax3,ax4 = axs
+        ax1,ax2,ax3 = axs
         
     temps = np.array(data.sweep_primary_package_temperature)
     Qis = np.array(data.Q_i)
+#    Qis = 1/(1/Qis-.99/Qis.max())
+    print Qis
     fractional_freq = np.array(data.fractional_delta_f_0)
+#    fractional_freq = data.f_0/data.f_0.iat[temps.argmin()]-1
     Qi_err = np.array(data.Q_err)
     Qi_err[Qi_err <= 0] = np.median(Qi_err)
     Qi_err = Qi_err/error_factor
+    print Qi_err/Qis
     f0_err = np.array(data.f_0_err/data.f_0)
     f0_err[f0_err <= 0] = np.median(f0_err)
-    ax1.plot(temps,fractional_freq,'o')
+    print f0_err/np.abs(fractional_freq)
+    ax1.plot(temps,fractional_freq,'o',label='data')
     ax2.plot(temps,fractional_freq,'o')    
+    #ax3.errorbar(temps,1/Qis,yerr=100*Qi_err/Qis**2 ,linestyle='none',marker='.')
     ax3.plot(temps,1/Qis,'o')
-    ax4.plot(temps,1/Qis,'o')
+    #ax4.plot(temps,1/Qis,'o')
     
     T = np.linspace(0.1,0.38,1000)
     
-    optional_params = ['nqp0','delta_0','delta_loss']
+    temp_mask = temps>min_fit_temp
+    fit_temps = temps[temp_mask]
+    fit_fractional_freq = fractional_freq[temp_mask]
+    fit_f0_err = f0_err[temp_mask]
+    fit_Qi_err = Qi_err[temp_mask]
+    fit_Qis = Qis[temp_mask]
+#    fit_Qi_err = fit_Qis*error_factor
+    ax1.plot(fit_temps,fit_fractional_freq,'ro',label='fit data')
+    ax2.plot(fit_temps,fit_fractional_freq,'ro')    
+    ax3.plot(fit_temps,1/fit_Qis,'ro')
+    #ax4.plot(fit_temps,1/fit_Qis,'ro')    
+    
+    optional_params = ['delta_0','delta_loss']
     param_sets = [[]]
     for k in range(len(optional_params)):
         param_sets.extend(itertools.combinations(optional_params,k+1))
-    colors = plt.cm.jet(np.linspace(0,1,len(param_sets)))
+    colors = plt.cm.spectral(np.linspace(0.1,.9,len(param_sets)))
     for color,param_set in zip(colors,param_sets):
         km = kid_eqns.DarkKIDModelFractional()
         for name in optional_params:
             km.params[name].vary = False
         for name in param_set:
             km.params[name].vary = True
-        km.fit_f0(temps,fractional_freq,f0_err)
-        print "fitting only f0 and varying", param_set
+        km.fit_f0(fit_temps,fit_fractional_freq,fit_f0_err)
+        print "\nfitting only f0 and varying", param_set
         lmfit.report_fit(km.params)
         print km.result.message
         ax1.plot(T,km.total_fres(T),color=color,label=('f0 %s' % ','.join(param_set)))
         ax2.plot(T,km.total_fres(T),color=color,label=('f0 %s' % ','.join(param_set)))
         ax3.plot(T,1/km.total_Qi(T),color=color,label=('f0 %s' % ','.join(param_set)))
-        ax4.plot(T,1/km.total_Qi(T),color=color,label=('f0 %s' % ','.join(param_set)))
+        #ax4.plot(T,1/km.total_Qi(T),color=color,label=('f0 %s' % ','.join(param_set)))
         
+        if 0:
+            km = kid_eqns.DarkKIDModelFractional()
+            for name in optional_params:
+                km.params[name].vary = False
+            for name in param_set:
+                km.params[name].vary = True
+            km.fit_qi(fit_temps,fit_Qis,fit_Qi_err)
+            print "\nfitting only qi and varying", param_set
+            lmfit.report_fit(km.params)
+            print km.result.message
+            ax1.plot(T,km.total_fres(T),':',color=color,lw=4,label=('qi %s' % ','.join(param_set)))
+            ax2.plot(T,km.total_fres(T),':',color=color,lw=4,label=('qi %s' % ','.join(param_set)))
+            ax3.plot(T,1/km.total_Qi(T),':',color=color,lw=4,label=('qi %s' % ','.join(param_set)))
+            #ax4.plot(T,1/km.total_Qi(T),':',color=color,lw=4,label=('qi %s' % ','.join(param_set)))
+                
         km = kid_eqns.DarkKIDModelFractional()
         for name in optional_params:
             km.params[name].vary = False
         for name in param_set:
             km.params[name].vary = True
-        km.fit_f0_qi(temps,fractional_freq,Qis,f0_err=f0_err,Qi_err=Qi_err)
-        print "fitting f0 and Qi and varying", param_set
+        km.fit_f0_qi(fit_temps,fit_fractional_freq,fit_Qis,f0_err=fit_f0_err,Qi_err=fit_Qi_err)
+        print "\nitting f0 and Qi and varying", param_set
         lmfit.report_fit(km.params)
         print km.result.message
-        ax1.plot(T,km.total_fres(T),'--',color=color,lw=1.5,label=('%s' % ','.join(param_set)))
-        ax2.plot(T,km.total_fres(T),'--',color=color,lw=1.5,label=('%s' % ','.join(param_set)))
-        ax3.plot(T,1/km.total_Qi(T),'--',color=color,lw=1.5,label=('%s' % ','.join(param_set)))
-        ax4.plot(T,1/km.total_Qi(T),'--',color=color,lw=1.5,label=('%s' % ','.join(param_set)))
+        ax1.plot(T,km.total_fres(T),'--',color=color,lw=2.5,label=('f0qi %s' % ','.join(param_set)))
+        ax2.plot(T,km.total_fres(T),'--',color=color,lw=2.5,label=('f0qi %s' % ','.join(param_set)))
+        ax3.plot(T,1/km.total_Qi(T),'--',color=color,lw=2.5,label=('%s' % ','.join(param_set)))
+        #ax4.plot(T,1/km.total_Qi(T),'--',color=color,lw=1.5,label=('%s' % ','.join(param_set)))
     
-    ax1.set_ylim(fractional_freq.min(),0)
-    ax2.set_ylim(-1e-5,0)
-    ax3.set_ylim(1/Qis.max(),1/Qis.min())
-    ax4.set_ylim(0,1e-5)
-    ax2.legend(loc='lower left',prop=dict(size='xx-small'))
+    ax1.set_ylim(fractional_freq.min()*1.1,0)
+    ax2.set_ylim(-2e-5,1e-5)
+    #ax3.set_ylim(1/Qis.max(),1/Qis.min())
+    ax3.set_ylim(0,2e-5)
+    #ax5.set_visible(False)
+    fig.legend(ax1.lines,[x.get_label() for x in ax1.lines],loc='upper right',prop=dict(size='xx-small'))
+#    ax2.legend(loc='lower left',prop=dict(size='xx-small'),bbox_to_anchor=ax5.get_position())
     
 def apply_limits(data,limits_dict):
     for name,limits in limits_dict.items():
@@ -119,6 +154,7 @@ def refine_dataset(original_data,settings):
         data = data[temp_deviations < settings['max_package_temp_deviation']]
     #data = data.sort(["f_0"])
     data['f_0_max'] = np.zeros((data.shape[0],))#data.groupby("resonator_index")["f_0"].transform(lambda x: x.max())
+    data['Q_i_max'] = np.zeros((data.shape[0],))
     data['responsivity_Hz_per_K'] = np.zeros((data.shape[0],))
     data['responsivity_err'] = np.zeros((data.shape[0],))
     data['responsivity_offset'] = np.zeros((data.shape[0],))
@@ -126,8 +162,12 @@ def refine_dataset(original_data,settings):
         group = data[data.resonator_index == index]
         max = group[group.sweep_primary_load_temperature < settings['f_0_max_temp_limit']].f_0.max()
         data.f_0_max[data.resonator_index == index] = max
+        max = group[group.sweep_primary_load_temperature < settings['f_0_max_temp_limit']].Q_i.max()
+        data.Q_i_max[data.resonator_index == index] = max
+        
     data['delta_f_0_Hz'] = (data.f_0-data.f_0_max)*1e6
     data['fractional_delta_f_0'] = data.delta_f_0_Hz/(1e6*data.f_0_max)#(1e6*data.noise_measurement_freq_MHz)
+    data['fractional_delta_Q_i'] = data.Q_i/data.Q_i_max - 1
 
     for index in np.unique(data.resonator_index):
         group = data[data.resonator_index == index]

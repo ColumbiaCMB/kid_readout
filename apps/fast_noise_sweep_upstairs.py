@@ -45,8 +45,8 @@ print "loaded waveforms in", (time.time()-start),"seconds"
 sys.stdout.flush()
 time.sleep(1)
 
-atten_list = np.linspace(5,26,8)#[30]#[35.5,33.5,46.5,43.5,40.5,37.5]
-atten_list = [20.0]
+atten_list = np.linspace(15,46,8)#[30]#[35.5,33.5,46.5,43.5,40.5,37.5]
+#atten_list = [33.0]
 for atten in atten_list:
     df = data_file.DataFile()
     ri.set_dac_attenuator(atten)
@@ -95,6 +95,7 @@ for atten in atten_list:
 
     df.log_hw_state(ri)
     df.nc.sync()
-    df.nc.close()
     
+    df.nc.close()
+
 print "completed in",((time.time()-start)/60.0),"minutes"

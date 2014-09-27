@@ -22,9 +22,9 @@ f0s = np.load('/home/gjones/kid_readout/apps/sc5x4_0813f12.npy')
 f0s.sort()
 f0s = f0s[[0,1,2,3,4,5,6,7,8,9,10,13,14,15,16,17]]  # remove close packed resonators to enable reading out all simultaneously
 
-suffix = "mmwnet"
+suffix = "mmw"
 mmw_source_modulation_freq = 25.0
-mmw_atten_turns = (6.5,6.5)
+mmw_atten_turns = (7.0,7.0)
 
 nf = len(f0s)
 atonce = 16
@@ -45,7 +45,7 @@ print f0s
 print offsets*1e6
 print len(f0s)
 
-mmw_freqs = np.linspace(135e9,165e9,2000)
+mmw_freqs = np.linspace(135e9,165e9,500)
 fundamental_freqs = mmw_freqs/12.0
 
 
@@ -60,8 +60,8 @@ if False:
     time.sleep(600)
 start = time.time()
 
-use_fmin = True
-attenlist = [33,36,39]
+use_fmin = False
+attenlist = [39]
 for atten in attenlist:
     hittite.off()
     print "setting attenuator to",atten

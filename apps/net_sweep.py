@@ -17,7 +17,7 @@ ri.initialize()
 #f0s = np.load('/home/gjones/workspace/apps/sc5x4_0813f10_first_pass.npy')#[:4]
 #f0s = np.load('/home/gjones/workspace/readout/apps/sc3x3_0813f9_2014-02-11.npy')
 #f0s = np.load('/home/gjones/workspace/readout/apps/sc3x3_0813f5_2014-02-27.npy')
-f0s = np.load('/home/gjones/workspace/apps/sc5x4_0813f12.npy')
+f0s = np.load('/home/gjones/kid_readout/apps/sc5x4_0813f12.npy')
 f0s.sort()
 #f0s = f0s*(1-4e-5)
 
@@ -46,10 +46,10 @@ print offsets*1e6
 print len(f0s)
 
 #heater_voltages = 0.4*np.sqrt(np.arange(1,11))
-heater_voltages = [1.0,1.2,1.4,1.6,1.8,2.0]
+heater_voltages = np.array([1.25,2,2.5,3])
 #heater_voltages = np.hstack(([0.0],heater_voltages))
 
-fg.set_dc_voltage(0.0)
+#fg.set_dc_voltage(3.25)
 #time.sleep(60*10)
 
 if True:
@@ -57,13 +57,14 @@ if True:
     while True:
         temp = get_all_temperature_data()[1][-1]
         print "mk stage at", temp
-        if temp < 0.205:
+        if temp < 0.210:
             break
         time.sleep(300)
     time.sleep(120)
 start = time.time()
 
-ri.set_dac_attenuator(39.0)
+ri.set_dac_attenuator(33.0)
+use_fmin = True
 
 for heater_voltage in heater_voltages:
     measured_freqs = sweeps.prepare_sweep(ri,f0binned,offsets,nsamp=nsamp)
@@ -84,16 +85,19 @@ for heater_voltage in heater_voltages:
         res = fit_best_resonator(fr,s21,errors=errors)
         fmin = fr[np.abs(s21).argmin()]
         print "s21 fmin", fmin, "original guess",thiscf,"this fit", res.f_0, "delay",delay,"resid delay",res.delay
-        if abs(res.f_0 - thiscf) > 0.1:
-            if abs(fmin - thiscf) > 0.1:
-                print "using original guess"
-                meas_cfs.append(thiscf)
-            else:
-                print "using fmin"
-                meas_cfs.append(fmin)
+        if use_fmin:
+            meas_cfs.append(fmin)
         else:
-            print "using this fit"
-            meas_cfs.append(res.f_0)
+            if abs(res.f_0 - thiscf) > 0.1:
+                if abs(fmin - thiscf) > 0.1:
+                    print "using original guess"
+                    meas_cfs.append(thiscf)
+                else:
+                    print "using fmin"
+                    meas_cfs.append(fmin)
+            else:
+                print "using this fit"
+                meas_cfs.append(res.f_0)
         idx = np.unravel_index(abs(measured_freqs - meas_cfs[-1]).argmin(),measured_freqs.shape)
         idxs.append(idx)
     
@@ -133,16 +137,19 @@ for heater_voltage in heater_voltages:
         res = fit_best_resonator(fr,s21,errors=errors) #Resonator(fr,s21,errors=errors)
         fmin = fr[np.abs(s21).argmin()]
         print "s21 fmin", fmin, "original guess",thiscf,"this fit", res.f_0
-        if abs(res.f_0 - thiscf) > 0.1:
-            if abs(fmin - thiscf) > 0.1:
-                print "using original guess"
-                meas_cfs.append(thiscf)
-            else:
-                print "using fmin"
-                meas_cfs.append(fmin)
+        if use_fmin:
+            meas_cfs.append(fmin)
         else:
-            print "using this fit"
-            meas_cfs.append(res.f_0)
+            if abs(res.f_0 - thiscf) > 0.1:
+                if abs(fmin - thiscf) > 0.1:
+                    print "using original guess"
+                    meas_cfs.append(thiscf)
+                else:
+                    print "using fmin"
+                    meas_cfs.append(fmin)
+            else:
+                print "using this fit"
+                meas_cfs.append(res.f_0)
         idx = np.unravel_index(abs(measured_freqs - meas_cfs[-1]).argmin(),measured_freqs.shape)
         idxs.append(idx)
     print meas_cfs
@@ -168,7 +175,7 @@ for heater_voltage in heater_voltages:
     print "Setting heater to ",heater_voltage
     fg.set_dc_voltage(heater_voltage)
     heat_start = time.time()
-    while time.time() - heat_start < 1800.0:
+    while time.time() - heat_start < 25*60.0:
         df.log_hw_state(ri)
         print "making sweep"
         sweep_data = sweeps.do_prepared_sweep(ri, nchan_per_step=atonce, reads_per_step=8)
