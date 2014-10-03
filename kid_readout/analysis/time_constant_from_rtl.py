@@ -23,5 +23,5 @@ def get_time_constant_from_file(filename,pulse_period=10e-3, debug=False):
         ax.plot(t,y)
         ax.plot(t,fit.model(x=t),'r',lw=2)
         peakt = t[np.abs(y-y.mean()).argmax()]
-        ax.set_xlim(peakt-1e-3,peakt+1e-3)
+        ax.set_xlim(peakt-.1e-3,peakt+.5e-3)
     return fit.tau, fit

@@ -1,13 +1,13 @@
 __author__ = 'gjones'
 import numpy as np
 from matplotlib import pyplot as plt
-from kid_readout.equipment.hittite_controller import HittiteController
+from kid_readout.equipment.hittite_controller import hittiteController
 
 import rtlsdr
 
 class RtlKidReadout(object):
     def __init__(self):
-        self.hittite = HittiteController()
+        self.hittite = hittiteController()
         self.rtl = rtlsdr.RtlSdr()
         self.rtl.sample_rate = 256e3
         self.rtl.gain = 30.0
