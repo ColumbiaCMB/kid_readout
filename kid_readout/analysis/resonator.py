@@ -67,6 +67,14 @@ def fit_best_resonator(*args,**kwargs):
     return (rr,bif)[prefer_bif]
 
 
+def normalized_s21_to_detuning(s21,resonator):
+    if 'a' in resonator.result.params:
+        print "warning: inverse not yet defined for bifurcation model, proceeding anyway"
+    Q = resonator.Q
+    Qe = resonator.Q_e
+    x = 1j*(Qe*(s21-1)+Q) / (2*Qe*Q*(s21-1))
+    return x.real
+
 class Resonator(Fitter):
     """
     This class represents a single resonator. All of the
@@ -221,14 +229,14 @@ class Resonator(Fitter):
     def convert_s21_to_freq_fluctuation(self,freq,s21):
         """
         Use formula in Phil's LTD paper to convert S21 data to frequency fluctuations.
-        
+
         The result of this is the same as Re(S21/(dS21/df)), so the same as self.project_s21_to_delta_freq().real
-        
+
         freq : float
             frequency in same units as the model was built with, at which the S21 data was measured.
-        
+
         s21 : complex or array of complex
-            Raw S21 data measured at the indicated frequency         
+            Raw S21 data measured at the indicated frequency
         """
         normalized_s21 = self.normalize(freq,s21)
         gradient = self.approx_normalized_gradient(freq)
@@ -239,3 +247,4 @@ class Resonator(Fitter):
         dQdf = gradient.imag
         ef = (I*dIdf + Q*dQdf)/(dIdf**2 + dQdf**2)
         return ef
+

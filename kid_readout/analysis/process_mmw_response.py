@@ -1,18 +1,34 @@
-import numpy as np
-from matplotlib import pyplot as plt
 import os
 
-import kid_readout.analysis.fit_pulses
-import kid_readout.analysis.resonator
-import kid_readout.utils.readoutnc
-import kid_readout.analysis.resources.skip5x4
+import numpy as np
+from matplotlib import pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
+import kid_readout.analysis.fit_pulses
+import kid_readout.analysis.resonator
+from kid_readout.analysis.resonator import normalized_s21_to_detuning
+import kid_readout.utils.readoutnc
+import kid_readout.analysis.resources.skip5x4
+
+
 file_id_to_res_id = [0,1,2,3,4,5,6,7,8,17,16,15,14,13,10,9]
 
-def plot_file(filename,num_resonators=16):
+def plot_file_with_air_spacer_reference(filename):
+    d1 = np.load('/home/data2/mmw_sweeps/2014-09-03_150009_140.000_161.000_10.0.npz')
+    d2 = np.load('/home/data2/mmw_sweeps/2014-09-11_105355_135.000_165.000_10.0.npz')
+    waveguide_freq = d1['mmw_freq']
+    waveguide_response = d1['power_watts']/d1['power_watts'].max()
+    optics_freq = d2['mmw_freq']
+    optics_response = d2['power_watts']/d2['power_watts'].max()
+    total_response = np.interp(waveguide_freq,optics_freq,optics_response)*waveguide_response
+    total_freq = waveguide_freq
+
+    plot_file(filename,reference_spectrum=(total_freq,total_response*9))
+
+
+def plot_file(filename,num_resonators=16,reference_spectrum=None):
     plt.rcParams['font.size'] = 16
     mmws = [MmwResponse(filename,k) for k in range(num_resonators)]
     blah, fbase = os.path.split(filename)
@@ -28,6 +44,8 @@ def plot_file(filename,num_resonators=16):
     ax = fig.add_subplot(221)
     for mmw in mmws:
         ax.plot(mmw.mmw_freq/1e9,1e6*np.abs(mmw.mmw_frac_response))
+    if reference_spectrum is not None:
+        ax.plot(reference_spectrum[0]/1e9,reference_spectrum[1])
     ax.set_title('Response of all detectors')
     ax.set_ylabel('Frac. freq response [ppm]')
     ax.set_xlabel('mm-wave source freq [GHz]')
@@ -59,6 +77,8 @@ def plot_file(filename,num_resonators=16):
         ax = fig.add_axes([x/5.0,y/4.0,0.8/5.0,0.8/4.0])
 #        ax = fig.add_subplot(4,5,n+1)
         ax.plot(mmw.mmw_freq/1e9,1e6*np.abs(mmw.mmw_frac_response))
+        if reference_spectrum is not None:
+            ax.plot(reference_spectrum[0]/1e9,reference_spectrum[1],color='gray')
         ax.text(0.1,0.9,("%.6f MHz" % (mmw.resonator.f_0)),transform=ax.transAxes,ha='left',va='top',size='small')
         ax.set_ylim(0,8)
     canvas = FigureCanvasAgg(fig)
@@ -86,14 +106,6 @@ def plot_file(filename,num_resonators=16):
         #fig.set_canvas(canvas)
         pdf.savefig(fig,bbox_inches='tight')
     pdf.close()
-
-def normalized_s21_to_detuning(s21,resonator):
-    if 'a' in resonator.result.params:
-        print "warning: inverse not yet defined for bifurcation model, proceeding anyway"
-    Q = resonator.Q
-    Qe = resonator.Q_e
-    x = 1j*(Qe*(s21-1)+Q) / (2*Qe*Q*(s21-1))
-    return x.real
 
 class MmwResponse(object):
     def __init__(self,ncfilename,resonator_index):
