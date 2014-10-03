@@ -20,7 +20,7 @@ def deglitch_block(ts,thresh=5):
     mask[:-50] = mask[:-50] | mask[50:]
     mask[50:] = mask[50:] | mask[:-50]
     nmask = mask.sum()
-    print "rejecting",nmask/float(ts.shape[0])
+#    print "rejecting",nmask/float(ts.shape[0])
     out = ts.copy()
     try:
         out[mask] = np.array(random.sample(ts[~mask],nmask))
@@ -36,7 +36,7 @@ def deglitch_window(data, window_length, thresh=6):
         start = k-1
         if start < 0:
             start = 0
-        print start*step,(k+1)*step,
+#        print start*step,(k+1)*step,
         chunk = data[start*step:(k+1)*step]
         res = deglitch_block(chunk,thresh=thresh)
         out[start*step:((start+1)*step)] = res[:step]
