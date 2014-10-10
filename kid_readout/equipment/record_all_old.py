@@ -19,7 +19,8 @@ try:
     timestr = time.strftime("%Y%m%d-%H%M%S")
     filename = "/home/heather/SRS/%s.txt" % timestr
     f = open(filename, 'w+')
-    f.write("time, diode ch1 temp, dio ch 2 temp, dio 3 temp, dio 4 temp, dio 1 volts, dio 2 volts, dio 3 volts, dio 4 volts, rox 1 temp, rox 1 res, rox 2 temp, rox 2 res, rox 3 res, rox 3 temp\n")
+    # The column headers for rox 3 were the opposite of the written data until 2014-10-10:
+    f.write("time, diode ch1 temp, dio ch 2 temp, dio 3 temp, dio 4 temp, dio 1 volts, dio 2 volts, dio 3 volts, dio 4 volts, rox 1 temp, rox 1 res, rox 2 temp, rox 2 res, rox 3 temp, rox 3 res\n")
 
     while 1:
 
