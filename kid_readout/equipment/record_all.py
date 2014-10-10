@@ -1,74 +1,87 @@
+import os
 import time
-import threading
-import logging 
-import serial 
-import io
-import sim900
-import sys
+from kid_readout.equipment import sim
 
-#this is a bad file for recording the diode temps and voltages
-#eventually it will be merged with recording the resistance bridges
-#and actually use the sim900 file functions
+def main():
 
-#create an instance of the sim900 commands
-sim = sim900.sim900()
+    # Time between temperature requests, in seconds.
+    delay = 3
 
+    basepath = '/dev/serial/by-id'
+    serial_id = 'usb-FTDI_USB_to_Serial_Cable_FTGQM0GY-if00-port0'
+    serial_port = os.path.realpath(os.path.join(basepath, serial_id))
+    sim900 = sim.SIM900(serial_port)
+    print("Connected to {0}".format(sim900.identity))
+    print("Port: Connected device:")
+    for port, device in sim900.ports.items():
+        print("{0}     {1}".format(port, device))
 
-#main function to records temps
-try: 
-    timestr = time.strftime("%Y%m%d-%H%M%S")
-    filename = "/home/heather/SRS/%s.txt" % timestr
-    f = open(filename, 'w+')
-    f.write("time, diode ch1 temp, dio ch 2 temp, dio 3 temp, dio 4 temp, dio 1 volts, dio 2 volts, dio 3 volts, dio 4 volts, rox 1 temp, rox 1 res, rox 2 temp, rox 2 res, rox 3 res, rox 3 temp\n")
+    # Set up the SIMs
+    ruox3628 = sim900.ports['4']
+    ruox3882 = sim900.ports['6']
+    diodes = sim900.ports['8']
 
-    while 1:
+    ruox3628.reset()
+    ruox3628.autorange_gain = 'ON'
+    ruox3628.excitation = 2 # 30 uV
+    ruox3628.mode = 'VOLTAGE'
+    ruox3628.display_temperature = 'ON'
+    ruox3628.curve_number = 1
+    print("Port 4 curve: {0}".format(ruox3628.curve_info(ruox3628.curve_number)[1]))
 
-        #get diode info
-        sim.connect_sim922()     
-        dio_temps = sim.get_sim922_temp()
-        dio_temps = dio_temps.rstrip()
-        time.sleep(1)
-        dio_volts = sim.get_sim922_volts()
-        dio_volts = dio_volts.rstrip()
-        sim.close_sim922()
-        print "diode"
+    ruox3882.reset()
+    ruox3882.autorange_gain = 'ON'
+    ruox3882.excitation = 2 # 30 uV
+    ruox3882.mode = 'VOLTAGE'
+    ruox3882.display_temperature = 'ON'
+    ruox3882.curve_number = 1
+    print("Port 6 curve: {0}".format(ruox3882.curve_info(ruox3882.curve_number)[1]))
 
-        time.sleep(1)
+    diodes.reset()
+    diodes.set_curve_type(1, 'USER')
+    print("Port 8 channel 1 curve: {0}".format(diodes.curve_info(1)[1]))
+    diodes.set_curve_type(2, 'USER')
+    print("Port 8 channel 2 curve: {0}".format(diodes.curve_info(2)[1]))
 
-        #get rox1 info
-        sim.connect_sim921_1()
-        rox1_res = sim.get_resistance()
-        rox1_temp = sim.get_temp()
-        sim.close_sim921_1()
-        
-        print "rox1"
-
-        time.sleep(1)
-        
-        sim.connect_sim921()
-        rox2_res = sim.get_resistance()
-        rox2_temp = sim.get_temp()
-        sim.close_sim921()
-        
-        
-        #get rox3 info
-        sim.connect_sim921_6()
-        rox3_res = sim.get_resistance()
-        rox3_temp = sim.get_temp()
-        sim.close_sim921_6()
-        
-        print "rox2"
-
-        time.sleep(1)
-
-        #write it all to file
-        current_time = time.strftime("%Y%m%d-%H%M%S")
-        f.write("%s, %s, %s, %s, %s, %s, %s, %s, %s\n" % (current_time, dio_temps, dio_volts, rox1_temp, rox1_res, rox2_temp, rox2_res, rox3_temp, rox3_res))
+    try: 
+        header = "time, diode ch1 temp, dio ch 2 temp, dio 3 temp, dio 4 temp, dio 1 volts, dio 2 volts, dio 3 volts, dio 4 volts, rox 1 temp, rox 1 res, rox 2 temp, rox 2 res, rox 3 temp, rox 3 res"
+        timestr = time.strftime("%Y%m%d-%H%M%S")
+        filename = "/home/data/SRS/%s.txt" %timestr
+        print("Writing to {0}".format(filename))
+        f = open(filename, 'w+')
+        f.write(header + '\n')
         f.flush()
+        print(header)
 
-except KeyboardInterrupt:
-    f.close()
-    print "done writing"
-    sim.close_sim922()
-    sim.close_sim900()
-    print "ports closed"
+        while True:
+            dio1_volt = diodes.voltage(1)
+            dio1_temp = diodes.temperature(1)
+            dio2_volt = diodes.voltage(2)
+            dio2_temp = diodes.temperature(2)
+            # Update this if we attach diodes to channels 3 and 4
+            dio3_volt = dio3_temp = dio4_volt = dio4_temp = 0
+            rox1_res = ruox3628.resistance
+            rox1_temp = ruox3628.temperature
+            rox2_res = ruox3882.resistance
+            rox2_temp = ruox3882.temperature
+            # Update this if we attach a new SIM921
+            rox3_res = rox3_temp = 0
+    
+            current_time = time.strftime("%Y%m%d-%H%M%S")
+            all_values = ", ".join([str(n) for n in
+                                    (current_time,
+                                     dio1_temp, dio2_temp, dio3_temp, dio4_temp,
+                                     dio1_volt, dio2_volt, dio3_volt, dio4_volt,
+                                     rox1_temp, rox1_res, rox2_temp, rox2_res, rox3_temp, rox3_res)])
+            f.write(all_values+'\n')
+            f.flush()
+            print(all_values)
+            time.sleep(delay)
+
+    except KeyboardInterrupt:
+        f.close()
+        sim900.disconnect()
+        sim900.serial.close()
+
+if __name__ == "__main__":
+    main()

@@ -69,7 +69,7 @@ class sim900():
         self.ser.write("FREQ 10\n") #set frequency, at 10hz -CHECK
         
         #we want .3microA going across the RuOx600- CHECK
-        self.ser.write("RANG 6\n") #set range to 20 kohms (5) 
+        self.ser.write("RANG 6\n") #set range to 20 kohms (5) 6
         self.ser.write("MODE 2\n") #set excitation mode to voltage  biased
         self.ser.write("EXON 1\n") #set exctiation mode on
         self.ser.write("EXCI 2\n") #set excitiation to 30 microVolts (4)
