@@ -122,10 +122,18 @@ class RoachInterface(object):
             self.modulation_rate = rate
             self.modulation_output = 2
             self.save_state()
-            rate_in_hz = (self.fs*1e6/(2*self.nfft))/(2**rate)
+            return self.get_modulation_rate_hz()
+        else:
+            raise ValueError('Invalid value for rate: got %s, expected one of "high", "low", or 1-8' % str(rate))
+
+
+    def get_modulation_rate_hz(self):
+        if self.modulation_rate == 0:
+            return 0.0
+        else:
+            rate_in_hz = (self.fs*1e6/(2*self.nfft))/(2**self.modulation_rate)
             return rate_in_hz
 
-        
     def save_state(self):
         np.savez(CONFIG_FILE_NAME,
                  boffile = self.boffile,
