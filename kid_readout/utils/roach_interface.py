@@ -96,6 +96,35 @@ class RoachInterface(object):
         self.r.write_int('fftshift',fftshift)
         self.save_state()
 
+    def set_modulation_output(self, rate='low'):
+        """
+        rate: can be 'high', 'low', 1-8.
+            modulation output signal switching state. 'high' and 'low' set the TTL output to a constant level.
+            Integers 1-8 set the switching rate to cycle every 2**k spectra
+        returns: float, switching rate in Hz.
+        """
+
+        rate_register = 'gpiob'
+        if str.lower(rate) == 'low':
+            self.r.write_int(rate_register,0)
+            self.modulation_rate = 0
+            self.modulation_output = 0
+            self.save_state()
+            return 0.0
+        if str.lower(rate) == 'high':
+            self.r.write_int(rate_register,1)
+            self.modulation_rate = 0
+            self.modulation_output = 1
+            self.save_state()
+            return 0.0
+        if rate >= 1 and rate <= 8:
+            self.r.write_int(rate_register,10-rate)
+            self.modulation_rate = rate
+            self.modulation_output = 2
+            self.save_state()
+            rate_in_hz = (self.fs*1e6/(2*self.nfft))/(2**rate)
+            return rate_in_hz
+
         
     def save_state(self):
         np.savez(CONFIG_FILE_NAME,
@@ -490,7 +519,8 @@ class RoachBaseband(RoachInterface):
         self.roachip = roachip
 #        self.boffile = 'bb2xpfb14mcr5_2013_Jul_31_1301.bof'
 #        self.boffile = 'bb2xpfb14mcr7_2013_Oct_31_1332.bof'
-        self.boffile = 'bb2xpfb14mcr11_2014_Jan_17_1721.bof'
+#        self.boffile = 'bb2xpfb14mcr11_2014_Jan_17_1721.bof'
+        self.boffile = 'bb2xpfb14mcr17_2014_Oct_12_1745.bof'
         
         if initialize:
             self.initialize()
