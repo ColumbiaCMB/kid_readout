@@ -44,6 +44,8 @@ class DataFile():
         self.hw_adc_atten = self.hw_state.createVariable('adc_atten',np.float32,dimensions=('time',))
         self.hw_dac_atten = self.hw_state.createVariable('dac_atten',np.float32,dimensions=('time',))
         self.hw_ntones = self.hw_state.createVariable('ntones',np.int32,dimensions=('time',))
+        self.hw_modulation_rate = self.hw_state.createVariable('modulation_rate',np.int32,dimensions=('time',))
+        self.hw_modulation_output = self.hw_state.createVariable('modulation_output',np.int32,dimensions=('time',))
         
         self.adc_snaps = self.nc.createGroup('adc_snaps')
         self.adc_snaps.createDimension('epoch', None)
@@ -68,6 +70,8 @@ class DataFile():
         self.hw_adc_atten[idx] = ri.adc_atten
         self.hw_dac_atten[idx] = ri.dac_atten
         self.hw_ntones[idx] = ri.tone_bins.shape[1]
+        self.hw_modulation_rate[idx] = ri.modulation_rate
+        self.hw_modulation_output[idx] = ri.modulation_output
         
     def log_adc_snap(self,ri):
         t0 = time.time()
