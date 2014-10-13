@@ -17,13 +17,16 @@ lockin = lockin_controller.lockinController()
 print lockin.get_idn()
 
 ri = roach_interface.RoachBaseband()
-ri.initialize()
+
+
+print "modulating at:", ri.set_modulation_output(rate=7)
+
 f0s = np.load('/home/gjones/kid_readout/apps/sc5x4_0813f12.npy')
 f0s.sort()
 f0s = f0s[[0,1,2,3,4,5,6,7,8,9,10,13,14,15,16,17]]  # remove close packed resonators to enable reading out all simultaneously
 
 suffix = "mmw"
-mmw_source_modulation_freq = 25.0
+mmw_source_modulation_freq = ri.get_modulation_rate_hz()
 mmw_atten_turns = (7.0,7.0)
 
 nf = len(f0s)

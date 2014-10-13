@@ -105,13 +105,13 @@ class RoachInterface(object):
         """
 
         rate_register = 'gpiob'
-        if str.lower(rate) == 'low':
+        if str.lower(str(rate)) == 'low':
             self.r.write_int(rate_register,0)
             self.modulation_rate = 0
             self.modulation_output = 0
             self.save_state()
             return 0.0
-        if str.lower(rate) == 'high':
+        if str.lower(str(rate)) == 'high':
             self.r.write_int(rate_register,1)
             self.modulation_rate = 0
             self.modulation_output = 1
@@ -529,13 +529,15 @@ class RoachBaseband(RoachInterface):
         self.tone_nsamp = None
         self.tone_bins = None
         self.phases = None
+        self.modulation_output = 0
+        self.modulation_rate = 0
         self.bof_pid = None
         self.roachip = roachip
 #        self.boffile = 'bb2xpfb14mcr5_2013_Jul_31_1301.bof'
 #        self.boffile = 'bb2xpfb14mcr7_2013_Oct_31_1332.bof'
 #        self.boffile = 'bb2xpfb14mcr11_2014_Jan_17_1721.bof'
         self.boffile = 'bb2xpfb14mcr17_2014_Oct_12_1745.bof'
-        
+
         if initialize:
             self.initialize()
         else:
