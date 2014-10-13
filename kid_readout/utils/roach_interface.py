@@ -136,7 +136,9 @@ class RoachInterface(object):
                  fft_gain = self.fft_gain,
                  tone_nsamp = self.tone_nsamp,
                  tone_bins = self.tone_bins,
-                 phases = self.phases)
+                 phases = self.phases,
+                 modulation_rate = self.modulation_rate,
+                 modulation_output = self.modulation_output)
         try:
             os.chmod(CONFIG_FILE_NAME, 0777)
         except:
@@ -192,6 +194,8 @@ class RoachInterface(object):
             self.tone_nsamp = None
             self.tone_bins = None
             self.phases = None
+            self.modulation_output = 0
+            self.modulation_rate = 0
             self.save_state()
         else:
             self.adc_atten = state['adc_atten'][()]
@@ -201,6 +205,8 @@ class RoachInterface(object):
             self.tone_nsamp = state['tone_nsamp'][()]
             self.tone_bins = state['tone_bins']
             self.phases = state['phases']
+            self.modulation_output = state['modulation_output'][()]
+            self.modulation_rate = state['modulation_rate'][()]
             
     def measure_fs(self):
         """
