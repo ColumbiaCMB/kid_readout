@@ -2,6 +2,9 @@ import bisect
 from kid_readout.utils.time_tools import date_to_unix_time
 
 by_unix_time_table = [
+                ('2014-10-10', 'STAR Cryo 4x5 130919 0813f12 ASU Al horn package, AR chip, LPF, copper shield, waveguide with air spacer, absorber tied to 1 K', 'light'),
+                ('2014-09-11', 'STAR Cryo 4x5 130919 0813f12 ASU Al horn package, AR chip, LPF, copper shield, waveguide with air spacer', 'light'),
+                ('2014-08-26', 'STAR Cryo 4x5 130919 0813f12 ASU Al horn package, AR chip, LPF, copper shield, waveguide with Stycast spacer', 'light'),
                 ('2014-08-18', 'STAR Cryo 4x5 130919 0813f12 ASU Al horn package, AR chip, no LPF, copper shield, IR LED fiber', 'light'),
                 ('2014-08-12', 'STAR Cryo 4x5 140423 0813f12 Al horn package, AR chip, LPF, copper shield, IR LED fiber', 'light'),
                 ('2014-07-30', 'STAR Cryo 4x5 HFdip 0813f9 Al horn package, AR chip, LPF, copper shield, IR LED fiber', 'light'),
