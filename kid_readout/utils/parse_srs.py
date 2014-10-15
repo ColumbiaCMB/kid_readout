@@ -8,7 +8,7 @@ _timecache = []
 _tempcache = []
 _lastupdate = -1
 
-def get_all_temperature_data(logdir = '/home/heather/SRS'):
+def get_all_temperature_data(logdir = '/home/data/SRS'):
     logs = glob.glob(os.path.join(logdir,'201*.txt'))
     logs.sort()
     times = []

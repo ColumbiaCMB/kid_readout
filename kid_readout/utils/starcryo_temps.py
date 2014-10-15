@@ -13,7 +13,7 @@ import kid_readout.utils.parse_srs
 
 
 
-temperature_log_file_dir = '/home/heather/SRS/'
+temperature_log_file_dir = '/home/data/SRS/'
 
 _filecache = {}
 epochs = []
