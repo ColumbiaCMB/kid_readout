@@ -181,10 +181,12 @@ class SweepNoiseMeasurement(object):
         self.start_temp = self.sweep_primary_package_temperature
         self.resonator_index = resonator_index
         
-        description,is_dark,optical_load = experiments.get_experiment_info_at(self.sweep_epoch, cryostat=cryostat)
-        self.chip_name = description
-        self.is_dark = is_dark
-        self.optical_load = optical_load
+        info = experiments.get_experiment_info_at(self.sweep_epoch, cryostat=cryostat)
+        self.experiment_description = info['description']
+        self.experiment_info = info
+        self.chip_name = info['chip_id']
+        self.is_dark = info['is_dark']
+        self.optical_state = info['optical_state']
         self.dac_chain_gain = dac_chain_gain
         
         try:
