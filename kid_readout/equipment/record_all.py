@@ -11,10 +11,10 @@ def main():
     serial_id = 'usb-FTDI_USB_to_Serial_Cable_FTGQM0GY-if00-port0'
     serial_port = os.path.realpath(os.path.join(basepath, serial_id))
     sim900 = sim.SIM900(serial_port)
-    print("Connected to {0}".format(sim900.identity))
+    print("Connected to {}".format(sim900.identification))
     print("Port: Connected device:")
     for port, device in sim900.ports.items():
-        print("{0}     {1}".format(port, device))
+        print("{}     {}".format(port, device))
 
     # Set up the SIMs
     ruox3628 = sim900.ports['4']
@@ -22,32 +22,34 @@ def main():
     diodes = sim900.ports['8']
 
     ruox3628.reset()
-    ruox3628.autorange_gain = 'ON'
     ruox3628.excitation = 2 # 30 uV
-    ruox3628.mode = 'VOLTAGE'
-    ruox3628.display_temperature = 'ON'
+    ruox3628.excitation_mode = 'VOLTAGE'
+    ruox3628.time_constant = 2 # 3 s
+    ruox3628.autorange_gain()
+    ruox3628.display_temperature = True
     ruox3628.curve_number = 1
-    print("Port 4 curve: {0}".format(ruox3628.curve_info(ruox3628.curve_number)[1]))
+    print("Port 4 curve: {}".format(ruox3628.curve_info(ruox3628.curve_number)[1]))
 
     ruox3882.reset()
-    ruox3882.autorange_gain = 'ON'
     ruox3882.excitation = 2 # 30 uV
-    ruox3882.mode = 'VOLTAGE'
-    ruox3882.display_temperature = 'ON'
+    ruox3882.excitation_mode = 'VOLTAGE'
+    ruox3882.time_constant = 2
+    ruox3882.autorange_gain()
+    ruox3882.display_temperature = True
     ruox3882.curve_number = 1
-    print("Port 6 curve: {0}".format(ruox3882.curve_info(ruox3882.curve_number)[1]))
+    print("Port 6 curve: {}".format(ruox3882.curve_info(ruox3882.curve_number)[1]))
 
     diodes.reset()
     diodes.set_curve_type(1, 'USER')
-    print("Port 8 channel 1 curve: {0}".format(diodes.curve_info(1)[1]))
+    print("Port 8 channel 1 curve: {}".format(diodes.curve_info(1)[1]))
     diodes.set_curve_type(2, 'USER')
-    print("Port 8 channel 2 curve: {0}".format(diodes.curve_info(2)[1]))
+    print("Port 8 channel 2 curve: {}".format(diodes.curve_info(2)[1]))
 
     try: 
         header = "time, diode ch1 temp, dio ch 2 temp, dio 3 temp, dio 4 temp, dio 1 volts, dio 2 volts, dio 3 volts, dio 4 volts, rox 1 temp, rox 1 res, rox 2 temp, rox 2 res, rox 3 temp, rox 3 res"
         timestr = time.strftime("%Y%m%d-%H%M%S")
         filename = "/home/data/SRS/%s.txt" %timestr
-        print("Writing to {0}".format(filename))
+        print("Writing to {}".format(filename))
         f = open(filename, 'w+')
         f.write(header + '\n')
         f.flush()

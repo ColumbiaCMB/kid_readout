@@ -16,14 +16,25 @@ class SIMError(Exception):
     pass
 
 
+class SIMValueError(SIMError):
+    pass
+
+
+class SIMTimeout(SIMError):
+    pass
+
+
 class SIM(object):
 
     termination = '\n'
 
-    boolean_tokens = {'OFF': False,
-                      '0': False,
-                      'ON': True,
-                      '1': True}
+    token_to_boolean = {'OFF': False,
+                        '0': False,
+                        'ON': True,
+                        '1': True}
+
+    boolean_to_token = {True: 'ON',
+                        False: 'OFF'}
 
     def __init__(self, serial, parent_and_port=(None, None)):
         self.serial = serial
@@ -31,54 +42,69 @@ class SIM(object):
         self.port = parent_and_port[1]
 
     def send(self, message):
-        if self.parent is None:
-            self.serial.write(message + self.termination)
-        else:
+        if self.parent is not None:
             self.parent.connect(self.port)
-            self.serial.write(message + self.termination)
+        self.serial.write(message + self.termination)
+        if self.parent is not None:
             self.parent.disconnect()
 
+    # Consider raising SIMTimeout for blank messages;
+    # needs to handle disconnection elegantly.
     def receive(self):
-        if self.parent is None:
-            return self.serial.readline().strip()
-        else:
+        if self.parent is not None:
             self.parent.connect(self.port)
-            message = self.serial.readline().strip()
+        response = self.serial.readline().strip()
+        if self.parent is not None:
             self.parent.disconnect()
-            return message
+        return response
 
     def send_and_receive(self, message):
-        if self.parent is None:
-            self.serial.write(message + self.termination)
-            return self.serial.readline().strip()
-        else:
+        if self.parent is not None:
             self.parent.connect(self.port)
-            self.serial.write(message + self.termination)
-            message = self.parent.receive()
+        self.serial.write(message + self.termination)
+        response = self.serial.readline().strip()
+        if self.parent is not None:
             self.parent.disconnect()
-            return message
+        return response
 
     @property
     def token(self):
-        return self.send_and_receive('TOKN?')
+        """
+        The token mode.
+
+        This property implements the TOKN(?) command.
+
+        When True, the SIM returns tokens such as 'ON' or 'VOLTAGE'; when False, the SIM returns integer codes instead.
+        """
+        return self.token_to_boolean[self.send_and_receive('TOKN?')]
 
     @token.setter
     def token(self, mode):
-        if not str(mode).upper() in self.boolean_tokens:
-            raise ValueError("Valid token modes are {0}.".format(self.boolean_tokens))
-        self.send('TOKN {0}'.format(mode))
+        try:
+            self.send('TOKN {}'.format(self.boolean_to_token[mode]))
+        except KeyError:
+            raise SIMValueError("Valid token modes are True and False.")
     
     @property
-    def identity(self):
+    def identification(self):
         return self.send_and_receive('*IDN?')
 
     def reset(self):
         self.send('*RST')
 
+    def clear_status(self):
+        """
+        Clear all status registers. The registers cleared vary by device.
+
+        This method implements the *CLS command.
+        """
+        self.send('*CLS')
+
 
 class SIM900(SIM):
 
-    escape = 'ESCAPE'
+    # This is the ASCII <ESC> character.
+    escape = chr(27)
 
     def __init__(self, serial_port, baudrate=9600, timeout=2, autodetect=True):
         self.serial = serial.Serial(port=serial_port, baudrate=baudrate, timeout=timeout)
@@ -104,7 +130,7 @@ class SIM900(SIM):
             self.autodetect()
 
     def broadcast(self, message):
-        self.send('BRDT "{0}"'.format(message))
+        self.send('BRDT "{}"'.format(message))
 
     def parse_definite_length(self, message):
         length_bytes = int(message[1])
@@ -130,9 +156,9 @@ class SIM900(SIM):
         if port is None:
             self.send('FLSH')
         elif str(port) in self.ports:
-            self.send('SRST {0}'.format(port))
+            self.send('FLSH {}'.format(port))
         else:
-            raise ValueError("Invalid port {0}'.format(port)")
+            raise SIMValueError("Invalid port {}'.format(port)")
 
     def SIM_reset(self, port=None):
         """
@@ -144,14 +170,14 @@ class SIM900(SIM):
         if port is None:
             self.send('SRST')
         elif int(port) in range(1, 9):
-            self.send('SRST {0}'.format(int(port)))
+            self.send('SRST {}'.format(int(port)))
         else:
-            raise ValueError("Invalid port {0}'.format(port)")
+            raise SIMValueError("Invalid port {}".format(port))
 
     def connect(self, port):
         if self.connected is not None:
-            raise ValueError("Connected to port {0}".format(self.connected))
-        self.send('CONN {0}, "{1}"'.format(port, self.escape))
+            raise SIMError("Connected to port {}".format(self.connected))
+        self.send('CONN {}, "{}"'.format(port, self.escape))
         self.connected = port
 
     def disconnect(self):
@@ -176,6 +202,7 @@ class SIM900(SIM):
             except KeyError as e:
                 self.ports[port] = str(e)
 
+
 class SIMThermometer(SIM):
     """
     This is intended to be an abstract class that allows the
@@ -194,14 +221,14 @@ class SIMThermometer(SIM):
     maximum_fractional_error = 1e-4
 
     def curve_info(self, number):
-        message = self.send_and_receive('CINI? {0}'.format(number)).split(',')
+        message = self.send_and_receive('CINI? {}'.format(number)).split(',')
         format = message[0]
         identification = message[1]
         points = int(message[2])
         return format, identification, points
 
     def initialize_curve(self, number, format, identification):
-        self.send('CINI {0}, {1}, {2}'.format(number, format, identification))
+        self.send('CINI {}, {}, {}'.format(number, format, identification))
 
     def read_curve(self, number):
         format, identification, points = self.curve_info(number)
@@ -211,7 +238,7 @@ class SIMThermometer(SIM):
         for n in range(1, points + 1):
             # The SIM921 separator is a comma, as its manual says, but
             # the SIM922 separator is a space and its manual lies.
-            message = self.send_and_receive('CAPT? {0}, {1}'.format(number, n)).split(self.CAPT_separator)
+            message = self.send_and_receive('CAPT? {}, {}'.format(number, n)).split(self.CAPT_separator)
             sensor.append(float(message[0]))
             temperature.append(float(message[1]))
         return CalibrationCurve(sensor, temperature, identification, format)
@@ -223,7 +250,7 @@ class SIMThermometer(SIM):
         if self.parent is not None:
             self.parent.connect(self.port)
         for n in range(curve.sensor.size):
-            self.serial.write('CAPT {0}, {1}, {2}{3}'.format(number, curve.sensor[n], curve.temperature[n], self.termination))
+            self.serial.write('CAPT {}, {}, {}{}'.format(number, curve.sensor[n], curve.temperature[n], self.termination))
             time.sleep(self.write_delay)
         if self.parent is not None:
             self.parent.disconnect()
@@ -278,8 +305,8 @@ class SIM921(SIMThermometer):
     @frequency.setter
     def frequency(self, frequency):
         if not self.minimum_frequency <= frequency <= self.maximum_frequency:
-            raise ValueError("Valid excitation frequency range is from {0} to {1} Hz".format(self.minimum_frequency, self.maximum_frequency))
-        self.send('FREQ {0}'.format(frequency))
+            raise SIMValueError("Valid excitation frequency range is from {} to {} Hz".format(self.minimum_frequency, self.maximum_frequency))
+        self.send('FREQ {}'.format(frequency))
 
     @property
     def range(self):
@@ -293,8 +320,8 @@ class SIM921(SIMThermometer):
     @range.setter
     def range(self, code):
         if not int(code) in range(10):
-            raise ValueError("Valid range codes are integers 0 through 9.")
-        self.send('RANG {0}'.format(int(code)))
+            raise SIMValueError("Valid range codes are integers 0 through 9.")
+        self.send('RANG {}'.format(int(code)))
 
     @property
     def excitation(self):
@@ -308,23 +335,23 @@ class SIM921(SIMThermometer):
     @excitation.setter
     def excitation(self, code):
         if not int(code) in range(-1, 9):
-            raise ValueError("Valid excitation codes are integers -1 through 8.")
-        self.send('EXCI {0}'.format(int(code)))
+            raise SIMValueError("Valid excitation codes are integers -1 through 8.")
+        self.send('EXCI {}'.format(int(code)))
 
     @property
-    def excitation_state(self):
+    def excitation_on(self):
         """
         The excitation state.
 
         This property implements the EXON(?) command.
         """
-        return self.send_and_receive('EXON?')
+        return self.token_to_boolean[self.send_and_receive('EXON?')]
 
-    @excitation_state.setter
-    def excitation_state(self, state):
-        if not str(state).upper() in self.boolean_tokens:
-            raise ValueError("Valid excitation states are {0}.".format(self.boolean_tokens))
-        self.send('EXON {0}'.format(state))
+    @excitation_on.setter
+    def excitation_on(self, state):
+        if not state in self.boolean_to_token:
+            raise SIMValueError("Valid excitation states are True and False.")
+        self.send('EXON {}'.format(self.boolean_to_token[state]))
 
     @property
     def excitation_mode(self):
@@ -338,8 +365,8 @@ class SIM921(SIMThermometer):
     @excitation_mode.setter
     def excitation_mode(self, mode):
         if not str(mode).upper() in ('PASSIVE', '0', 'CURRENT', '1', 'VOLTAGE', '2', 'POWER', '3'):
-            raise ValueError("Invalid excitation mode.")
-        self.send('MODE {0}'.format(mode))
+            raise SIMValueError("Invalid excitation mode.")
+        self.send('MODE {}'.format(mode))
 
     @property
     def excitation_current(self):
@@ -425,8 +452,8 @@ class SIM921(SIMThermometer):
     @display.setter
     def display(self, code):
         if not int(code) in range(9):
-            raise ValueError("Valid display codes are integers 0 through 8.")
-        self.send('DISP {0}'.format(int(code)))
+            raise SIMValueError("Valid display codes are integers 0 through 8.")
+        self.send('DISP {}'.format(int(code)))
 
     # Post-detection processing commands.
 
@@ -450,8 +477,8 @@ class SIM921(SIMThermometer):
     @time_constant.setter
     def time_constant(self, code):
         if not int(code) in range(-1, 7):
-            raise ValueError("Valid time constant codes are integers -1 through 6.")
-        self.send('TCON {0}'.format(int(code)))
+            raise SIMValueError("Valid time constant codes are integers -1 through 6.")
+        self.send('TCON {}'.format(int(code)))
 
     @property
     def phase_hold(self):
@@ -464,9 +491,9 @@ class SIM921(SIMThermometer):
 
     @phase_hold.setter
     def phase_hold(self, mode):
-        if not str(mode).upper() in self.boolean_tokens:
-            raise ValueError("Valid phase hold modes are {0}.".format(self.boolean_tokens))
-        self.send('PHLD {0}'.format(mode))
+        if not str(mode).upper() in self.token_to_boolean:
+            raise SIMValueError("Valid phase hold modes are {}.".format(self.token_to_boolean))
+        self.send('PHLD {}'.format(mode))
 
     # Calibration curve commands
 
@@ -477,13 +504,13 @@ class SIM921(SIMThermometer):
 
         This property implements the DTEM(?) command.
         """
-        return self.send_and_receive('DTEM?')
+        return self.token_to_boolean[self.send_and_receive('DTEM?')]
 
     @display_temperature.setter
     def display_temperature(self, mode):
-        if not str(mode).upper() in self.boolean_tokens:
-            raise ValueError("Valid temperature display modes are {0}.".format(self.boolean_tokens))
-        self.send('DTEM {0}'.format(mode))
+        if not mode in self.boolean_to_token:
+            raise SIMValueError("Valid temperature display modes are True and False.")
+        self.send('DTEM {}'.format(self.boolean_to_token[mode]))
 
     @property
     def analog_output_temperature(self):
@@ -496,9 +523,9 @@ class SIM921(SIMThermometer):
 
     @analog_output_temperature.setter
     def analog_output_temperature(self, mode):
-        if not str(mode).upper() in self.boolean_tokens:
-            raise ValueError("Valid analog output temperature modes are {0}.".format(self.boolean_tokens))
-        self.send('A {0}'.format(mode))
+        if not str(mode).upper() in self.token_to_boolean:
+            raise SIMValueError("Valid analog output temperature modes are {}.".format(self.token_to_boolean))
+        self.send('A {}'.format(mode))
 
     @property
     def active_curve(self):
@@ -512,28 +539,25 @@ class SIM921(SIMThermometer):
     @active_curve.setter
     def active_curve(self, number):
         if not str(number) in ('1', '2', '3'):
-            raise ValueError("Curve number must be 1, 2, or 3.")
-        self.send('CURV {0}'.format(number))
+            raise SIMValueError("Curve number must be 1, 2, or 3.")
+        self.send('CURV {}'.format(number))
 
     # The CINI(?) and CAPT(?) commands are implemented in SIMThermometer.
     
     # Autoranging commands
     
-    @property
     def autorange_gain(self):
         """
-        The gain autorange mode.
+        Perform a gain autorange cycle, which should take about two seconds.
 
-        This property implements the AGAI(?) command.
+        This method implements the AGAI(?) command.
+
+        This method will return only when the autorange cycle completes.
         """
-        return self.send_and_receive('AGAI?')
+        self.send('AGAI ON')
+        while self.token_to_boolean[self.send_and_receive('AGAI?')]:
+            time.sleep(0.1)
     
-    @autorange_gain.setter
-    def autorange_gain(self, mode):
-        if not str(mode).upper() in self.boolean_tokens:
-            raise ValueError("Valid gain autorange modes are {0}.".format(self.boolean_tokens))
-        self.send('AGAI {0}'.format(mode))
-
     @property
     def autorange_display(self):
         """
@@ -545,9 +569,9 @@ class SIM921(SIMThermometer):
     
     @autorange_display.setter
     def autorange_display(self, mode):
-        if not str(mode).upper() in self.boolean_tokens:
-            raise ValueError("Valid dispay autorange modes are {0}.".format(self.boolean_tokens))
-        self.send('ADIS {0}'.format(mode))
+        if not mode in self.boolean_to_token:
+            raise SIMValueError("Valid display autorange modes are True and False.")
+        self.send('ADIS {}'.format(self.boolean_to_token[mode]))
 
     def autocalibrate(self):
         """
@@ -562,10 +586,10 @@ class SIM921(SIMThermometer):
     # The *IDN, *RST, and TOKN commands are implemented in SIM.
 
     # Status commands.
-    # Not yet implemented.
 
 
-        
+    # The *CLS command is implemented in SIM.
+
 
 class SIM922(SIMThermometer):
 
@@ -581,22 +605,21 @@ class SIM922(SIMThermometer):
     write_delay = 1
 
     def voltage(self, channel):
-        return float(self.send_and_receive('VOLT? {0}'.format(channel)))
+        return float(self.send_and_receive('VOLT? {}'.format(channel)))
 
     def temperature(self, channel):
-        return float(self.send_and_receive('TVAL? {0}'.format(channel)))
+        return float(self.send_and_receive('TVAL? {}'.format(channel)))
 
     def get_curve_type(self, channel):
-        return self.send_and_receive('CURV? {0}'.format(channel))
+        return self.send_and_receive('CURV? {}'.format(channel))
 
     def set_curve_type(self, channel, curve_type):
         if not str(curve_type).upper() in ('0', 'STAN', '1', 'USER'):
-            raise ValueError("Invalid curve type.")
-        self.send('CURV {0}, {1}'.format(channel, curve_type))
+            raise SIMValueError("Invalid curve type.")
+        self.send('CURV {}, {}'.format(channel, curve_type))
 
 
 class SIM925(SIM):
-
         pass
 
 
@@ -612,10 +635,10 @@ class CalibrationCurve(object):
         """
         self.sensor = np.array(sensor)
         if not all(np.diff(self.sensor)):
-            raise ValueError("Sensor values must increase monotonically.")
+            raise SIMError("Sensor values must increase monotonically.")
         self.temperature = np.array(temperature)
         if not self.sensor.size == self.temperature.size:
-            raise ValueError("Different numbers of sensor and temperature points.")
+            raise SIMError("Different numbers of sensor and temperature points.")
         self.identification = str(identification).upper()
         self.format = str(format)
 
