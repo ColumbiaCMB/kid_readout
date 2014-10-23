@@ -29,6 +29,9 @@ def convert_to_lmfit_params(raw_params,base_params,raw_param_list=parameter_list
 
 
 class MCMCFitter(Fitter):
+    def __init__(self,*args,**kwargs):
+        super(MCMCFitter,self).__init__(*args,**kwargs)
+        self.parameter_list = self.result.params.keys()
     def get_param_bounds_by_index(self,index,error_factor=None):
         parameter_list = self.parameter_list # need to set this up, something like self.reseult.params.keys() but ommitting non varying params
         name = parameter_list[index]
@@ -63,8 +66,23 @@ class MCMCFitter(Fitter):
             return -np.inf
         return np.sum(self.basic_loglikelihood(params))
 
+    def run(self,length=500,burn_in=100,nwalkers=32):
+        self.setup_sampler(nwalkers=nwalkers)
+        self.sampler.run_mcmc(self.initial,length)
+        self.samples = self.sampler.chain[:,burn_in:,:].reshape((-1,self.ndim))
+        self.mcmc_params = self.result.params.copy()
+        for dim in range(self.ndim):
+            self.mcmc_params[self.mcmc_params.keys()[dim]].value = self.samples[:,dim].mean()
+            self.mcmc_params[self.mcmc_params.keys()[dim]].stderr = self.samples[:,dim].std()
+
+    def triangle(self,*args,**kwargs):
+        import triangle
+        kwargs['labels'] = self.parameter_list
+        triangle.corner(self.samples,*args,**kwargs)
+
     def setup_sampler(self,nwalkers=32,error_factor=None):
         ndim = len(self.result.params)
+        self.ndim = ndim
         self.initial = np.zeros((nwalkers,ndim))
         for dim in range(ndim):
             min,max = self.get_param_bounds_by_index(dim,error_factor=error_factor)
@@ -78,16 +96,6 @@ class MCMCResonator(Resonator,MCMCFitter):
         ndim = len(self.parameter_list)
         if not 'a' in self.result.params:
             ndim -= 1
-#        for name,param in self.result.params.items():
-#            if name not in ['phi', 'delay','Q_e_imag']:
-#                if param.value*1.2 <= param.max:
-#                    param.max = param.value*1.2
-#                if param.value*0.8 >= param.min:
-#                    param.min = param.value*0.8
-#            else:
-#                if name == 'Q_e_imag':
-#                    param.max = param.value + 1000
-#                    param.min = param.value - 1000
         self.ndim = ndim
         self.initial = np.zeros((nwalkers,ndim))
         for dim in range(ndim):
@@ -104,15 +112,6 @@ class MCMCResonator(Resonator,MCMCFitter):
         return (-np.log(np.abs(self.errors))
                 - 0.5*abs((self.y_data-model)/self.errors)**2)
 
-    def run(self,length=500,burn_in=100,nwalkers=32):
-        self.setup_sampler(nwalkers=nwalkers)
-        self.sampler.run_mcmc(self.initial,length)
-        self.samples = self.sampler.chain[:,burn_in:,:].reshape((-1,self.ndim))
-
-    def triangle(self,*args,**kwargs):
-        import triangle
-        kwargs['labels'] = self.parameter_list
-        triangle.corner(self.samples,*args,**kwargs)
 
     def uniform_logprior(self,params):
         for k in range(len(params)):

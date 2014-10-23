@@ -1,10 +1,18 @@
 import bisect
 from kid_readout.utils.time_tools import date_to_unix_time
 
+thermometry_2014_10_20 = dict(package=9,null=1,load=11,waveguide=2)
 thermometry_2014_10_10 = dict(package=9,load=1,stage=11,waveguide=2)
 thermometry_2014_03_19 = dict(package=11,load=2,stage=13,copper=1)
 
 by_unix_time_table = [
+                dict(date='2014-10-20',
+                     description='STAR Cryo 4x5 130919 0813f12 ASU Al horn package, AR chip, LPF, copper shield, waveguide with teflon spacer, absorber tied to 1 K',
+                     optical_state='light',
+                     thermometry_config=thermometry_2014_10_20,
+                     chip_id='130919 0813f12',
+                     ),
+
                 dict(date='2014-10-10',
                      description='STAR Cryo 4x5 130919 0813f12 ASU Al horn package, AR chip, LPF, copper shield, waveguide with air spacer, absorber tied to 1 K',
                      optical_state='light',

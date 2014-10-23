@@ -27,7 +27,7 @@ f0s = f0s[[0,1,2,3,4,5,6,7,8,9,10,13,14,15,16,17]]  # remove close packed resona
 
 suffix = "mmw"
 mmw_source_modulation_freq = ri.get_modulation_rate_hz()
-mmw_atten_turns = (7.0,7.0)
+mmw_atten_turns = (8.0,8.0)
 
 nf = len(f0s)
 atonce = 16
