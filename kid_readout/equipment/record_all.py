@@ -1,4 +1,5 @@
 import os
+import pwd
 import time
 from kid_readout.equipment import sim
 
@@ -51,6 +52,8 @@ def main():
         filename = "/home/data/SRS/%s.txt" %timestr
         print("Writing to {}".format(filename))
         f = open(filename, 'w+')
+        # Change the owner and group to someone:readout, where someone is the user running this script.
+        os.chown(filename, os.getuid(), pwd.getpwnam('readout').pw_gid)
         f.write(header + '\n')
         f.flush()
         print(header)

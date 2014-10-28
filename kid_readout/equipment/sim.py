@@ -89,7 +89,7 @@ class SIM(object):
     # Handle boolean user input for commands that accept ('OFF', '0', 'ON', '1').
     def _boolean_input(self, thing):
         try:
-            return self.boolean_to_token[token_to_boolean.get(str(thing).upper(), thing)]
+            return self.boolean_to_token[self.token_to_boolean.get(str(thing).upper(), thing)]
         except KeyError:
             raise SIMValueError("Invalid boolean setting {}".format(thing))
 
