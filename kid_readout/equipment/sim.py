@@ -1,8 +1,27 @@
 """
 This module contains classes to interface with SRS SIM hardware.
 
-Commands are case-insensitive but calibration curve identification
-strings are converted to uppercase.
+The classes do not maintain any internal state that corresponds to hardware settings: all state queries are directed
+to the hardware.
+
+As described below in more detail, the query commands return strings, booleans, or floats.
+
+Settings such as excitation codes that take only integer values accept either an integer or a string corresponding to
+an integer; they return a string corresponding to an integer.
+
+Many of the SIM commands accept either an integer or a token. For example, the SIM921 excitation mode can be set to
+constant current using either 'MODE CURRENT' or 'MODE 2'. These commands accept a valid token, a string corresponding
+to an integer, or an integer. Depending on the token mode, they return a string that is either a token or represents
+an integer.
+
+Settings that can be only 'OFF' or 'ON' are fundamentally boolean. The corresponding commands accept strings ('OFF',
+'0') or ('ON', '1'), or booleans. These commands always return True or False, not a string, regardless of the token
+mode.
+
+Commands that return values measured by an instrument, such as a resistance, return floats.
+
+Commands that accept tokens are case-insensitive. (However, note that calibration curve identification strings are
+converted to uppercase.)
 """
 from __future__ import division
 import os
@@ -67,6 +86,17 @@ class SIM(object):
             self.parent.disconnect()
         return response
 
+    # Handle boolean user input for commands that accept ('OFF', '0', 'ON', '1').
+    def _boolean_input(self, thing):
+        try:
+            return self.boolean_to_token[token_to_boolean.get(str(thing).upper(), thing)]
+        except KeyError:
+            raise SIMValueError("Invalid boolean setting {}".format(thing))
+
+    # Handle boolean output for commands that return ('OFF', '0', 'ON', '1').
+    def _boolean_output(self, thing):
+        return self.token_to_boolean[thing]
+
     @property
     def token(self):
         """
@@ -76,15 +106,12 @@ class SIM(object):
 
         When True, the SIM returns tokens such as 'ON' or 'VOLTAGE'; when False, the SIM returns integer codes instead.
         """
-        return self.token_to_boolean[self.send_and_receive('TOKN?')]
+        return self._boolean_output(self.send_and_receive('TOKN?'))
 
     @token.setter
-    def token(self, mode):
-        try:
-            self.send('TOKN {}'.format(self.boolean_to_token[mode]))
-        except KeyError:
-            raise SIMValueError("Valid token modes are True and False.")
-    
+    def token(self, boolean):
+        self.send('TOKN {}'.format(self._boolean_input([boolean])))
+
     @property
     def identification(self):
         return self.send_and_receive('*IDN?')
@@ -164,7 +191,7 @@ class SIM900(SIM):
         """
         Send the SIM reset signal to the given SIM port, meaning port
         1 through port 8, or to all SIM ports if no port is specified.
-        
+
         This method implements the SRST command.
         """
         if port is None:
@@ -220,6 +247,7 @@ class SIMThermometer(SIM):
     # errors of up to 1.2e-5 or so.
     maximum_fractional_error = 1e-4
 
+    # Consider adding enumeration of allowable curve numbers.
     def curve_info(self, number):
         message = self.send_and_receive('CINI? {}'.format(number)).split(',')
         format = message[0]
@@ -292,7 +320,7 @@ class SIM921(SIMThermometer):
     maximum_frequency = 61.1
 
     # Excitation commands
-    
+
     @property
     def frequency(self):
         """
@@ -331,7 +359,7 @@ class SIM921(SIMThermometer):
         This property implements the EXCI(?) command.
         """
         return int(self.send_and_receive('EXCI?'))
-        
+
     @excitation.setter
     def excitation(self, code):
         if not int(code) in range(-1, 9):
@@ -345,13 +373,11 @@ class SIM921(SIMThermometer):
 
         This property implements the EXON(?) command.
         """
-        return self.token_to_boolean[self.send_and_receive('EXON?')]
+        return self._boolean_output(self.send_and_receive('EXON?'))
 
     @excitation_on.setter
-    def excitation_on(self, state):
-        if not state in self.boolean_to_token:
-            raise SIMValueError("Valid excitation states are True and False.")
-        self.send('EXON {}'.format(self.boolean_to_token[state]))
+    def excitation_on(self, boolean):
+        self.send('EXON {}'.format(self._boolean_input(boolean)))
 
     @property
     def excitation_mode(self):
@@ -361,7 +387,7 @@ class SIM921(SIMThermometer):
         This property implements the MODE(?) command.
         """
         return self.send_and_receive('MODE?')
-    
+
     @excitation_mode.setter
     def excitation_mode(self, mode):
         if not str(mode).upper() in ('PASSIVE', '0', 'CURRENT', '1', 'VOLTAGE', '2', 'POWER', '3'):
@@ -385,16 +411,16 @@ class SIM921(SIMThermometer):
         This property implements the VEXC? command.
         """
         return float(self.send_and_receive('VEXC?'))
-        
-    # Measurement commands 
+
+    # Measurement commands
 
     @property
     def resistance(self):
         """
         Return the measured resistance.
-        
+
         This property implements the RVAL? command.
-        
+
         Multiple measurements and streaming are not yet implemented.
         """
         return float(self.send_and_receive('RVAL?'))
@@ -487,13 +513,11 @@ class SIM921(SIMThermometer):
 
         This property implements the PHLD command.
         """
-        return self.send_and_receive('PHLD?')
+        return self._boolean_output(self.send_and_receive('PHLD?'))
 
     @phase_hold.setter
-    def phase_hold(self, mode):
-        if not str(mode).upper() in self.token_to_boolean:
-            raise SIMValueError("Valid phase hold modes are {}.".format(self.token_to_boolean))
-        self.send('PHLD {}'.format(mode))
+    def phase_hold(self, boolean):
+        self.send('PHLD {}'.format(self._boolean_input(boolean)))
 
     # Calibration curve commands
 
@@ -504,13 +528,11 @@ class SIM921(SIMThermometer):
 
         This property implements the DTEM(?) command.
         """
-        return self.token_to_boolean[self.send_and_receive('DTEM?')]
+        return self._boolean_output(self.send_and_receive('DTEM?'))
 
     @display_temperature.setter
-    def display_temperature(self, mode):
-        if not mode in self.boolean_to_token:
-            raise SIMValueError("Valid temperature display modes are True and False.")
-        self.send('DTEM {}'.format(self.boolean_to_token[mode]))
+    def display_temperature(self, boolean):
+        self.send('DTEM {}'.format(self._boolean_input(boolean)))
 
     @property
     def analog_output_temperature(self):
@@ -519,13 +541,11 @@ class SIM921(SIMThermometer):
 
         This property implements the ATEM(?) command.
         """
-        return self.send_and_receive('ATEM?')
+        return self._boolean_output(self.send_and_receive('ATEM?'))
 
     @analog_output_temperature.setter
-    def analog_output_temperature(self, mode):
-        if not str(mode).upper() in self.token_to_boolean:
-            raise SIMValueError("Valid analog output temperature modes are {}.".format(self.token_to_boolean))
-        self.send('A {}'.format(mode))
+    def analog_output_temperature(self, boolean):
+        self.send('ATEM {}'.format(self._boolean_input(boolean)))
 
     @property
     def active_curve(self):
@@ -534,7 +554,7 @@ class SIM921(SIMThermometer):
 
         This property implements the CURV(?) command.
         """
-        return int(self.send_and_receive('CURV?'))
+        return self.send_and_receive('CURV?')
 
     @active_curve.setter
     def active_curve(self, number):
@@ -543,9 +563,9 @@ class SIM921(SIMThermometer):
         self.send('CURV {}'.format(number))
 
     # The CINI(?) and CAPT(?) commands are implemented in SIMThermometer.
-    
+
     # Autoranging commands
-    
+
     def autorange_gain(self):
         """
         Perform a gain autorange cycle, which should take about two seconds.
@@ -555,9 +575,9 @@ class SIM921(SIMThermometer):
         This method will return only when the autorange cycle completes.
         """
         self.send('AGAI ON')
-        while self.token_to_boolean[self.send_and_receive('AGAI?')]:
-            time.sleep(0.1)
-    
+        while self._boolean_output(self.send_and_receive('AGAI?')):
+            time.sleep(0.5)
+
     @property
     def autorange_display(self):
         """
@@ -565,13 +585,11 @@ class SIM921(SIMThermometer):
 
         This property implements the ADIS(?) command.
         """
-        return self.send_and_receive('ADIS?')
-    
+        return self._boolean_output(self.send_and_receive('ADIS?'))
+
     @autorange_display.setter
-    def autorange_display(self, mode):
-        if not mode in self.boolean_to_token:
-            raise SIMValueError("Valid display autorange modes are True and False.")
-        self.send('ADIS {}'.format(self.boolean_to_token[mode]))
+    def autorange_display(self, boolean):
+        self.send('ADIS {}'.format(self._boolean_input(boolean)))
 
     def autocalibrate(self):
         """
@@ -624,7 +642,7 @@ class SIM925(SIM):
 
 
 class CalibrationCurve(object):
-    
+
     def __init__(self, sensor, temperature, identification, format='0'):
         """
         This class represents and calibration curve.
