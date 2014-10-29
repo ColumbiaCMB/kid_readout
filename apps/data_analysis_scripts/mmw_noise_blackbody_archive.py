@@ -26,9 +26,9 @@ def refine_archive(df, fractional_f0_error=1e-7, fractional_Q_error=1e-2):
     df = df[df.noise_off_f_0_err != 0]
     df = df[df.noise_on_f_0_err != 0]
     df = df[df.noise_on_f_0_err/df.noise_on_f_0 < fractional_f0_error]
-    df = df[df.noise_off_f_0_err/df.noise_off_f_0 < fractional_f0_error]
+#    df = df[df.noise_off_f_0_err/df.noise_off_f_0 < fractional_f0_error]
     df = df[df.noise_on_Q_err/df.noise_on_Q < fractional_Q_error]
-    df = df[df.noise_off_Q_err/df.noise_off_Q < fractional_Q_error]
+#    df = df[df.noise_off_Q_err/df.noise_off_Q < fractional_Q_error]
     df = df.groupby(['resonator_id']).apply(normalize_f0)
     return df
 
@@ -57,6 +57,9 @@ def build_archive(info, archive_name=None, force_rebuild=False):
         print "processing",fname
         pkl = load_noise_pkl(fname)
         noise_on = pkl['noise_on_measurements']
+        noise_on_orig = noise_on
+        if len(noise_on) > len(info['index_to_resnum']):
+            noise_on = noise_on[::6]
         noise_off = pkl['noise_off_sweeps']
         noise_mod = pkl['noise_modulated_measurements']
         pnames = noise_on[0].fit_params.keys()
@@ -127,7 +130,7 @@ def build_archive(info, archive_name=None, force_rebuild=False):
             data['folded_noise_fractional_response'].append(folded)
             data['zbd_voltage'].append(nm.zbd_voltage)
 #            data['zbd_power'].append(nm.zbd_power)
-        for nm in noise_on:
+        for nm in noise_on_orig:
             nm._close_files()
         for nm in noise_mod:
             nm._close_files()
@@ -151,11 +154,18 @@ def load_archive(fn):
 
 if __name__ == "__main__":
 
-    infos = dict(df0924 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-09-24*.pkl'),index_to_resnum=np.arange(16)),
+    infos = dict(
+    df0924 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-09-24*.pkl'),index_to_resnum=np.arange(16)),
     df0929 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-09-29*.pkl'),index_to_resnum=np.arange(16)),
     df0930 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-09-30*.pkl'),index_to_resnum=np.arange(16)),
     df1001 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-01*.pkl'),index_to_resnum=np.arange(16)),
     df1014 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-14*.pkl'),index_to_resnum=np.arange(16)),
+    df1015 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-15*.pkl'),index_to_resnum=np.arange(16)),
+    df1017 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-17*.pkl'),index_to_resnum=np.arange(16)),
+    df1018 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-18*.pkl'),index_to_resnum=np.arange(16)),
+    df1022 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-22*.pkl'),index_to_resnum=np.arange(16)),
+    df1024 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-24*.pkl'),index_to_resnum=np.arange(16)),
+#    df1028 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-28*.pkl'),index_to_resnum=np.arange(16)),
     )
 
     for dfn,info in infos.items():
@@ -166,4 +176,5 @@ if __name__ == "__main__":
 
     df = pd.concat([globals()[x] for x in infos.keys()])
     df = df.reset_index(drop=True)
-    dfr = refine_archive(df)
+    dfrall = refine_archive(df)
+    dfr = dfrall[dfrall.atten == 39]
