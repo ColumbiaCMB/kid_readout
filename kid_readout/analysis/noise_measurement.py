@@ -26,6 +26,7 @@ else:
     from kid_readout.utils.starcryo_temps import get_temperatures_at
 import time
 import os
+import pwd
 import glob
 from kid_readout.analysis.resources import experiments
 
@@ -588,7 +589,11 @@ def load_noise_pkl(pklname):
     return pkl
 
 def save_noise_pkl(pklname,obj):
-    fh = open(pklname,'w')
-    cPickle.dump(obj,fh,-1)
+    fh = open(pklname, 'w')
+    cPickle.dump(obj, fh, -1)
     fh.close()
+    try:
+        os.chown(pklname, os.getuid(), pwd.getpwnam('readout').pw_gid)
+    except:
+        pass
 
