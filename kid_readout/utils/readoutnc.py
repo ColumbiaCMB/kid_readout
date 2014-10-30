@@ -8,7 +8,8 @@ from kid_readout.utils.roach_utils import ntone_power_correction
 
 
 class TimestreamGroup(object):
-    def __init__(self,ncgroup):
+    def __init__(self,ncgroup, parent=None):
+        self.parent = parent
         keys = ncgroup.variables.keys()
         keys.remove('data')
         keys.remove('dt')
@@ -38,7 +39,23 @@ class TimestreamGroup(object):
 #            self.sweep_index = ncgroup.variables['sweep_index'][:]
 #        else:
 #            self.sweep_index = None
-            
+
+        if self.parent is not None:
+            self.modulation_duty_cycle = np.zeros_like(self.epoch)
+            self.modulation_phase = np.zeros_like(self.epoch)
+            self.modulation_freq = np.zeros_like(self.epoch)
+            self.modulation_period_samples = np.zeros_like(self.epoch)
+            for index in range(len(self.epoch)):
+                out, rate = self.parent.get_modulation_state_at(self.epoch[index])
+                if out == 2:
+                    self.modulation_duty_cycle[index] = 0.5
+                    self.modulation_freq[index] = self.sample_rate[index]/2.**rate
+                    self.modulation_period_samples[index] = 2.**rate
+                else:
+                    self.modulation_duty_cycle[index] = out
+                    self.modulation_freq[index] = 0.0
+                    self.modulation_period_samples[index] = 0.0
+
         self._data = ncgroup.variables['data']
         self.num_data_samples = self._data.shape[1]
         self.data_len_seconds = self.num_data_samples/self.sample_rate
@@ -67,11 +84,12 @@ class TimestreamGroup(object):
             return self._datacache[index]
         
 class SweepGroup(object):
-    def __init__(self,ncgroup):
+    def __init__(self,ncgroup, parent=None):
+        self.parent = parent
         self.frequency = ncgroup.variables['frequency'][:]
         self.s21 = ncgroup.variables['s21'][:].view(ncgroup.variables['s21'].datatype.name)
         self.index = ncgroup.variables['index'][:]
-        self.timestream_group = TimestreamGroup(ncgroup.groups['datablocks'])
+        self.timestream_group = TimestreamGroup(ncgroup.groups['datablocks'], parent=parent)
         self.start_epoch = self.timestream_group.epoch.min()
         self.end_epoch = self.timestream_group.epoch.max()
     
@@ -105,10 +123,12 @@ class ReadoutNetCDF(object):
         self.hardware_state_epoch = hwgroup.variables['epoch'][:]
         self.adc_atten = hwgroup.variables['adc_atten'][:]
         self.dac_atten = hwgroup.variables['dac_atten'][:]
-        if hwgroup.variables.has_key('ntones'):
-            self.num_tones = hwgroup.variables['ntones'][:]
-        else:
-            self.num_tones = None
+        for key in ['ntones', 'modulation_rate', 'modulation_output']:
+            if key in hwgroup.variables:
+                self.__setattr__(key,hwgroup.variables[key][:])
+            else:
+                self.__setattr__(key,None)
+
         try:
             self.gitinfo = self.ncroot.gitinfo
         except AttributeError:
@@ -117,11 +137,11 @@ class ReadoutNetCDF(object):
         self.sweeps_dict = OrderedDict()
         self.timestreams_dict = OrderedDict()
         for name,group in self.ncroot.groups['sweeps'].groups.items():
-            self.sweeps_dict[name] = SweepGroup(group)
+            self.sweeps_dict[name] = SweepGroup(group, parent=self)
             self.__setattr__(name,self.sweeps_dict[name])
         self.sweeps = self.sweeps_dict.values()
         for name,group in self.ncroot.groups['timestreams'].groups.items():
-            self.timestreams_dict[name] = TimestreamGroup(group)
+            self.timestreams_dict[name] = TimestreamGroup(group, parent=self)
             self.__setattr__(name,self.timestreams_dict[name])
         self.timestreams = self.timestreams_dict.values()
     def close(self):
@@ -137,4 +157,13 @@ class ReadoutNetCDF(object):
             warnings.warn("ntones parameter not found in data file %s, assuming 1. The effective power level may be wrong" % self.filename)
         total = dac_atten + ntone_power_correction(ntones)
         return dac_atten, total
-    
+
+    def get_modulation_state_at(self,epoch):
+        if self.modulation_rate is None:
+            return 0,0
+        index = bisect.bisect_left(self.hardware_state_epoch, epoch) # find the index of the epoch immediately preceding the desired epoch
+        if index == len(self.hardware_state_epoch):
+            index = index - 1
+        modulation_rate = self.modulation_rate[index]
+        modulation_output = self.modulation_output[index]
+        return modulation_output, modulation_rate
