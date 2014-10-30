@@ -19,13 +19,13 @@ print lockin.get_idn()
 
 hittite.on()
 hittite.set_power(0)
-if True: #cw case:
+if False: #cw case:
     mmw_source_frequency = 158e9
     hittite.set_freq(mmw_source_frequency/12)
 else:
     mmw_source_frequency = -1.0
 
-source_on_freq_scale = 0.998  # nominally 1 if low-ish power
+source_on_freq_scale = 1.0  # nominally 1 if low-ish power
 
 ri = roach_interface.RoachBaseband()
 f0s = np.load('/home/gjones/kid_readout/apps/sc5x4_0813f12.npy')

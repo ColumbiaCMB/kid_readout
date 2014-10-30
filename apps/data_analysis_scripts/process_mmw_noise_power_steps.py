@@ -68,7 +68,7 @@ if __name__ == "__main__":
     #fns = glob.glob('/home/data2/2014-10-15*mmwnoisestep*.nc')
     #fns = glob.glob('/home/data2/2014-10-17*mmwnoisestep*.nc')
     #fns = glob.glob('/home/data2/2014-10-18*mmwnoisestep*.nc')
-    fns = glob.glob('/home/data2/2014-10-28_17*mmw*step*.nc')
+    fns = glob.glob('/home/data2/2014-10-29_17*mmw*step*.nc')
     fns.sort()
     for fn in fns:
         process_file(fn)
