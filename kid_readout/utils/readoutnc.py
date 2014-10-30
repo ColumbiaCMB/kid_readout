@@ -123,7 +123,11 @@ class ReadoutNetCDF(object):
         self.hardware_state_epoch = hwgroup.variables['epoch'][:]
         self.adc_atten = hwgroup.variables['adc_atten'][:]
         self.dac_atten = hwgroup.variables['dac_atten'][:]
-        for key in ['ntones', 'modulation_rate', 'modulation_output']:
+        if 'ntones' in hwgroup.variables:
+            self.num_tones = hwgroup.variables['ntones'][:]
+        else:
+            self.num_tones = None
+        for key in ['modulation_rate', 'modulation_output']:
             if key in hwgroup.variables:
                 self.__setattr__(key,hwgroup.variables[key][:])
             else:
@@ -154,6 +158,8 @@ class ReadoutNetCDF(object):
         
     def get_effective_dac_atten_at(self,epoch):
         index = bisect.bisect_left(self.hardware_state_epoch, epoch) # find the index of the epoch immediately preceding the desired epoch
+        if index == len(self.hardware_state_epoch):
+            index = index - 1
         dac_atten = self.dac_atten[index]
         if self.num_tones is not None:
             ntones = self.num_tones[index]

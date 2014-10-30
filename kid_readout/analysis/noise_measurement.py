@@ -188,7 +188,8 @@ class SweepNoiseMeasurement(object):
         self.is_dark = info['is_dark']
         self.optical_state = info['optical_state']
         self.dac_chain_gain = dac_chain_gain
-        
+        self.mmw_atten_turns = self._sweep_file.mmw_atten_turns
+
         try:
             self.atten, self.total_dac_atten = self._sweep_file.get_effective_dac_atten_at(self.sweep_epoch)
             self.power_dbm = dac_chain_gain - self.total_dac_atten
@@ -210,6 +211,10 @@ class SweepNoiseMeasurement(object):
         self.noise_measurement_freq_MHz = self.timestream.measurement_freq[timestream_index]
         self.nfft = self.timestream.nfft[timestream_index]
         self.timeseries_sample_rate = self.timestream.sample_rate[timestream_index]
+        self.timestream_modulation_duty_cycle = self.timestream.modulation_duty_cycle[timestream_index]
+        self.timestream_modulation_freq = self.timestream.modulation_freq[timestream_index]
+        self.timestream_modulation_phase = self.timestream.modulation_phase[timestream_index]
+        self.timestream_modulation_period_samples = self.timestream.modulation_period_samples[timestream_index]
         
         self.timestream_epoch = self.timestream.epoch[timestream_index]
         self.timestream_duration = original_timeseries.shape[0]/self.timeseries_sample_rate
@@ -443,6 +448,7 @@ class SweepNoiseMeasurement(object):
     def _open_sweep_file(self):
         if self._sweep_file is None:
             self._sweep_file = readoutnc.ReadoutNetCDF(self.sweep_filename)
+
     def _open_timestream_file(self):
         if self._timestream_file is None:
             self._timestream_file = readoutnc.ReadoutNetCDF(self.timestream_filename)
