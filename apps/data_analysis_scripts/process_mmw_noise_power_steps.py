@@ -41,10 +41,13 @@ def process_file(filename):
             noise_modulated_measurement.zbd_voltage = rnc.timestreams[-1].zbd_voltage[0]
             for noise_on_measurement in power_steps_mmw_on:
                 noise_on_measurement.zbd_voltage = rnc.timestreams[-1].zbd_voltage[0]
-            noise_modulated_measurement.folded_projected_timeseries = noise_modulated_measurement.projected_timeseries.reshape((-1, noise_modulated_measurement.timestream_modulation_period_samples))
-            folded = noise_modulated_measurement.folded_projected_timeseries.mean(0)
-            high, low, rising_edge = kid_readout.analysis.fit_pulses.find_high_low(folded)
-            noise_modulated_measurement.folded_projected_timeseries = np.roll(noise_modulated_measurement.folded_projected_timeseries,-rising_edge, axis=1)
+            if noise_modulated_measurement.timestream_modulation_period_samples != 0:
+                noise_modulated_measurement.folded_projected_timeseries = noise_modulated_measurement.projected_timeseries.reshape((-1, noise_modulated_measurement.timestream_modulation_period_samples))
+                folded = noise_modulated_measurement.folded_projected_timeseries.mean(0)
+                high, low, rising_edge = kid_readout.analysis.fit_pulses.find_high_low(folded)
+                noise_modulated_measurement.folded_projected_timeseries = np.roll(noise_modulated_measurement.folded_projected_timeseries,-rising_edge, axis=1)
+            else:
+                noise_modulated_measurement.folded_projected_timeseries = None
 
             fr, s21, err = rnc.sweeps[1].select_by_index(resonator_id)
             noise_off_sweep = kid_readout.analysis.resonator.fit_best_resonator(fr, s21, errors=err)
@@ -75,5 +78,10 @@ if __name__ == "__main__":
     #fns = glob.glob('/home/data2/2014-10-18*mmwnoisestep*.nc')
     fns = glob.glob('/home/data2/2014-09*mmw*step*.nc')
     fns.sort()
-    pool = multiprocessing.Pool(4)
-    pool.map(process_file,fns)
+    if False:
+        pool = multiprocessing.Pool(4)
+        pool.map(process_file,fns)
+
+    else:
+        for fn in fns:
+            process_file(fn)
