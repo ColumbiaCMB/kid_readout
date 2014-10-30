@@ -133,6 +133,11 @@ class ReadoutNetCDF(object):
             self.gitinfo = self.ncroot.gitinfo
         except AttributeError:
             self.gitinfo = ''
+
+        try:
+            self.mmw_atten_turns = self.ncroot.mmw_atten_turns
+        except AttributeError:
+            self.mmw_atten_turns = (np.nan,np.nan)
             
         self.sweeps_dict = OrderedDict()
         self.timestreams_dict = OrderedDict()
