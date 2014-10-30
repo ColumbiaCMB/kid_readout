@@ -121,10 +121,7 @@ def load_archive(fn):
     df = pd.DataFrame.from_records(npa)
     return df
 
-
 if __name__ == "__main__":
-    pass
-    """
     infos = dict(
     df0924 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-09-24*.pkl'),index_to_resnum=np.arange(16)),
     df0929 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-09-29*.pkl'),index_to_resnum=np.arange(16)),
@@ -141,7 +138,7 @@ if __name__ == "__main__":
 
     for dfn,info in infos.items():
         df = build_archive(info,
-                       force_rebuild=False,
+                       force_rebuild=True,
                        archive_name=None)
         globals()[dfn] = df
 
@@ -149,4 +146,3 @@ if __name__ == "__main__":
     df = df.reset_index(drop=True)
     dfrall = refine_archive(df)
     dfr = dfrall[dfrall.atten == 39]
-    """
