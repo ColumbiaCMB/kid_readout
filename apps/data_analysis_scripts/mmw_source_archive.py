@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import os
+import pwd
 from kid_readout.analysis.noise_measurement import load_noise_pkl
 import glob
 import collections
@@ -111,6 +112,7 @@ def build_archive(info, archive_name=None, force_rebuild=False):
 
     try:
         np.save(archname,df.to_records())
+        os.chown(archname, os.getuid(), pwd.getpwnam('readout').pw_gid)
     except Exception,e:
         print "failed to pickle",e
     return df
