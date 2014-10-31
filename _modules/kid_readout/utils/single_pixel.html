@@ -55,8 +55,6 @@
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 
-<span class="k">print</span> <span class="s">&quot;hi&quot;</span>
-
 <div class="viewcode-block" id="SinglePixelReadout"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.single_pixel.SinglePixelReadout">[docs]</a><span class="k">class</span> <span class="nc">SinglePixelReadout</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Base class for single pixel readout systems.</span>
@@ -91,19 +89,40 @@
 <span class="sd">        gain: the number of stages to divide on. The final gain will be 2^gain</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">fftshift</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">20</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">gain</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>  <span class="c">#this expression puts downsifts at the earliest stages of the FFT</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fft_gain</span> <span class="o">=</span> <span class="n">gain</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s">&#39;fftshift&#39;</span><span class="p">,</span><span class="n">fftshift</span><span class="p">)</span>
         </div>
-<div class="viewcode-block" id="SinglePixelReadout.initialize"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.single_pixel.SinglePixelReadout.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="SinglePixelReadout.initialize"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.single_pixel.SinglePixelReadout.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mf">500.0</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Reprogram the ROACH and get things running</span>
+<span class="sd">        </span>
+<span class="sd">        fs: float</span>
+<span class="sd">            Sampling frequency in MHz</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">print</span> <span class="s">&quot;Deprogramming&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">progdev</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_fs</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
         <span class="k">print</span> <span class="s">&quot;Programming&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">boffile</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">progdev</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boffile</span><span class="p">)</span>
-        <span class="k">print</span> <span class="s">&quot;FPGA clock rate ~&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">est_brd_clk</span><span class="p">()</span>
+        <span class="n">estfs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measure_fs</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fs</span><span class="o">-</span><span class="n">estfs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">2.0</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;Warning! FPGA clock may not be locked to sampling clock!&quot;</span>
+        <span class="k">print</span> <span class="s">&quot;Requested sampling rate </span><span class="si">%.1f</span><span class="s"> MHz. Estimated sampling rate </span><span class="si">%.1f</span><span class="s"> MHz&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">fs</span><span class="p">,</span><span class="n">estfs</span><span class="p">)</span>
+        <span class="k">print</span> <span class="s">&quot;setting attenuators to maximum values&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_adc_attenuator</span><span class="p">(</span><span class="mf">31.5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_dac_attenuator</span><span class="p">(</span><span class="mf">31.5</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_fft_gain</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">print</span> <span class="s">&quot;selecting channel 1024 to start things off&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_channel</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="SinglePixelReadout.measure_fs"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.single_pixel.SinglePixelReadout.measure_fs">[docs]</a>    <span class="k">def</span> <span class="nf">measure_fs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Estimate the sampling rate</span>
+<span class="sd">        </span>
+<span class="sd">        This takes about 2 seconds to run</span>
+<span class="sd">        returns: fs, the approximate sampling rate in MHz</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">est_brd_clk</span><span class="p">()</span> 
         </div>
 <div class="viewcode-block" id="SinglePixelReadout.set_channel"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.single_pixel.SinglePixelReadout.set_channel">[docs]</a>    <span class="k">def</span> <span class="nf">set_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">ch</span><span class="p">,</span><span class="n">dphi</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">amp</span><span class="o">=-</span><span class="mi">3</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;Abstract base class&quot;</span><span class="p">)</span></div>
@@ -131,11 +150,22 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="n">gpio_reg</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">)</span>
         </div>
 <div class="viewcode-block" id="SinglePixelReadout.set_adc_attenuator"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.single_pixel.SinglePixelReadout.set_adc_attenuator">[docs]</a>    <span class="k">def</span> <span class="nf">set_adc_attenuator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">attendb</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        attendb: attenuation of 0 to 31.5 dB in increments of 0.5</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_attenuator</span><span class="p">(</span><span class="n">attendb</span><span class="p">,</span><span class="n">le_bit</span><span class="o">=</span><span class="mh">0x02</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="SinglePixelReadout.set_dac_attenuator"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.single_pixel.SinglePixelReadout.set_dac_attenuator">[docs]</a>    <span class="k">def</span> <span class="nf">set_dac_attenuator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">attendb</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        attendb: attenuation of 0 to 31.5 dB in increments of 0.5</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_attenuator</span><span class="p">(</span><span class="n">attendb</span><span class="p">,</span><span class="n">le_bit</span><span class="o">=</span><span class="mh">0x01</span><span class="p">)</span>
     </div>
+    <span class="k">def</span> <span class="nf">_set_fs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set sampling frequency in MHz</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
     <span class="k">def</span> <span class="nf">_read_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">nread</span><span class="p">,</span><span class="n">bufname</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Low level data reading loop, common to both readouts</span>
@@ -181,16 +211,25 @@
 
 </div>
 <div class="viewcode-block" id="SinglePixelBaseband"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.single_pixel.SinglePixelBaseband">[docs]</a><span class="k">class</span> <span class="nc">SinglePixelBaseband</span><span class="p">(</span><span class="n">SinglePixelReadout</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">roach</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">wafer</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">roachip</span><span class="o">=</span><span class="s">&#39;roach&#39;</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">roach</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">wafer</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">roachip</span><span class="o">=</span><span class="s">&#39;roach&#39;</span><span class="p">,</span><span class="n">adc_valon</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Class to represent the baseband readout system (low-frequency (150 MHz), no mixers)</span>
 <span class="sd">        </span>
-<span class="sd">        roach: an FpgaClient instance for communicating with the ROACH. If not specified,</span>
-<span class="sd">                will try to instantiate one connected to *roachip*</span>
+<span class="sd">        roach: an FpgaClient instance for communicating with the ROACH. </span>
+<span class="sd">                If not specified, will try to instantiate one connected to *roachip*</span>
 <span class="sd">        wafer: 0 or 1. </span>
 <span class="sd">                In baseband mode, each of the two DAC and ADC connections can be used independantly to</span>
 <span class="sd">                readout a single wafer each. This parameter indicates which connection you want to use.</span>
 <span class="sd">        roachip: (optional). Network address of the ROACH if you don&#39;t want to provide an FpgaClient</span>
+<span class="sd">        adc_valon: a Valon class, a string, or None</span>
+<span class="sd">                Provide access to the Valon class which controls the Valon synthesizer which provides</span>
+<span class="sd">                the ADC and DAC sampling clock.</span>
+<span class="sd">                The default None value will use the valon.find_valon function to locate a synthesizer</span>
+<span class="sd">                and create a Valon class for you.</span>
+<span class="sd">                You can alternatively pass a string such as &#39;/dev/ttyUSB0&#39; to specify the port for the</span>
+<span class="sd">                synthesizer, which will then be used for creating a Valon class.</span>
+<span class="sd">                Finally, for test suites, you can directly pass a Valon class or a class with the same</span>
+<span class="sd">                interface.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">roach</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">roach</span>
@@ -203,21 +242,39 @@
                 <span class="k">if</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">t1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">timeout</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Connection timeout to roach&quot;</span><span class="p">)</span>
                 <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+                
+        <span class="k">if</span> <span class="n">adc_valon</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">valon</span>
+            <span class="n">ports</span> <span class="o">=</span> <span class="n">valon</span><span class="o">.</span><span class="n">find_valons</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ports</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;No Valon found!&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon_port</span> <span class="o">=</span> <span class="n">ports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon</span> <span class="o">=</span> <span class="n">valon</span><span class="o">.</span><span class="n">Synthesizer</span><span class="p">(</span><span class="n">ports</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="c">#use latest port</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">adc_valon</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">valon</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon_port</span> <span class="o">=</span> <span class="n">adc_valon</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon</span> <span class="o">=</span> <span class="n">valon</span><span class="o">.</span><span class="n">Synthesizer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">adc_valon_port</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon</span> <span class="o">=</span> <span class="n">adc_valon</span>
             
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon</span><span class="o">.</span><span class="n">get_frequency_a</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">wafer</span> <span class="o">=</span> <span class="n">wafer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dac_ns</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">16</span> <span class="c"># number of samples in the dac buffer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">raw_adc_ns</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">12</span> <span class="c"># number of samples in the raw ADC buffer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nfft</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">14</span>
 <span class="c">#        self.boffile = &#39;adcdac2xfft14r4_2013_Jun_13_1717.bof&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">boffile</span> <span class="o">=</span> <span class="s">&#39;adcdac2xfft14r5_2013_Jun_18_1542.bof&#39;</span>
-        
+        <span class="bp">self</span><span class="o">.</span><span class="n">bufname</span> <span class="o">=</span> <span class="s">&#39;ppout</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">wafer</span>
 <div class="viewcode-block" id="SinglePixelBaseband.set_channel"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.single_pixel.SinglePixelBaseband.set_channel">[docs]</a>    <span class="k">def</span> <span class="nf">set_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">ch</span><span class="p">,</span><span class="n">dphi</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">amp</span><span class="o">=-</span><span class="mi">3</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        ch: channel number (0 to nfft-1)</span>
+<span class="sd">        ch: channel number (0 to dac_ns-1)</span>
+
 <span class="sd">        dphi: phase offset between I and Q components in turns (nominally 1/4 = pi/2 radians)</span>
+<span class="sd">                not used for Baseband readout</span>
+
 <span class="sd">        amp: amplitude relative to full scale in dB</span>
+
 <span class="sd">        nfft: size of the fft</span>
-<span class="sd">        ns: number of samples in the playback memory </span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_tone</span><span class="p">(</span><span class="n">ch</span><span class="o">/</span><span class="p">(</span><span class="mf">1.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">dac_ns</span><span class="p">),</span> <span class="n">dphi</span><span class="o">=</span><span class="n">dphi</span><span class="p">,</span> <span class="n">amp</span><span class="o">=</span><span class="n">amp</span><span class="p">)</span>
         <span class="n">absch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span>
@@ -234,8 +291,10 @@
 <span class="sd">        nread: number of 4096 sample frames to read</span>
 <span class="sd">        </span>
 <span class="sd">        returns  dout,addrs</span>
+
 <span class="sd">        dout: complex data stream. Real and imaginary parts are each 16 bit signed </span>
 <span class="sd">                integers (but cast to numpy complex)</span>
+
 <span class="sd">        addrs: counter values when each frame was read. Can be used to check that </span>
 <span class="sd">                frames are contiguous</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -268,16 +327,24 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set the register which selects the FFT bin we get data from</span>
 <span class="sd">        </span>
-<span class="sd">        ibin: 0 to fftlen -1</span>
+<span class="sd">        ibin: 0 to nfft -1</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">offset</span> <span class="o">=</span> <span class="mi">2</span> <span class="c"># bins are shifted by 2</span>
         <span class="n">ibin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="n">ibin</span><span class="o">-</span><span class="n">offset</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">nfft</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s">&#39;chansel&#39;</span><span class="p">,</span><span class="n">ibin</span><span class="p">)</span>
-    
+    </div>
+    <span class="k">def</span> <span class="nf">_set_fs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fs</span><span class="p">,</span><span class="n">chan_spacing</span><span class="o">=</span><span class="mf">2.0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set sampling frequency in MHz</span>
+<span class="sd">        Note, this should generally not be called without also reprogramming the ROACH</span>
+<span class="sd">        Use initialize() instead        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon</span><span class="o">.</span><span class="n">set_frequency_a</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span><span class="n">chan_spacing</span><span class="o">=</span><span class="n">chan_spacing</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span>
 
-</div></div>
+</div>
 <div class="viewcode-block" id="SinglePixelHeterodyne"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.single_pixel.SinglePixelHeterodyne">[docs]</a><span class="k">class</span> <span class="nc">SinglePixelHeterodyne</span><span class="p">(</span><span class="n">SinglePixelReadout</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">roach</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">roachip</span><span class="o">=</span><span class="s">&#39;roach&#39;</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">roach</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">roachip</span><span class="o">=</span><span class="s">&#39;roach&#39;</span><span class="p">,</span><span class="n">adc_valon</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Class to represent the heterodyne readout system (high frequency, 1.5 GHz, with IQ mixers)</span>
 <span class="sd">        </span>
@@ -296,7 +363,22 @@
                 <span class="k">if</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">t1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">timeout</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Connection timeout to roach&quot;</span><span class="p">)</span>
                 <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">adc_valon</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">valon</span>
+            <span class="n">ports</span> <span class="o">=</span> <span class="n">valon</span><span class="o">.</span><span class="n">find_valons</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ports</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;No Valon found!&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon_port</span> <span class="o">=</span> <span class="n">ports</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon</span> <span class="o">=</span> <span class="n">valon</span><span class="o">.</span><span class="n">Synthesizer</span><span class="p">(</span><span class="n">ports</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="c">#use latest port</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">adc_valon</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">valon</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon_port</span> <span class="o">=</span> <span class="n">adc_valon</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon</span> <span class="o">=</span> <span class="n">valon</span><span class="o">.</span><span class="n">Synthesizer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">adc_valon_port</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon</span> <span class="o">=</span> <span class="n">adc_valon</span>
             
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon</span><span class="o">.</span><span class="n">get_frequency_a</span><span class="p">()</span>        
         <span class="bp">self</span><span class="o">.</span><span class="n">dac_ns</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">16</span> <span class="c"># number of samples in the dac buffer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">raw_adc_ns</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">11</span> <span class="c"># number of samples in the raw ADC buffer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nfft</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">14</span>
@@ -304,15 +386,14 @@
         
 <div class="viewcode-block" id="SinglePixelHeterodyne.set_channel"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.single_pixel.SinglePixelHeterodyne.set_channel">[docs]</a>    <span class="k">def</span> <span class="nf">set_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">ch</span><span class="p">,</span><span class="n">dphi</span><span class="o">=-</span><span class="mf">0.25</span><span class="p">,</span><span class="n">amp</span><span class="o">=-</span><span class="mi">3</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        ch: channel number (-nfft/2 to nfft/2-1)</span>
+<span class="sd">        ch: channel number (-dac_ns/2 to dac_ns/2-1)</span>
 <span class="sd">        dphi: phase offset between I and Q components in turns (nominally -1/4 = pi/2 radians)</span>
 <span class="sd">        amp: amplitude relative to full scale in dB</span>
 <span class="sd">        nfft: size of the fft</span>
-<span class="sd">        ns: number of samples in the playback memory </span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_tone</span><span class="p">(</span><span class="n">ch</span><span class="o">/</span><span class="p">(</span><span class="mf">1.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">dac_ns</span><span class="p">),</span> <span class="n">dphi</span><span class="o">=</span><span class="n">dphi</span><span class="p">,</span> <span class="n">amp</span><span class="o">=</span><span class="n">amp</span><span class="p">)</span>
         <span class="n">absch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span>
-        <span class="n">chan_per_bin</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">dac_ns</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">nfft</span>
+        <span class="n">chan_per_bin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dac_ns</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">nfft</span>
         <span class="n">ibin</span> <span class="o">=</span> <span class="n">absch</span> <span class="o">//</span> <span class="n">chan_per_bin</span>
         <span class="k">if</span> <span class="n">ch</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">ibin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nfft</span><span class="o">-</span><span class="n">ibin</span>       
@@ -325,12 +406,14 @@
 <span class="sd">        nread: number of 4096 sample frames to read</span>
 <span class="sd">        </span>
 <span class="sd">        returns  dout,addrs</span>
+
 <span class="sd">        dout: complex data stream. Real and imaginary parts are each 16 bit signed </span>
 <span class="sd">                integers (but cast to numpy complex)</span>
+
 <span class="sd">        addrs: counter values when each frame was read. Can be used to check that </span>
 <span class="sd">                frames are contiguous</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">bufname</span> <span class="o">=</span> <span class="s">&#39;ppout0&#39;</span>
+        <span class="n">bufname</span> <span class="o">=</span> <span class="s">&#39;ppout&#39;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_data</span><span class="p">(</span><span class="n">nread</span><span class="p">,</span> <span class="n">bufname</span><span class="p">)</span>
         </div>
 <div class="viewcode-block" id="SinglePixelHeterodyne.load_waveform"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.single_pixel.SinglePixelHeterodyne.load_waveform">[docs]</a>    <span class="k">def</span> <span class="nf">load_waveform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">iwave</span><span class="p">,</span><span class="n">qwave</span><span class="p">):</span>
@@ -342,8 +425,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">blindwrite</span><span class="p">(</span><span class="s">&#39;iout&#39;</span><span class="p">,</span><span class="n">iw2</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">blindwrite</span><span class="p">(</span><span class="s">&#39;qout&#39;</span><span class="p">,</span><span class="n">qw2</span><span class="p">)</span>
             
-<span class="c">#        self.r.write_int(&#39;dacctrl&#39;,0)</span>
-<span class="c">#        self.r.write_int(&#39;dacctrl&#39;,1)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s">&#39;dacctrl&#39;</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s">&#39;dacctrl&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
         </div>
 <div class="viewcode-block" id="SinglePixelHeterodyne.set_tone"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.single_pixel.SinglePixelHeterodyne.set_tone">[docs]</a>    <span class="k">def</span> <span class="nf">set_tone</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">f0</span><span class="p">,</span><span class="n">dphi</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span><span class="n">amp</span><span class="o">=-</span><span class="mi">3</span><span class="p">):</span>
         <span class="n">a</span> <span class="o">=</span> <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">amp</span><span class="o">/</span><span class="mf">20.0</span><span class="p">)</span>
@@ -358,27 +441,18 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set the register which selects the FFT bin we get data from</span>
 <span class="sd">        </span>
-<span class="sd">        ibin: 0 to fftlen -1</span>
+<span class="sd">        ibin: 0 to nfft -1</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s">&#39;chansel&#39;</span><span class="p">,</span><span class="n">ibin</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
-</div>
-<div class="viewcode-block" id="SinglePixelHeterodyne.set_adc_attenuator"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.single_pixel.SinglePixelHeterodyne.set_adc_attenuator">[docs]</a>    <span class="k">def</span> <span class="nf">set_adc_attenuator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">attendb</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_attenuator</span><span class="p">(</span><span class="n">attendb</span><span class="p">,</span><span class="n">le_bit</span><span class="o">=</span><span class="mh">0x02</span><span class="p">)</span>
-</div>
-<div class="viewcode-block" id="SinglePixelHeterodyne.set_dac_attenuator"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.single_pixel.SinglePixelHeterodyne.set_dac_attenuator">[docs]</a>    <span class="k">def</span> <span class="nf">set_dac_attenuator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">attendb</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">attendb</span> <span class="o">&gt;</span> <span class="mf">31.5</span><span class="p">:</span>
-            <span class="n">atten_a</span> <span class="o">=</span> <span class="mf">31.5</span>
-            <span class="n">atten_b</span> <span class="o">=</span> <span class="n">attendb</span> <span class="o">-</span> <span class="n">atten_a</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">atten_a</span> <span class="o">=</span> <span class="n">attendb</span>
-            <span class="n">atten_b</span> <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_attenuator</span><span class="p">(</span><span class="n">atten_a</span><span class="p">,</span><span class="n">le_bit</span><span class="o">=</span><span class="mh">0x01</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_attenuator</span><span class="p">(</span><span class="n">atten_b</span><span class="p">,</span><span class="n">le_bit</span><span class="o">=</span><span class="mh">0x80</span><span class="p">)</span>
-    
-
-
-    
-    </div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s">&#39;chansel&#39;</span><span class="p">,</span><span class="n">ibin</span><span class="p">)</span>
+    </div>
+    <span class="k">def</span> <span class="nf">_set_fs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fs</span><span class="p">,</span><span class="n">chan_spacing</span><span class="o">=</span><span class="mf">2.0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set sampling frequency in MHz</span>
+<span class="sd">        Note, this should generally not be called without also reprogramming the ROACH</span>
+<span class="sd">        Use initialize() instead</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon</span><span class="o">.</span><span class="n">set_frequency_a</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span><span class="n">chan_spacing</span><span class="o">=</span><span class="n">chan_spacing</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="n">fs</span></div>
 </pre></div>
 
           </div>
@@ -418,7 +492,7 @@
     </div>
     <div class="footer">
         &copy; Copyright 2013, Author.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.
     </div>
   </body>
 </html>

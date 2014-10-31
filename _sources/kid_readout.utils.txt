@@ -1,83 +1,206 @@
-utils Package
-=============
+kid_readout.utils package
+=========================
 
-:mod:`aggregator` Module
-------------------------
+Submodules
+----------
 
-.. automodule:: kid_readout.utils.aggregator
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`borph_utils` Module
--------------------------
+kid_readout.utils.borph_utils module
+------------------------------------
 
 .. automodule:: kid_readout.utils.borph_utils
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`catcher` Module
----------------------
+kid_readout.utils.check_output module
+-------------------------------------
 
-.. automodule:: kid_readout.utils.catcher
+.. automodule:: kid_readout.utils.check_output
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`coordinator` Module
--------------------------
+kid_readout.utils.data_block module
+-----------------------------------
 
-.. automodule:: kid_readout.utils.coordinator
+.. automodule:: kid_readout.utils.data_block
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`mini_aggregator` Module
------------------------------
+kid_readout.utils.data_file module
+----------------------------------
 
-.. automodule:: kid_readout.utils.mini_aggregator
+.. automodule:: kid_readout.utils.data_file
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`netcdf_writer` Module
----------------------------
+kid_readout.utils.dataset module
+--------------------------------
 
-.. automodule:: kid_readout.utils.netcdf_writer
+.. automodule:: kid_readout.utils.dataset
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`roach_interface` Module
------------------------------
+kid_readout.utils.despike module
+--------------------------------
+
+.. automodule:: kid_readout.utils.despike
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.utils.easync module
+-------------------------------
+
+.. automodule:: kid_readout.utils.easync
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.utils.fftfilt module
+--------------------------------
+
+.. automodule:: kid_readout.utils.fftfilt
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.utils.filters module
+--------------------------------
+
+.. automodule:: kid_readout.utils.filters
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.utils.hpd_temps module
+----------------------------------
+
+.. automodule:: kid_readout.utils.hpd_temps
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.utils.jpl_data module
+---------------------------------
+
+.. automodule:: kid_readout.utils.jpl_data
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.utils.parse_srs module
+----------------------------------
+
+.. automodule:: kid_readout.utils.parse_srs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.utils.plot_nc module
+--------------------------------
+
+.. automodule:: kid_readout.utils.plot_nc
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.utils.proc_sweep module
+-----------------------------------
+
+.. automodule:: kid_readout.utils.proc_sweep
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.utils.readoutnc module
+----------------------------------
+
+.. automodule:: kid_readout.utils.readoutnc
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.utils.roach_interface module
+----------------------------------------
 
 .. automodule:: kid_readout.utils.roach_interface
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`single_pixel` Module
---------------------------
+kid_readout.utils.roach_utils module
+------------------------------------
+
+.. automodule:: kid_readout.utils.roach_utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.utils.single_pixel module
+-------------------------------------
 
 .. automodule:: kid_readout.utils.single_pixel
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`sweeper` Module
----------------------
+kid_readout.utils.starcryo_temps module
+---------------------------------------
 
-.. automodule:: kid_readout.utils.sweeper
+.. automodule:: kid_readout.utils.starcryo_temps
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`valon` Module
--------------------
+kid_readout.utils.sweeps module
+-------------------------------
+
+.. automodule:: kid_readout.utils.sweeps
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.utils.time_tools module
+-----------------------------------
+
+.. automodule:: kid_readout.utils.time_tools
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.utils.udp_catcher module
+------------------------------------
+
+.. automodule:: kid_readout.utils.udp_catcher
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.utils.upstairs_gain_db module
+-----------------------------------------
+
+.. automodule:: kid_readout.utils.upstairs_gain_db
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.utils.valon module
+------------------------------
 
 .. automodule:: kid_readout.utils.valon
     :members:
     :undoc-members:
     :show-inheritance:
 
+
+Module contents
+---------------
+
+.. automodule:: kid_readout.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:

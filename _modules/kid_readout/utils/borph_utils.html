@@ -51,7 +51,7 @@
 
 <span class="c"># use this as check_output(&#39;ssh root@roach &quot;pgrep -f bof$&quot;&#39;,shell=True)</span>
 
-<div class="viewcode-block" id="check_output"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.borph_utils.check_output">[docs]</a><span class="k">def</span> <span class="nf">check_output</span><span class="p">(</span><span class="o">*</span><span class="n">popenargs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_check_output</span><span class="p">(</span><span class="o">*</span><span class="n">popenargs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">r&quot;&quot;&quot;Run command with arguments and return its output as a byte string.</span>
 
 <span class="sd">    If the exit code was non-zero it raises a CalledProcessError.  The</span>
@@ -84,34 +84,27 @@
             <span class="n">cmd</span> <span class="o">=</span> <span class="n">popenargs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">raise</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">(</span><span class="n">retcode</span><span class="p">,</span> <span class="n">cmd</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">output</span>
-</div>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">subprocess</span> <span class="kn">import</span> <span class="n">check_output</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">check_output</span> <span class="o">=</span> <span class="n">_check_output</span>    
 <div class="viewcode-block" id="get_bof_pid"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.borph_utils.get_bof_pid">[docs]</a><span class="k">def</span> <span class="nf">get_bof_pid</span><span class="p">():</span>
     <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">check_output</span><span class="p">(</span><span class="s">&#39;ssh root@roach &quot;pgrep -f bof$&quot;&#39;</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
 </div>
-<div class="viewcode-block" id="start_server"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.borph_utils.start_server">[docs]</a><span class="k">def</span> <span class="nf">start_server</span><span class="p">(</span><span class="n">buff_name</span><span class="p">):</span>
-    <span class="c"># Buffname is ppout or ppout0, usually.</span>
-    <span class="n">a</span> <span class="o">=</span> <span class="n">check_output</span><span class="p">(</span><span class="s">&#39;ssh root@roach &quot;pgrep -f bof$&quot;&#39;</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">)[:</span><span class="mi">4</span><span class="p">]</span>
-    <span class="c"># Slicing is to avoid the newline return.</span>
-    <span class="k">print</span> <span class="n">a</span>
-    
-    <span class="c"># Kill existing processes</span>
+<div class="viewcode-block" id="start_server"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.borph_utils.start_server">[docs]</a><span class="k">def</span> <span class="nf">start_server</span><span class="p">(</span><span class="n">bof_pid</span><span class="p">):</span>
     <span class="k">try</span><span class="p">:</span>
-    <span class="c"># Try/except block</span>
-        <span class="n">c</span> <span class="o">=</span> <span class="n">check_output</span><span class="p">(</span><span class="s">&#39;ssh root@roach pkill -f pingpong&#39;</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">check_output</span><span class="p">(</span><span class="s">&#39;ssh root@roach pkill -f kid_ppc&#39;</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
         <span class="k">print</span> <span class="s">&#39;process killed&#39;</span>
-    <span class="c"># Problem here: if there is no process to kill, the program ends in an error.</span>
     <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">:</span>
         <span class="k">pass</span>
         
     
     <span class="c"># remote_command = &#39;ssh root@roach &quot;/boffiles/udp/channel_pingpong_fileserver %s %s&quot;&#39; % (a,buff_name)</span>
-    <span class="n">remote_command</span> <span class="o">=</span> <span class="s">&#39;nohup ssh root@roach &quot;/boffiles/udp/channel_pingpong_fileserver </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot; &lt; /dev/null &amp;&gt; /dev/null &amp;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">buff_name</span><span class="p">)</span>
+    <span class="c">#remote_command = &#39;nohup ssh root@roach &quot;/boffiles/udp/channel_pingpong_fileserver %s %s&quot; &lt; /dev/null &amp;&gt; /dev/null &amp;&#39; % (a, buff_name)</span>
+    <span class="n">remote_command</span> <span class="o">=</span> <span class="s">&#39;ssh root@roach &quot;nohup /boffiles/udp/kid_ppc </span><span class="si">%s</span><span class="s"> &lt; /dev/null &amp;&gt; /dev/null &amp;&quot;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">bof_pid</span><span class="p">,)</span>
     <span class="k">print</span> <span class="n">remote_command</span>
-    <span class="n">b</span> <span class="o">=</span> <span class="n">check_output</span><span class="p">(</span><span class="n">remote_command</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-    <span class="c"># The goal of the extra stuff is to not wait for a return. This doesn&#39;t seem to work.</span>
-</div>
-<span class="sd">&#39;&#39;&#39;Check output sends commands to the terminal. The goal here is to write a </span>
-<span class="sd">program that automatically starts up the roach, initializes channels, etc.&#39;&#39;&#39;</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">check_output</span><span class="p">(</span><span class="n">remote_command</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -151,7 +144,7 @@
     </div>
     <div class="footer">
         &copy; Copyright 2013, Author.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2b1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.
     </div>
   </body>
 </html>
