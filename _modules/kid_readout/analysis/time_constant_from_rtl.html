@@ -1,0 +1,119 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.analysis.time_constant_from_rtl &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for kid_readout.analysis.time_constant_from_rtl</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="kn">import</span> <span class="nn">kid_readout.analysis.demodulate_rtl</span>
+<span class="nb">reload</span><span class="p">(</span><span class="n">kid_readout</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">demodulate_rtl</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">kid_readout.analysis.fit_pulses</span>
+<span class="kn">import</span> <span class="nn">kid_readout.analysis.fitter</span>
+
+
+<div class="viewcode-block" id="get_time_constant_from_file"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.time_constant_from_rtl.get_time_constant_from_file">[docs]</a><span class="k">def</span> <span class="nf">get_time_constant_from_file</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="n">pulse_period</span><span class="o">=</span><span class="mf">10e-3</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">demod</span> <span class="o">=</span> <span class="n">kid_readout</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">demodulate_rtl</span><span class="o">.</span><span class="n">demodulate</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s">&#39;data&#39;</span><span class="p">],</span><span class="n">debug</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">pulse_period_samples</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s">&#39;sample_rate&#39;</span><span class="p">][()]</span><span class="o">*</span><span class="n">pulse_period</span><span class="p">)</span>
+    <span class="n">folded</span> <span class="o">=</span> <span class="n">kid_readout</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">demodulate_rtl</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span><span class="n">demod</span><span class="p">,</span><span class="n">pulse_period_samples</span><span class="p">)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">pulse_period_samples</span><span class="p">)</span><span class="o">/</span><span class="n">d</span><span class="p">[</span><span class="s">&#39;sample_rate&#39;</span><span class="p">]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">folded</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">fit</span> <span class="o">=</span> <span class="n">kid_readout</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">fitter</span><span class="o">.</span><span class="n">Fitter</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">y</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">kid_readout</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">fit_pulses</span><span class="o">.</span><span class="n">fred_model</span><span class="p">,</span>
+                                             <span class="n">guess</span> <span class="o">=</span> <span class="n">kid_readout</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">fit_pulses</span><span class="o">.</span><span class="n">fred_guess</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">fit</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">t</span><span class="p">),</span><span class="s">&#39;r&#39;</span><span class="p">,</span><span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">peakt</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="n">y</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="o">.</span><span class="n">argmax</span><span class="p">()]</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">peakt</span><span class="o">-.</span><span class="mf">1e-3</span><span class="p">,</span><span class="n">peakt</span><span class="o">+.</span><span class="mf">5e-3</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fit</span><span class="o">.</span><span class="n">tau</span><span class="p">,</span> <span class="n">fit</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.
+    </div>
+  </body>
+</html>

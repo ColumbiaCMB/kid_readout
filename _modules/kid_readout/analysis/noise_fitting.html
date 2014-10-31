@@ -1,0 +1,221 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.analysis.noise_fitting &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for kid_readout.analysis.noise_fitting</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">va,vb,vi = True: values of alpha, beta, i params are variable respectively</span>
+<span class="sd">k=1: the module fits the noise 1 time. va,vb,vi will not be use.</span>
+<span class="sd">For all k!=1, the noise is fitted with va=True, vb=True, vi=True</span>
+<span class="sd">              second fit picks up values of params returned by first fit with </span>
+<span class="sd">              value of va,vb,vi depending on choices of users.</span>
+<span class="sd">       </span>
+<span class="sd">plot whole pkls: k = plot_pkls_noise(fn,k=1)</span>
+<span class="sd">plot single file: k = plot_single_noise(f,pxx)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span>
+<span class="kn">import</span> <span class="nn">cPickle</span>
+<span class="kn">from</span> <span class="nn">lmfit</span> <span class="kn">import</span> <span class="n">minimize</span> 
+<span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s">&#39;mathtext.fontset&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;stix&#39;</span>
+<span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s">&#39;font.size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">16.0</span>
+<span class="kn">import</span> <span class="nn">os</span>
+    
+<span class="kn">from</span> <span class="nn">kid_readout.analysis.noise_function</span> <span class="kn">import</span> <span class="n">pkl_mask</span> <span class="k">as</span> <span class="n">default_mask</span>
+<span class="kn">from</span> <span class="nn">kid_readout.analysis.noise_function</span> <span class="kn">import</span> <span class="n">guess</span> <span class="k">as</span> <span class="n">default_guess</span>
+<span class="kn">from</span> <span class="nn">kid_readout.analysis.noise_function</span> <span class="kn">import</span> <span class="n">model</span> <span class="k">as</span> <span class="n">default_model</span>
+<span class="kn">from</span> <span class="nn">kid_readout.analysis.noise_function</span> <span class="kn">import</span> <span class="n">plot_single_pkl_noise</span> <span class="k">as</span> <span class="n">plot_single_pkl_noise</span>
+<span class="kn">from</span> <span class="nn">kid_readout.analysis.noise_function</span> <span class="kn">import</span> <span class="n">crop_data</span> <span class="k">as</span> <span class="n">crop_data</span>
+<div class="viewcode-block" id="Noise"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.noise_fitting.Noise">[docs]</a><span class="k">class</span> <span class="nc">Noise</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">f</span><span class="p">,</span><span class="n">p</span><span class="p">,</span><span class="n">A</span><span class="o">=</span><span class="mf">4709632.149</span><span class="p">,</span><span class="n">B</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">alpha</span><span class="o">=-</span><span class="mi">3</span><span class="p">,</span><span class="n">beta</span><span class="o">=-</span><span class="mf">0.1</span><span class="p">,</span><span class="n">fc</span><span class="o">=</span><span class="mf">2e3</span><span class="p">,</span><span class="n">i</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">N_white</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
+                 <span class="n">guess_func</span><span class="o">=</span><span class="n">default_guess</span><span class="p">,</span><span class="n">model_func</span><span class="o">=</span><span class="n">default_model</span><span class="p">,</span><span class="n">mask_func</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">va</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span><span class="n">vb</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span><span class="n">vi</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span> 
+        <span class="k">if</span> <span class="n">mask_func</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">f</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">p</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">f_masked</span><span class="p">,</span><span class="n">p_masked</span> <span class="o">=</span> <span class="n">mask_func</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="n">p</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">f_masked</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">p_masked</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_guess</span> <span class="o">=</span> <span class="n">guess_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">guess</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">alpha</span><span class="p">,</span><span class="n">beta</span><span class="p">,</span><span class="n">fc</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="n">N_white</span><span class="o">=</span><span class="n">N_white</span><span class="p">),</span><span class="n">k</span><span class="p">,</span><span class="n">va</span><span class="p">,</span><span class="n">vb</span><span class="p">,</span><span class="n">vi</span><span class="p">)</span>
+           
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">attr</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">__dir__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">dir</span><span class="p">(</span><span class="nb">super</span><span class="p">(</span><span class="n">Noise</span><span class="p">,</span> <span class="bp">self</span><span class="p">))</span> <span class="o">+</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">+</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        
+<div class="viewcode-block" id="Noise.fit"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.noise_fitting.Noise.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">initial</span><span class="p">,</span><span class="n">k</span><span class="p">,</span><span class="n">va</span><span class="p">,</span><span class="n">vb</span><span class="p">,</span><span class="n">vi</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">k</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residual</span><span class="p">,</span><span class="n">initial</span><span class="p">)</span> <span class="c">#ftol=1e-6</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">minimize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residual</span><span class="p">,</span><span class="n">initial</span><span class="p">)</span>
+            <span class="n">A</span> <span class="o">=</span> <span class="n">initial</span><span class="p">[</span><span class="s">&#39;A&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">B</span> <span class="o">=</span> <span class="n">initial</span><span class="p">[</span><span class="s">&#39;B&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">alpha</span> <span class="o">=</span> <span class="n">initial</span><span class="p">[</span><span class="s">&#39;alpha&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">beta</span> <span class="o">=</span> <span class="n">initial</span><span class="p">[</span><span class="s">&#39;beta&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">N_white</span> <span class="o">=</span> <span class="n">initial</span><span class="p">[</span><span class="s">&#39;N_white&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">fc</span> <span class="o">=</span> <span class="n">initial</span><span class="p">[</span><span class="s">&#39;fc&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">initial</span><span class="p">[</span><span class="s">&#39;i&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">p2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">guess</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">alpha</span><span class="p">,</span><span class="n">beta</span><span class="p">,</span><span class="n">fc</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="n">N_white</span><span class="o">=</span><span class="n">N_white</span><span class="p">,</span><span class="n">va</span><span class="o">=</span><span class="n">va</span><span class="p">,</span><span class="n">vb</span><span class="o">=</span><span class="n">vb</span><span class="p">,</span><span class="n">vi</span><span class="o">=</span><span class="n">vi</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residual</span><span class="p">,</span><span class="n">p2</span><span class="p">)</span>
+            </div>
+<div class="viewcode-block" id="Noise.guess"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.noise_fitting.Noise.guess">[docs]</a>    <span class="k">def</span> <span class="nf">guess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">alpha</span><span class="p">,</span><span class="n">beta</span><span class="p">,</span><span class="n">fc</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="n">N_white</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span><span class="n">va</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span><span class="n">vb</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span><span class="n">vi</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_guess</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">alpha</span><span class="p">,</span><span class="n">beta</span><span class="p">,</span><span class="n">fc</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="n">N_white</span><span class="o">=</span><span class="n">N_white</span><span class="p">,</span><span class="n">va</span><span class="o">=</span><span class="n">va</span><span class="p">,</span><span class="n">vb</span><span class="o">=</span><span class="n">vb</span><span class="p">,</span><span class="n">vi</span><span class="o">=</span><span class="n">vi</span><span class="p">)</span>
+        </div>
+<div class="viewcode-block" id="Noise.residual"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.noise_fitting.Noise.residual">[docs]</a>    <span class="k">def</span> <span class="nf">residual</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">params</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">params</span><span class="p">))</span>
+        </div>
+<div class="viewcode-block" id="Noise.model"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.noise_fitting.Noise.model">[docs]</a>    <span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">params</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">,</span><span class="n">params</span><span class="p">)</span>
+        </div></div>
+<div class="viewcode-block" id="plot_pkls_noise"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.noise_fitting.plot_pkls_noise">[docs]</a><span class="k">def</span> <span class="nf">plot_pkls_noise</span><span class="p">(</span><span class="n">fns</span><span class="p">,</span><span class="n">A</span><span class="o">=</span><span class="mf">4709632.149</span><span class="p">,</span><span class="n">B</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">alpha</span><span class="o">=-</span><span class="mi">3</span><span class="p">,</span><span class="n">beta</span><span class="o">=-</span><span class="mf">0.1</span><span class="p">,</span><span class="n">fc</span><span class="o">=</span><span class="mf">2e3</span><span class="p">,</span><span class="n">i</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">N_white</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
+                    <span class="n">front_crop</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">end_crop</span><span class="o">=</span><span class="mf">2e4</span><span class="p">,</span>
+                    <span class="n">guess_func</span><span class="o">=</span><span class="n">default_guess</span><span class="p">,</span><span class="n">model_func</span><span class="o">=</span><span class="n">default_model</span><span class="p">,</span>
+                    <span class="n">mask_func</span><span class="o">=</span><span class="n">default_mask</span><span class="p">,</span>
+                    <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">va</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span><span class="n">vb</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span><span class="n">vi</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+
+    <span class="n">params_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([(</span><span class="s">&#39;A&#39;</span><span class="p">,[]),(</span><span class="s">&#39;alpha&#39;</span><span class="p">,[]),(</span><span class="s">&#39;B&#39;</span><span class="p">,[]),(</span><span class="s">&#39;beta&#39;</span><span class="p">,[]),(</span><span class="s">&#39;fc&#39;</span><span class="p">,[]),(</span><span class="s">&#39;i&#39;</span><span class="p">,[]),(</span><span class="s">&#39;N_white&#39;</span><span class="p">,[])])</span>
+    <span class="n">fdir</span><span class="p">,</span><span class="n">fbase</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">fns</span><span class="p">)</span>
+    <span class="n">fh</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fns</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">pkls</span> <span class="o">=</span> <span class="n">cPickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">EOFError</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;End of File Error&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">fh</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>            
+        <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">pkls</span><span class="p">)):</span>
+            <span class="n">nm</span><span class="o">=</span><span class="n">pkls</span><span class="p">[</span><span class="n">el</span><span class="p">]</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">nm</span><span class="o">.</span><span class="n">fr_coarse</span>
+            <span class="n">pxx</span> <span class="o">=</span> <span class="n">nm</span><span class="o">.</span><span class="n">prr_coarse</span>
+            <span class="n">f</span><span class="p">,</span><span class="n">pxx</span> <span class="o">=</span> <span class="n">crop_data</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="n">pxx</span><span class="p">,</span><span class="n">front_crop</span><span class="o">=</span><span class="n">front_crop</span><span class="p">,</span><span class="n">end_crop</span><span class="o">=</span><span class="n">end_crop</span><span class="p">)</span>
+            
+            <span class="n">n</span> <span class="o">=</span> <span class="n">Noise</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="n">pxx</span><span class="p">,</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">alpha</span><span class="p">,</span><span class="n">beta</span><span class="p">,</span><span class="n">fc</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="n">N_white</span><span class="o">=</span><span class="n">N_white</span><span class="p">,</span>
+                      <span class="n">guess_func</span><span class="o">=</span><span class="n">guess_func</span><span class="p">,</span><span class="n">model_func</span><span class="o">=</span><span class="n">model_func</span><span class="p">,</span>
+                      <span class="n">mask_func</span><span class="o">=</span><span class="n">mask_func</span><span class="p">,</span>
+                      <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span><span class="n">va</span><span class="o">=</span><span class="n">va</span><span class="p">,</span><span class="n">vb</span><span class="o">=</span><span class="n">vb</span><span class="p">,</span><span class="n">vi</span><span class="o">=</span><span class="n">vi</span><span class="p">)</span>
+                      
+            <span class="n">plot_single_pkl_noise</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="n">pkls_name</span><span class="o">=</span><span class="n">fbase</span><span class="p">,</span><span class="n">single_pkl_no</span><span class="o">=</span><span class="n">el</span><span class="p">)</span>
+        
+            <span class="n">params_dict</span><span class="p">[</span><span class="s">&#39;A&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">el</span><span class="p">,</span><span class="n">n</span><span class="o">.</span><span class="n">A</span><span class="p">))</span>
+            <span class="n">params_dict</span><span class="p">[</span><span class="s">&#39;alpha&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">el</span><span class="p">,</span><span class="n">n</span><span class="o">.</span><span class="n">alpha</span><span class="p">))</span>
+            <span class="n">params_dict</span><span class="p">[</span><span class="s">&#39;B&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">el</span><span class="p">,</span><span class="n">n</span><span class="o">.</span><span class="n">B</span><span class="p">))</span>
+            <span class="n">params_dict</span><span class="p">[</span><span class="s">&#39;beta&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">el</span><span class="p">,</span><span class="n">n</span><span class="o">.</span><span class="n">beta</span><span class="p">))</span>
+            <span class="n">params_dict</span><span class="p">[</span><span class="s">&#39;i&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">el</span><span class="p">,</span><span class="n">n</span><span class="o">.</span><span class="n">i</span><span class="p">))</span>
+            <span class="n">params_dict</span><span class="p">[</span><span class="s">&#39;fc&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">el</span><span class="p">,</span><span class="n">n</span><span class="o">.</span><span class="n">fc</span><span class="p">))</span>
+            <span class="n">params_dict</span><span class="p">[</span><span class="s">&#39;N_white&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">el</span><span class="p">,</span><span class="n">n</span><span class="o">.</span><span class="n">N_white</span><span class="p">))</span>
+            
+    <span class="k">return</span> <span class="n">params_dict</span>
+</div>
+<div class="viewcode-block" id="plot_single_noise"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.noise_fitting.plot_single_noise">[docs]</a><span class="k">def</span> <span class="nf">plot_single_noise</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="n">pxx</span><span class="p">,</span><span class="n">A</span><span class="o">=</span><span class="mf">4709632.149</span><span class="p">,</span><span class="n">B</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">alpha</span><span class="o">=-</span><span class="mi">3</span><span class="p">,</span><span class="n">beta</span><span class="o">=-</span><span class="mf">0.1</span><span class="p">,</span><span class="n">fc</span><span class="o">=</span><span class="mf">2e3</span><span class="p">,</span><span class="n">i</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">N_white</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
+                      <span class="n">front_crop</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">end_crop</span><span class="o">=</span><span class="mf">2e4</span><span class="p">,</span>
+                      <span class="n">guess_func</span><span class="o">=</span><span class="n">default_guess</span><span class="p">,</span><span class="n">model_func</span><span class="o">=</span><span class="n">default_model</span><span class="p">,</span>
+                      <span class="n">mask_func</span><span class="o">=</span><span class="n">default_mask</span><span class="p">,</span>
+                      <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">va</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span><span class="n">vb</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span><span class="n">vi</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+                          
+    <span class="n">f</span><span class="p">,</span><span class="n">pxx</span> <span class="o">=</span> <span class="n">crop_data</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="n">pxx</span><span class="p">,</span><span class="n">front_crop</span><span class="o">=</span><span class="n">front_crop</span><span class="p">,</span><span class="n">end_crop</span><span class="o">=</span><span class="n">end_crop</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">Noise</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="n">pxx</span><span class="p">,</span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">alpha</span><span class="p">,</span><span class="n">beta</span><span class="p">,</span><span class="n">fc</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="n">N_white</span><span class="o">=</span><span class="n">N_white</span><span class="p">,</span>
+              <span class="n">guess_func</span><span class="o">=</span><span class="n">guess_func</span><span class="p">,</span><span class="n">model_func</span><span class="o">=</span><span class="n">model_func</span><span class="p">,</span>
+              <span class="n">mask_func</span><span class="o">=</span><span class="n">mask_func</span><span class="p">,</span>
+              <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span><span class="n">va</span><span class="o">=</span><span class="n">va</span><span class="p">,</span><span class="n">vb</span><span class="o">=</span><span class="n">vb</span><span class="p">,</span><span class="n">vi</span><span class="o">=</span><span class="n">vi</span><span class="p">)</span>
+              
+    <span class="n">plot_single_pkl_noise</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    
+    <span class="n">params_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([(</span><span class="s">&#39;A&#39;</span><span class="p">,</span><span class="n">n</span><span class="o">.</span><span class="n">A</span><span class="p">),(</span><span class="s">&#39;alpha&#39;</span><span class="p">,</span><span class="n">n</span><span class="o">.</span><span class="n">alpha</span><span class="p">),(</span><span class="s">&#39;B&#39;</span><span class="p">,</span><span class="n">n</span><span class="o">.</span><span class="n">B</span><span class="p">),(</span><span class="s">&#39;beta&#39;</span><span class="p">,</span><span class="n">n</span><span class="o">.</span><span class="n">beta</span><span class="p">),(</span><span class="s">&#39;fc&#39;</span><span class="p">,</span><span class="n">n</span><span class="o">.</span><span class="n">fc</span><span class="p">),(</span><span class="s">&#39;i&#39;</span><span class="p">,</span><span class="n">n</span><span class="o">.</span><span class="n">i</span><span class="p">),(</span><span class="s">&#39;N_white&#39;</span><span class="p">,</span><span class="n">n</span><span class="o">.</span><span class="n">N_white</span><span class="p">)])</span>
+    <span class="k">return</span> <span class="n">params_dict</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.
+    </div>
+  </body>
+</html>

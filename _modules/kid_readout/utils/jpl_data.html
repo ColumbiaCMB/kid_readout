@@ -1,0 +1,289 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.utils.jpl_data &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for kid_readout.utils.jpl_data</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module contains functions that load data taken by Peter and</span>
+<span class="sd">Byeong-Ho at JPL.</span>
+
+<span class="sd">The functions that load specific data sets contain plenty of magic</span>
+<span class="sd">numbers, some of which fix problems specific to that data set.</span>
+
+<span class="sd">The frequency data has units of Hz and the S21 data is complex and has</span>
+<span class="sd">units of V / V, i.e., not dB.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">path</span>
+<span class="kn">from</span> <span class="nn">glob</span> <span class="kn">import</span> <span class="n">glob</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">kid_readout.analysis.resonator</span> <span class="kn">import</span> <span class="n">Resonator</span>
+<span class="kn">from</span> <span class="nn">kid_readout.analysis.khalil</span> <span class="kn">import</span> <span class="n">generic_guess</span><span class="p">,</span> <span class="n">generic_s21</span>
+<span class="kn">from</span> <span class="nn">kid_readout.analysis.khalil</span> <span class="kn">import</span> <span class="n">delayed_generic_s21</span><span class="p">,</span> <span class="n">delayed_generic_guess</span>
+
+
+<div class="viewcode-block" id="read_sweep"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.jpl_data.read_sweep">[docs]</a><span class="k">def</span> <span class="nf">read_sweep</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a tuple (freq_data, s21_data) containing data from the</span>
+<span class="sd">    given filename.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">f</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">unpack</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">,</span> <span class="n">I</span> <span class="o">+</span> <span class="mi">1j</span> <span class="o">*</span> <span class="n">Q</span>
+
+</div>
+<div class="viewcode-block" id="read_all_sweeps"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.jpl_data.read_all_sweeps">[docs]</a><span class="k">def</span> <span class="nf">read_all_sweeps</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s">&#39;tr*.txt&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a list of tuples (freq_data, s21_data) from all text files</span>
+<span class="sd">    in the given directory that match the given pattern.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sweeps</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">glob</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">pattern</span><span class="p">)):</span>
+        <span class="n">sweeps</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">filename</span><span class="p">)[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">:])]</span> <span class="o">=</span> <span class="n">read_sweep</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sweeps</span>
+
+</div>
+<div class="viewcode-block" id="JPL_2014_May_light_blackbody_temperature"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.jpl_data.JPL_2014_May_light_blackbody_temperature">[docs]</a><span class="k">def</span> <span class="nf">JPL_2014_May_light_blackbody_temperature</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parameter directory is a string that is the path to the unzipped</span>
+<span class="sd">    contents of the file Log0522JAlSKIP20_bbT_sweep.zip, which is</span>
+<span class="sd">    posted on the SKIP wiki.</span>
+
+<span class="sd">    Return a dictionary with keys that are integers from 0 through 13</span>
+<span class="sd">    and values that are lists of 14 Resonators fitted to frequency</span>
+<span class="sd">    sweeps taken at blackbody temperatures from 4.2 K to 40 K in</span>
+<span class="sd">    ascending order. Each list contains data for a single detector.</span>
+
+<span class="sd">    The fits must include cable delay as a free parameter because it</span>
+<span class="sd">    has not been removed.</span>
+<span class="sd">    </span>
+<span class="sd">    The frequency data in the files is in Hz and is converted to MHz</span>
+<span class="sd">    here to match our data.</span>
+
+<span class="sd">    The original data directory contains 150 sweeps, with indices</span>
+<span class="sd">    ranging from 203 through 352, taken at ten different temperatures</span>
+<span class="sd">    between 40 K and 4.2 K. There are 14 working resonators. Each</span>
+<span class="sd">    group of sweeps contains one sweep of the entire frequency range</span>
+<span class="sd">    then 14 sweeps of individual resonators in order of increasing</span>
+<span class="sd">    resonance frequency. Sweep 203 thus contains a sweep of the entire</span>
+<span class="sd">    band at the highest temperature of 40 K, and sweep 352 covers the</span>
+<span class="sd">    resonator with highest resonance frequency at the lowest</span>
+<span class="sd">    temperature of 4.2 K.</span>
+
+<span class="sd">    Note that each list in the returned dictionary contains sweeps in</span>
+<span class="sd">    order of increasing black body temperature.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">log</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="s">&#39;Log0522JAlSKIP20_bbT_sweep.txt&#39;</span><span class="p">)</span>
+    <span class="n">sweeps_per_group</span> <span class="o">=</span> <span class="mi">15</span>
+    <span class="c"># Each element of sweep_number is the XX in trXX.txt</span>
+    <span class="n">sweep_number</span><span class="p">,</span> <span class="n">readout_power_dBm</span><span class="p">,</span> <span class="n">bb_temp_K</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">log</span><span class="p">,</span>
+                                                            <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span>
+                                                            <span class="n">delimiter</span><span class="o">=</span><span class="s">&#39; &#39;</span><span class="p">,</span>
+                                                            <span class="n">skiprows</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+                                                            <span class="n">unpack</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                                                            <span class="n">converters</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">s</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">:]})</span>
+    <span class="n">sweeps</span> <span class="o">=</span> <span class="n">read_all_sweeps</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+    <span class="n">first_sweep</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">sweeps</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">resonators</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([(</span><span class="n">n</span><span class="p">,</span> <span class="p">[])</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sweeps_per_group</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)])</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sweeps</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="o">%</span> <span class="n">sweeps_per_group</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="c"># skip the first sweep in each group</span>
+            <span class="k">continue</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">Resonator</span><span class="p">(</span><span class="n">sweeps</span><span class="p">[</span><span class="n">n</span> <span class="o">+</span> <span class="n">first_sweep</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1e6</span><span class="p">,</span> <span class="n">sweeps</span><span class="p">[</span><span class="n">n</span> <span class="o">+</span> <span class="n">first_sweep</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="c"># Hz to MHz</span>
+                          <span class="n">guess</span> <span class="o">=</span> <span class="n">delayed_generic_guess</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">delayed_generic_s21</span><span class="p">)</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">T_bath</span> <span class="o">=</span> <span class="mf">0.2</span> <span class="c"># The device temperature, as listed in the header.</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">T_bb</span> <span class="o">=</span> <span class="n">bb_temp_K</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">P_readout</span> <span class="o">=</span> <span class="n">readout_power_dBm</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+            <span class="n">resonators</span><span class="p">[(</span><span class="n">n</span> <span class="o">%</span> <span class="n">sweeps_per_group</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="c"># Insert in ascending order</span>
+    <span class="k">return</span> <span class="n">resonators</span>
+
+</div>
+<div class="viewcode-block" id="JPL_2014_May_light_bath_temperature"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.jpl_data.JPL_2014_May_light_bath_temperature">[docs]</a><span class="k">def</span> <span class="nf">JPL_2014_May_light_bath_temperature</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parameter directory is a string that is the path to the unzipped</span>
+<span class="sd">    contents of the file Log0522JAlSKIP20_Tsweep.zip, which is</span>
+<span class="sd">    posted on the SKIP wiki.</span>
+
+<span class="sd">    Return a dictionary with keys that are integers from 0 through 13</span>
+<span class="sd">    and values that are lists of 14 Resonators fitted to frequency</span>
+<span class="sd">    sweeps taken at bath temperatures from 0.02 K to 0.4 K, in</span>
+<span class="sd">    ascending order. Each list contains data for a single detector.</span>
+
+
+<span class="sd">    The fits must include cable delay as a free parameter because it</span>
+<span class="sd">    has not been removed.</span>
+
+<span class="sd">    The frequency data in the files is in Hz and is converted to MHz</span>
+<span class="sd">    here to match our data.</span>
+<span class="sd">    </span>
+<span class="sd">    The data file contains 300 sweeps, with indices ranging from 1218</span>
+<span class="sd">    through 1517, taken at ten different bath temperatures between</span>
+<span class="sd">    0.02 K and 0.4 K in steps of 0.02 K. There are 14 working</span>
+<span class="sd">    resonators. Each group of sweeps contains one sweep of the entire</span>
+<span class="sd">    frequency range then 14 sweeps of individual resonators in order</span>
+<span class="sd">    of increasing resonance frequency. The groups of sweeps are taken</span>
+<span class="sd">    in order of increasing bath temperature.  Sweep 1218 thus contains</span>
+<span class="sd">    a sweep of the entire band at the lowest temperature of 0.02 K,</span>
+<span class="sd">    and sweep 1517 covers the resonator with highest resonance</span>
+<span class="sd">    frequency at the highest temperature of 0.4 K.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">log</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="s">&#39;Log0522JAlSKIP20_Tsweep.txt&#39;</span><span class="p">)</span>
+    <span class="n">sweeps_per_group</span> <span class="o">=</span> <span class="mi">15</span>
+    <span class="c"># Each element of sweep_number is the XX in trXX.txt</span>
+    <span class="n">sweep_number</span><span class="p">,</span> <span class="n">readout_power_dBm</span><span class="p">,</span> <span class="n">kid_temp_K</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">log</span><span class="p">,</span>
+                                                             <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span>
+                                                             <span class="n">delimiter</span><span class="o">=</span><span class="s">&#39; &#39;</span><span class="p">,</span>
+                                                             <span class="n">skiprows</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+                                                             <span class="n">unpack</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                                                             <span class="n">converters</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">s</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">:]})</span>
+    <span class="n">sweeps</span> <span class="o">=</span> <span class="n">read_all_sweeps</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+    <span class="n">first_sweep</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">sweeps</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">resonators</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([(</span><span class="n">n</span><span class="p">,</span> <span class="p">[])</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sweeps_per_group</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)])</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sweeps</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="o">%</span> <span class="n">sweeps_per_group</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="c"># skip the first sweep in each group</span>
+            <span class="k">continue</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">Resonator</span><span class="p">(</span><span class="n">sweeps</span><span class="p">[</span><span class="n">n</span> <span class="o">+</span> <span class="n">first_sweep</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1e6</span><span class="p">,</span> <span class="n">sweeps</span><span class="p">[</span><span class="n">n</span> <span class="o">+</span> <span class="n">first_sweep</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="c"># Hz to MHz</span>
+                          <span class="n">guess</span> <span class="o">=</span> <span class="n">delayed_generic_guess</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">delayed_generic_s21</span><span class="p">)</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">T_bath</span> <span class="o">=</span> <span class="n">kid_temp_K</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">T_bb</span> <span class="o">=</span> <span class="mf">4.2</span> <span class="c"># The black body temperature, as reported by Peter.</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">P_readout</span> <span class="o">=</span> <span class="n">readout_power_dBm</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+            <span class="n">resonators</span><span class="p">[(</span><span class="n">n</span> <span class="o">%</span> <span class="n">sweeps_per_group</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">resonators</span>
+
+</div>
+<div class="viewcode-block" id="JPL_2013_August_dark"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.jpl_data.JPL_2013_August_dark">[docs]</a><span class="k">def</span> <span class="nf">JPL_2013_August_dark</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a list of 17 Resonators from Peter&#39;s sweeps of the first</span>
+<span class="sd">    JPL chip.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sweeps</span> <span class="o">=</span>  <span class="n">read_all_sweeps</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+    <span class="c"># The 18th sweep is the full readout band.</span>
+    <span class="k">del</span><span class="p">(</span><span class="n">sweeps</span><span class="p">[</span><span class="mi">18</span><span class="p">])</span>
+    <span class="n">split_9</span> <span class="o">=</span> <span class="mf">150.025e6</span>
+    <span class="n">split_10</span> <span class="o">=</span> <span class="mf">150.041e6</span>
+    <span class="n">resonators</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">18</span><span class="p">):</span>
+        <span class="n">f</span><span class="p">,</span> <span class="n">s21</span> <span class="o">=</span> <span class="n">sweeps</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">9</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">f</span> <span class="o">&lt;</span> <span class="n">split_9</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">n</span> <span class="o">==</span><span class="mi">10</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">f</span> <span class="o">&gt;</span> <span class="n">split_10</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s">&#39;bool&#39;</span><span class="p">)</span>
+        <span class="c"># Cable delay seems to be removed, so don&#39;t give the model an</span>
+        <span class="c"># extra free parameter.</span>
+        <span class="n">resonators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Resonator</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">s21</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span>
+                                    <span class="n">model</span><span class="o">=</span><span class="n">generic_s21</span><span class="p">,</span>
+                                    <span class="n">guess</span><span class="o">=</span><span class="n">generic_guess</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">resonators</span>
+
+</div>
+<div class="viewcode-block" id="JPL_2013_August_dark_bath_temperature"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.jpl_data.JPL_2013_August_dark_bath_temperature">[docs]</a><span class="k">def</span> <span class="nf">JPL_2013_August_dark_bath_temperature</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a list of Resonators from Peter&#39;s temperature sweeps of one</span>
+<span class="sd">    resonance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">log</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="s">&#39;Log0829LSKIP_T_sweep.txt&#39;</span><span class="p">)</span>
+    <span class="n">numbers</span><span class="p">,</span> <span class="n">temp_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">log</span><span class="p">,</span>
+                                    <span class="n">usecols</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">9</span><span class="p">),</span>
+                                    <span class="n">delimiter</span><span class="o">=</span><span class="s">&#39; &#39;</span><span class="p">,</span>
+                                    <span class="n">skiprows</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
+                                    <span class="n">unpack</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                                    <span class="n">converters</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">s</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">:]})</span> <span class="c"># extract XX from trXX.txt</span>
+    <span class="n">sweeps</span> <span class="o">=</span> <span class="n">read_all_sweeps</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+    <span class="n">resonators</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">T_bath</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">numbers</span><span class="p">,</span> <span class="n">temp_list</span><span class="p">):</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">Resonator</span><span class="p">(</span><span class="n">sweeps</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">sweeps</span><span class="p">[</span><span class="n">n</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">guess</span> <span class="o">=</span> <span class="n">generic_guess</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">generic_s21</span><span class="p">)</span>
+        <span class="n">r</span><span class="o">.</span><span class="n">T_bath</span> <span class="o">=</span> <span class="n">T_bath</span>
+        <span class="n">resonators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">resonators</span>
+</pre></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.
+    </div>
+  </body>
+</html>

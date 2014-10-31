@@ -12,14 +12,6 @@ kid_readout.utils.borph_utils module
     :undoc-members:
     :show-inheritance:
 
-kid_readout.utils.check_output module
--------------------------------------
-
-.. automodule:: kid_readout.utils.check_output
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 kid_readout.utils.data_block module
 -----------------------------------
 
@@ -176,14 +168,6 @@ kid_readout.utils.udp_catcher module
 ------------------------------------
 
 .. automodule:: kid_readout.utils.udp_catcher
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-kid_readout.utils.upstairs_gain_db module
------------------------------------------
-
-.. automodule:: kid_readout.utils.upstairs_gain_db
     :members:
     :undoc-members:
     :show-inheritance:

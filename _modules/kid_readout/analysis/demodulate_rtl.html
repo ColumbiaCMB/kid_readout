@@ -1,0 +1,150 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.analysis.demodulate_rtl &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for kid_readout.analysis.demodulate_rtl</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<div class="viewcode-block" id="fft_bin_to_freq"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.demodulate_rtl.fft_bin_to_freq">[docs]</a><span class="k">def</span> <span class="nf">fft_bin_to_freq</span><span class="p">(</span><span class="nb">bin</span><span class="p">,</span><span class="n">n</span><span class="p">):</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="nb">bin</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">:</span>
+        <span class="n">freq</span> <span class="o">=</span> <span class="nb">bin</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">freq</span> <span class="o">=</span> <span class="p">((</span><span class="nb">bin</span> <span class="o">-</span> <span class="n">N</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">n</span><span class="o">//</span><span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span><span class="o">*</span><span class="mf">1.0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">freq</span>
+</div>
+<div class="viewcode-block" id="find_peak_freq"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.demodulate_rtl.find_peak_freq">[docs]</a><span class="k">def</span> <span class="nf">find_peak_freq</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="n">data_fft</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">peak</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">data_fft</span><span class="p">)</span><span class="o">.</span><span class="n">argmax</span><span class="p">()</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">peak_freq</span> <span class="o">=</span> <span class="n">fft_bin_to_freq</span><span class="p">(</span><span class="n">peak</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">peak_freq</span>
+</div>
+<div class="viewcode-block" id="demodulate"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.demodulate_rtl.demodulate">[docs]</a><span class="k">def</span> <span class="nf">demodulate</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">poly_degree</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span><span class="n">debug</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="n">peak_freq</span> <span class="o">=</span> <span class="n">find_peak_freq</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">num_points</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">demod</span> <span class="o">=</span> <span class="n">data</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">2j</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">peak_freq</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_points</span><span class="p">))</span>
+    <span class="n">interval</span> <span class="o">=</span> <span class="n">num_points</span><span class="o">//</span><span class="mi">1000</span>
+    <span class="k">if</span> <span class="n">interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">interval</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_points</span><span class="p">)</span>
+    <span class="n">poly</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">4000</span><span class="p">::</span><span class="n">interval</span><span class="p">],</span><span class="n">np</span><span class="o">.</span><span class="n">unwrap</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">demod</span><span class="p">[</span><span class="mi">4000</span><span class="p">::</span><span class="n">interval</span><span class="p">])),</span><span class="n">poly_degree</span><span class="p">)</span>
+    <span class="n">demod2</span> <span class="o">=</span> <span class="n">demod</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1j</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">poly</span><span class="p">,</span><span class="n">t</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">[::</span><span class="n">interval</span><span class="p">],</span><span class="n">np</span><span class="o">.</span><span class="n">unwrap</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">demod</span><span class="p">[::</span><span class="n">interval</span><span class="p">])))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">[::</span><span class="n">interval</span><span class="p">],</span><span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">poly</span><span class="p">,</span><span class="n">t</span><span class="p">[::</span><span class="n">interval</span><span class="p">]),</span><span class="s">&#39;r&#39;</span><span class="p">,</span><span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">[::</span><span class="n">interval</span><span class="p">],</span><span class="n">np</span><span class="o">.</span><span class="n">unwrap</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">demod2</span><span class="p">[::</span><span class="n">interval</span><span class="p">])))</span>
+
+    <span class="k">return</span> <span class="n">demod2</span>
+</div>
+<div class="viewcode-block" id="fold"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.demodulate_rtl.fold">[docs]</a><span class="k">def</span> <span class="nf">fold</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">period</span><span class="p">,</span><span class="n">debug</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="n">num_points</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">fold1</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">period</span><span class="o">*</span><span class="p">(</span><span class="n">num_points</span><span class="o">//</span><span class="n">period</span><span class="p">)]</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">period</span><span class="p">))</span>
+    <span class="n">fold1</span> <span class="o">=</span> <span class="n">fold1</span><span class="p">[</span><span class="mi">1</span><span class="p">:,:]</span> <span class="c">#drop first row since it&#39;s often got garbage</span>
+    <span class="n">first_rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fold1</span><span class="p">[:</span><span class="mi">10</span><span class="p">,:])</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">first_peak</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">first_rows</span> <span class="o">-</span> <span class="n">first_rows</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="o">.</span><span class="n">argmax</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">first_peak</span> <span class="o">&lt;</span> <span class="mi">2000</span><span class="p">:</span>
+        <span class="n">fold1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">fold1</span><span class="p">,</span><span class="mi">2000</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">first_peak</span> <span class="o">+=</span> <span class="mi">2000</span>
+    <span class="k">if</span> <span class="n">first_peak</span> <span class="o">&gt;</span> <span class="mi">8000</span><span class="p">:</span>
+        <span class="n">fold1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">fold1</span><span class="p">,</span><span class="o">-</span><span class="mi">8000</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">first_peak</span> <span class="o">=</span> <span class="n">first_peak</span><span class="o">-</span><span class="mi">8000</span>
+    <span class="n">last_rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fold1</span><span class="p">[</span><span class="o">-</span><span class="mi">10</span><span class="p">:,:])</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">last_peak</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">last_rows</span> <span class="o">-</span> <span class="n">last_rows</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="o">.</span><span class="n">argmax</span><span class="p">()</span>
+    <span class="n">slope</span> <span class="o">=</span> <span class="p">(</span><span class="n">last_peak</span> <span class="o">-</span> <span class="n">first_peak</span><span class="p">)</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">fold1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="mi">10</span><span class="p">)</span>
+    <span class="k">print</span> <span class="n">last_peak</span><span class="p">,</span> <span class="n">first_peak</span><span class="p">,</span> <span class="n">slope</span>
+    <span class="n">fold2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">fold1</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">fold1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">fold2</span><span class="p">[</span><span class="n">k</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">fold1</span><span class="p">[</span><span class="n">k</span><span class="p">,:],</span><span class="o">-</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">slope</span><span class="o">*</span><span class="n">k</span><span class="p">)))</span>
+    <span class="n">fold2</span> <span class="o">=</span> <span class="n">fold2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1j</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">fold2</span><span class="p">[:,:</span><span class="mi">1000</span><span class="p">])</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">1</span><span class="p">)[:,</span><span class="bp">None</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">fold2</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.
+    </div>
+  </body>
+</html>

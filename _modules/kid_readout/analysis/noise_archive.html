@@ -1,0 +1,275 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.analysis.noise_archive &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for kid_readout.analysis.noise_archive</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">kid_readout.analysis.noise_measurement</span> <span class="kn">import</span> <span class="n">load_noise_pkl</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+
+<span class="n">lg_5x4</span> <span class="o">=</span> <span class="mf">54e-9</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">20</span><span class="p">,))</span>
+<span class="n">cap_5x4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">27.57</span><span class="p">,</span>
+                    <span class="mf">24.86</span><span class="p">,</span>
+                    <span class="mf">22.58</span><span class="p">,</span>
+                    <span class="mf">20.70</span><span class="p">,</span>
+                    <span class="mf">18.83</span><span class="p">,</span>
+                    <span class="mf">15.92</span><span class="p">,</span>
+                    <span class="mf">14.67</span><span class="p">,</span>
+                    <span class="mf">13.63</span><span class="p">,</span>
+                    <span class="mf">12.59</span><span class="p">,</span>
+                    <span class="mf">11.76</span><span class="p">,</span>
+                    <span class="mf">10.40</span><span class="p">,</span>
+                    <span class="mf">10.40</span><span class="p">,</span>
+                    <span class="mf">10.40</span><span class="p">,</span>
+                    <span class="mf">10.40</span><span class="p">,</span>
+                    <span class="mf">10.40</span><span class="p">,</span>
+                    <span class="mf">8.43</span><span class="p">,</span>
+                    <span class="mf">8.01</span><span class="p">,</span>
+                    <span class="mf">7.59</span><span class="p">,</span>
+                    <span class="mf">7.17</span><span class="p">,</span>
+                    <span class="mf">6.76</span><span class="p">])</span><span class="o">*</span><span class="mf">1e-12</span>
+
+<span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s">&#39;/home/data/noise_2014-02-1*.pkl&#39;</span><span class="p">)</span><span class="c"># + glob.glob(&#39;/home/data/noise_2014-02-14*.pkl&#39;)</span>
+<span class="n">files</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+<span class="n">sc3x3_0813f5_dark_info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">chip_name</span><span class="o">=</span><span class="s">&#39;StarCryo 3x3 0813f5 HPD Dark 1&#39;</span><span class="p">,</span>
+                   <span class="n">dark</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+                   <span class="n">files</span> <span class="o">=</span> <span class="n">files</span><span class="p">,</span>
+                   <span class="n">index_to_resnum</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+                              <span class="p">)</span>
+
+<span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s">&#39;/home/data/noise_2014-02-2*.pkl&#39;</span><span class="p">)</span>
+<span class="n">files</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+<span class="n">sc3x3_0813f5_dark_info_2</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">chip_name</span><span class="o">=</span><span class="s">&#39;StarCryo 3x3 0813f5 HPD Dark 2&#39;</span><span class="p">,</span>
+                   <span class="n">dark</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+                   <span class="n">files</span> <span class="o">=</span> <span class="n">files</span><span class="p">,</span>
+                   <span class="n">index_to_resnum</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+                              <span class="p">)</span>
+
+<span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s">&#39;/home/data/noise_2014-04-15*.pkl&#39;</span><span class="p">)</span>
+<span class="n">files</span> <span class="o">+=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s">&#39;/home/data/noise_2014-04-16*.pkl&#39;</span><span class="p">)</span>
+<span class="n">files</span> <span class="o">+=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s">&#39;/home/data/noise_2014-04-17*.pkl&#39;</span><span class="p">)</span>
+<span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">files</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;led&#39;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">files</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+<span class="n">sc3x3_0813f5_dark_info_3</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">chip_name</span><span class="o">=</span><span class="s">&#39;StarCryo 3x3 0813f5 HPD Dark 3&#39;</span><span class="p">,</span>
+                   <span class="n">dark</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+                   <span class="n">files</span> <span class="o">=</span> <span class="n">files</span><span class="p">,</span>
+                   <span class="n">index_to_resnum</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+                              <span class="p">)</span>
+
+<span class="n">files</span> <span class="o">+=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s">&#39;/home/data/noise_2014-04-17*.pkl&#39;</span><span class="p">)</span>
+<span class="n">files</span> <span class="o">+=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s">&#39;/home/data/noise_2014-04-18*.pkl&#39;</span><span class="p">)</span>
+<span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">files</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;led&#39;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">files</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+<span class="n">sc3x3_0813f5_dark_info_4</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">chip_name</span><span class="o">=</span><span class="s">&#39;StarCryo 3x3 0813f5 HPD Dark 4&#39;</span><span class="p">,</span>
+                   <span class="n">dark</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+                   <span class="n">files</span> <span class="o">=</span> <span class="n">files</span><span class="p">,</span>
+                   <span class="n">index_to_resnum</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+                              <span class="p">)</span>
+
+<span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s">&#39;/home/data/noise_2014-03-01_2*.pkl&#39;</span><span class="p">)</span>
+<span class="n">files</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+<span class="n">sc5x4_0813f10_net_info_1</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">chip_name</span><span class="o">=</span><span class="s">&#39;StarCryo 5x4 0813f10 LPF Horns NET 1&#39;</span><span class="p">,</span>
+                                <span class="n">dark</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span>
+                                <span class="n">files</span> <span class="o">=</span> <span class="n">files</span><span class="p">,</span>
+                                <span class="n">index_to_resnum</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">))</span>
+
+<span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s">&#39;/home/data/noise_2014-04-06*&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s">&#39;/home/data/noise_2014-04-07*&#39;</span><span class="p">)</span>
+<span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">files</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;_net&#39;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">files</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+<span class="n">sc5x4_0813f12_dark_info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">chip_name</span> <span class="o">=</span> <span class="s">&#39;StarCryo_5x4_0813f12&#39;</span><span class="p">,</span>
+                               <span class="n">dark</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+                               <span class="n">files</span> <span class="o">=</span> <span class="n">files</span><span class="p">,</span>
+                               <span class="n">index_to_resnum</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+                               <span class="p">)</span>
+
+<span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s">&#39;/home/data/noise_2014-04-18*&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s">&#39;/home/data/noise_2014-04-21*&#39;</span><span class="p">)</span>
+<span class="n">files</span> <span class="o">+=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s">&#39;/home/data/noise_2014-04-22*&#39;</span><span class="p">)</span>
+<span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">files</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;_net&#39;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">files</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;compressor&#39;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">files</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+<span class="n">sc5x4_0813f12_taped_dark_info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">chip_name</span> <span class="o">=</span> <span class="s">&#39;StarCryo_5x4_0813f12_taped_dark&#39;</span><span class="p">,</span>
+                               <span class="n">dark</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+                               <span class="n">files</span> <span class="o">=</span> <span class="n">files</span><span class="p">,</span>
+                               <span class="n">index_to_resnum</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+                               <span class="p">)</span>
+
+            <span class="c">#index_to_resnum = [1,2,3,6,8,9,12,13,14,15,17,19]) </span>
+<div class="viewcode-block" id="build_noise_archive"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.noise_archive.build_noise_archive">[docs]</a><span class="k">def</span> <span class="nf">build_noise_archive</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">force_rebuild</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="n">nm</span> <span class="o">=</span> <span class="n">load_noise_pkl</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">chipfname</span> <span class="o">=</span> <span class="n">nm</span><span class="o">.</span><span class="n">chip_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span><span class="s">&#39;_&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">,</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">archname</span> <span class="o">=</span> <span class="s">&#39;/home/data/archive/</span><span class="si">%s</span><span class="s">.npy&#39;</span> <span class="o">%</span> <span class="n">chipfname</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">force_rebuild</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">archname</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">load_archive</span><span class="p">(</span><span class="n">archname</span><span class="p">)</span>
+            <span class="k">print</span> <span class="s">&quot;Loaded noise archive from:&quot;</span><span class="p">,</span><span class="n">archname</span>
+            <span class="k">return</span> <span class="n">df</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+     
+    <span class="n">nms</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s">&#39;files&#39;</span><span class="p">]:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">nms</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">load_noise_pkl</span><span class="p">(</span><span class="n">fname</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span><span class="n">e</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;couldn&#39;t get noise measurements from&quot;</span><span class="p">,</span><span class="n">fname</span><span class="p">,</span><span class="s">&quot;error was:&quot;</span><span class="p">,</span><span class="n">e</span>
+    <span class="n">pnames</span> <span class="o">=</span> <span class="n">nms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fit_params</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">pnames</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s">&#39;a&#39;</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">pn</span> <span class="ow">in</span> <span class="n">pnames</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="n">pn</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">nm</span><span class="o">.</span><span class="n">fit_params</span><span class="p">[</span><span class="n">pn</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="n">nms</span><span class="p">]</span>
+        <span class="n">data</span><span class="p">[</span><span class="n">pn</span> <span class="o">+</span> <span class="s">&#39;_err&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">nm</span><span class="o">.</span><span class="n">fit_params</span><span class="p">[</span><span class="n">pn</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span> <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="n">nms</span><span class="p">]</span>
+    <span class="n">avals</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">aerrs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="n">nms</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">nm</span><span class="o">.</span><span class="n">fit_params</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="s">&#39;a&#39;</span><span class="p">):</span>
+            <span class="n">avals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nm</span><span class="o">.</span><span class="n">fit_params</span><span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">aerrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nm</span><span class="o">.</span><span class="n">fit_params</span><span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">avals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+            <span class="n">aerrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">avals</span>
+    <span class="n">data</span><span class="p">[</span><span class="s">&#39;a_err&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">aerrs</span>
+    <span class="n">attrs</span> <span class="o">=</span> <span class="n">nms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="n">attrs</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s">&#39;fit_params&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s">&#39;_resonator_model&#39;</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+        <span class="n">attrs</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s">&#39;_resonator_model&#39;</span><span class="p">)</span>
+    <span class="n">private</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">attrs</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">private_var</span> <span class="ow">in</span> <span class="n">private</span><span class="p">:</span>
+        <span class="n">attrs</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">private_var</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">pn</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="n">pn</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">nm</span><span class="p">,</span><span class="n">pn</span><span class="p">)</span> <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="n">nms</span><span class="p">]</span>
+    <span class="n">pca_fr</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s">&#39;pca_freq&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">noise150</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">noise30k</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="n">nms</span><span class="p">:</span>
+        <span class="n">mask150</span> <span class="o">=</span> <span class="p">(</span><span class="n">nm</span><span class="o">.</span><span class="n">pca_freq</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">nm</span><span class="o">.</span><span class="n">pca_freq</span> <span class="o">&lt;</span> <span class="mi">200</span><span class="p">)</span>
+        <span class="n">mask30k</span> <span class="o">=</span> <span class="p">(</span><span class="n">nm</span><span class="o">.</span><span class="n">pca_freq</span> <span class="o">&gt;</span> <span class="mf">20e3</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">nm</span><span class="o">.</span><span class="n">pca_freq</span> <span class="o">&lt;</span> <span class="mf">40e3</span><span class="p">)</span>
+        <span class="n">noise150</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nm</span><span class="o">.</span><span class="n">pca_eigvals</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">mask150</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+        <span class="n">noise30k</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nm</span><span class="o">.</span><span class="n">pca_eigvals</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">mask30k</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+    <span class="n">data</span><span class="p">[</span><span class="s">&#39;noise_150_Hz&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">noise150</span>
+    <span class="n">data</span><span class="p">[</span><span class="s">&#39;noise_30_kHz&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">noise30k</span>
+    <span class="n">data</span><span class="p">[</span><span class="s">&#39;resonator_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;index_to_resnum&#39;</span><span class="p">][</span><span class="n">nm</span><span class="o">.</span><span class="n">resonator_index</span><span class="p">]</span> <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="n">nms</span><span class="p">]</span>
+    
+    <span class="n">lgs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">cgs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">nm</span> <span class="ow">in</span> <span class="n">nms</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">lg</span> <span class="o">=</span> <span class="n">lg_5x4</span><span class="p">[</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;index_to_resnum&#39;</span><span class="p">][</span><span class="n">nm</span><span class="o">.</span><span class="n">resonator_index</span><span class="p">]]</span>
+            <span class="n">cg</span> <span class="o">=</span> <span class="n">cap_5x4</span><span class="p">[</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;index_to_resnum&#39;</span><span class="p">][</span><span class="n">nm</span><span class="o">.</span><span class="n">resonator_index</span><span class="p">]]</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="n">lg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="n">cg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">lgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lg</span><span class="p">)</span>
+        <span class="n">cgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cg</span><span class="p">)</span>
+                
+            
+    <span class="n">data</span><span class="p">[</span><span class="s">&#39;Lg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lgs</span>
+    <span class="n">data</span><span class="p">[</span><span class="s">&#39;Cg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cgs</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">df</span><span class="p">[</span><span class="s">&#39;round_temp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s">&#39;end_temp&#39;</span><span class="p">]</span><span class="o">*</span><span class="mi">1000</span><span class="o">/</span><span class="mi">10</span><span class="p">)</span><span class="o">*</span><span class="mi">10</span>
+    
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">archname</span><span class="p">,</span><span class="n">df</span><span class="o">.</span><span class="n">to_records</span><span class="p">())</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span><span class="n">e</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;failed to pickle&quot;</span><span class="p">,</span><span class="n">e</span>
+    <span class="k">return</span> <span class="n">df</span>
+</div>
+<div class="viewcode-block" id="load_archive"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.noise_archive.load_archive">[docs]</a><span class="k">def</span> <span class="nf">load_archive</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+    <span class="n">npa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">(</span><span class="n">npa</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span>
+    </div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.
+    </div>
+  </body>
+</html>

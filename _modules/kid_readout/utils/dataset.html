@@ -1,0 +1,217 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.utils.dataset &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for kid_readout.utils.dataset</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">netCDF4</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">kid_readout.analysis.resonator</span> <span class="kn">import</span> <span class="n">Resonator</span>
+
+<div class="viewcode-block" id="Dataset"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.dataset.Dataset">[docs]</a><span class="k">class</span> <span class="nc">Dataset</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ds</span> <span class="o">=</span> <span class="n">netCDF4</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Dataset.sweep"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.dataset.Dataset.sweep">[docs]</a>    <span class="k">def</span> <span class="nf">sweep</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sweep_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the netCDF4.Group object corresponding to sweep_name.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="p">[</span><span class="n">group</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ds</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="s">&#39;sweeps&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                 <span class="k">if</span> <span class="n">sweep_name</span> <span class="ow">in</span> <span class="n">name</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;No sweep names contain {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sweep_name</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">match</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Multiple sweep names contain {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sweep_name</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Dataset.sweep_names"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.dataset.Dataset.sweep_names">[docs]</a>    <span class="k">def</span> <span class="nf">sweep_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ds</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="s">&#39;sweeps&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+</div></div>
+<div class="viewcode-block" id="CoarseSweep"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.dataset.CoarseSweep">[docs]</a><span class="k">class</span> <span class="nc">CoarseSweep</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This interface is going to change soon -- it will figure out</span>
+<span class="sd">    everything from the netCDF group, like the FineSweep.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">s21</span><span class="p">,</span> <span class="n">coarse_resolution</span><span class="p">,</span> <span class="n">n_subsweeps</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">f</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span> <span class="o">=</span> <span class="n">s21</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coarse_resolution</span> <span class="o">=</span> <span class="n">coarse_resolution</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_subsweeps</span> <span class="o">=</span> <span class="n">n_subsweeps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coarse_resolution</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subsweeps</span>
+
+<div class="viewcode-block" id="CoarseSweep.nth_subsweep"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.dataset.CoarseSweep.nth_subsweep">[docs]</a>    <span class="k">def</span> <span class="nf">nth_subsweep</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="n">f_int</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">resolution</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">f_int</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_subsweeps</span> <span class="o">==</span> <span class="n">n</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mask</span>
+</div>
+<div class="viewcode-block" id="CoarseSweep.subsweep_derivative_rms"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.dataset.CoarseSweep.subsweep_derivative_rms">[docs]</a>    <span class="k">def</span> <span class="nf">subsweep_derivative_rms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">nth_subsweep</span><span class="p">(</span><span class="n">n</span><span class="p">)]))</span> <span class="o">/</span>
+                                <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">nth_subsweep</span><span class="p">(</span><span class="n">n</span><span class="p">)]))</span>
+                         <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_subsweeps</span><span class="p">)])</span>
+        
+</div></div>
+<div class="viewcode-block" id="FineSweep"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.dataset.FineSweep">[docs]</a><span class="k">class</span> <span class="nc">FineSweep</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A container class for a fine sweep.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">    group -- a netCDF Group that contains fine sweep data.</span>
+
+<span class="sd">    Keywords:</span>
+<span class="sd">    fit_subsweeps -- if True, the class will attempt to fit the data</span>
+<span class="sd">    correponding to each index using the current resonator defaults.</span>
+<span class="sd">    scale_frequency -- frequency values from the data are multiplied</span>
+<span class="sd">    by this number; the default of 1e6 assumes that the frequency is</span>
+<span class="sd">    stored in MHz and converts it to Hz.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">fit_subsweeps</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">scale_frequency</span><span class="o">=</span><span class="mf">1e6</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FineSweep</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">group</span> <span class="o">=</span> <span class="n">group</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">scale_frequency</span> <span class="o">*</span> <span class="n">group</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s">&#39;frequency&#39;</span><span class="p">][:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s">&#39;s21&#39;</span><span class="p">][:]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="s">&#39;complex128&#39;</span><span class="p">)</span>
+        <span class="c"># This allows the class to load old data without the subsweep</span>
+        <span class="c"># index. Use build_index() instead.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s">&#39;index&#39;</span><span class="p">][:]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">if</span> <span class="n">fit_subsweeps</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit_subsweeps</span><span class="p">()</span>
+
+<div class="viewcode-block" id="FineSweep.fit_subsweeps"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.dataset.FineSweep.fit_subsweeps">[docs]</a>    <span class="k">def</span> <span class="nf">fit_subsweeps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">deglitch</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Attempt to fit the data corresponding to each value of the</span>
+<span class="sd">        index by instantiating a Resonator object with default</span>
+<span class="sd">        settings. If *deglitch* is true then points identified as</span>
+<span class="sd">        glitches with be masked.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">):</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">index</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+            <span class="n">s21</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">deglitch</span><span class="p">:</span>
+                <span class="n">good</span> <span class="o">=</span> <span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">glitch</span><span class="p">(</span><span class="n">s21</span><span class="p">,</span> <span class="n">threshold</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">good</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">s21</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s">&#39;bool&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">Resonator</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">s21</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">good</span><span class="p">)</span>
+
+    <span class="c"># Replace this with a method that uses gaps in the frequencies.</span></div>
+<div class="viewcode-block" id="FineSweep.build_index"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.dataset.FineSweep.build_index">[docs]</a>    <span class="k">def</span> <span class="nf">build_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f_0</span><span class="p">,</span> <span class="n">span</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build the index for old data that doesn&#39;t have an index. This</span>
+<span class="sd">        works well if the subsweeps don&#39;t overlap, but fails if they</span>
+<span class="sd">        do. Data outside all ranges f_0 +/- span will fall into index</span>
+<span class="sd">        -1, which is a sign that the frequencies or span should be</span>
+<span class="sd">        adjusted.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">f_0</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">f</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">span</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span>
+</div>
+<div class="viewcode-block" id="FineSweep.glitch"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.dataset.FineSweep.glitch">[docs]</a>    <span class="k">def</span> <span class="nf">glitch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">threshold</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a boolean array with the same size as the data that is</span>
+<span class="sd">        True where the absolute value of the second derivative is at</span>
+<span class="sd">        least *threshold* standard deviations above the mean.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># This is a poor man&#39;s second derivative.</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;same&#39;</span><span class="p">)</span>
+        <span class="c"># This supuriously flags the (k.size - )/2 points at each end</span>
+        <span class="c"># due to zero padding; it also flags one point on either side</span>
+        <span class="c"># of a single-point glitch. </span>
+        <span class="n">glitch</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">threshold</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">glitch</span><span class="p">[:(</span><span class="n">k</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">glitch</span><span class="p">[</span><span class="o">-</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">:]</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">return</span> <span class="n">glitch</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,220 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.utils.parse_srs &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for kid_readout.utils.parse_srs</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+
+<span class="n">_timecache</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">_tempcache</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">_lastupdate</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+<div class="viewcode-block" id="get_all_temperature_data"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.parse_srs.get_all_temperature_data">[docs]</a><span class="k">def</span> <span class="nf">get_all_temperature_data</span><span class="p">(</span><span class="n">logdir</span> <span class="o">=</span> <span class="s">&#39;/home/data/SRS&#39;</span><span class="p">):</span>
+    <span class="n">logs</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">logdir</span><span class="p">,</span><span class="s">&#39;201*.txt&#39;</span><span class="p">))</span>
+    <span class="n">logs</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+    <span class="n">times</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">temps</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">log</span> <span class="ow">in</span> <span class="n">logs</span><span class="p">:</span>
+        <span class="n">t0</span><span class="p">,</span><span class="n">temp0</span> <span class="o">=</span> <span class="n">parse_srs_log</span><span class="p">(</span><span class="n">log</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">t0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">t0</span><span class="p">,</span><span class="n">temp0</span> <span class="o">=</span> <span class="n">parse_srs_log</span><span class="p">(</span><span class="n">log</span><span class="p">,</span><span class="n">sensor</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="n">times</span> <span class="o">+</span> <span class="n">t0</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">temps</span> <span class="o">=</span> <span class="n">temps</span> <span class="o">+</span> <span class="n">temp0</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">times</span><span class="p">,</span><span class="n">temps</span>
+        </div>
+<div class="viewcode-block" id="get_temperature_at"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.parse_srs.get_temperature_at">[docs]</a><span class="k">def</span> <span class="nf">get_temperature_at</span><span class="p">(</span><span class="n">epoch</span><span class="p">):</span>
+    <span class="k">global</span> <span class="n">_timecache</span><span class="p">,</span> <span class="n">_tempcache</span><span class="p">,</span> <span class="n">_lastupdate</span>
+    <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">_lastupdate</span> <span class="o">&gt;</span> <span class="mi">20</span><span class="o">*</span><span class="mi">60</span><span class="p">:</span>
+        <span class="n">_timecache</span><span class="p">,</span> <span class="n">_tempcache</span> <span class="o">=</span> <span class="n">get_all_temperature_data</span><span class="p">()</span>
+        <span class="n">_lastupdate</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">print</span> <span class="s">&quot;get_temperature_at: updated cache&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">_tempcache</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="n">temp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span><span class="n">_timecache</span><span class="p">,</span><span class="n">_tempcache</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">temp</span>
+</div>
+<div class="viewcode-block" id="convtime"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.parse_srs.convtime">[docs]</a><span class="k">def</span> <span class="nf">convtime</span><span class="p">(</span><span class="n">tstr</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">time</span><span class="o">.</span><span class="n">mktime</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">tstr</span><span class="p">,</span><span class="s">&#39;%Y%m</span><span class="si">%d</span><span class="s">-%H%M%S&#39;</span><span class="p">))</span></div>
+<div class="viewcode-block" id="get_load_log"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.parse_srs.get_load_log">[docs]</a><span class="k">def</span> <span class="nf">get_load_log</span><span class="p">(</span><span class="n">fname</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">tdata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">genfromtxt</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span><span class="n">delimiter</span><span class="o">=</span><span class="s">&#39;,&#39;</span><span class="p">,</span><span class="n">converters</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="n">convtime</span><span class="p">},</span><span class="n">skiprows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">invalid_raise</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="p">[</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tdata</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">pandas</span> <span class="kn">import</span> <span class="n">read_table</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">read_table</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span><span class="n">sep</span><span class="o">=</span><span class="s">&#39;[ ,]+&#39;</span><span class="p">,</span><span class="n">skiprows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">converters</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="n">convtime</span><span class="p">},</span><span class="n">header</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="p">[</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="n">tdata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span><span class="mi">15</span><span class="p">))</span>
+        <span class="n">tdata</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">tdata</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">tdata</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">tdata</span><span class="p">[:,</span><span class="mi">11</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="mi">9</span><span class="p">])</span>
+        <span class="n">tdata</span><span class="p">[:,</span><span class="mi">12</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="mi">10</span><span class="p">])</span>
+        <span class="n">tdata</span><span class="p">[:,</span><span class="mi">13</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="mi">11</span><span class="p">])</span>
+        <span class="n">tdata</span><span class="p">[:,</span><span class="mi">14</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="mi">12</span><span class="p">])</span>
+
+
+<span class="c">#    if tdata[0] is np.nan: # special case for earlier files, at least 2014-02</span>
+<span class="c">#        tdata = np.genfromtxt(fname,delimiter=&#39; &#39;,converters={3:convtime},skiprows=1,invalid_raise=False)</span>
+<span class="c">#        dt = [datetime.datetime.fromtimestamp(x) for x in tdata[:,3]]</span>
+<span class="c">#    else:</span>
+
+    <span class="k">return</span> <span class="n">dt</span><span class="p">,</span><span class="n">tdata</span>
+</div>
+<div class="viewcode-block" id="parse_srs_log"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.parse_srs.parse_srs_log">[docs]</a><span class="k">def</span> <span class="nf">parse_srs_log</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span><span class="n">sensor</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse log file created by Heather&#39;s SRS logger</span>
+<span class="sd">    *fname* : file name of log</span>
+<span class="sd">    *sensor* : which sensor to extract (right now 2 corresponds to the package thermometer)</span>
+<span class="sd">    returns numpy arrays of unix times and the temperature values</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fh</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span><span class="s">&#39;r&#39;</span><span class="p">)</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">fh</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+    <span class="n">fh</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">temps</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">times</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">15</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">mktime</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span><span class="s">&#39;%Y%m</span><span class="si">%d</span><span class="s">-%H%M%S,&#39;</span><span class="p">)))</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="n">times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">mktime</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span><span class="s">&#39;%Y%m</span><span class="si">%d</span><span class="s">-%H%M%S&#39;</span><span class="p">)))</span>
+                <span class="n">temps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">11</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">)))</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span><span class="mi">9</span><span class="p">:</span>
+                <span class="n">times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">mktime</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span><span class="s">&#39;%Y%m</span><span class="si">%d</span><span class="s">-%H%M%S&#39;</span><span class="p">)))</span>
+                <span class="n">temps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">9</span><span class="p">]))</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">!=</span> <span class="n">sensor</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">temps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+            <span class="n">times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">mktime</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span><span class="s">&#39;%Y%m</span><span class="si">%d</span><span class="s">-%H%M%S&#39;</span><span class="p">)))</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">,</span><span class="n">e</span><span class="p">:</span>
+            <span class="k">pass</span>
+            <span class="c">#print &quot;failed to parse&quot;,repr(line),&quot;skipping&quot;,str(e)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">times</span><span class="p">),</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">temps</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="SRSLogFile"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.parse_srs.SRSLogFile">[docs]</a><span class="k">class</span> <span class="nc">SRSLogFile</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Usage example: log_file[1].R returns an array of resistances for</span>
+<span class="sd">    channel 1.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SRSLogFile.Channel"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.parse_srs.SRSLogFile.Channel">[docs]</a>    <span class="k">class</span> <span class="nc">Channel</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+        <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">T</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="n">time</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">R</span> <span class="o">=</span> <span class="n">R</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">T</span> <span class="o">=</span> <span class="n">T</span>
+</div>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_channels</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">channels</span><span class="p">,</span> <span class="n">resistances</span><span class="p">,</span> <span class="n">temperatures</span><span class="p">,</span> <span class="n">times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span>
+                                                                <span class="n">unpack</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                                                                <span class="n">converters</span><span class="o">=</span><span class="p">{</span><span class="mi">3</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">convert_timestamp</span><span class="p">})</span>
+        <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">channels</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s">&#39;int&#39;</span><span class="p">)):</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">channels</span> <span class="o">==</span> <span class="n">channel</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_channels</span><span class="p">[</span><span class="n">channel</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Channel</span><span class="p">(</span><span class="n">times</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span>
+                                                   <span class="n">resistances</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span>
+                                                   <span class="n">temperatures</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_channels</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+
+<div class="viewcode-block" id="SRSLogFile.convert_timestamp"><a class="viewcode-back" href="../../../kid_readout.utils.html#kid_readout.utils.parse_srs.SRSLogFile.convert_timestamp">[docs]</a>    <span class="k">def</span> <span class="nf">convert_timestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">time</span><span class="o">.</span><span class="n">mktime</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">timestamp</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span><span class="s">&#39;%Y%m</span><span class="si">%d</span><span class="s">-%H%M%S&#39;</span><span class="p">))</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.
+    </div>
+  </body>
+</html>

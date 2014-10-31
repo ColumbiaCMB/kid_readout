@@ -1,0 +1,274 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.analysis.fit_pulses &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for kid_readout.analysis.fit_pulses</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">lmfit</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="kn">from</span> <span class="nn">kid_readout.analysis</span> <span class="kn">import</span> <span class="n">fitter</span>
+
+<div class="viewcode-block" id="fred"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.fit_pulses.fred">[docs]</a><span class="k">def</span> <span class="nf">fred</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">tau</span><span class="p">,</span><span class="n">amp</span><span class="p">,</span><span class="n">offset</span><span class="p">,</span><span class="n">t_on</span><span class="p">,</span><span class="n">t_rise</span><span class="p">):</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="n">before</span> <span class="o">=</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">t_on</span>
+    <span class="n">result</span><span class="p">[</span><span class="n">before</span><span class="p">]</span> <span class="o">=</span> <span class="n">offset</span>
+    <span class="n">on</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span> <span class="o">&gt;=</span> <span class="n">t_on</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">t</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">t_on</span><span class="o">+</span><span class="n">t_rise</span><span class="p">))</span>
+    <span class="n">t_during_rise</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="n">t_on</span><span class="p">)[</span><span class="n">on</span><span class="p">]</span>
+    <span class="n">result</span><span class="p">[</span><span class="n">on</span><span class="p">]</span> <span class="o">=</span> <span class="n">t_during_rise</span><span class="o">*</span><span class="n">amp</span><span class="o">/</span><span class="n">t_rise</span> <span class="o">+</span> <span class="n">offset</span>
+    <span class="n">after</span> <span class="o">=</span> <span class="n">t</span><span class="o">&gt;=</span> <span class="p">(</span><span class="n">t_on</span><span class="o">+</span><span class="n">t_rise</span><span class="p">)</span>
+    <span class="n">result</span><span class="p">[</span><span class="n">after</span><span class="p">]</span> <span class="o">=</span> <span class="n">amp</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="n">after</span><span class="p">]</span><span class="o">-</span><span class="p">(</span><span class="n">t_on</span><span class="o">+</span><span class="n">t_rise</span><span class="p">))</span><span class="o">/</span><span class="n">tau</span><span class="p">)</span><span class="o">+</span><span class="n">offset</span>
+    <span class="k">return</span> <span class="n">result</span>
+</div>
+<div class="viewcode-block" id="fred_model"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.fit_pulses.fred_model">[docs]</a><span class="k">def</span> <span class="nf">fred_model</span><span class="p">(</span><span class="n">params</span><span class="p">,</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">fred</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;tau&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">params</span><span class="p">[</span><span class="s">&#39;amp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">params</span><span class="p">[</span><span class="s">&#39;offset&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">params</span><span class="p">[</span><span class="s">&#39;t_on&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">params</span><span class="p">[</span><span class="s">&#39;t_rise&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="fred_guess"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.fit_pulses.fred_guess">[docs]</a><span class="k">def</span> <span class="nf">fred_guess</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">):</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">lmfit</span><span class="o">.</span><span class="n">Parameters</span><span class="p">()</span>
+    <span class="n">peak_at</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="n">y</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span><span class="o">.</span><span class="n">argmax</span><span class="p">()</span>
+    <span class="n">peak</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">peak_at</span><span class="p">]</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">tau_guess</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">ptp</span><span class="p">()</span><span class="o">/</span><span class="mf">100.0</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&#39;tau&#39;</span><span class="p">,</span><span class="n">value</span><span class="o">=</span><span class="n">tau_guess</span><span class="p">,</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="nb">max</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">ptp</span><span class="p">()</span><span class="o">*</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&#39;amp&#39;</span><span class="p">,</span><span class="n">value</span><span class="o">=</span><span class="n">peak</span><span class="o">-</span><span class="n">offset</span><span class="p">,</span><span class="nb">min</span><span class="o">=-</span><span class="n">y</span><span class="o">.</span><span class="n">ptp</span><span class="p">(),</span><span class="nb">max</span><span class="o">=</span><span class="n">y</span><span class="o">.</span><span class="n">ptp</span><span class="p">())</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&#39;offset&#39;</span><span class="p">,</span><span class="n">value</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span><span class="nb">min</span><span class="o">=</span><span class="n">y</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">-</span><span class="n">y</span><span class="o">.</span><span class="n">ptp</span><span class="p">(),</span><span class="nb">max</span><span class="o">=</span><span class="n">y</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">+</span><span class="n">y</span><span class="o">.</span><span class="n">ptp</span><span class="p">())</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&#39;t_on&#39;</span><span class="p">,</span><span class="n">value</span><span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="n">peak_at</span><span class="p">],</span><span class="nb">min</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span><span class="nb">max</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&#39;t_rise&#39;</span><span class="p">,</span><span class="n">value</span><span class="o">=</span><span class="n">tau_guess</span><span class="o">/</span><span class="mf">10.0</span><span class="p">,</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="nb">max</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">ptp</span><span class="p">()</span><span class="o">*</span><span class="mi">10</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s">&quot;initial guess:&quot;</span><span class="p">,</span><span class="n">params</span>
+    <span class="k">return</span> <span class="n">params</span>
+
+</div>
+<div class="viewcode-block" id="exponential"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.fit_pulses.exponential">[docs]</a><span class="k">def</span> <span class="nf">exponential</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">tau</span><span class="p">,</span><span class="n">amp</span><span class="p">,</span><span class="n">offset</span><span class="p">,</span><span class="n">t0</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="n">before</span> <span class="o">=</span> <span class="n">t</span> <span class="o">&lt;</span> <span class="n">t0</span>
+    <span class="n">result</span><span class="p">[</span><span class="n">before</span><span class="p">]</span> <span class="o">=</span> <span class="n">amp</span><span class="o">+</span><span class="n">offset</span>
+    <span class="n">result</span><span class="p">[</span><span class="o">~</span><span class="n">before</span><span class="p">]</span> <span class="o">=</span> <span class="n">amp</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="o">~</span><span class="n">before</span><span class="p">]</span><span class="o">-</span><span class="n">t0</span><span class="p">)</span><span class="o">/</span><span class="n">tau</span><span class="p">)</span><span class="o">+</span><span class="n">offset</span>
+    <span class="k">return</span> <span class="n">result</span>
+</div>
+<div class="viewcode-block" id="exponential_model"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.fit_pulses.exponential_model">[docs]</a><span class="k">def</span> <span class="nf">exponential_model</span><span class="p">(</span><span class="n">params</span><span class="p">,</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">exponential</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;tau&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;amp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">params</span><span class="p">[</span><span class="s">&#39;offset&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">params</span><span class="p">[</span><span class="s">&#39;t0&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="exponential_guess"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.fit_pulses.exponential_guess">[docs]</a><span class="k">def</span> <span class="nf">exponential_guess</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">):</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">lmfit</span><span class="o">.</span><span class="n">Parameters</span><span class="p">()</span>
+    <span class="n">midval</span> <span class="o">=</span> <span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">+</span><span class="n">y</span><span class="o">.</span><span class="n">min</span><span class="p">())</span><span class="o">/</span><span class="mf">2.0</span>
+    <span class="n">midpoint</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="n">midval</span><span class="p">)</span><span class="o">.</span><span class="n">argmin</span><span class="p">()]</span>
+    <span class="n">tau_guess</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">ptp</span><span class="p">()</span><span class="o">/</span><span class="mf">10.0</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&#39;tau&#39;</span><span class="p">,</span><span class="n">value</span><span class="o">=</span><span class="n">tau_guess</span><span class="p">,</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="nb">max</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">ptp</span><span class="p">()</span><span class="o">*</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&#39;amp&#39;</span><span class="p">,</span><span class="n">value</span><span class="o">=</span><span class="n">midval</span><span class="p">,</span><span class="nb">min</span><span class="o">=-</span><span class="n">y</span><span class="o">.</span><span class="n">ptp</span><span class="p">(),</span><span class="nb">max</span><span class="o">=</span><span class="n">y</span><span class="o">.</span><span class="n">ptp</span><span class="p">())</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&#39;offset&#39;</span><span class="p">,</span><span class="n">value</span><span class="o">=</span><span class="n">midval</span><span class="p">,</span><span class="nb">min</span><span class="o">=</span><span class="n">y</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">-</span><span class="n">y</span><span class="o">.</span><span class="n">ptp</span><span class="p">(),</span><span class="nb">max</span><span class="o">=</span><span class="n">y</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">+</span><span class="n">y</span><span class="o">.</span><span class="n">ptp</span><span class="p">())</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&#39;t0&#39;</span><span class="p">,</span><span class="n">value</span><span class="o">=</span><span class="n">midpoint</span><span class="p">,</span><span class="nb">min</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span><span class="nb">max</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+    <span class="k">print</span> <span class="s">&quot;initial guess:&quot;</span><span class="p">,</span><span class="n">params</span>
+    <span class="k">return</span> <span class="n">params</span>
+</div>
+<div class="viewcode-block" id="square_wave"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.fit_pulses.square_wave">[docs]</a><span class="k">def</span> <span class="nf">square_wave</span><span class="p">(</span><span class="n">num_points</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">low_level</span><span class="p">,</span> <span class="n">high_level</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s">&#39;float&#39;</span><span class="p">):</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_points</span><span class="p">)</span>
+    <span class="n">high</span> <span class="o">=</span> <span class="p">((</span><span class="n">index</span> <span class="o">-</span> <span class="n">phase</span><span class="p">)</span> <span class="o">%</span> <span class="n">period</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">period</span> <span class="o">/</span> <span class="mf">2.</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">num_points</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">[</span><span class="n">high</span><span class="p">]</span> <span class="o">*=</span> <span class="n">high_level</span>
+    <span class="n">out</span><span class="p">[</span><span class="o">~</span><span class="n">high</span><span class="p">]</span> <span class="o">*=</span> <span class="n">low_level</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+</div>
+<div class="viewcode-block" id="square_wave_model"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.fit_pulses.square_wave_model">[docs]</a><span class="k">def</span> <span class="nf">square_wave_model</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+    <span class="n">num_points</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">dtype</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span>
+    <span class="n">period</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s">&#39;period&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">low_level</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s">&#39;low_level&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">high_level</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s">&#39;high_level&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">phase</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s">&#39;phase&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+    <span class="k">return</span> <span class="n">square_wave</span><span class="p">(</span><span class="n">num_points</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="n">low_level</span><span class="p">,</span> <span class="n">high_level</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="square_wave_guess"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.fit_pulses.square_wave_guess">[docs]</a><span class="k">def</span> <span class="nf">square_wave_guess</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">period</span><span class="p">):</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">lmfit</span><span class="o">.</span><span class="n">Parameters</span><span class="p">()</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&#39;period&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">period</span><span class="p">,</span> <span class="n">vary</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">median_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+    <span class="n">min_y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="n">max_y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">ptp_y</span> <span class="o">=</span> <span class="n">max_y</span> <span class="o">-</span> <span class="n">min_y</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&#39;low_level&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">min_y</span> <span class="o">+</span> <span class="n">ptp_y</span> <span class="o">/</span> <span class="mi">4</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="n">y</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="nb">max</span><span class="o">=</span><span class="n">median_y</span><span class="p">)</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&#39;high_level&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">max_y</span> <span class="o">-</span> <span class="n">ptp_y</span> <span class="o">/</span> <span class="mi">4</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="n">median_y</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">y</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s">&#39;phase&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">period</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">period</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">params</span>
+
+</div>
+<div class="viewcode-block" id="fit_complex_square_wave"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.fit_pulses.fit_complex_square_wave">[docs]</a><span class="k">def</span> <span class="nf">fit_complex_square_wave</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="mi">125</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">fixed_period_guess</span><span class="p">(</span><span class="n">x_</span><span class="p">,</span> <span class="n">y_</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">square_wave_guess</span><span class="p">(</span><span class="n">x_</span><span class="p">,</span> <span class="n">y_</span><span class="p">,</span> <span class="n">period</span><span class="p">)</span>
+
+    <span class="n">real_fitter</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">Fitter</span><span class="p">(</span><span class="n">x_data</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">y_data</span><span class="o">=</span><span class="n">y</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">square_wave_model</span><span class="p">,</span> <span class="n">guess</span><span class="o">=</span><span class="n">fixed_period_guess</span><span class="p">,</span>
+                                <span class="n">method</span><span class="o">=</span><span class="s">&#39;anneal&#39;</span><span class="p">)</span>
+    <span class="n">imag_fitter</span> <span class="o">=</span> <span class="n">fitter</span><span class="o">.</span><span class="n">Fitter</span><span class="p">(</span><span class="n">x_data</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">y_data</span><span class="o">=</span><span class="n">y</span><span class="o">.</span><span class="n">imag</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">square_wave_model</span><span class="p">,</span> <span class="n">guess</span><span class="o">=</span><span class="n">fixed_period_guess</span><span class="p">,</span>
+                                <span class="n">method</span><span class="o">=</span><span class="s">&#39;anneal&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">real_fitter</span><span class="p">,</span> <span class="n">imag_fitter</span>
+
+</div>
+<div class="viewcode-block" id="find_rising_edge"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.fit_pulses.find_rising_edge">[docs]</a><span class="k">def</span> <span class="nf">find_rising_edge</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">10</span><span class="p">,))</span><span class="o">/</span><span class="mf">10.0</span><span class="p">,</span><span class="n">mode</span><span class="o">=</span><span class="s">&#39;valid&#39;</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">[:</span><span class="n">x</span><span class="p">[</span><span class="mi">10</span><span class="p">:</span><span class="o">-</span><span class="mi">10</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="n">x</span><span class="p">[</span><span class="mi">10</span><span class="p">:</span><span class="o">-</span><span class="mi">10</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span>
+    <span class="n">mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="n">x</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">/</span> <span class="mf">2.</span>
+    <span class="n">above</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="n">mid</span><span class="p">)</span>
+    <span class="n">nonz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">((</span><span class="n">above</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">above</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">nonz</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">nonz</span>
+
+</div>
+<div class="viewcode-block" id="wrap_period"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.fit_pulses.wrap_period">[docs]</a><span class="k">def</span> <span class="nf">wrap_period</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">period</span><span class="p">):</span>
+    <span class="n">wrapped</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">val</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s">&#39;int&#39;</span><span class="p">)</span> <span class="o">%</span> <span class="n">period</span>
+    <span class="n">wrapped</span><span class="p">[</span><span class="n">wrapped</span> <span class="o">==</span> <span class="n">period</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="n">wrapped</span>
+
+
+</div>
+<div class="viewcode-block" id="find_high_low"><a class="viewcode-back" href="../../../kid_readout.analysis.html#kid_readout.analysis.fit_pulses.find_high_low">[docs]</a><span class="k">def</span> <span class="nf">find_high_low</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">use_fraction</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="n">period</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">rising_edges</span> <span class="o">=</span> <span class="n">find_rising_edge</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">rising_edge</span> <span class="ow">in</span> <span class="n">rising_edges</span><span class="p">:</span>
+        <span class="n">falling_edge</span> <span class="o">=</span> <span class="p">(</span><span class="n">rising_edge</span> <span class="o">+</span> <span class="n">period</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="n">high_start</span> <span class="o">=</span> <span class="n">rising_edge</span> <span class="o">+</span> <span class="p">(</span><span class="n">period</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">use_fraction</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
+        <span class="n">high_end</span> <span class="o">=</span> <span class="n">high_start</span> <span class="o">+</span> <span class="n">period</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">use_fraction</span>
+
+        <span class="n">low_start</span> <span class="o">=</span> <span class="n">falling_edge</span> <span class="o">+</span> <span class="p">(</span><span class="n">period</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">use_fraction</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
+        <span class="n">low_end</span> <span class="o">=</span> <span class="n">low_start</span> <span class="o">+</span> <span class="n">period</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">use_fraction</span>
+
+        <span class="n">raw_indexes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">period</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">high_indexes</span> <span class="o">=</span> <span class="n">wrap_period</span><span class="p">(</span><span class="n">raw_indexes</span><span class="p">[(</span><span class="n">raw_indexes</span> <span class="o">&gt;</span> <span class="n">high_start</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">raw_indexes</span> <span class="o">&lt;</span> <span class="n">high_end</span><span class="p">)],</span> <span class="n">period</span><span class="p">)</span>
+        <span class="n">low_indexes</span> <span class="o">=</span> <span class="n">wrap_period</span><span class="p">(</span><span class="n">raw_indexes</span><span class="p">[(</span><span class="n">raw_indexes</span> <span class="o">&gt;</span> <span class="n">low_start</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">raw_indexes</span> <span class="o">&lt;</span> <span class="n">low_end</span><span class="p">)],</span> <span class="n">period</span><span class="p">)</span>
+        <span class="n">high</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">high_indexes</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">high_indexes</span><span class="p">]</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span>
+        <span class="n">low</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">low_indexes</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">low_indexes</span><span class="p">]</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">high</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">low</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1.</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+                <span class="k">print</span> <span class="p">(</span><span class="s">&quot;at rising edge candidate:&quot;</span><span class="p">,</span><span class="n">rising_edge</span><span class="p">,</span>
+                       <span class="s">&quot;found high&quot;</span><span class="p">,</span><span class="nb">abs</span><span class="p">(</span><span class="n">high</span><span class="p">),</span><span class="s">&quot;low&quot;</span><span class="p">,</span><span class="nb">abs</span><span class="p">(</span><span class="n">low</span><span class="p">),</span><span class="s">&quot;ratio&quot;</span><span class="p">,</span><span class="nb">abs</span><span class="p">(</span><span class="n">high</span><span class="p">)</span><span class="o">/</span><span class="nb">abs</span><span class="p">(</span><span class="n">low</span><span class="p">))</span>
+
+
+
+    <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="n">ax2</span><span class="p">,</span> <span class="n">ax3</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">ncols</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nrows</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">period</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="n">high_indexes</span><span class="p">],</span> <span class="n">x</span><span class="o">.</span><span class="n">real</span><span class="p">[</span><span class="n">high_indexes</span><span class="p">],</span> <span class="s">&#39;r.&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="n">low_indexes</span><span class="p">],</span> <span class="n">x</span><span class="o">.</span><span class="n">real</span><span class="p">[</span><span class="n">low_indexes</span><span class="p">],</span> <span class="s">&#39;k.&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">high</span><span class="p">),</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;y&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">low</span><span class="p">),</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;y&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">rising_edge</span> <span class="ow">in</span> <span class="n">rising_edges</span><span class="p">:</span>
+            <span class="n">ax1</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">rising_edge</span><span class="p">)</span>
+
+        <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">imag</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="n">high_indexes</span><span class="p">],</span> <span class="n">x</span><span class="o">.</span><span class="n">imag</span><span class="p">[</span><span class="n">high_indexes</span><span class="p">],</span> <span class="s">&#39;r.&#39;</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="n">low_indexes</span><span class="p">],</span> <span class="n">x</span><span class="o">.</span><span class="n">imag</span><span class="p">[</span><span class="n">low_indexes</span><span class="p">],</span> <span class="s">&#39;k.&#39;</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">high</span><span class="p">),</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;y&#39;</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">low</span><span class="p">),</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;y&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">rising_edge</span> <span class="ow">in</span> <span class="n">rising_edges</span><span class="p">:</span>
+            <span class="n">ax2</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">rising_edge</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">10</span><span class="p">,))</span><span class="o">/</span><span class="mf">10.0</span><span class="p">,</span><span class="n">mode</span><span class="o">=</span><span class="s">&#39;valid&#39;</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">[:</span><span class="n">x</span><span class="p">[</span><span class="mi">10</span><span class="p">:</span><span class="o">-</span><span class="mi">10</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="n">x</span><span class="p">[</span><span class="mi">10</span><span class="p">:</span><span class="o">-</span><span class="mi">10</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span>
+
+        <span class="n">ax3</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">rising_edge</span> <span class="ow">in</span> <span class="n">rising_edges</span><span class="p">:</span>
+            <span class="n">ax3</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">rising_edge</span><span class="p">)</span>
+
+
+    <span class="k">return</span> <span class="n">high</span><span class="p">,</span> <span class="n">low</span><span class="p">,</span> <span class="n">rising_edge</span>
+    </div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.
+    </div>
+  </body>
+</html>
