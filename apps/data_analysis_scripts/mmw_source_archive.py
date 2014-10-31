@@ -135,12 +135,14 @@ if __name__ == "__main__":
     df1018 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-18*.pkl'),index_to_resnum=np.arange(16)),
     df1022 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-22*.pkl'),index_to_resnum=np.arange(16)),
     df1024 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-24*.pkl'),index_to_resnum=np.arange(16)),
-#    df1028 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-28*.pkl'),index_to_resnum=np.arange(16)),
+    df1028 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-28*.pkl'),index_to_resnum=np.arange(16)),
+    df1029 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-29*.pkl'),index_to_resnum=np.arange(16)),
+    df1030 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-30*.pkl'),index_to_resnum=np.arange(16)),
     )
 
     for dfn,info in infos.items():
         df = build_archive(info,
-                       force_rebuild=True,
+                       force_rebuild=False,
                        archive_name=None)
         globals()[dfn] = df
 

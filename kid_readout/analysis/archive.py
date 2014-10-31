@@ -130,12 +130,12 @@ def load_archive(fn):
     df = pd.DataFrame.from_records(npa)
     return df
 
-try:
-    sc5x4_0813f8_data = build_archive(sc5x4_0813f8_info,force_rebuild=True)
-except Exception, e:
-    print "could not build or load archive for sc5x4_0813f8",e
-try:
-    jpl5x4_data = build_archive(jpl5x4_info,force_rebuild=True)
-except Exception, e:
-    print "could not build or load archive for jpl5x4",e
-    
+if __name__ == "__main__":
+    try:
+        sc5x4_0813f8_data = build_archive(sc5x4_0813f8_info,force_rebuild=True)
+    except Exception, e:
+        print "could not build or load archive for sc5x4_0813f8",e
+    try:
+        jpl5x4_data = build_archive(jpl5x4_info,force_rebuild=True)
+    except Exception, e:
+        print "could not build or load archive for jpl5x4",e

@@ -16,6 +16,7 @@ file_id_to_res_id = [0, 1, 2, 3, 4, 5, 6, 7, 8, 17, 16, 15, 14, 13, 10, 9]
 
 
 def process_file(filename):
+    print filename
     try:
         rnc = kid_readout.utils.readoutnc.ReadoutNetCDF(filename)
         num_power_steps = len(rnc.timestreams)-1 # last time stream is modulated measurement
@@ -76,12 +77,15 @@ if __name__ == "__main__":
     #fns = glob.glob('/home/data2/2014-10-15*mmwnoisestep*.nc')
     #fns = glob.glob('/home/data2/2014-10-17*mmwnoisestep*.nc')
     #fns = glob.glob('/home/data2/2014-10-18*mmwnoisestep*.nc')
-    fns = glob.glob('/home/data2/2014-09*mmw*step*.nc')
+    fns = glob.glob('/home/data2/2014-10-30*mmw*step*.nc')
     fns.sort()
-    if False:
+    if True:
         pool = multiprocessing.Pool(4)
         pool.map(process_file,fns)
 
     else:
         for fn in fns:
-            process_file(fn)
+            blah = process_file(fn)
+            if blah is None:
+                break
+

@@ -1,0 +1,16 @@
+check out gh-pages branch in ~/kid_readout_docs/html
+
+cd ~/kid_readout/docs
+
+make html # this will build the docs, but will not run autodoc
+
+to run autodoc, do the following
+
+sphinx-apidoc -f -o . ../kid_readout/  # The -f says force overwrite, so it will clobber the corresponding .rst
+
+Then make html
+
+cd ~/kid_readout_docs/html
+
+git commit -a -m "rebuild docs"
+git push origin gh-pages

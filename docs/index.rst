@@ -11,8 +11,8 @@ Contents:
 .. toctree::
    :maxdepth: 4
 
+   ppc
    kid_readout
-
 
 Indices and tables
 ==================

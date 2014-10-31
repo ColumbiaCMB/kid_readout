@@ -7,9 +7,34 @@ Subpackages
 .. toctree::
 
     kid_readout.analysis.resources
+    kid_readout.analysis.tests
 
 Submodules
 ----------
+
+kid_readout.analysis.archive module
+-----------------------------------
+
+.. automodule:: kid_readout.analysis.archive
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.analysis.demodulate_rtl module
+------------------------------------------
+
+.. automodule:: kid_readout.analysis.demodulate_rtl
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.analysis.fit_pulses module
+--------------------------------------
+
+.. automodule:: kid_readout.analysis.fit_pulses
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 kid_readout.analysis.fitter module
 ----------------------------------
@@ -23,14 +48,6 @@ kid_readout.analysis.iqnoise module
 -----------------------------------
 
 .. automodule:: kid_readout.analysis.iqnoise
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-kid_readout.analysis.kfitm module
----------------------------------
-
-.. automodule:: kid_readout.analysis.kfitm
     :members:
     :undoc-members:
     :show-inheritance:
@@ -51,6 +68,14 @@ kid_readout.analysis.kid_eqns module
     :undoc-members:
     :show-inheritance:
 
+kid_readout.analysis.kid_response module
+----------------------------------------
+
+.. automodule:: kid_readout.analysis.kid_response
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 kid_readout.analysis.mcfit module
 ---------------------------------
 
@@ -59,18 +84,26 @@ kid_readout.analysis.mcfit module
     :undoc-members:
     :show-inheritance:
 
-kid_readout.analysis.model module
----------------------------------
-
-.. automodule:: kid_readout.analysis.model
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 kid_readout.analysis.mspsd module
 ---------------------------------
 
 .. automodule:: kid_readout.analysis.mspsd
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.analysis.noise_archive module
+-----------------------------------------
+
+.. automodule:: kid_readout.analysis.noise_archive
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.analysis.noise_fit module
+-------------------------------------
+
+.. automodule:: kid_readout.analysis.noise_fit
     :members:
     :undoc-members:
     :show-inheritance:
@@ -115,6 +148,30 @@ kid_readout.analysis.plot_resonator module
     :undoc-members:
     :show-inheritance:
 
+kid_readout.analysis.process_mmw_response module
+------------------------------------------------
+
+.. automodule:: kid_readout.analysis.process_mmw_response
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.analysis.process_net_sweeps module
+----------------------------------------------
+
+.. automodule:: kid_readout.analysis.process_net_sweeps
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.analysis.proposal_plots module
+------------------------------------------
+
+.. automodule:: kid_readout.analysis.proposal_plots
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 kid_readout.analysis.resonator module
 -------------------------------------
 
@@ -131,10 +188,10 @@ kid_readout.analysis.resonator_test module
     :undoc-members:
     :show-inheritance:
 
-kid_readout.analysis.sweep_estm2 module
----------------------------------------
+kid_readout.analysis.time_constant_from_rtl module
+--------------------------------------------------
 
-.. automodule:: kid_readout.analysis.sweep_estm2
+.. automodule:: kid_readout.analysis.time_constant_from_rtl
     :members:
     :undoc-members:
     :show-inheritance:
