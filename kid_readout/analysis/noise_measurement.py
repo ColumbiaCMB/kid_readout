@@ -216,6 +216,7 @@ class SweepNoiseMeasurement(object):
         self.timestream_modulation_freq = self.timestream.modulation_freq[timestream_index]
         self.timestream_modulation_phase = self.timestream.modulation_phase[timestream_index]
         self.timestream_modulation_period_samples = self.timestream.modulation_period_samples[timestream_index]
+        self.timestream_mmw_source_freq = self.timestream.mmw_source_freq[timestream_index]
         
         self.timestream_epoch = self.timestream.epoch[timestream_index]
         self.timestream_duration = original_timeseries.shape[0]/self.timeseries_sample_rate
