@@ -155,11 +155,26 @@ class ReadoutNetCDF(object):
         self.timestreams = self.timestreams_dict.values()
     def close(self):
         self.ncroot.close()
-        
-    def get_effective_dac_atten_at(self,epoch):
+
+    def _get_hwstate_index_at(self,epoch):
+        """
+        Find the index of the hardware state arrays corresponding to the hardware state at a given epoch
+        :param epoch: unix timestamp
+        :return:
+        """
         index = bisect.bisect_left(self.hardware_state_epoch, epoch) # find the index of the epoch immediately preceding the desired epoch
-        if index == len(self.hardware_state_epoch):
-            index = index - 1
+        index = index - 1
+        if index < 0:
+            index = 0
+        return index
+
+    def get_effective_dac_atten_at(self,epoch):
+        """
+        Get the dac attenuator value and total signal attenuation at a given time
+        :param epoch: unix timestamp
+        :return: dac attenuator in dB, total attenuation in dB
+        """
+        index = self._get_hwstate_index_at(epoch)
         dac_atten = self.dac_atten[index]
         if self.num_tones is not None:
             ntones = self.num_tones[index]
@@ -170,12 +185,15 @@ class ReadoutNetCDF(object):
         return dac_atten, total
 
     def get_modulation_state_at(self,epoch):
+        """
+        Get the source modulation TTL output state at a given time
+        :param epoch: unix timestamp
+        :return: modulation output state: 0 -> low, 1 -> high, 2 -> modulated
+         modulation rate parameter: FIXME
+        """
         if self.modulation_rate is None:
             return 0,0
-        index = bisect.bisect_left(self.hardware_state_epoch, epoch) # find the index of the epoch immediately preceding the desired epoch
-        index = index - 1
-        if index < 0:
-            index = 0
+        index = self._get_hwstate_index_at(epoch)
         modulation_rate = self.modulation_rate[index]
         modulation_output = self.modulation_output[index]
         return modulation_output, modulation_rate
