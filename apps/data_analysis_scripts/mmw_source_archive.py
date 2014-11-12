@@ -144,7 +144,7 @@ def build_archive(info, archive_name=None, force_rebuild=False):
             attrs.remove(private_var)
         for pn in attrs:
             if pn == 'timestream_modulation_duty_cycle':
-                data_source_off[pn].extend([0.0 for nm in noise_mod])
+                data_source_off[pn].extend([1.0 for nm in noise_mod])
             else:
                 data_source_off[pn].extend([getattr(nm,pn) for nm in noise_mod])
 
