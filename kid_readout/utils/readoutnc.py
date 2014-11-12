@@ -173,8 +173,9 @@ class ReadoutNetCDF(object):
         if self.modulation_rate is None:
             return 0,0
         index = bisect.bisect_left(self.hardware_state_epoch, epoch) # find the index of the epoch immediately preceding the desired epoch
-        if index == len(self.hardware_state_epoch):
-            index = index - 1
+        index = index - 1
+        if index < 0:
+            index = 0
         modulation_rate = self.modulation_rate[index]
         modulation_output = self.modulation_output[index]
         return modulation_output, modulation_rate
