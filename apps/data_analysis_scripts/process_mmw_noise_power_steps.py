@@ -50,7 +50,7 @@ def process_file(filename):
             else:
                 noise_modulated_measurement.folded_projected_timeseries = None
 
-            fr, s21, err = rnc.sweeps[1].select_by_index(resonator_id)
+            fr, s21, err = rnc.sweeps[-1].select_by_index(resonator_id)
             noise_off_sweep = kid_readout.analysis.resonator.fit_best_resonator(fr, s21, errors=err)
             noise_off_sweep_params.append(noise_off_sweep.result.params)
             noise_on_measurements.extend(power_steps_mmw_on)
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     #fns = glob.glob('/home/data2/2014-10-15*mmwnoisestep*.nc')
     #fns = glob.glob('/home/data2/2014-10-17*mmwnoisestep*.nc')
     #fns = glob.glob('/home/data2/2014-10-18*mmwnoisestep*.nc')
-    fns = glob.glob('/home/data2/2014-10-30*mmw*step*.nc')
+    fns = glob.glob('/home/data2/2014-*mmw*step*.nc')
     fns.sort()
     if True:
         pool = multiprocessing.Pool(4)
