@@ -59,7 +59,7 @@ class GeneralMCMC():
             raise ValueError("Got %d values but have %d parameters. values were %s, parameters are %s" %
                              (len(args), len(self.parameter_list), str(args), str(self.parameter_list)))
 
-        for value,min,max in zip(args,self.mins,self.maxs):
+        for value,min,max in zip(args,self.parameter_mins,self.parameter_maxs):
             if value > max or value < min:
                 return -np.inf
         return 0.
