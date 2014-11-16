@@ -34,7 +34,7 @@ class GeneralMCMC():
         self.parameter_mins = []
         self.parameter_maxs = []
         self.fixed_parameters = []
-        self.update_parameeter_list()
+        self.update_parameter_list()
     def update_parameter_list(self):
         self.parameter_list = []
         self.parameter_mins = []
