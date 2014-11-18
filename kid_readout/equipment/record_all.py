@@ -20,6 +20,7 @@ def main():
     # Set up the SIMs
     ruox3628 = sim900.ports['4']
     ruox3882 = sim900.ports['6']
+    lakeshore = sim900.ports['1']
     diodes = sim900.ports['8']
 
     ruox3628.reset()
@@ -40,11 +41,18 @@ def main():
     ruox3882.curve_number = 1
     print("Port 6 curve: {}".format(ruox3882.curve_info(ruox3882.curve_number)[1]))
 
+    lakeshore.reset()
+    lakeshore.excitation = 2 # 30 uV
+    lakeshore.excitation_mode = 'VOLTAGE'
+    lakeshore.time_constant = 2
+    lakeshore.autorange_gain()
+    lakeshore.display_temperature = True
+    lakeshore.curve_number = 1
+    print("Port 1 curve: {}".format(lakeshore.curve_info(lakeshore.curve_number)[1]))
+
     diodes.reset()
     diodes.set_curve_type(1, 'USER')
     print("Port 8 channel 1 curve: {}".format(diodes.curve_info(1)[1]))
-    diodes.set_curve_type(2, 'USER')
-    print("Port 8 channel 2 curve: {}".format(diodes.curve_info(2)[1]))
 
     try: 
         header = "time, diode ch1 temp, dio ch 2 temp, dio 3 temp, dio 4 temp, dio 1 volts, dio 2 volts, dio 3 volts, dio 4 volts, rox 1 temp, rox 1 res, rox 2 temp, rox 2 res, rox 3 temp, rox 3 res"
@@ -61,17 +69,14 @@ def main():
         while True:
             dio1_volt = diodes.voltage(1)
             dio1_temp = diodes.temperature(1)
-            dio2_volt = diodes.voltage(2)
-            dio2_temp = diodes.temperature(2)
-            # Update this if we attach diodes to channels 3 and 4
-            dio3_volt = dio3_temp = dio4_volt = dio4_temp = 0
+            dio2_volt = dio2_temp = dio3_volt = dio3_temp = dio4_volt = dio4_temp = 0
             rox1_res = ruox3628.resistance
             rox1_temp = ruox3628.temperature
             rox2_res = ruox3882.resistance
             rox2_temp = ruox3882.temperature
-            # Update this if we attach a new SIM921
-            rox3_res = rox3_temp = 0
-    
+            rox3_res = lakeshore.resistance
+            rox3_temp = lakeshore.temperature
+
             current_time = time.strftime("%Y%m%d-%H%M%S")
             all_values = ", ".join([str(n) for n in
                                     (current_time,
