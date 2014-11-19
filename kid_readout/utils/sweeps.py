@@ -25,7 +25,7 @@ def segmented_fine_sweep(ri,center_freqs,segments=default_segments_mhz,nchan_per
     
 
 def prepare_sweep(ri,center_freqs,offsets,nsamp=2**21):
-    if nsamp*4*len(offsets) > 2**29:
+    if nsamp*4*len(offsets) > 2**28:
         raise ValueError("total number of waveforms (%d) times number of samples (%d) exceeds DRAM capacity" % (len(offsets),nsamp))
     freqs = center_freqs[None,:] + offsets[:,None]
     return ri.set_tone_freqs(freqs,nsamp=nsamp)
