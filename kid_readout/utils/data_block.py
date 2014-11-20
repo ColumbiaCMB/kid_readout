@@ -36,11 +36,14 @@ class DataBlock():
                 self._lpf_data = fftfilt.fftfilt(lpf,self.data)[len(lpf):]*self.wavenorm
             self._mean = self._lpf_data.mean(0,dtype='complex')
         return self._mean
-    def std(self):
+    def mean_error(self):
         if self._std is None:
             if self._lpf_data is None:
                 self._lpf_data = fftfilt.fftfilt(lpf,self.data)[len(lpf):]*self.wavenorm
-            self._std = self._lpf_data.std(0)
+            # the standard deviation is scaled by the number of independant samples
+            # to compute the error on the mean. The leading factor of 2 takes into account
+            # that the data is complex
+            self._std = self._lpf_data.std(0)/np.sqrt(2.*self._lpf_data.shape[0]/len(lpf))
         return self._std
         
 class SweepData():
@@ -79,4 +82,4 @@ class SweepData():
         return np.array(self._sweep_indexes)
     @property
     def errors(self):
-        return np.array([x.std() for x in self.blocks])
+        return np.array([x.mean_error() for x in self.blocks])
