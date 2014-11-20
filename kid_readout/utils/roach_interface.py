@@ -790,10 +790,31 @@ class RoachBaseband(RoachInterface):
     
     def get_data(self,nread=2,demod=True):
         return self.get_data_udp(nread=nread,demod=demod)
-    
+
     def get_data_seconds(self,nseconds,demod=True,pow2=True):
         """
-        Capture data for specified length of time
+        Capture data for specified length of time (using the udp interface)
+
+        nseconds: Number of seconds
+
+        demod: bool, Should the data be demodulated (default True)
+
+        pow2: bool, If true, force the data length to the nearest power of 2
+        """
+        chan_rate = self.fs*1e6/(2*self.nfft)   # samples per second for one channel
+        samples_per_channel_per_block = 4096
+        seconds_per_block = samples_per_channel_per_block/chan_rate
+        blocks = int(np.round(nseconds/seconds_per_block))
+        if pow2:
+            lg2 = np.round(np.log2(blocks))
+            if lg2 < 0:
+                lg2 = 0
+            blocks = 2**lg2
+        return self.get_data_udp(blocks,demod=demod)
+
+    def get_data_seconds_katcp(self,nseconds,demod=True,pow2=True):
+        """
+        Capture data for specified length of time using the katcp interface
         
         nseconds: Number of seconds
         
@@ -810,7 +831,7 @@ class RoachBaseband(RoachInterface):
             if lg2 < 0:
                 lg2 = 0
             blocks = 2**lg2
-        return self.get_data(blocks,demod=demod)
+        return self.get_data_katcp(blocks,demod=demod)
     
     def get_data_katcp(self,nread=10,demod=True):
         """
