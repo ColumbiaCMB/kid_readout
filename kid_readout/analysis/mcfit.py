@@ -66,9 +66,11 @@ class GeneralMCMC():
 
     def basic_loglikelihood(self,params):
         self.set_parameter_values(params)
-        model = self.fitter.model()
-        return (-np.log(np.abs(self.fitter.errors))
-                - 0.5*abs((self.fitter.y_data-model)/self.fitter.errors)**2)
+        residual, errors = self.fitter.residual()
+        if errors is None:
+            errors = np.ones(residual.shape[0])
+        return (-np.log(np.abs(errors))
+                - 0.5*abs(residual/errors)**2)
     def basic_logprob(self,params):
         if np.isinf(self.uniform_logprior(params)):
             return -np.inf
@@ -89,8 +91,8 @@ class GeneralMCMC():
         self.sampler.run_mcmc(self.initial,length)
         self.samples = self.sampler.chain[:,burn_in:,:].reshape((-1,self.ndim))
         for dim,name in enumerate(self.parameter_list):
-            self.fitter.result.params[name].value = self.samples[:,dim].mean()
-            self.fitter.result.params[name].stderr = self.samples[:,dim].std()
+            self.fitter.params[name].value = self.samples[:,dim].mean()
+            self.fitter.params[name].stderr = self.samples[:,dim].std()
 
     def triangle(self,*args,**kwargs):
         import triangle

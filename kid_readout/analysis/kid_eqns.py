@@ -70,13 +70,18 @@ class KIDModel(object):
         self.tau_star = tau_star
         self.P_read = P_read
         self.T_noise = T_noise
+
+        self.fit_for = None
         
     @property
     def foffset(self):
         return self.params['foffset'].value
     @property
     def delta_0(self):
-        return self.params['delta_0'].value        
+        return self.params['delta_0'].value
+    @property
+    def delta_loss(self):
+        return self.params['delta_loss'].value
     @property
     def Tc(self):
         return self.params['Tc'].value
@@ -206,27 +211,54 @@ class KIDModel(object):
     
     def fit_f0_resid(self,params,T,f0,f0_err=None):
         if f0_err is None:
-            return (f0 - self.total_fres(T))/self.f0_nom
+            return (f0 - self.total_fres(T))#/self.f0_nom
         else:
             return (f0 - self.total_fres(T))/f0_err
     def fit_f0(self,T,f0,f0_err=None):
+        self.fit_for = 'f0'
+        self.T_data = T
+        self.f0_data = f0
+        self.f0_err = f0_err
         self.params['F_TLS'].value = 1.0
         self.params['F_TLS'].vary = False
         self.result = lmfit.minimize(self.fit_f0_resid,self.params,args=(T,f0,f0_err))
         
     def fit_qi_resid(self,params,T,Qi,Qi_err=None):
         if Qi_err is None:
-            return (Qi - self.total_Qi(T))/1e7
+            return (Qi - self.total_Qi(T))#/1e7
         else:
             return abs(Qi - self.total_Qi(T))/Qi_err
     
     def fit_qi(self,T,Qi,Qi_err=None):
+        self.fit_for = 'qi'
+        self.T_data = T
+        self.Qi_data = Qi
+        self.Qi_err = Qi_err
         self.result = lmfit.minimize(self.fit_qi_resid,self.params,args=(T,Qi,Qi_err))
         
     def fit_f0_qi_resid(self,params,T,f0,Qi,f0_err=None,Qi_err=None):
         return np.concatenate((self.fit_f0_resid(params, T, f0,f0_err),self.fit_qi_resid(params, T, Qi,Qi_err)))
-    def fit_f0_qi(self,T,f0,Qi,f0_err = None, Qi_err = None):
-        self.result = lmfit.minimize(self.fit_f0_qi_resid,self.params,args=(T,f0,Qi,f0_err,Qi_err))
+    def fit_f0_qi(self,T,f0,Qi,f0_err = None, Qi_err = None,**kwargs):
+        self.fit_for = 'f0qi'
+        self.T_data = T
+        self.f0_data = f0
+        self.f0_err = f0_err
+        self.Qi_data = Qi
+        self.Qi_err = Qi_err
+        self.result = lmfit.minimize(self.fit_f0_qi_resid,self.params,args=(T,f0,Qi,f0_err,Qi_err),**kwargs)
+
+    def residual(self):
+        if self.fit_for == 'f0':
+            return self.fit_f0_resid(None,self.T_data,self.f0_data),self.f0_err
+        if self.fit_for == 'qi':
+            return self.fit_qi_resid(None,self.T_data,self.Qi_data),self.Qi_err
+        if self.fit_for == 'f0qi':
+            if self.f0_err is None or self.Qi_err is None:
+                errs = None
+            else:
+                errs = np.concatenate((self.f0_err,self.Qi_err))
+            return self.fit_f0_qi_resid(None,self.T_data,self.f0_data,self.Qi_data),errs
+        raise Exception("Got unexpected fit for argument: %s" % str(self.fit_for))
         
 class DarkKIDModel(KIDModel):
     def sigma1(self,T):
@@ -291,7 +323,7 @@ class DarkKIDModelFractional(DarkKIDModel):
     def total_delta_invQi(self,T):
         delta_TLS_loss = self.delta_tls(T)
         invQi = self.invQi(T)
-        return invQi + delta_TLS_loss
+        return invQi + delta_TLS_loss + self.delta_loss
         
     
     
