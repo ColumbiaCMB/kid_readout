@@ -5,7 +5,8 @@ import bisect
 import warnings
 from collections import OrderedDict
 from kid_readout.utils.roach_utils import ntone_power_correction
-
+import kid_readout.utils.fftfilt
+from kid_readout.utils.data_block import lpf
 
 class TimestreamGroup(object):
     def __init__(self,ncgroup, parent=None):
@@ -99,10 +100,17 @@ class SweepGroup(object):
             wavenorm = 1
         else:
             wavenorm = self.timestream_group.wavenorm[0]
-        real_err = self.timestream_group.data.real.std(1)
-        imag_err = self.timestream_group.data.imag.std(1)
-        nsamp = self.timestream_group.data.shape[1]
-        return (real_err + 1j*imag_err)/np.sqrt(nsamp)
+        errors = np.zeros(self.timestream_group.data.shape[0], dtype='complex')
+        for index in range(self.timestream_group.data.shape[0]):
+            filtered = kid_readout.utils.fftfilt.fftfilt(lpf, self.timestream_group.data[index,:])[len(lpf):]
+            # the standard deviation is scaled by the number of independant samples
+            # to compute the error on the mean.
+            error_scaling = np.sqrt(float(len(filtered))/len(lpf))
+            real_error = filtered.real.std()/error_scaling
+            imag_error = filtered.imag.std()/error_scaling
+            errors[index] = real_error + 1j*imag_error
+
+        return errors
 
     def select_by_index(self,index):
         mask = self.index == index
