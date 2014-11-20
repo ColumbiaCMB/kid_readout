@@ -40,7 +40,7 @@ class DataBlock():
         if self._std is None:
             if self._lpf_data is None:
                 self._lpf_data = fftfilt.fftfilt(lpf,self.data)[len(lpf):]*self.wavenorm
-            # the standard deviation is scaled by the number of independant samples
+            # the standard deviation is scaled by the number of independent samples
             # to compute the error on the mean. The leading factor of 2 takes into account
             # that the data is complex
             self._std = self._lpf_data.std(0)/np.sqrt(2.*self._lpf_data.shape[0]/len(lpf))

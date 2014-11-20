@@ -103,7 +103,7 @@ class SweepGroup(object):
         errors = np.zeros(self.timestream_group.data.shape[0], dtype='complex')
         for index in range(self.timestream_group.data.shape[0]):
             filtered = kid_readout.utils.fftfilt.fftfilt(lpf, self.timestream_group.data[index,:])[len(lpf):]
-            # the standard deviation is scaled by the number of independant samples
+            # the standard deviation is scaled by the number of independent samples
             # to compute the error on the mean.
             error_scaling = np.sqrt(float(len(filtered))/len(lpf))
             real_error = filtered.real.std()/error_scaling
