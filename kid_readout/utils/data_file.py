@@ -103,7 +103,7 @@ class DataFile():
         dt = dbg.createVariable('dt',np.float64,('epoch',))
         fs = dbg.createVariable('fs',np.float64,('epoch',))
         wavenorm = dbg.createVariable('wavenorm',np.float64,('epoch'))
-        data = dbg.createVariable('data',self.cdf128,('epoch','sample'))
+        data = dbg.createVariable('data',self.cdf64,('epoch','sample'))
         sweep_index = dbg.createVariable('sweep_index',np.int32,('epoch'))
         
         blocks = sweep_data.blocks
@@ -116,7 +116,7 @@ class DataFile():
                 newblk = np.zeros((1,blen),dtype=blk.data.dtype)
                 newblk[0,:blk.data.shape[0]] = blk.data[:]
                 blocklist.append(newblk)
-        data[:] = np.concatenate(blocklist,axis=0).astype('complex128').view(self.c128)
+        data[:] = np.concatenate(blocklist,axis=0).astype('complex64').view(self.c64)
         fs[:] = np.array([x.fs for x in blocks])
         t0[:] = np.array([x.t0 for x in blocks])
         tone[:] = np.array([x.tone for x in blocks])
