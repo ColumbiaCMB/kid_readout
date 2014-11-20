@@ -652,11 +652,13 @@ class CalibrationCurve(object):
         validate_curve() method to work.
         """
         self.sensor = np.array(sensor)
-        if not all(np.diff(self.sensor)):
+        if np.any(np.diff(self.sensor) <= 0):
             raise SIMError("Sensor values must increase monotonically.")
         self.temperature = np.array(temperature)
         if not self.sensor.size == self.temperature.size:
             raise SIMError("Different numbers of sensor and temperature points.")
+        if len(identification) > 15:
+            raise SIMError("Identification string may be at most 15 characters.")
         self.identification = str(identification).upper()
         self.format = str(format)
 
