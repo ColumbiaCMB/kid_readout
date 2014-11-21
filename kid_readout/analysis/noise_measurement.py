@@ -120,7 +120,7 @@ def plot_noise_nc(fglob,**kwargs):
 class SweepNoiseMeasurement(object):
     def __init__(self,sweep_filename,sweep_group_index=0,timestream_filename=None,timestream_group_index=0,
                  resonator_index=0,low_pass_cutoff_Hz=4.0,
-                 dac_chain_gain = -49, delay_estimate=-7.29,
+                 dac_chain_gain = -49, delay_estimate=None,
                  deglitch_threshold=5, cryostat=None, mask_sweep_indicies=None):
         """
         sweep_filename : str
