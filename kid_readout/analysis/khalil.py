@@ -3,11 +3,12 @@ This module uses models from the Khalil paper.
 """
 
 from __future__ import division
-from scipy.special import cbrt
 import numpy as np
+from scipy.special import cbrt
 from lmfit import Parameters
 
-def qi_error(Q,Q_err,Q_e_real,Q_e_real_err,Q_e_imag,Q_e_imag_err):
+
+def qi_error(Q, Q_err, Q_e_real, Q_e_real_err, Q_e_imag, Q_e_imag_err):
     """
     Compute error on Qi
     
@@ -36,14 +37,16 @@ def qi_error(Q,Q_err,Q_e_real,Q_e_real_err,Q_e_imag,Q_e_imag_err):
     dQer = Q_e_real_err
     Qei = Q_e_imag
     dQei = Q_e_imag_err
-    denom = (Q*Qer - Qer**2 + Qei**2)**2
-    
-    dQi_dQ = (Qer**2 - Qei**2)**2 / denom
-    dQi_dQer = (Q**2 * (Qer**2 + Qei**2)) / denom
-    dQi_dQei = (2 * Q**2 * Qer * Qei) / denom
-    
-    dQi = np.sqrt((dQ * dQi_dQ)**2 + (dQer * dQi_dQer)**2 + (dQei * dQi_dQei)**2)
+    denom = (Q * Qer - Qer ** 2 + Qei ** 2) ** 2
+
+    dQi_dQ = (Qer ** 2 - Qei ** 2) ** 2 / denom
+    dQi_dQer = (Q ** 2 * (Qer ** 2 + Qei ** 2)) / denom
+    dQi_dQei = (2 * Q ** 2 * Qer * Qei) / denom
+
+    dQi = np.sqrt((dQ * dQi_dQ) ** 2 + (dQer * dQi_dQer) ** 2 + (dQei * dQi_dQei) ** 2)
     return dQi
+
+# todo: rewrite all functions to use params.valuesdict()
 
 def cable_delay(params, f):
     """
@@ -60,6 +63,7 @@ def cable_delay(params, f):
     f_min = params['f_phi'].value
     return np.exp(1j * (-2 * np.pi * (f - f_min) * delay + phi))
 
+
 def generic_s21(params, f):
     """
     This is Equation 11, except that the parameter A is a complex
@@ -72,29 +76,30 @@ def generic_s21(params, f):
     Q = params['Q'].value
     Q_e = (params['Q_e_real'].value +
            1j * params['Q_e_imag'].value)
-    return A * (1 - (Q * Q_e**-1 /
+    return A * (1 - (Q * Q_e ** -1 /
                      (1 + 2j * Q * (f - f_0) / f_0)))
 
-def create_model(f_0 = 100e6, Q = 1e4, 
-                 Q_e = 2e4, A = 1.0,
-                 delay = 0.0, a = 0.0):
+
+def create_model(f_0=100e6, Q=1e4, Q_e=2e4, A=1.0, delay=0.0, a=0.0):
     p = Parameters()
     A_mag = np.abs(A)
     phi = np.angle(A)
     Q_e_real = np.real(Q_e)
     Q_e_imag = np.imag(Q_e)
-    p.add('f_0', value = f_0)
-    p.add('Q', value = Q)
-    p.add('Q_e_real', value = Q_e_real)
-    p.add('Q_e_imag', value = Q_e_imag)
-    p.add('A_mag', value = A_mag)
-    p.add('A_phase',value=0)
-    p.add('phi', value = phi)
-    p.add('delay',value = delay)
-    p.add('f_phi',value = 0)
-    p.add('a',value = a)
+    p.add('f_0', value=f_0)
+    p.add('Q', value=Q)
+    p.add('Q_e_real', value=Q_e_real)
+    p.add('Q_e_imag', value=Q_e_imag)
+    p.add('A_mag', value=A_mag)
+    p.add('A_phase', value=0)
+    p.add('phi', value=phi)
+    p.add('delay', value=delay)
+    p.add('f_phi', value=0)
+    p.add('a', value=a)
     return p
-def bifurcation_s21(params,f):
+
+
+def bifurcation_s21(params, f):
     """
     Swenson paper:
         Equation: y = yo + A/(1+4*y**2)
@@ -105,156 +110,159 @@ def bifurcation_s21(params,f):
     Q = params['Q'].value
     Q_e = (params['Q_e_real'].value +
            1j * params['Q_e_imag'].value)
-           
+
     a = params['a'].value
-    
+
     if np.isscalar(f):
-        fmodel = np.linspace(f*0.9999,f*1.0001,1000)
+        fmodel = np.linspace(f * 0.9999, f * 1.0001, 1000)
         scalar = True
     else:
         fmodel = f
         scalar = False
-    y_0 = ((fmodel - f_0)/f_0)*Q
-    y =  (y_0/3. + 
-            (y_0**2/9 - 1/12)/cbrt(a/8 + y_0/12 + np.sqrt((y_0**3/27 + y_0/12 + a/8)**2 - (y_0**2/9 - 1/12)**3) + y_0**3/27) + 
-            cbrt(a/8 + y_0/12 + np.sqrt((y_0**3/27 + y_0/12 + a/8)**2 - (y_0**2/9 - 1/12)**3) + y_0**3/27))
-    x = y/Q
-    s21 = A*(1 - (Q/Q_e)/(1+2j*Q*x))
-    msk = np.isfinite(s21)
-    if scalar or not np.all(msk):
-        s21_interp_real = np.interp(f,fmodel[msk],s21[msk].real)
-        s21_interp_imag = np.interp(f,fmodel[msk],s21[msk].imag)
-        s21new = s21_interp_real+1j*s21_interp_imag
-    
+    y_0 = ((fmodel - f_0) / f_0) * Q
+    y = (y_0 / 3. +
+         (y_0 ** 2 / 9 - 1 / 12) / cbrt(a / 8 + y_0 / 12 + np.sqrt(
+             (y_0 ** 3 / 27 + y_0 / 12 + a / 8) ** 2 - (y_0 ** 2 / 9 - 1 / 12) ** 3) + y_0 ** 3 / 27) +
+         cbrt(a / 8 + y_0 / 12 + np.sqrt(
+             (y_0 ** 3 / 27 + y_0 / 12 + a / 8) ** 2 - (y_0 ** 2 / 9 - 1 / 12) ** 3) + y_0 ** 3 / 27))
+    x = y / Q
+    s21 = A * (1 - (Q / Q_e) / (1 + 2j * Q * x))
+    mask = np.isfinite(s21)
+    if scalar or not np.all(mask):
+        s21_interp_real = np.interp(f, fmodel[mask], s21[mask].real)
+        s21_interp_imag = np.interp(f, fmodel[mask], s21[mask].imag)
+        s21new = s21_interp_real + 1j * s21_interp_imag
     else:
         s21new = s21
-    return s21new*cable_delay(params,f)
+    return s21new * cable_delay(params, f)
+
 
 def delayed_generic_s21(params, f):
     """
-    This adds a cable delay controlled by two parameters to the
-    generic model above.
+    This adds a cable delay controlled by two parameters to the generic model above.
     """
     return cable_delay(params, f) * generic_s21(params, f)
-    
-def bifurcation_guess(f, data):
-    p = delayed_generic_guess(f,data)
-    p.add('a',value=0,min=0,max=0.8)
+
+
+def bifurcation_guess(f, s21):
+    p = delayed_generic_guess(f, s21)
+    p.add('a', value=0, min=0, max=0.8)
     return p
 
-def delayed_generic_guess(f, data):
+
+def delayed_generic_guess(f, s21):
     """
-    The phase of A is fixed at 0 and the phase at lowest frequency is
-    incorporated into the cable delay term.
+    The phase of A is fixed at 0 and the phase at lowest frequency is incorporated into the cable delay term.
     """
-    p = generic_guess(f, data)
+    p = generic_guess(f, s21)
     p['A_phase'].value = 0
     p['A_phase'].vary = False
-    slope, offset = np.polyfit(f, np.unwrap(np.angle(data)), 1)
-    p.add('delay', value = -slope / (2 * np.pi))
-    p.add('phi', value = np.angle(data[0]), min = -np.pi, max = np.pi)
-    p.add('f_phi', value = f[0], vary=False)
+    slope, offset = np.polyfit(f, np.unwrap(np.angle(s21)), 1)
+    p.add('delay', value=-slope / (2 * np.pi))
+    p.add('phi', value=np.angle(s21[0]), min=-np.pi, max=np.pi)
+    p.add('f_phi', value=f[0], vary=False)
     return p
 
-def generic_guess(f, data):
+
+def generic_guess(f, s21):
     """
-    Right now these Q values are magic numbers. I suppose the
-    design values are a good initial guess, but there might be a
-    good way to approximate them without doing the full fit.
+    This is deprecated in favor of auto_guess because it uses hardcoded Q values.
     """
     p = Parameters()
     bw = f.max() - f.min()
     # Allow f_0 to vary by +/- the bandwidth over which we have data
-    p.add('f_0', value = f[np.argmin(abs(data))],
-          min = f.min() - bw, max = f.max() + bw)
-    p.add('A_mag', value = np.mean((np.abs(data[0]), np.abs(data[-1]))),
-          min = 0, max = 1e6)
-    p.add('A_phase', value = np.mean(np.angle(data)),
-          min = -np.pi, max = np.pi)
-    p.add('Q', value = 5e4, min = 0, max = 1e7)
-    p.add('Q_e_real', value = 4e4, min = 0, max = 1e6)
-    p.add('Q_e_imag', value = 0, min = -1e6, max = 1e6)
+    p.add('f_0', value=f[np.argmin(abs(s21))],
+          min=f.min() - bw, max=f.max() + bw)
+    p.add('A_mag', value=np.mean((np.abs(s21[0]), np.abs(s21[-1]))),
+          min=0, max=1e6)
+    p.add('A_phase', value=np.mean(np.angle(s21)),
+          min=-np.pi, max=np.pi)
+    p.add('Q', value=5e4, min=0, max=1e7)
+    p.add('Q_e_real', value=4e4, min=0, max=1e6)
+    p.add('Q_e_imag', value=0, min=-1e6, max=1e6)
     return p
 
-def auto_guess(f, data):
+
+def auto_guess(f, s21):
     """
-    Use the linewidth and the transmission ratio on and off resonance
-    to guess the initial Q values.  Estimate the linewidth by
-    smoothing then looking for the extrema of the first
-    derivative. This may fail if the resonance is very close to the
-    edge of the data.
+    Use the linewidth and the transmission ratio on and off resonance to guess the initial Q values.  Estimate the
+    linewidth by smoothing then looking for the extrema of the first derivative. This may fail if the resonance is
+    very close to the edge of the data.
     """
     p = Parameters()
     bw = f.max() - f.min()
     # Allow f_0 to vary by +/- the bandwidth over which we have data
-    p.add('f_0', value = f[np.argmin(abs(data))],
-          min = f.min() - bw, max = f.max() + bw)
-    off = np.mean((np.abs(data[0]), np.abs(data[-1])))
-    p.add('A_mag', value = off,
-          min = 0, max = 1e6)
-    p.add('A_phase', value = np.mean(np.angle(data)),
-          min = -np.pi, max = np.pi)
+    p.add('f_0', value=f[np.argmin(abs(s21))],
+          min=f.min() - bw, max=f.max() + bw)
+    off = np.mean((np.abs(s21[0]), np.abs(s21[-1])))
+    p.add('A_mag', value=off,
+          min=0, max=1e6)
+    p.add('A_phase', value=np.mean(np.angle(s21)),
+          min=-np.pi, max=np.pi)
     width = int(f.size / 10)
-    gaussian = np.exp(-np.linspace(-4, 4, width)**2)
-    gaussian /= np.sum(gaussian) # not necessary
-    smoothed = np.convolve(gaussian, abs(data), mode='same')
+    gaussian = np.exp(-np.linspace(-4, 4, width) ** 2)
+    gaussian /= np.sum(gaussian)  # not necessary
+    smoothed = np.convolve(gaussian, abs(s21), mode='same')
     derivative = np.convolve(np.array([1, -1]), smoothed, mode='same')
     # Exclude the edges, which are affected by zero padding.
     linewidth = (f[np.argmax(derivative[width:-width])] -
                  f[np.argmin(derivative[width:-width])])
-    p.add('Q', value = p['f_0'].value / linewidth,
-          min = 1, max = 1e7) # This seems to stop an occasional failure mode.
-    p.add('Q_e_real', value = (p['Q'].value /
-                               (1 - np.min(np.abs(data)) / off)),
-          min = 1, max = 1e6) # As above.
-    p.add('Q_e_imag', value = 0, min = -1e6, max = 1e6)
+    p.add('Q', value=p['f_0'].value / linewidth,
+          min=1, max=1e7)  # This seems to stop an occasional failure mode.
+    p.add('Q_e_real', value=(p['Q'].value /
+                             (1 - np.min(np.abs(s21)) / off)),
+          min=1, max=1e6)  # As above.
+    p.add('Q_e_imag', value=0, min=-1e6, max=1e6)
     return p
 
-def delayed_auto_guess(f, data):
-    auto = auto_guess(f, data)
-    delayed = delayed_generic_guess(f, data)
+
+def delayed_auto_guess(f, s21):
+    auto = auto_guess(f, s21)
+    delayed = delayed_generic_guess(f, s21)
     delayed['Q'].value = auto['Q'].value
     delayed['Q_e_real'].value = auto['Q_e_real'].value
     return delayed
 
+
 def Q_i(params):
     """
-    Return the internal Q of the resonator.
+    Return the internal quality factor of the resonator.
     """
     Q = params['Q'].value
     Qe = Q_e(params)
-    return (Q**-1 - np.real(Qe**-1))**-1
+    return (Q ** -1 - np.real(Qe ** -1)) ** -1
+
 
 def Q_e(params):
     """
-    Return the external (coupling) Q of the resonator.
+    Return the external (coupling) quality factor of the resonator.
     """
     return (params['Q_e_real'].value +
             1j * params['Q_e_imag'].value)
-    
-# Zmuidzinas doesn't say how to calculate the coupling coefficient
-# \chi_c when Q_e (what he calls Q_c) is complex, and I don't know
-# whether to use the real part or the norm of Q_e. It doesn't seem to
-# make much difference.
+
+
+# Zmuidzinas doesn't say how to calculate the coupling coefficient \chi_c when Q_e (what he calls Q_c) is complex,
+# and I don't know whether to use the real part or the norm of Q_e. It doesn't seem to make much difference.
 def chi_c_real(params):
     """
-    Calculate the coupling coefficient \chi_c
-    using the real part of Q_e.
+    Calculate the coupling coefficient \chi_c using the real part of Q_e.
     """
     Qi = Q_i(params)
     Qc = params['Q_e_real'].value
     return ((4 * Qc * Qi) /
-            (Qc + Qi)**2)
+            (Qc + Qi) ** 2)
+
 
 def chi_c_norm(params):
     """
-    Calculate the coupling coefficient \chi_c
-    using the norm of Q_e.
+    Calculate the coupling coefficient \chi_c using the norm of Q_e.
     """
     Qi = Q_i(params)
     Qc = np.abs(Q_e(params))
     return ((4 * Qc * Qi) /
-            (Qc + Qi)**2)
+            (Qc + Qi) ** 2)
+
+# todo: write a function to calculate normalized s21 here.
 
 generic_functions = {'Q_i': Q_i,
                      'Q_e': Q_e,

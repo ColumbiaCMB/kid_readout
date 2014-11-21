@@ -199,7 +199,8 @@ class SweepNoiseMeasurement(object):
             self.atten = np.nan
             self.total_dac_atten = np.nan
             self.power_dbm = np.nan
-            
+
+        # This uses the error calculation in readoutnc.SweepGroup
         self.sweep_freqs_MHz, self.sweep_s21, self.sweep_errors = self.sweep.select_by_index(resonator_index)
         
         # find the time series that was measured closest to the sweep frequencies
@@ -280,7 +281,7 @@ class SweepNoiseMeasurement(object):
         else:
             deglitched_timeseries = projected_timeseries
         
-        
+        # TODO: should nyquist_freq be half the sample rate?
         self.low_pass_projected_timeseries = low_pass_fir(deglitched_timeseries, num_taps=1024, cutoff=low_pass_cutoff_Hz, 
                                                 nyquist_freq=self.timeseries_sample_rate, decimate_by=decimation_factor)
         self.low_pass_timestep = decimation_factor/self.timeseries_sample_rate
