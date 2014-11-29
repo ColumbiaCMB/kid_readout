@@ -1,7 +1,11 @@
 import numpy as np
 import pandas as pd
 import os
-import pwd
+try:
+    import pwd
+except ImportError:
+    print "couldn't import pwd, ignoring"
+
 from kid_readout.analysis.noise_measurement import load_noise_pkl
 import glob
 import collections
@@ -18,7 +22,7 @@ def refine_archive(df, fractional_f0_error=1e-5, fractional_Q_error=1e-2):
     df = df[df.f_0_err != 0]
     df = df[df.f_0_err/df.f_0 < fractional_f0_error]
     df = df[df.Q_err/df.Q < fractional_Q_error]
-    df = df.groupby(['resonator_id']).apply(normalize_f0)
+    df = df.reset_index(drop=True).groupby(['resonator_id']).apply(normalize_f0).set_index('index')
     return df
 
 
@@ -196,7 +200,7 @@ if __name__ == "__main__":
 
     for dfn,info in infos.items():
         df = build_archive(info,
-                       force_rebuild=True,
+                       force_rebuild=False,
                        archive_name=None)
         globals()[dfn] = df
 

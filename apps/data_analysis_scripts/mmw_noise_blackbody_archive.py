@@ -6,7 +6,6 @@ import kid_readout.analysis.resonator
 import glob
 import socket
 import collections
-
 #sc5x4_0813f12_taped_dark_info = dict(chip_name = 'StarCryo_5x4_0813f12_taped_dark',
 #                               dark = True,
 #                               files = files,
@@ -121,6 +120,7 @@ def build_archive(info, archive_name=None, force_rebuild=False):
         data['noise_7_kHz'].extend(noise7k)
         data['resonator_id'].extend([info['index_to_resnum'][nm.resonator_index] for nm in noise_on])
 
+        # fixme: this seriously needs to be cleaned up.
         for nm in noise_mod:
             detuning = kid_readout.analysis.resonator.normalized_s21_to_detuning(nm.normalized_timeseries,
                                                                                  nm.resonator_model)

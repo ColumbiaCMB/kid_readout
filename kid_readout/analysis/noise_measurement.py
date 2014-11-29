@@ -26,7 +26,10 @@ else:
     from kid_readout.utils.starcryo_temps import get_temperatures_at
 import time
 import os
-import pwd
+try:
+    import pwd
+except ImportError:
+    print "couldn't import pwd"
 import glob
 from kid_readout.analysis.resources import experiments
 

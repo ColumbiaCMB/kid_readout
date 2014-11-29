@@ -84,7 +84,7 @@ class GeneralMCMC():
         for dim in range(ndim):
             min,max = self.parameter_mins[dim], self.parameter_maxs[dim]
             self.initial[:,dim] = np.random.uniform(min,max,size=nwalkers)
-        self.sampler = emcee.EnsembleSampler(nwalkers,ndim,self.basic_logprob)
+        self.sampler = emcee.EnsembleSampler(nwalkers,ndim,self.basic_logprob,threads=4)
 
     def run(self,length=500,burn_in=100,nwalkers=32):
         self.setup_sampler(nwalkers=nwalkers)
