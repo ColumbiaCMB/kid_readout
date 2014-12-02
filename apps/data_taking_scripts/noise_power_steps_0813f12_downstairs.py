@@ -7,37 +7,20 @@ import sys
 from kid_readout.utils import roach_interface,data_file,sweeps
 from kid_readout.analysis.resonator import Resonator
 from kid_readout.analysis.resonator import fit_best_resonator
-from kid_readout.equipment import hittite_controller
-from kid_readout.equipment import lockin_controller
-from kid_readout.equipment.agilent_33220 import FunctionGenerator
 
-fg = FunctionGenerator()
+mmw_source_frequency = np.nan
 
-hittite = hittite_controller.hittiteController()
-lockin = lockin_controller.lockinController()
-print lockin.get_idn()
-
-hittite.on()
-hittite.set_power(0)
-if True: #cw case:
-    mmw_source_frequency = 158e9
-    hittite.set_freq(mmw_source_frequency/12)
-else:
-    mmw_source_frequency = -1.0
-
-source_on_freq_scale = 0.999#1.0  # nominally 1 if low-ish power
+source_on_freq_scale = 1.0  # nominally 1 if low-ish power
 
 ri = roach_interface.RoachBaseband()
-f0s = np.load('/home/gjones/kid_readout/apps/sc5x4_0813f12.npy')
+f0s = np.load('/home/gjones/readout/kid_readout/apps/sc5x4_0813f12.npy')
 f0s.sort()
 f0s = f0s[[0,1,2,3,4,5,6,7,8,9,10,13,14,15,16,17]]  # remove close packed resonators to enable reading out all simultaneously
 
-if mmw_source_frequency == -1:
-    suffix = "mmwnoisestep"
-else:
-    suffix = "mmwcwstep"
-mmw_source_modulation_freq = ri.set_modulation_output(7)
-mmw_atten_turns = (6.5,6.5)
+suffix = "dark"
+mmw_source_modulation_freq = np.nan
+mmw_atten_turns = (np.nan,np.nan)
+
 
 def source_on():
     ri.set_modulation_output(rate='low')
@@ -83,12 +66,10 @@ use_fmin = False
 attenlist = [39,37,35,33,31,29]
 while True:
     print "*"*40
-    print "Enter mmw attenuator values as a tuple i.e.: 6.5,6.5 or type exit to stop collecting data"
-    mmw_atten_str = raw_input("mmw attenuator values: ")
+    print "Hit enter to take a data set"
+    mmw_atten_str = raw_input("start: ")
     if mmw_atten_str == 'exit':
         break
-    else:
-        mmw_atten_turns = eval(mmw_atten_str)
 
     nsamp = 2**18
     step = 1
@@ -98,7 +79,7 @@ while True:
     offsets = offset_bins*512.0/nsamp
     offsets = np.concatenate(([offsets.min()-20e-3,],offsets,[offsets.max()+20e-3]))
 
-    source_on()
+    source_off()
     print "setting attenuator to",attenlist[0]
     ri.set_dac_attenuator(attenlist[0])
     f0binned = np.round(f0s*nsamp/512.0)*512.0/nsamp
@@ -206,7 +187,6 @@ while True:
         time.sleep(0.5)
 
 
-        #raw_input("turn on LED take data")
 
         df.log_hw_state(ri)
         nsets = len(meas_cfs)/atonce
@@ -218,7 +198,7 @@ while True:
             time.sleep(0.4)
             t0 = time.time()
             dmod,addr = ri.get_data_seconds(30)
-            x,y,r,theta = lockin.get_data()
+            x = np.nan
 
             tsg = df.add_timestream_data(dmod, ri, t0, tsg=tsg, mmw_source_freq=mmw_source_frequency,
                                          mmw_source_modulation_freq=mmw_source_modulation_freq,
@@ -226,125 +206,5 @@ while True:
             df.sync()
             print "done with sweep"
 
-    ri.set_dac_attenuator(attenlist[0])
-    mmw_source_modulation_freq = source_modulate()
-    df.log_hw_state(ri)
-    nsets = len(meas_cfs)/atonce
-    tsg = None
-    for iset in range(nsets):
-        selection = range(len(meas_cfs))[iset::nsets]
-        ri.select_fft_bins(selection)
-        ri._sync()
-        time.sleep(0.4)
-        t0 = time.time()
-        dmod,addr = ri.get_data_seconds(4)
-        x,y,r,theta = lockin.get_data()
-
-        tsg = df.add_timestream_data(dmod, ri, t0, tsg=tsg, mmw_source_freq=mmw_source_frequency,
-                                     mmw_source_modulation_freq=mmw_source_modulation_freq,
-                                     zbd_voltage=x)
-        df.sync()
-        print "done with sweep"
-
-
-    # now do source off
-
-    nsamp = 2**18
-    step = 1
-    nstep = 80
-    offset_bins = np.arange(-(nstep+1),(nstep+1))*step
-
-    offsets = offset_bins*512.0/nsamp
-    offsets = np.concatenate(([offsets.min()-20e-3,],offsets,[offsets.max()+20e-3]))
-
-    source_off()
-    print "setting attenuator to",attenlist[0]
-    ri.set_dac_attenuator(attenlist[0])
-    f0binned = np.round(f0s*nsamp/512.0)*512.0/nsamp
-    measured_freqs = sweeps.prepare_sweep(ri,f0binned,offsets,nsamp=nsamp)
-    print "loaded waveforms in", (time.time()-start),"seconds"
-
-    sweep_data = sweeps.do_prepared_sweep(ri, nchan_per_step=atonce, reads_per_step=1)
-    orig_sweep_data = sweep_data
-    meas_cfs = []
-    idxs = []
-    delays = []
-    for m in range(len(f0s)):
-        fr,s21,errors = sweep_data.select_by_freq(f0s[m])
-        thiscf = f0s[m]
-        res = fit_best_resonator(fr[1:-1],s21[1:-1],errors=errors[1:-1]) #Resonator(fr,s21,errors=errors)
-        delay = res.delay
-        delays.append(delay)
-        s21 = s21*np.exp(2j*np.pi*res.delay*fr)
-        res = fit_best_resonator(fr,s21,errors=errors)
-        fmin = fr[np.abs(s21).argmin()]
-        print "s21 fmin", fmin, "original guess",thiscf,"this fit", res.f_0, "delay",delay,"resid delay",res.delay
-        if use_fmin:
-            meas_cfs.append(fmin)
-        else:
-            if abs(res.f_0 - thiscf) > max_fit_error:
-                if abs(fmin - thiscf) > max_fit_error:
-                    print "using original guess"
-                    meas_cfs.append(thiscf)
-                else:
-                    print "using fmin"
-                    meas_cfs.append(fmin)
-            else:
-                print "using this fit"
-                meas_cfs.append(res.f_0)
-        idx = np.unravel_index(abs(measured_freqs - meas_cfs[-1]).argmin(),measured_freqs.shape)
-        idxs.append(idx)
-
-    delay = np.median(delays)
-    print "median delay is ",delay
-    nsamp = 2**22
-    step = 1
-
-    offset_bins = np.array([-8,-4,-2,-1,0,1,2,4])
-    offset_bins = np.concatenate(([-40,-20],offset_bins,[20,40]))
-    offsets = offset_bins*512.0/nsamp
-
-    meas_cfs = np.array(meas_cfs)
-    f0binned_meas = np.round(meas_cfs*nsamp/512.0)*512.0/nsamp
-    f0s = f0binned_meas
-    measured_freqs = sweeps.prepare_sweep(ri,f0binned_meas,offsets,nsamp=nsamp)
-    print "loaded updated waveforms in", (time.time()-start),"seconds"
-
-
-
-    sys.stdout.flush()
-    time.sleep(1)
-
-
-    df.log_hw_state(ri)
-    sweep_data = sweeps.do_prepared_sweep(ri, nchan_per_step=atonce, reads_per_step=1, sweep_data=orig_sweep_data)
-    df.add_sweep(sweep_data)
-    meas_cfs = []
-    idxs = []
-    for m in range(len(f0s)):
-        fr,s21,errors = sweep_data.select_by_freq(f0s[m])
-        thiscf = f0s[m]
-        s21 = s21*np.exp(2j*np.pi*delay*fr)
-        res = fit_best_resonator(fr,s21,errors=errors) #Resonator(fr,s21,errors=errors)
-        fmin = fr[np.abs(s21).argmin()]
-        print "s21 fmin", fmin, "original guess",thiscf,"this fit", res.f_0
-        if use_fmin:
-            meas_cfs.append(fmin)
-        else:
-            if abs(res.f_0 - thiscf) > max_fit_error:
-                if abs(fmin - thiscf) > max_fit_error:
-                    print "using original guess"
-                    meas_cfs.append(thiscf)
-                else:
-                    print "using fmin"
-                    meas_cfs.append(fmin)
-            else:
-                print "using this fit"
-                meas_cfs.append(res.f_0)
-        idx = np.unravel_index(abs(measured_freqs - meas_cfs[-1]).argmin(),measured_freqs.shape)
-        idxs.append(idx)
-    print meas_cfs
-
-    df.nc.close()
 
 print "completed in",((time.time()-start)/60.0),"minutes"
