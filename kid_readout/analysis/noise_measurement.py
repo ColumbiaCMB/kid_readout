@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import matplotlib
 matplotlib.use('agg')
 #matplotlib.rcParams['mathtext.fontset'] = 'stix'
@@ -586,6 +587,25 @@ class SweepNoiseMeasurement(object):
         title = ("%s\nmeasured %s\nplotted %s" % (self.chip_name,time.ctime(self.sweep_epoch),time.ctime()))
         ax1.set_title(title,size='small')
         return f1
+
+    def to_dataframe(self):
+        data = {}
+        for param in self.fit_params.values():
+            data[param.name] = param.value
+            data[param.name+'_err'] = param.stderr
+
+        attrs = self.__dict__.keys()
+        attrs.remove('fit_params')
+        attrs.remove('zbd_voltage')
+
+        private = [x for x in attrs if x.startswith('_')]
+        for private_var in private:
+            attrs.remove(private_var)
+        for pn in attrs:
+            data[pn]= getattr(self,pn)
+
+        return pd.DataFrame(data,index=[0])
+
         
 def load_noise_pkl(pklname):
     fh = open(pklname,'r')
