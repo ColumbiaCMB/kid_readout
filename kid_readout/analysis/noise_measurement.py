@@ -596,10 +596,6 @@ class SweepNoiseMeasurement(object):
 
         attrs = self.__dict__.keys()
         attrs.remove('fit_params')
-        try:
-            attrs.remove('zbd_voltage')
-        except ValueError:
-            pass
 
         private = [x for x in attrs if x.startswith('_')]
         for private_var in private:
