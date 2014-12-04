@@ -63,7 +63,7 @@ start = time.time()
 
 max_fit_error = 0.5
 use_fmin = False
-attenlist = [39,37,35,33,31,29]
+attenlist = [45,43,41,39,37,35,33,31,29]
 while True:
     print "*"*40
     print "Hit enter to take a data set"
