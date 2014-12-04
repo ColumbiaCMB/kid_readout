@@ -591,18 +591,21 @@ class SweepNoiseMeasurement(object):
     def to_dataframe(self):
         data = {}
         for param in self.fit_params.values():
-            data[param.name] = param.value
-            data[param.name+'_err'] = param.stderr
+            data[param.name] = [param.value]
+            data[param.name+'_err'] = [param.stderr]
 
         attrs = self.__dict__.keys()
         attrs.remove('fit_params')
-        attrs.remove('zbd_voltage')
+        try:
+            attrs.remove('zbd_voltage')
+        except ValueError:
+            pass
 
         private = [x for x in attrs if x.startswith('_')]
         for private_var in private:
             attrs.remove(private_var)
         for pn in attrs:
-            data[pn]= getattr(self,pn)
+            data[pn]= [getattr(self,pn)]
 
         return pd.DataFrame(data,index=[0])
 
