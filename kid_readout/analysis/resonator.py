@@ -24,6 +24,10 @@ def fit_resonator(freq, s21, mask=None, errors=None, min_a=0.08, fstat_thresh=0.
     if not np.iscomplexobj(errors):
         errors = errors*(1+1j)  # if real errors are given, convert them to complex to make sure the Resonator class
                                 # is happy.
+    # Mask points that have exceptionally large errors:
+    if mask is None and errors is not None:
+        mask = abs(errors) < 5 * np.median(abs(errors))
+
     rr = Resonator(freq, s21, mask=mask, errors=errors, guess=my_default_guess)
 
     if delay_estimate is not None:

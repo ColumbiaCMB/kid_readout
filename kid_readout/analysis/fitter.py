@@ -83,10 +83,7 @@ class Fitter(object):
         self._functions = functions
         self.method = method
         if mask is None:
-            if errors is None:
-                self.mask = np.ones(x_data.shape, dtype=np.bool)
-            else:
-                self.mask = abs(errors) < np.median(abs(errors)) * 3
+            self.mask = np.ones(x_data.shape, dtype=np.bool)
         else:
             self.mask = mask
         self.errors = errors
@@ -109,7 +106,7 @@ class Fitter(object):
         try:
             return self._functions[attr](self.result.params)
         except KeyError:
-            raise AttributeError("'{0}' object has no attribute '{1}'".format(self.__class__.__name__, attr))
+            raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__, attr))
 
     def __dir__(self):
         return (dir(super(Fitter, self)) +
