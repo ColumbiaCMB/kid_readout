@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 import os
+import sys
 
 import kid_readout.analysis.fit_pulses
 from kid_readout.analysis.noise_measurement import SweepNoiseMeasurement, save_noise_pkl
@@ -77,9 +78,10 @@ if __name__ == "__main__":
     #fns = glob.glob('/home/data2/2014-10-15*mmwnoisestep*.nc')
     #fns = glob.glob('/home/data2/2014-10-17*mmwnoisestep*.nc')
     #fns = glob.glob('/home/data2/2014-10-18*mmwnoisestep*.nc')
-    fns = glob.glob('/home/data2/2014-*mmw*step*.nc')
-    fns.sort()
-    if True:
+    #fns = glob.glob('/home/data2/2014-*mmw*step*.nc')
+    #fns.sort()
+    fns = glob.glob(sys.argv[1])
+    if False:
         pool = multiprocessing.Pool(4)
         pool.map(process_file,fns)
 
