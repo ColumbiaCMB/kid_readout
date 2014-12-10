@@ -18,6 +18,15 @@ class FunctionGenerator(object):
             self.send("OUTPUT ON")
         else:
             self.send("OUTPUT OFF")
+
+    def set_square_wave(self,freq,high_level,low_level=0,duty_cycle_percent=50.0):
+        self.enable_output(False)
+        self.send("FUNC SQUARE")
+        self.send("FREQ %f" % freq)
+        self.send("VOLT:HIGH %f" % high_level)
+        self.send("VOLT:LOW %f" % low_level)
+        self.send("FUNC:SQUARE:DCYCLE %f" % (duty_cycle_percent))
+        print "waveform ready, remember to enable output."
         
     def send_get(self,cmd,timeout=1):
         result = None
