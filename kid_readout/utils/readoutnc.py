@@ -7,6 +7,8 @@ from collections import OrderedDict
 from kid_readout.utils.roach_utils import ntone_power_correction
 import kid_readout.utils.fftfilt
 from kid_readout.utils.data_block import lpf
+import kid_readout.utils.roach_utils
+
 
 class TimestreamGroup(object):
     def __init__(self,ncgroup, parent=None):
@@ -147,6 +149,11 @@ class ReadoutNetCDF(object):
             self.gitinfo = ''
 
         try:
+            self.boffile = self.ncroot.boffile
+        except AttributeError:
+            self.boffile = ''
+
+        try:
             self.mmw_atten_turns = self.ncroot.mmw_atten_turns
         except AttributeError:
             self.mmw_atten_turns = (np.nan,np.nan)
@@ -163,6 +170,16 @@ class ReadoutNetCDF(object):
         self.timestreams = self.timestreams_dict.values()
     def close(self):
         self.ncroot.close()
+
+    def get_delay_estimate(self):
+        if self.boffile == '':
+            try:
+                nfft = self.sweeps[0].timestream_group.nfft[0]
+            except IndexError:
+                raise Exception("could not find any means to estimate the delay for %s" % self.filename)
+            return kid_readout.utils.roach_utils.get_delay_estimate_for_nfft(nfft)
+        else:
+            return kid_readout.utils.roach_utils.get_delay_estimate_for_boffile(self.boffile)
 
     def _get_hwstate_index_at(self,epoch):
         """

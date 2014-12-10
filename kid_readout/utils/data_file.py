@@ -72,6 +72,8 @@ class DataFile():
         self.hw_ntones[idx] = ri.tone_bins.shape[1]
         self.hw_modulation_rate[idx] = ri.modulation_rate
         self.hw_modulation_output[idx] = ri.modulation_output
+        if not 'boffile' in self.nc.ncattrs():
+            self.nc.boffile = ri.boffile
         
     def log_adc_snap(self,ri):
         t0 = time.time()

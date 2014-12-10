@@ -253,12 +253,20 @@ class SweepNoiseMeasurement(object):
         self.sweep_s21 = self.sweep_s21[order]
         self.sweep_errors = self.sweep_errors[order]
 
+        if delay_estimate is None:
+            self.delay_estimate_microseconds = self._sweep_file.get_delay_estimate()*1e6
+        else:
+            self.delay_estimate_microseconds = delay_estimate
+
+
         if mask_sweep_indicies is None:
-            rr = fit_best_resonator(self.sweep_freqs_MHz,self.sweep_s21,errors=self.sweep_errors,delay_estimate=delay_estimate)
+            rr = fit_best_resonator(self.sweep_freqs_MHz,self.sweep_s21,errors=self.sweep_errors,
+                                    delay_estimate=self.delay_estimate_microseconds)
         else:
             mask = np.ones(self.sweep_s21.shape,dtype=np.bool)
             mask[mask_sweep_indicies] = False
-            rr = fit_best_resonator(self.sweep_freqs_MHz[mask],self.sweep_s21[mask],errors=self.sweep_errors[mask],delay_estimate=delay_estimate)
+            rr = fit_best_resonator(self.sweep_freqs_MHz[mask],self.sweep_s21[mask],errors=self.sweep_errors[mask],
+                                    delay_estimate=self.delay_estimate_microseconds)
         self._resonator_model = rr
         self.Q_i = rr.Q_i
         self.fit_params = rr.result.params
