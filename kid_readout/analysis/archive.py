@@ -5,14 +5,28 @@ try:
     import pwd
 except ImportError:
     print "couldn't import pwd, ignoring"
+    pwd = None
 
 from kid_readout.analysis.noise_measurement import load_noise_pkl
 import glob
 import time
 
-def build_simple_archive(pklnames, index_to_id = None):
+def build_simple_archives(pklglob,index_to_id=None):
+    pklnames = glob.glob(pklglob)
+    dfs = []
+    for pklname in pklnames:
+        dfs.append(build_simple_archive([pklname],index_to_id=index_to_id))
+    return pd.concat(dfs,ignore_index=True)
+
+def build_simple_archive(pklnames, index_to_id = None, archive_name=None):
+
     if not type(pklnames) is list:
         pklnames = glob.glob(pklnames)
+
+    if archive_name is None:
+        archive_name = os.path.splitext(os.path.basename(pklnames[0]))[0]
+    archname = '/home/data/archive/%s.npy' % archive_name
+
     data = []
     for pklname in pklnames:
         nms = load_noise_pkl(pklname)
@@ -27,4 +41,34 @@ def build_simple_archive(pklnames, index_to_id = None):
         x['resonator_id'] = index_to_id[x.resonator_index.iloc[0]]
         return x
     df = df.groupby(['resonator_index']).apply(set_resonator_id).reset_index(drop=True)
+
+    save_archive(df,archname)
+    return df
+
+def add_noise_summary(df,device_band=(1,100),amplifier_band=(2e3,10e3), method=np.median):
+    x = df
+    device_noise = []
+    amplifier_noise = []
+    for k in range(len(x)):
+        devmsk = (x.pca_freq.iloc[k] >= device_band[0]) & (x.pca_freq.iloc[k] <= device_band[1])
+        ampmsk = (x.pca_freq.iloc[k] >= amplifier_band[0]) & (x.pca_freq.iloc[k] <= amplifier_band[1])
+        device_noise.append(method(x.pca_eigvals.iloc[k][1,devmsk]))
+        amplifier_noise.append(method(x.pca_eigvals.iloc[k][1,ampmsk]))
+    x['device_noise'] = np.array(device_noise)
+    x['amplifier_noise'] = np.array(amplifier_noise)
+    return df
+
+
+def save_archive(df,archname):
+    try:
+        np.save(archname,df.to_records())
+        if pwd is not None:
+            os.chown(archname, os.getuid(), pwd.getpwnam('readout').pw_gid)
+    except Exception,e:
+        print "failed to pickle",e
+
+
+def load_archive(fn):
+    npa = np.load(fn)
+    df = pd.DataFrame.from_records(npa)
     return df

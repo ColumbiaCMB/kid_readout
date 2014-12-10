@@ -10,19 +10,21 @@ plot single file: k = plot_single_noise(f,pxx)
 """
 
 from __future__ import division
+import cPickle
+
 import numpy as np
 import matplotlib
-import cPickle
-from lmfit import minimize 
+from lmfit import minimize
+
 matplotlib.rcParams['mathtext.fontset'] = 'stix'
 matplotlib.rcParams['font.size'] = 16.0
 import os
     
-from kid_readout.analysis.noise_function import pkl_mask as default_mask
-from kid_readout.analysis.noise_function import guess as default_guess
-from kid_readout.analysis.noise_function import model as default_model
-from kid_readout.analysis.noise_function import plot_single_pkl_noise as plot_single_pkl_noise
-from kid_readout.analysis.noise_function import crop_data as crop_data
+from kid_readout.analysis._old.noise_function import pkl_mask as default_mask
+from kid_readout.analysis._old.noise_function import guess as default_guess
+from kid_readout.analysis._old.noise_function import model as default_model
+from kid_readout.analysis._old.noise_function import plot_single_pkl_noise as plot_single_pkl_noise
+from kid_readout.analysis._old.noise_function import crop_data as crop_data
 class Noise(object):
     def __init__(self,f,p,A=4709632.149,B=1,alpha=-3,beta=-0.1,fc=2e3,i=3,N_white=1e-3,
                  guess_func=default_guess,model_func=default_model,mask_func=None,
