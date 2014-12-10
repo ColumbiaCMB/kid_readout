@@ -63,7 +63,7 @@ def process_file(filename):
                     noise_off_sweeps=noise_off_sweep_params)
         blah, fbase = os.path.split(filename)
         fbase, ext = os.path.splitext(fbase)
-        pklname = os.path.join('/home/data', 'mmw_noise_steps_' + fbase + '.pkl')
+        pklname = os.path.join('/home/data/pkl', 'mmw_noise_steps_' + fbase + '.pkl')
         save_noise_pkl(pklname, data)
         return data
     except KeyboardInterrupt:
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     #fns = glob.glob('/home/data2/2014-*mmw*step*.nc')
     #fns.sort()
     fns = glob.glob(sys.argv[1])
-    if False:
+    if True:
         pool = multiprocessing.Pool(4)
         pool.map(process_file,fns)
 
