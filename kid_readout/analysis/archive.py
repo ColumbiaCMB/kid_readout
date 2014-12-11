@@ -10,6 +10,7 @@ except ImportError:
 from kid_readout.analysis.noise_measurement import load_noise_pkl
 import glob
 import time
+import kid_readout.analysis.noise_fit
 
 def build_simple_archives(pklglob,index_to_id=None):
     pklnames = glob.glob(pklglob)
@@ -58,6 +59,22 @@ def add_noise_summary(df,device_band=(1,100),amplifier_band=(2e3,10e3), method=n
     x['amplifier_noise'] = np.array(amplifier_noise)
     return df
 
+def add_noise_fits(df):
+    def add_noise_fit_info(x):
+        try:
+            nf = kid_readout.analysis.noise_fit.fit_single_pole_noise(x['pca_freq'].iloc[0],
+                                                                  x['pca_eigvals'].iloc[0][1,:],
+                                                                  max_num_masked=8)
+        except:
+            return x
+        x['noise_fit_fc'] = nf.fc
+        x['noise_fit_fc_err'] = nf.result.params['fc'].stderr
+        x['noise_fit_device_noise'] = nf.A
+        x['noise_fit_device_noise_err'] = nf.result.params['A'].stderr
+        x['noise_fit_amplifier_noise'] = nf.nw
+        x['noise_fit_amplifier_noise_err'] = nf.result.params['nw'].stderr
+        return x
+    return df.groupby(df.index).apply(add_noise_fit_info)
 
 def save_archive(df,archname):
     try:
