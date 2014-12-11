@@ -240,21 +240,21 @@ def load_archive(fn):
 
 if __name__ == "__main__":
     infos = dict(
-    df0924 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-09-24*.pkl'),index_to_resnum=np.arange(16)),
-    df0929 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-09-29*.pkl'),index_to_resnum=np.arange(16)),
-    df0930 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-09-30*.pkl'),index_to_resnum=np.arange(16)),
-    df1001 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-01*.pkl'),index_to_resnum=np.arange(16)),
-    df1014 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-14*.pkl'),index_to_resnum=np.arange(16)),
-    df1015 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-15*.pkl'),index_to_resnum=np.arange(16)),
-    df1017 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-17*.pkl'),index_to_resnum=np.arange(16)),
-    df1018 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-18*.pkl'),index_to_resnum=np.arange(16)),
-    df1022 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-22*.pkl'),index_to_resnum=np.arange(16)),
-    df1024 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-24*.pkl'),index_to_resnum=np.arange(16)),
-    df1028 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-28*.pkl'),index_to_resnum=np.arange(16)),
-    df1029 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-29*.pkl'),index_to_resnum=np.arange(16)),
-    df1030 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-10-30*.pkl'),index_to_resnum=np.arange(16)),
-    df1103 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-11-03*.pkl'),index_to_resnum=np.arange(16)),
-    df1104 = dict(files=glob.glob('/home/data/mmw_noise_steps_2014-11-04*.pkl'),index_to_resnum=np.arange(16)),
+    df0924 = dict(files=glob.glob('/home/data/pkl/mmw_noise_steps_2014-09-24*.pkl'),index_to_resnum=np.arange(16)),
+    df0929 = dict(files=glob.glob('/home/data/pkl/mmw_noise_steps_2014-09-29*.pkl'),index_to_resnum=np.arange(16)),
+    df0930 = dict(files=glob.glob('/home/data/pkl/mmw_noise_steps_2014-09-30*.pkl'),index_to_resnum=np.arange(16)),
+    df1001 = dict(files=glob.glob('/home/data/pkl/mmw_noise_steps_2014-10-01*.pkl'),index_to_resnum=np.arange(16)),
+    df1014 = dict(files=glob.glob('/home/data/pkl/mmw_noise_steps_2014-10-14*.pkl'),index_to_resnum=np.arange(16)),
+    df1015 = dict(files=glob.glob('/home/data/pkl/mmw_noise_steps_2014-10-15*.pkl'),index_to_resnum=np.arange(16)),
+    df1017 = dict(files=glob.glob('/home/data/pkl/mmw_noise_steps_2014-10-17*.pkl'),index_to_resnum=np.arange(16)),
+    df1018 = dict(files=glob.glob('/home/data/pkl/mmw_noise_steps_2014-10-18*.pkl'),index_to_resnum=np.arange(16)),
+    df1022 = dict(files=glob.glob('/home/data/pkl/mmw_noise_steps_2014-10-22*.pkl'),index_to_resnum=np.arange(16)),
+    df1024 = dict(files=glob.glob('/home/data/pkl/mmw_noise_steps_2014-10-24*.pkl'),index_to_resnum=np.arange(16)),
+    df1028 = dict(files=glob.glob('/home/data/pkl/mmw_noise_steps_2014-10-28*.pkl'),index_to_resnum=np.arange(16)),
+    df1029 = dict(files=glob.glob('/home/data/pkl/mmw_noise_steps_2014-10-29*.pkl'),index_to_resnum=np.arange(16)),
+    df1030 = dict(files=glob.glob('/home/data/pkl/mmw_noise_steps_2014-10-30*.pkl'),index_to_resnum=np.arange(16)),
+    df1103 = dict(files=glob.glob('/home/data/pkl/mmw_noise_steps_2014-11-03*.pkl'),index_to_resnum=np.arange(16)),
+    df1104 = dict(files=glob.glob('/home/data/pkl/mmw_noise_steps_2014-11-04*.pkl'),index_to_resnum=np.arange(16)),
     )
 
     for dfn,info in infos.items():
