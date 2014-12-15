@@ -30,7 +30,13 @@ def build_simple_archive(pklnames, index_to_id = None, archive_name=None):
 
     data = []
     for pklname in pklnames:
-        nms = load_noise_pkl(pklname)
+        pkl = load_noise_pkl(pklname)
+        if type(pkl) is list:
+            nms = pkl
+        else:
+            nms = []
+            for k,v in pkl.items():
+                nms.extend(v)
         for nm in nms:
             data.append(nm.to_dataframe())
     df = pd.concat(data,ignore_index=True)

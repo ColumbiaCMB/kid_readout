@@ -20,7 +20,17 @@ def process_file(filename):
     print filename
     try:
         rnc = kid_readout.utils.readoutnc.ReadoutNetCDF(filename)
-        num_power_steps = len(rnc.timestreams)-1 # last time stream is modulated measurement
+        num_timestreams = len(rnc.timestreams)
+        num_sweeps = len(rnc.sweeps)
+        if num_timestreams == num_sweeps:
+            has_source_off_timestream = False
+            num_power_steps = num_timestreams - 1 # last time stream is modulated measurement
+        elif num_timestreams == num_sweeps + 1:
+            has_source_off_timestream = True
+            num_power_steps = num_timestreams - 2
+        else:
+            raise Exception("Found unexpected number of timestreams %d and number of sweeps %d for file %s" %
+                            (num_timestreams,num_sweeps,filename))
         resonator_ids = np.unique(rnc.sweeps[0].index)
         noise_on_measurements = []
         noise_modulated_measurements = []
@@ -31,29 +41,43 @@ def process_file(filename):
                 noise_on_measurement = SweepNoiseMeasurement(sweep_filename=filename, sweep_group_index=idx,
                                                              timestream_group_index=idx,
                                                              resonator_index=resonator_id,
-                                                             delay_estimate=-63.0)
+                                                             )
                 power_steps_mmw_on.append(noise_on_measurement)
                 noise_on_measurement._close_files()
             noise_modulated_measurement = SweepNoiseMeasurement(sweep_filename=filename, sweep_group_index=0,
                                                                 timestream_group_index=num_power_steps,
                                                                 resonator_index=resonator_id,
                                                                 deglitch_threshold=None,
-                                                                delay_estimate=-63.0)
+                                                                )
+            if has_source_off_timestream:
+                noise_off_measurement = SweepNoiseMeasurement(sweep_filename=filename, sweep_group_index=num_sweeps-1,
+                                                              timestream_group_index=num_timestreams-1,
+                                                              resonator_index=resonator_id)
+
             #all the zbd_voltages are the same, so we can grab any of them
-            noise_modulated_measurement.zbd_voltage = rnc.timestreams[-1].zbd_voltage[0]
+            noise_modulated_measurement.zbd_voltage = rnc.timestreams[num_power_steps].zbd_voltage[0]
             for noise_on_measurement in power_steps_mmw_on:
-                noise_on_measurement.zbd_voltage = rnc.timestreams[-1].zbd_voltage[0]
+                noise_on_measurement.zbd_voltage = rnc.timestreams[num_power_steps].zbd_voltage[0]
             if noise_modulated_measurement.timestream_modulation_period_samples != 0:
                 noise_modulated_measurement.folded_projected_timeseries = noise_modulated_measurement.projected_timeseries.reshape((-1, noise_modulated_measurement.timestream_modulation_period_samples))
                 folded = noise_modulated_measurement.folded_projected_timeseries.mean(0)
                 high, low, rising_edge = kid_readout.analysis.fit_pulses.find_high_low(folded)
                 noise_modulated_measurement.folded_projected_timeseries = np.roll(noise_modulated_measurement.folded_projected_timeseries,-rising_edge, axis=1)
+                noise_modulated_measurement.folded_normalized_timeseries = np.roll(
+                    noise_modulated_measurement.normalized_timeseries.reshape((-1,noise_modulated_measurement.timestream_modulation_period_samples)),
+                    -rising_edge, axis=1)
             else:
                 noise_modulated_measurement.folded_projected_timeseries = None
 
-            fr, s21, err = rnc.sweeps[-1].select_by_index(resonator_id)
-            noise_off_sweep = kid_readout.analysis.resonator.fit_best_resonator(fr, s21, errors=err)
-            noise_off_sweep_params.append(noise_off_sweep.result.params)
+            if not has_source_off_timestream:
+                fr, s21, err = rnc.sweeps[-1].select_by_index(resonator_id)
+                noise_off_sweep = kid_readout.analysis.resonator.fit_best_resonator(fr, s21, errors=err)
+                noise_off_sweep_params.append(noise_off_sweep.result.params)
+            else:
+                noise_off_measurement.zbd_voltage = rnc.timestreams[num_power_steps].zbd_voltage[0]
+                noise_off_sweep_params.append(noise_off_measurement)
+
+
             noise_on_measurements.extend(power_steps_mmw_on)
             noise_modulated_measurements.append(noise_modulated_measurement)
             noise_modulated_measurement._close_files()
@@ -63,7 +87,7 @@ def process_file(filename):
                     noise_off_sweeps=noise_off_sweep_params)
         blah, fbase = os.path.split(filename)
         fbase, ext = os.path.splitext(fbase)
-        pklname = os.path.join('/home/data/pkl', 'mmw_noise_steps_' + fbase + '.pkl')
+        pklname = os.path.join('/home/data/pkl', fbase + '.pkl')
         save_noise_pkl(pklname, data)
         return data
     except KeyboardInterrupt:
@@ -81,8 +105,9 @@ if __name__ == "__main__":
     #fns = glob.glob('/home/data2/2014-*mmw*step*.nc')
     #fns.sort()
     fns = glob.glob(sys.argv[1])
+    fns.sort()
     if True:
-        pool = multiprocessing.Pool(4)
+        pool = multiprocessing.Pool(6)
         pool.map(process_file,fns)
 
     else:
