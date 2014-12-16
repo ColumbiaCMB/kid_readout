@@ -30,14 +30,16 @@ def prepare_sweep(ri,center_freqs,offsets,nsamp=2**21):
     freqs = center_freqs[None,:] + offsets[:,None]
     return ri.set_tone_freqs(freqs,nsamp=nsamp)
     
-def do_prepared_sweep(ri,nchan_per_step=8,reads_per_step=2,callback = None, sweep_data=None):
+def do_prepared_sweep(ri,nchan_per_step=8,reads_per_step=2,callback = None, sweep_data=None, banks=None):
     if sweep_data is not None:
         swp = sweep_data
     else:
         swp = SweepData()
     nbanks = ri.tone_bins.shape[0]
     nsamp = ri.tone_nsamp
-    for bank in range(nbanks):
+    if banks is None:
+        banks = range(nbanks)
+    for bank in banks:
         ri.select_bank(bank)
         nchan = ri.fft_bins.shape[1]
         nstep = int(np.ceil(nchan/float(nchan_per_step)))

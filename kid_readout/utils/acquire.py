@@ -21,9 +21,9 @@ offset_integers = {19: np.arange(-63, 64),
                    20: np.concatenate([np.arange(-42, -20, 2),
                                        np.arange(-20, 21),
                                        np.arange(22, 44, 2)]),
-                   21: np.concatenate([np.arange(-40, -10, 5),
+                   21: np.concatenate([np.arange(-35, -10, 5),
                                        np.arange(-10, 11),
-                                       np.arange(15, 45, 5)]),
+                                       np.arange(15, 40, 5)]),
                    22: np.array([-36, -28, -15, -10, -6, -3, -1,
                                  0, 1, 3, 6, 10, 15, 21, 28, 36])}
 
