@@ -38,7 +38,10 @@ def build_simple_archive(pklnames, index_to_id = None, archive_name=None):
             for k,v in pkl.items():
                 nms.extend(v)
         for nm in nms:
-            data.append(nm.to_dataframe())
+            try:
+                data.append(nm.to_dataframe())
+            except AttributeError:
+                print "skipping non noise measurement for now"
     df = pd.concat(data,ignore_index=True)
     if index_to_id is None:
         indexes = list(set(df.resonator_index))
