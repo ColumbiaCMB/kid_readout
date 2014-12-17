@@ -62,6 +62,12 @@ def extract_and_pickle(nc_filename):
                 -rising_edge, axis=1)
             all_noise_modulated.append(noise_modulated)
 
+            # Add the ZBD voltage from the modulated timestream to the modulated and static on measurements:
+            zbd_voltage = rnc.timestreams[modulated_timestream_index].zbd_voltage[0]
+            noise_modulated.zbd_voltage = zbd_voltage
+            for snm in noise_on:
+                snm.zbd_voltage = zbd_voltage
+
             # Save only the Parameters object from a fit to the coarse sweep.
             freq, s21, err = rnc.sweeps[coarse_sweep_index].select_by_index(resonator_index)
             coarse_resonator = fit_best_resonator(freq, s21, errors=err)
