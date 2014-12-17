@@ -14,7 +14,7 @@ def extract_and_pickle(nc_filename):
                                                   resonator_index=resonator_index))
         rnc.close()
         # We decided to keep the .pkl files in /home/data regardless of origin.
-        pkl_filename = os.path.join('/home/data', os.path.splitext(os.path.split(nc_filename)[1])[0] + '.pkl')
+        pkl_filename = os.path.join('/home/data/pkl', os.path.splitext(os.path.split(nc_filename)[1])[0] + '.pkl')
         save_noise_pkl(pkl_filename, snms)
         print("Saved {}".format(pkl_filename))
     except KeyboardInterrupt:
@@ -24,11 +24,14 @@ def extract_and_pickle(nc_filename):
 if __name__ == '__main__':
     import sys
     from glob import glob
-    filenames = glob(sys.argv[1])
     try:
-        threads = int(sys.argv[2])
+        threads = int(sys.argv[1])
+        filenames = []
+        for arg in sys.argv[2:]:
+            filenames.extend(glob(arg))
     except IndexError:
-        threads = 1
+        print("python pickle_sweep_noise_measurements.py <threads> <file patterns>")
+        sys.exit()
     if threads == 1:
         for filename in filenames:
             extract_and_pickle(filename)
