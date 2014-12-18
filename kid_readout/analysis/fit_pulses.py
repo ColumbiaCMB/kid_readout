@@ -36,6 +36,41 @@ def fred_guess(x,y):
     print "initial guess:",params
     return params
 
+def fred_hat(t,tau,amp,offset,t_on,t_rise,t_top):
+    result = np.empty_like(t)
+    before = t < t_on
+    result[before] = offset
+    turning_on = (t >= t_on) & (t < (t_on+t_rise))
+    t_during_rise = (t - t_on)[turning_on]
+    result[turning_on] = t_during_rise*amp/t_rise + offset
+    on = (t>=(t_on+t_rise)) & ( t < (t_on+t_rise+t_top))
+    result[on] = amp+offset
+    after = t>= (t_on+t_rise+t_top)
+    result[after] = amp*np.exp(-(t[after]-(t_on+t_rise))/tau)+offset
+    return result
+
+def fred_hat_model(params,x):
+    return fred_hat(x,params['tau'].value,
+                params['amp'].value,
+                params['offset'].value,
+                params['t_on'].value,
+                params['t_rise'].value,
+                params['t_top'].value)
+
+def fred_hat_guess(x,y):
+    params = lmfit.Parameters()
+    peak_at = abs(y-y.mean()).argmax()
+    peak = y[peak_at]
+    offset = y.mean()
+    tau_guess = x.ptp()/100.0
+    params.add('tau',value=tau_guess,min=0,max=x.ptp()*10)
+    params.add('amp',value=peak-offset,min=-y.ptp(),max=y.ptp())
+    params.add('offset',value=offset,min=y.min()-y.ptp(),max=y.max()+y.ptp())
+    params.add('t_on',value=x[peak_at],min=x.min(),max=x.max())
+    params.add('t_rise',value=tau_guess/10.0,min=0,max=x.ptp()*10)
+    params.add('t_top',value=tau_guess/10.0,min=0,max=tau_guess)
+    print "initial guess:",params
+    return params
 
 def exponential(t,tau,amp,offset,t0=0):
     result = np.empty_like(t)

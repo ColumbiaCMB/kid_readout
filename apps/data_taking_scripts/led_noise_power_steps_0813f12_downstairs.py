@@ -57,8 +57,8 @@ start = time.time()
 
 max_fit_error = 0.5
 use_fmin = False
-attenlist = [45,43]#,41,39,37,35,33,31,29]
-led_voltages=[2.0]
+attenlist = [45,43,41,39,37,35,33,31]
+led_voltages=np.linspace(1.3,1.9,10)
 for led_voltage in led_voltages:
 
     nsamp = 2**18
@@ -148,7 +148,7 @@ for led_voltage in led_voltages:
             res = fit_best_resonator(fr,s21,errors=errors) #Resonator(fr,s21,errors=errors)
             fmin = fr[np.abs(s21).argmin()]
             print "s21 fmin", fmin, "original guess",thiscf,"this fit", res.f_0
-            if k != 0 or use_fmin:
+            if ('a' in res.result.params) or use_fmin:
                 print "using fmin"
                 meas_cfs.append(fmin)
             else:

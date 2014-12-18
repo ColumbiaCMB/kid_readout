@@ -6,8 +6,8 @@ from kid_readout.equipment.hittite_controller import hittiteController
 import rtlsdr
 
 class RtlKidReadout(object):
-    def __init__(self):
-        self.hittite = hittiteController()
+    def __init__(self,hittite_addr='192.168.1.70'):
+        self.hittite = hittiteController(addr=hittite_addr)
         self.rtl = rtlsdr.RtlSdr()
         self.rtl.sample_rate = 256e3
         self.rtl.gain = 30.0
