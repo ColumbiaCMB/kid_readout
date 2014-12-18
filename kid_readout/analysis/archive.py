@@ -89,6 +89,11 @@ def add_noise_fits(df):
         return x
     return df.groupby(df.index).apply(add_noise_fit_info)
 
+def add_total_mmw_attenuator_turns(df):
+    df['mmw_atten_total_turns'] = np.nan
+    df.ix[~df.mmw_atten_turns.isnull(),'mmw_atten_total_turns'] = np.array([x.sum() for x in df[~df.mmw_atten_turns.isnull()].mmw_atten_turns])
+    return df
+
 def save_archive(df,archname):
     try:
         np.save(archname,df.to_records())
