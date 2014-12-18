@@ -60,10 +60,14 @@ def add_noise_summary(df,device_band=(1,100),amplifier_band=(2e3,10e3), method=n
     device_noise = []
     amplifier_noise = []
     for k in range(len(x)):
-        devmsk = (x.pca_freq.iloc[k] >= device_band[0]) & (x.pca_freq.iloc[k] <= device_band[1])
-        ampmsk = (x.pca_freq.iloc[k] >= amplifier_band[0]) & (x.pca_freq.iloc[k] <= amplifier_band[1])
-        device_noise.append(method(x.pca_eigvals.iloc[k][1,devmsk]))
-        amplifier_noise.append(method(x.pca_eigvals.iloc[k][1,ampmsk]))
+        if not np.all(np.isfinite(x.pca_freq.iloc[k])):
+            device_noise.append(np.nan)
+            amplifier_noise.append(np.nan)
+        else:
+            devmsk = (x.pca_freq.iloc[k] >= device_band[0]) & (x.pca_freq.iloc[k] <= device_band[1])
+            ampmsk = (x.pca_freq.iloc[k] >= amplifier_band[0]) & (x.pca_freq.iloc[k] <= amplifier_band[1])
+            device_noise.append(method(x.pca_eigvals.iloc[k][1,devmsk]))
+            amplifier_noise.append(method(x.pca_eigvals.iloc[k][1,ampmsk]))
     x['device_noise'] = np.array(device_noise)
     x['amplifier_noise'] = np.array(amplifier_noise)
     return df
