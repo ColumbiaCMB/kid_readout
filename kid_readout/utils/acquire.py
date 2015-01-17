@@ -136,8 +136,9 @@ def record_timestream(roach, nominal_frequencies, attenuation, n_samples, suffix
     df.nc.close()
 
 
-def sweep_fit_timestream(roach, center_frequencies, offset_frequencies, sweep_n_samples, timestream_n_samples, attenuation, suffix,
-                         time_in_seconds, interactive=False, coarse_multiplier=3):
+def sweep_fit_timestream(roach, center_frequencies, offset_frequencies, sweep_n_samples, timestream_n_samples,
+                         attenuation, suffix, time_in_seconds,
+                         interactive=False, preliminary_sweep=True, coarse_multiplier=3):
     df = data_file.DataFile(suffix=suffix)
     print("Writing data to " + df.filename)
     print("Setting DAC attenuator to {:.1f} dB".format(attenuation))
@@ -146,17 +147,23 @@ def sweep_fit_timestream(roach, center_frequencies, offset_frequencies, sweep_n_
           memory_usage_bytes(offset_frequencies.shape[0], sweep_n_samples) / 2 ** 20, EFFECTIVE_DRAM_CAPACITY / 2 ** 20))
 
     # Do a preliminary sweep to make sure the main sweeps are centered properly.
-    sweeps.prepare_sweep(roach, center_frequencies, coarse_multiplier * offset_frequencies, sweep_n_samples)
-    roach._sync()
-    time.sleep(0.2)
-    if interactive:
-        raw_input("Hit enter to record preliminary frequency sweep.")
+    if preliminary_sweep:
+        sweeps.prepare_sweep(roach, center_frequencies, coarse_multiplier * offset_frequencies, sweep_n_samples)
+        roach._sync()
+        time.sleep(0.2)
+        if interactive:
+            raw_input("Hit enter to record preliminary frequency sweep.")
+        else:
+            print("Recording preliminary frequency sweep.")
+        coarse_sweep_data = sweeps.do_prepared_sweep(roach, nchan_per_step=center_frequencies.size, reads_per_step=8)
+        coarse_resonators = fit_sweep_data(coarse_sweep_data)
+        coarse_f0s = np.array([r.f_0 for r in coarse_resonators])
+        fine_center_frequencies = round_frequencies(coarse_f0s, roach.fs, sweep_n_samples)
+        print("Initial frequencies in MHz are " + ', '.join(['{:.3f}'.format(f0) for f0 in center_frequencies]))
+        print("initial - coarse fit [Hz]: " +
+              ', '.join(['{:.0f}'.format(1e6 * delta_f) for delta_f in center_frequencies - fine_center_frequencies]))
     else:
-        print("Recording preliminary frequency sweep.")
-    coarse_sweep_data = sweeps.do_prepared_sweep(roach, nchan_per_step=center_frequencies.size, reads_per_step=8)
-    coarse_resonators = fit_sweep_data(coarse_sweep_data)
-    coarse_f0s = np.array([r.f_0 for r in coarse_resonators])
-    fine_center_frequencies = round_frequencies(coarse_f0s, roach.fs, sweep_n_samples)
+        fine_center_frequencies = center_frequencies
 
     # Now do the actual sweep and save it.
     sweeps.prepare_sweep(roach, fine_center_frequencies, offset_frequencies, sweep_n_samples)
@@ -175,10 +182,10 @@ def sweep_fit_timestream(roach, center_frequencies, offset_frequencies, sweep_n_
     resonators = fit_sweep_data(sweep_data)
     fine_f0s = np.array([r.f_0 for r in resonators])
     print("Initial frequencies in MHz are " + ', '.join(['{:.3f}'.format(f0) for f0 in center_frequencies]))
-    print("initial - fit [Hz]: " +
+    print("initial - fine fit [Hz]: " +
           ', '.join(['{:.0f}'.format(1e6 * delta_f) for delta_f in center_frequencies - fine_f0s]))
 
-    timestream_measured_frequencies = roach.set_tone_frequencies(fine_f0s, nsamp=timestream_n_samples)
+    timestream_measured_frequencies = roach.set_tone_freqs(fine_f0s, nsamp=timestream_n_samples)
     roach.select_fft_bins(np.arange(roach.tone_bins.shape[1]))
     roach._sync()
     time.sleep(0.2)

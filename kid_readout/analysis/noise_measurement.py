@@ -224,8 +224,9 @@ class SweepNoiseMeasurement(object):
         self.timestream_mmw_source_freq = self.timestream.mmw_source_freq[timestream_index]
 
         old_style_source_modulation_freq = self.timestream.mmw_source_modulation_freq[timestream_index]
-        if (np.isfinite(old_style_source_modulation_freq) and old_style_source_modulation_freq !=
-            self.timestream_modulation_freq):
+        if (np.isfinite(old_style_source_modulation_freq) and
+            (old_style_source_modulation_freq != self.timestream_modulation_freq) and
+            (old_style_source_modulation_freq != 0)):
             print ("found old style modulation frequency", old_style_source_modulation_freq,
                    "which doesn't match the new style",
                    self.timestream_modulation_freq,"using the old style value")
@@ -233,7 +234,6 @@ class SweepNoiseMeasurement(object):
             self.timestream_modulation_period_samples = int(self.timeseries_sample_rate/old_style_source_modulation_freq)
             self.timestream_modulation_duty_cycle = 0.5
 
-        
         self.timestream_epoch = self.timestream.epoch[timestream_index]
         self.timestream_duration = original_timeseries.shape[0]/self.timeseries_sample_rate
         # The following hack helps fix a long standing timing bug which was recently fixed/improved
