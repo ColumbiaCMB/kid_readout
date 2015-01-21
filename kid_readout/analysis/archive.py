@@ -11,6 +11,7 @@ from kid_readout.analysis.noise_measurement import load_noise_pkl
 import glob
 import time
 import kid_readout.analysis.noise_fit
+from kid_readout.analysis import kid_response
 
 def build_simple_archives(pklglob,index_to_id=None):
     pklnames = glob.glob(pklglob)
@@ -93,6 +94,70 @@ def add_total_mmw_attenuator_turns(df):
     df['mmw_atten_total_turns'] = np.nan
     df.ix[~df.mmw_atten_turns.isnull(),'mmw_atten_total_turns'] = np.array([x.sum() for x in df[~df.mmw_atten_turns.isnull()].mmw_atten_turns])
     return df
+
+def get_constant_package_temperature_data(df,center_temperature=0.183,peak_excursion=0.005):
+    return df[abs(df.sweep_primary_package_temperature-center_temperature) < peak_excursion]
+
+
+def add_calibration(x,zbd_calibration_data=None):
+    #print x.resonator_id.value_counts()
+    rid = x['resonator_id'].iloc[0]
+    print rid
+    this_res = zbd_calibration_data[zbd_calibration_data.resonator_id==rid]
+    if len(this_res) > 0:
+        x['f_0_max'] = this_res.f_0_max.iloc[0]
+        x['frac_f0'] = 1-x.f_0/x.f_0_max
+        x['response_break_point'] = this_res.response_break_point.iloc[0]
+        x['response_scale'] = this_res.response_scale.iloc[0]
+        x['response_break_point_err'] = this_res.response_break_point_err.iloc[0]
+        x['response_scale_err'] = this_res.response_scale_err.iloc[0]
+    else:
+        print "warning, resonator",rid,"has no calibration data"
+        x['f_0_max'] = np.nan
+        x['frac_f0'] = np.nan
+        x['response_break_point'] = np.nan
+        x['response_scale'] = np.nan
+        x['response_break_point_err'] = np.nan
+        x['response_scale_err'] = np.nan
+
+    return x
+
+
+def compute_reconstructed_power(df,calibration):
+    df = df.groupby(['resonator_id']).apply(add_calibration,zbd_calibration_data=calibration).reset_index(drop=True)
+    df['reconstructed_power'] = kid_response.fractional_freq_to_power(x=df.frac_f0,
+                                                                     break_point=df.response_break_point,
+                                                                     scale=df.response_scale)
+    return df
+
+
+
+def build_response_fit_function(make_plots=False, mcmc_length=500, mcmc_burn_in=400):
+    def fit_response_mcmc(x):
+        x['f_0_max'] = x.f_0.max()
+        x['frac_f0'] = 1-x.f_0/x.f_0_max
+        mask = (x.sweep_primary_load_temperature<5) & (x.zbd_power > 0)
+        fit = kid_readout.analysis.kid_response.MCMCKidResponseFitter(x[mask]['frac_f0'],x[mask]['zbd_power'],
+                                                                      errors = np.where(x[mask]['zbd_power']>1e-7,
+                                                                                        x[mask]['zbd_power']*1e-2,
+                                                                                        1e-8))
+        fit.run(burn_in=mcmc_burn_in,length=mcmc_length)
+        if make_plots:
+            blah = fit.triangle()
+        x['response_break_point']=fit.mcmc_params['break_point'].value
+        x['response_scale']=fit.mcmc_params['scale'].value
+        x['response_break_point_err']=fit.mcmc_params['break_point'].stderr
+        x['response_scale_err']=fit.mcmc_params['scale'].stderr
+        #x['watts_to_ppm'] = (2*pp[0]*x['noise_on_frac_f0']+pp[1])
+        x['reconstructed_power'] = fit.to_power(x['frac_f0'])
+        return x
+    return fit_response_mcmc
+
+def normalize_f0(x):
+    x['f_0_max'] = x[x.sweep_primary_package_temperature < 0.3]['f_0'].max()
+    x['frac_f0'] = (x['f_0_max'] - x['f_0']) / x['f_0_max']
+    return x
+
 
 def save_archive(df,archname):
     try:
