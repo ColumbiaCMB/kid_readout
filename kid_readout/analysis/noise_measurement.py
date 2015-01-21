@@ -125,7 +125,7 @@ class SweepNoiseMeasurement(object):
     def __init__(self,sweep_filename,sweep_group_index=0,timestream_filename=None,timestream_group_index=0,
                  resonator_index=0,low_pass_cutoff_Hz=4.0,
                  dac_chain_gain = -49, delay_estimate=None,
-                 deglitch_threshold=5, cryostat=None, mask_sweep_indicies=None):
+                 deglitch_threshold=5, cryostat=None, mask_sweep_indicies=None, use_sweep_group_timestream=False):
         """
         sweep_filename : str
             NetCDF4 file with at least the sweep data. By default, this is also used for the timestream data.
@@ -176,6 +176,7 @@ class SweepNoiseMeasurement(object):
         self.timestream_group_index = timestream_group_index
         self._sweep_file = None
         self._timestream_file = None
+        self._use_sweep_group_timestream = use_sweep_group_timestream
         
         self.sweep_epoch = self.sweep.start_epoch
         pkg1,pkg2,load1,load2 = get_temperatures_at(self.sweep.start_epoch)
@@ -209,7 +210,24 @@ class SweepNoiseMeasurement(object):
         
         # find the time series that was measured closest to the sweep frequencies
         # this is a bit sloppy...
-        timestream_index = np.argmin(abs(self.timestream.measurement_freq-self.sweep_freqs_MHz.mean()))
+        if self._use_sweep_group_timestream:
+            if delay_estimate is None:
+                self.delay_estimate_microseconds = self._sweep_file.get_delay_estimate()*1e6
+            else:
+                self.delay_estimate_microseconds = delay_estimate
+
+
+            if mask_sweep_indicies is None:
+                rr = fit_best_resonator(self.sweep_freqs_MHz,self.sweep_s21,errors=self.sweep_errors,
+                                        delay_estimate=self.delay_estimate_microseconds)
+            else:
+                mask = np.ones(self.sweep_s21.shape,dtype=np.bool)
+                mask[mask_sweep_indicies] = False
+                rr = fit_best_resonator(self.sweep_freqs_MHz[mask],self.sweep_s21[mask],errors=self.sweep_errors[mask],
+                                        delay_estimate=self.delay_estimate_microseconds)
+            timestream_index = np.argmin(abs(self.timestream.measurement_freq-rr.f_0))
+        else:
+            timestream_index = np.argmin(abs(self.timestream.measurement_freq-self.sweep_freqs_MHz.mean()))
         self.timestream_index = timestream_index
         
         original_timeseries = self.timestream.get_data_index(timestream_index)
@@ -221,9 +239,13 @@ class SweepNoiseMeasurement(object):
         self.timestream_modulation_freq = self.timestream.modulation_freq[timestream_index]
         self.timestream_modulation_phase = self.timestream.modulation_phase[timestream_index]
         self.timestream_modulation_period_samples = self.timestream.modulation_period_samples[timestream_index]
-        self.timestream_mmw_source_freq = self.timestream.mmw_source_freq[timestream_index]
+        if not self._use_sweep_group_timestream:
+            self.timestream_mmw_source_freq = self.timestream.mmw_source_freq[timestream_index]
+            old_style_source_modulation_freq = self.timestream.mmw_source_modulation_freq[timestream_index]
+        else:
+            self.timestream_mmw_source_freq = np.nan
+            old_style_source_modulation_freq = np.nan
 
-        old_style_source_modulation_freq = self.timestream.mmw_source_modulation_freq[timestream_index]
         if (np.isfinite(old_style_source_modulation_freq) and old_style_source_modulation_freq !=
             self.timestream_modulation_freq):
             print ("found old style modulation frequency", old_style_source_modulation_freq,
@@ -305,7 +327,7 @@ class SweepNoiseMeasurement(object):
             deglitched_timeseries = projected_timeseries
         
         # TODO: should nyquist_freq be half the sample rate?
-        self.low_pass_projected_timeseries = low_pass_fir(deglitched_timeseries, num_taps=1024, cutoff=low_pass_cutoff_Hz, 
+        self.low_pass_projected_timeseries = low_pass_fir(deglitched_timeseries, num_taps=1024, cutoff=low_pass_cutoff_Hz,
                                                 nyquist_freq=self.timeseries_sample_rate, decimate_by=decimation_factor)
         self.low_pass_timestep = decimation_factor/self.timeseries_sample_rate
         
@@ -433,8 +455,12 @@ class SweepNoiseMeasurement(object):
         """
         Get the timestream group from the netcdf file
         """
-        self._open_timestream_file()
-        return self._timestream_file.timestreams[self.timestream_group_index]
+        if self._use_sweep_group_timestream:
+            self._open_sweep_file()
+            return self._sweep_file.sweeps[self.sweep_group_index].timestream_group
+        else:
+            self._open_timestream_file()
+            return self._timestream_file.timestreams[self.timestream_group_index]
     
     @property
     def resonator_model(self):
@@ -553,7 +579,8 @@ class SweepNoiseMeasurement(object):
     #    ax2b.set_xlim(ax2.get_xlim())
         ax2.grid()
         ax2b.grid(color='r')
-        ax2.set_xlim(self.pca_freq[1],self.pca_freq[-1])
+        if not self._use_sweep_group_timestream:
+            ax2.set_xlim(self.pca_freq[1],self.pca_freq[-1])
         ax2.set_ylabel('1/Hz')
         ax2.set_xlabel('Hz')
         ax2.legend(prop=dict(size='small'))
