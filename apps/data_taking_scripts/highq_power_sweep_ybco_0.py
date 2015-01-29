@@ -7,31 +7,21 @@ from kid_readout.utils import roach_interface,data_file,sweeps
 from kid_readout.analysis.resonator import Resonator
 from kid_readout.analysis.resonator import fit_best_resonator
 
-ri = roach_interface.RoachBasebandWide()
+ri = roach_interface.RoachBaseband()
 ri.initialize()
 #ri.set_fft_gain(6)
-#f0s = np.load('/home/gjones/workspace/apps/f8_fit_resonances.npy')
-#f0s = np.load('/home/gjones/workspace/apps/first_pass_sc3x3_0813f9.npy')
-#f0s = np.load('/home/gjones/workspace/apps/sc5x4_0813f10_first_pass.npy')#[:4]
-#f0s = np.load('/home/gjones/workspace/readout/apps/sc3x3_0813f9_2014-02-11.npy')
-#f0s = np.load('/home/gjones/workspace/readout/apps/sc3x3_0813f5_2014-02-27.npy')
-f0s = np.load('/home/gjones/workspace/readout/apps/sc3x3_140423_0813f4.npy')
+f0s = np.array([157.315, 201.49])
 f0s.sort()
 #f0s = f0s*(0.9995)
 
 suffix = "led"
 
 nf = len(f0s)
-atonce = 4
+atonce = 2
 if nf % atonce > 0:
     print "extending list of resonators to make a multiple of ",atonce
     f0s = np.concatenate((f0s,np.arange(1,1+atonce-(nf%atonce))+f0s.max()))
 
-offsets = np.linspace(-4882.8125,4638.671875,20)#[5:15]
-offsets = offsets
-#offsets = np.concatenate(([-40e3,-20e3],offsets,[20e3,40e3]))/1e6
-offsets = np.concatenate(([-40e3],offsets,[40e3]))/1e6
-#offsets = offsets*4
 
 nsamp = 2**18
 step = 1
@@ -59,7 +49,7 @@ if False:
 start = time.time()
 
 use_fmin = True
-attenlist = np.linspace(33,45,5)-9
+attenlist = np.linspace(33,63,5)
 #attenlist = [44.0]
 #attenlist = attenlist[:4]
 for atten in attenlist:

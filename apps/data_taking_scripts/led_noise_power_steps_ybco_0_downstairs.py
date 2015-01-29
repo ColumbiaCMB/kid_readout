@@ -16,17 +16,16 @@ mmw_source_frequency = np.nan
 source_on_freq_scale = 1.0  # nominally 1 if low-ish power
 
 ri = roach_interface.RoachBaseband()
-f0s = np.load('/home/gjones/readout/kid_readout/apps/sc5x4_0813f12.npy')
-f0s.sort()
-f0s = f0s[[0,1,2,3,4,5,6,7,8,9,10,13,14,15,16,17]]  # remove close packed resonators to enable reading out all simultaneously
+f0s = np.array([157.315, 201.49])
 
 suffix = "led"
 mmw_source_modulation_freq = 256e6/2**21
+print mmw_source_modulation_freq
 mmw_atten_turns = (np.nan,np.nan)
 
 
 nf = len(f0s)
-atonce = 16
+atonce = 2
 if nf % atonce > 0:
     print "extending list of resonators to make a multiple of ",atonce
     f0s = np.concatenate((f0s,np.arange(1,1+atonce-(nf%atonce))+f0s.max()))
@@ -57,8 +56,8 @@ start = time.time()
 
 max_fit_error = 0.5
 use_fmin = False
-attenlist = [45,43,41,39,37,35,33,31]
-led_voltages=np.linspace(1.3,1.9,10)
+attenlist = [33]#[45,43,41,39,37,35,33,31]
+led_voltages=[1.5,1.7]
 for led_voltage in led_voltages:
 
     nsamp = 2**18
@@ -71,6 +70,7 @@ for led_voltage in led_voltages:
 
     print "measuring with LED at %f volts" % led_voltage
     fg.set_dc_voltage(led_voltage)
+    ri.set_modulation_output(rate='low')
     print "setting attenuator to",attenlist[0]
     ri.set_dac_attenuator(attenlist[0])
     f0binned = np.round(f0s*source_on_freq_scale*nsamp/512.0)*512.0/nsamp
@@ -110,7 +110,7 @@ for led_voltage in led_voltages:
 
     delay = np.median(delays)
     print "median delay is ",delay
-    nsamp = 2**22
+    nsamp = 2**20
     step = 1
 
     offset_bins = np.array([-8,-4,-2,-1,0,1,2,4])
@@ -200,6 +200,7 @@ for led_voltage in led_voltages:
     ri.select_bank(ri.tone_bins.shape[0]-1)
     fg.set_square_wave(freq=mmw_source_modulation_freq,high_level=led_voltage)
     fg.enable_output(True)
+    ri.set_modulation_output(rate=7)
     df.log_hw_state(ri)
     nsets = len(meas_cfs)/atonce
     tsg = None
@@ -209,7 +210,7 @@ for led_voltage in led_voltages:
         ri._sync()
         time.sleep(0.4)
         t0 = time.time()
-        dmod,addr = ri.get_data_seconds(4)
+        dmod,addr = ri.get_data_seconds(30)
         x = led_voltage
 
         tsg = df.add_timestream_data(dmod, ri, t0, tsg=tsg, mmw_source_freq=mmw_source_frequency,
@@ -229,6 +230,7 @@ for led_voltage in led_voltages:
     offsets = np.concatenate(([offsets.min()-20e-3,],offsets,[offsets.max()+20e-3]))
 
     fg.enable_output(False)
+    ri.set_modulation_output(rate='high')
     print "setting attenuator to",attenlist[0]
     ri.set_dac_attenuator(attenlist[0])
     f0binned = np.round(f0s*nsamp/512.0)*512.0/nsamp
@@ -268,7 +270,7 @@ for led_voltage in led_voltages:
 
     delay = np.median(delays)
     print "median delay is ",delay
-    nsamp = 2**22
+    nsamp = 2**20
     step = 1
 
     offset_bins = np.array([-8,-4,-2,-1,0,1,2,4])
@@ -330,7 +332,7 @@ for led_voltage in led_voltages:
         ri._sync()
         time.sleep(0.4)
         t0 = time.time()
-        dmod,addr = ri.get_data_seconds(4)
+        dmod,addr = ri.get_data_seconds(30)
         x = 0.0
 
         tsg = df.add_timestream_data(dmod, ri, t0, tsg=tsg, mmw_source_freq=mmw_source_frequency,
