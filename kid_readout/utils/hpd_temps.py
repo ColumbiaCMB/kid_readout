@@ -35,6 +35,7 @@ def get_nc_list():
         
     # Then the interim logs
     ncs2 = glob.glob(os.path.join(nc_dir,'garbage_cooldown_logs/2014*.nc'))
+    ncs2 += glob.glob(os.path.join(nc_dir,'garbage_cooldown_logs/2015*.nc'))
     ncs2.sort()
     if len(ncs2) == 0:
         raise Exception("Could not find any nc files; is the data directory mounted properly?")
