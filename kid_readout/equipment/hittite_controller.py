@@ -1,7 +1,7 @@
 import socket
 
 class hittiteController():
-    def __init__(self, addr='192.168.000.070', port=50000, terminator='\r'):
+    def __init__(self, addr='192.168.001.070', port=50000, terminator='\r'):
         self.address=(addr,port)
         self.terminator=terminator
         self.connect()
