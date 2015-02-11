@@ -42,7 +42,7 @@ class Fitter(object):
 
     def __init__(self, x_data, y_data,
                  model=line_model, guess=line_guess, functions=default_functions,
-                 mask=None, errors=None, method='leastsq'):
+                 mask=None, errors=None, method='leastsq', **minimize_keywords):
         """
         Arguments:
 
@@ -58,6 +58,10 @@ class Fitter(object):
         fit the data, and the default is to use all data.
 
         errors: an array of the same size and data type as y_data with the corresponding error values;
+
+        method: a string representing the fitting method for lmfit.minimize to use.
+
+        minimize_keywords: keyword arguments that are passed directly to lmfit.minimize.
 
         Returns:
 
@@ -82,6 +86,7 @@ class Fitter(object):
         self._model = model
         self._functions = functions
         self.method = method
+        self.minimize_keywords = minimize_keywords
         if mask is None:
             self.mask = np.ones(x_data.shape, dtype=np.bool)
         else:
@@ -120,7 +125,7 @@ class Fitter(object):
 
         initial: a Parameters object containing initial values; it is modified by lmfit.
         """
-        self.result = lmfit.minimize(self.residual, initial, method=self.method)
+        self.result = lmfit.minimize(self.residual, initial, method=self.method, **self.minimize_keywords)
 
     def _residual_without_errors(self, params=None):
         """
