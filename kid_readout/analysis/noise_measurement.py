@@ -36,6 +36,22 @@ from kid_readout.analysis.resources import experiments
 
 import cPickle
 
+def find_nc_file(filename):
+    """
+    Find nc data file based on partial filename
+
+    Some pkls have incomplete timestream and sweep filenames, so we use this to complete them.
+    """
+    if os.path.exists(filename):
+        return filename
+    data_filename = os.path.join('/home/data2',filename)
+    if os.path.exists(data_filename):
+        return data_filename
+    data_filename = os.path.join('/home/data',filename)
+    if os.path.exists(data_filename):
+        return data_filename
+    raise IOError("Could not find file %s in any of /, /home/data, or /home/data2" % filename)
+
 
 def plot_noise_nc(fglob,**kwargs):
     """
@@ -500,11 +516,11 @@ class SweepNoiseMeasurement(object):
             
     def _open_sweep_file(self):
         if self._sweep_file is None:
-            self._sweep_file = readoutnc.ReadoutNetCDF(self.sweep_filename)
+            self._sweep_file = readoutnc.ReadoutNetCDF(find_nc_file(self.sweep_filename))
 
     def _open_timestream_file(self):
         if self._timestream_file is None:
-            self._timestream_file = readoutnc.ReadoutNetCDF(self.timestream_filename)
+            self._timestream_file = readoutnc.ReadoutNetCDF(find_nc_file(self.timestream_filename))
         
     def _close_files(self):
         if self._sweep_file:
