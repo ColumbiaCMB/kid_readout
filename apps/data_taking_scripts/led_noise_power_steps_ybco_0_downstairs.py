@@ -56,8 +56,8 @@ start = time.time()
 
 max_fit_error = 0.5
 use_fmin = False
-attenlist = [33]#[45,43,41,39,37,35,33,31]
-led_voltages=[1.5,1.7]
+attenlist = [33,39]#[45,43,41,39,37,35,33,31]
+led_voltages=[0.5]#,1.5,1.7,2.0,2.2]
 for led_voltage in led_voltages:
 
     nsamp = 2**18

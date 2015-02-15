@@ -31,12 +31,13 @@ def demodulate(data,poly_degree=7,debug=False):
     demod2 = demod * np.exp(-1j*np.polyval(poly,t))
     if debug:
         fig = plt.figure()
-        ax = fig.add_subplot(111)
+        ax = fig.add_subplot(211)
         ax.plot(t[::interval],np.unwrap(np.angle(demod[::interval])))
         ax.plot(t[::interval],np.polyval(poly,t[::interval]),'r',lw=2)
+        ax = fig.add_subplot(212)
         ax.plot(t[::interval],np.unwrap(np.angle(demod2[::interval])))
-        print demod3.dtype
-        ax.plot(t[::interval],np.unwrap(np.angle(demod3[::interval])))
+#        print demod3.dtype
+#        ax.plot(t[::interval],np.unwrap(np.angle(demod3[::interval])))
 
     return demod2
 
