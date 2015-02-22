@@ -262,7 +262,6 @@ class SweepNoiseMeasurement(object):
             self.timestream_mmw_source_freq = np.nan
             old_style_source_modulation_freq = np.nan
 
-        old_style_source_modulation_freq = self.timestream.mmw_source_modulation_freq[timestream_index]
         if (np.isfinite(old_style_source_modulation_freq) and
             (old_style_source_modulation_freq != self.timestream_modulation_freq) and
             (old_style_source_modulation_freq != 0)):
