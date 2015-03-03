@@ -7,17 +7,12 @@ from kid_readout.analysis.resonator import Resonator, fit_resonator
 from kid_readout.analysis.khalil import delayed_generic_s21, delayed_auto_guess
 from kid_readout.analysis.khalil import bifurcation_s21, bifurcation_guess
 
-# Both of these numbers may be wrong: check!
 BYTES_PER_SAMPLE = 4
 EFFECTIVE_DRAM_CAPACITY = 2**28  # 256 MB
 
-# This array almost fills the Roach memory when using 2^21 samples
-offset_integers_31 = np.array([-40, -30, -25, -20, -15, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-                               0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30, 40])
-
-# These are intended to be good offsets to use with 2^key tone samples.
-# Each array almost fills the Roach memory.
-offset_integers = {19: np.arange(-63, 64),
+# These are intended to be good offsets to use with 2^key tone samples. Each array almost fills the Roach memory.
+offset_integers = {18: np.arange(-127, 128),
+                   19: np.arange(-63, 64),
                    20: np.concatenate([np.arange(-42, -20, 2),
                                        np.arange(-20, 21),
                                        np.arange(22, 44, 2)]),

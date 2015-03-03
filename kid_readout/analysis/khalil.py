@@ -46,7 +46,6 @@ def qi_error(Q, Q_err, Q_e_real, Q_e_real_err, Q_e_imag, Q_e_imag_err):
     dQi = np.sqrt((dQ * dQi_dQ) ** 2 + (dQer * dQi_dQer) ** 2 + (dQei * dQi_dQei) ** 2)
     return dQi
 
-# todo: rewrite all functions to use params.valuesdict()
 
 def cable_delay(params, f):
     """
@@ -76,7 +75,7 @@ def generic_s21(params, f):
     Q = params['Q'].value
     Q_e = (params['Q_e_real'].value +
            1j * params['Q_e_imag'].value)
-    return A * (1 - (Q * Q_e ** -1 /
+    return A * (1 - (Q * Q_e**-1 /
                      (1 + 2j * Q * (f - f_0) / f_0)))
 
 

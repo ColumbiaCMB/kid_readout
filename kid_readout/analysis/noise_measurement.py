@@ -11,7 +11,8 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 mlab = plt.mlab
 
-from kid_readout.analysis.resonator import Resonator,fit_best_resonator
+from kid_readout.analysis.resonator import fit_best_resonator
+from kid_readout.analysis.khalil import qi_error
 from kid_readout.analysis import iqnoise
 from kid_readout.utils import readoutnc
 
@@ -318,6 +319,9 @@ class SweepNoiseMeasurement(object):
                                     delay_estimate=self.delay_estimate_microseconds)
         self._resonator_model = rr
         self.Q_i = rr.Q_i
+        self.Q_i_err = qi_error(rr.result.params['Q'].value, rr.result.params['Q'].stderr,
+                                rr.result.params['Q_e_real'].value, rr.result.params['Q_e_real'].stderr,
+                                rr.result.params['Q_e_imag'].value, rr.result.params['Q_e_imag'].stderr)
         self.fit_params = rr.result.params
         
         decimation_factor = self.timeseries_sample_rate/low_pass_cutoff_Hz

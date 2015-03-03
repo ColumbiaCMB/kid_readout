@@ -55,6 +55,12 @@ class SIM(object):
     boolean_to_token = {True: 'ON',
                         False: 'OFF'}
 
+    # This is experimental. The methods that send commands wait for this time in seconds:
+    communication_delay = 1e-3
+
+    # TODO: figure out the acceptable formats for floats
+    float_format = ':.6f'
+
     def __init__(self, serial, parent_and_port=(None, None)):
         self.serial = serial
         self.parent = parent_and_port[0]
@@ -66,6 +72,7 @@ class SIM(object):
         self.serial.write(message + self.termination)
         if self.parent is not None:
             self.parent.disconnect()
+        time.sleep(self.communication_delay)
 
     # Consider raising SIMTimeout for blank messages;
     # needs to handle disconnection elegantly.
@@ -84,6 +91,7 @@ class SIM(object):
         response = self.serial.readline().strip()
         if self.parent is not None:
             self.parent.disconnect()
+        time.sleep(self.communication_delay)
         return response
 
     # Handle boolean user input for commands that accept ('OFF', '0', 'ON', '1').
@@ -142,12 +150,14 @@ class SIM900(SIM):
                                   ('5', None),
                                   ('6', None),
                                   ('7', None),
-                                  ('8', None),
-                                  ('9', None),
-                                  ('A', None),
-                                  ('B', None),
-                                  ('C', None),
-                                  ('D', None)])
+                                  ('8', None)])
+
+# The other ports have different functions that aren't implemented yet.
+#                                  ('9', None),
+#                                  ('A', None),
+#                                  ('B', None),
+#                                  ('C', None),
+#                                  ('D', None)])
         self.parent = None
         self.disconnect()
         self.reset()
@@ -333,7 +343,8 @@ class SIM921(SIMThermometer):
     @frequency.setter
     def frequency(self, frequency):
         if not self.minimum_frequency <= frequency <= self.maximum_frequency:
-            raise SIMValueError("Valid excitation frequency range is from {} to {} Hz".format(self.minimum_frequency, self.maximum_frequency))
+            raise SIMValueError("Valid excitation frequency range is from {} to {} Hz".format(self.minimum_frequency,
+                                                                                              self.maximum_frequency))
         self.send('FREQ {}'.format(frequency))
 
     @property
@@ -566,9 +577,12 @@ class SIM921(SIMThermometer):
 
     # Autoranging commands
 
+    # TODO: figure out why this takes so long.
+    # TODO: figure out if this is necessary or even helpful when we know the appropriate range and excitation.
+    # TODO: figure out if this is returning too early and causing communication problems.
     def autorange_gain(self):
         """
-        Perform a gain autorange cycle, which should take about two seconds.
+        Perform a gain autorange cycle. The manual says this should take about two seconds, but it usually takes longer.
 
         This method implements the AGAI(?) command.
 
@@ -598,7 +612,84 @@ class SIM921(SIMThermometer):
         self.send('ACAL')
 
     # Setpoint and analog output commands.
-    # Not yet implemented.
+
+    @property
+    def resistance_setpoint(self):
+        """
+        Assign the setpoint, or offset, used for analog output when in resistance mode.
+
+        This property implements the RSET(?) command.
+        """
+        return float(self.send_and_receive('RSET?'))
+
+    @resistance_setpoint.setter
+    def resistance_setpoint(self, resistance):
+        self.send(('RSET {' + self.float_format + '}').format(resistance))
+
+    @property
+    def temperature_setpoint(self):
+        """
+        Assign the setpoint, or offset, used for analog output when in temperature mode.
+
+        This property implements the TSET(?) command.
+        """
+        return float(self.send_and_receive('TSET?'))
+
+    @temperature_setpoint.setter
+    def temperature_setpoint(self, temperature):
+        self.send(('TSET {' + self.float_format + '}').format(temperature))
+
+    @property
+    def analog_output_volts_per_ohm(self):
+        """
+        Set the analog output scale in resistance mode.
+
+        This property implements the VOHM(?) command.
+        """
+        return float(self.send_and_receive('VOHM?'))
+
+    @analog_output_volts_per_ohm.setter
+    def analog_output_volts_per_ohm(self, volts_per_ohm):
+        self.send(('VOHM {' + self.float_format + '}').format(volts_per_ohm))
+
+    @property
+    def analog_output_volts_per_kelvin(self):
+        """
+        Set the analog output scale in temperature mode.
+
+        This property implements the TKEL(?) command.
+        """
+        return float(self.send_and_receive('TKEL?'))
+
+    @analog_output_volts_per_kelvin.setter
+    def analog_output_volts_per_kelvin(self, volts_per_kelvin):
+        self.send(('VKEL {' + self.float_format + '}').format(volts_per_kelvin))
+
+    @property
+    def analog_output_manual_mode(self):
+        """
+        Set the analog output manual mode. In manual mode, the output value is set using the AMAN command.
+
+        This property implements the AMAN(?) command.
+        """
+        return self._boolean_output(self.send_and_receive('AMAN?'))
+
+    @analog_output_manual_mode.setter
+    def analog_output_manual_mode(self, boolean):
+        self.send('AMAN {}'.format(self._boolean_input(boolean)))
+
+    @property
+    def analog_output_manual_value(self):
+        """
+        Set the analog output manual value in volts.
+
+        This property implements the AOUT(?) command.
+        """
+        return float(self.send_and_receive('AOUT?'))
+
+    @analog_output_manual_value.setter
+    def analog_output_manual_value(self, volts):
+        self.send(('AOUT {' + self.float_format + '}').format(volts))
 
     # Interface commands.
     # The *IDN, *RST, and TOKN commands are implemented in SIM.
