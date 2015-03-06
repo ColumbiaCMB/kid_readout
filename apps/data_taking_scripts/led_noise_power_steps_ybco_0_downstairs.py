@@ -16,16 +16,17 @@ mmw_source_frequency = np.nan
 source_on_freq_scale = 1.0  # nominally 1 if low-ish power
 
 ri = roach_interface.RoachBaseband()
-f0s = np.array([157.315, 201.49])
+f0s = np.load('/home/gjones/readout/kid_readout/apps/ybco_4_element_2015-03-01.npy')
+#f0s = np.array([157.315, 201.49])
 
 suffix = "led"
-mmw_source_modulation_freq = 256e6/2**21
+mmw_source_modulation_freq = 256e6/2**24
 print mmw_source_modulation_freq
 mmw_atten_turns = (np.nan,np.nan)
 
 
 nf = len(f0s)
-atonce = 2
+atonce = 4
 if nf % atonce > 0:
     print "extending list of resonators to make a multiple of ",atonce
     f0s = np.concatenate((f0s,np.arange(1,1+atonce-(nf%atonce))+f0s.max()))
@@ -56,8 +57,8 @@ start = time.time()
 
 max_fit_error = 0.5
 use_fmin = False
-attenlist = [33,39]#[45,43,41,39,37,35,33,31]
-led_voltages=[0.5]#,1.5,1.7,2.0,2.2]
+attenlist = [33]#[45,43,41,39,37,35,33,31]
+led_voltages=[1.0,1.5,1.7,2.0,2.2]
 for led_voltage in led_voltages:
 
     nsamp = 2**18

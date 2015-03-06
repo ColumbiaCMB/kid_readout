@@ -63,7 +63,7 @@ def fold(data,period,debug=False):
     fold2 = fold2 * np.exp(-1j*np.angle(fold2[:,:1000]).mean(1)[:,None])
     return fold2
 
-def deproject_rtl(folded,samples_around_peak=200):
+def deproject_rtl(folded,samples_around_peak=200,debug=False):
     if len(folded.shape) > 1:
         folded = folded.mean(0)
     peak_index = np.abs(folded).argmax()
@@ -81,4 +81,9 @@ def deproject_rtl(folded,samples_around_peak=200):
         end = len(folded)-1
     p = np.polyfit(folded[start:end].real,folded[start:end].imag,1)
     deprojection = np.exp(-1j*np.arctan(p[0]))
+    if debug:
+        fig,axs = plt.subplots(1,1)#,figsize=(10,10))
+        axs.plot(folded.real,folded.imag,'.')
+        axs.plot(folded[start:end].real,folded[start:end].imag,'r.')
+        axs.plot([0,deprojection.real*folded.real.max()],[0,-deprojection.imag*folded.imag.max()],'k',lw=2)
     return folded*deprojection, deprojection
