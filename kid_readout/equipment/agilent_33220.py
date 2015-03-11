@@ -2,6 +2,7 @@
 Agilent 33220A Function generator
 """
 import socket
+import time
 
 class FunctionGenerator(object):
     def __init__(self,addr=('192.168.1.135', 5025)):
@@ -26,7 +27,22 @@ class FunctionGenerator(object):
         self.send("VOLT:HIGH %f" % high_level)
         self.send("VOLT:LOW %f" % low_level)
         self.send("FUNC:SQUARE:DCYCLE %f" % (duty_cycle_percent))
+        time.sleep(1)
         print "waveform ready, remember to enable output."
+
+    def set_pulse(self,period,width,high_level,low_level=0):
+        if width >= period:
+            raise ValueError("Width must be less than Period")
+        self.enable_output(False)
+        self.send("FUNC PULSE")
+        self.send("FUNC:PULSE:HOLD WIDTH")
+        self.send("PULSE:PERIOD %f" % period)
+        self.send("PULSE:WIDTH %f" % width)
+        self.send("VOLT:HIGH %f" % high_level)
+        self.send("VOLT:LOW %f" % low_level)
+        time.sleep(1)  # this sleep is required so that the output can be enabled immediately after, otherwise it
+        # seems to ignore the enable request
+        print "waveform ready, remember to enable output"
         
     def send_get(self,cmd,timeout=1):
         result = None

@@ -69,7 +69,6 @@ def fred_hat_guess(x,y):
     params.add('t_on',value=x[peak_at],min=x.min(),max=x.max())
     params.add('t_rise',value=tau_guess/10.0,min=0,max=x.ptp()*10)
     params.add('t_top',value=tau_guess/10.0,min=0,max=tau_guess)
-    print "initial guess:",params
     return params
 
 def exponential(t,tau,amp,offset,t0=0):

@@ -15,6 +15,8 @@ def get_time_constant_from_file(filename,pulse_period=10e-3, debug=False,filter_
     demod = kid_readout.analysis.demodulate_rtl.demodulate(d['data'],debug=debug)
     lpf = scipy.signal.firwin(1024,filter_cutoff/sample_rate)
     filtered = fftfilt(lpf,demod)[512:]
+    if 'pulse_period' in d:
+        pulse_period = d['pulse_period'][()]
     pulse_period_samples = int(d['sample_rate'][()]*pulse_period)
     if fine_fold:
         folded = kid_readout.analysis.demodulate_rtl.fold(filtered,pulse_period_samples)
@@ -57,4 +59,4 @@ def get_time_constant_from_file(filename,pulse_period=10e-3, debug=False,filter_
         ax.set_xscale('symlog')
         ax = fig.add_subplot(235)
         ax.plot(t,y)
-    return fit.tau, fit
+    return fit.tau, fit,t, deprojected
