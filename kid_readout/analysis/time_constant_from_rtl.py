@@ -8,6 +8,48 @@ import kid_readout.analysis.fitter
 import copy
 import scipy.signal
 from kid_readout.utils.fftfilt import fftfilt
+import pandas as pd
+try:
+    import kid_readout.utils.starcryo_temps
+    import kid_readout.utils.hpd_temps
+except ImportError:
+    print "no temperatures available"
+import kid_readout.analysis.resources.experiments
+
+def process_time_constant_rtl_file(filename,pulse_period=None,debug=False,filter_cutoff=200e3,fine_fold=False,
+                                   cryostat=None):
+    result = {}
+    tau,fit,t,folded = get_time_constant_from_file(filename,pulse_period=pulse_period, debug=debug,filter_cutoff=filter_cutoff,
+                                                   fine_fold=fine_fold)
+    d = np.load(filename)
+    for k in d.keys():
+        if k not in ['data']:
+            if len(d[k].shape) == 0:
+                result[k] = [d[k][()]] # unpack zero length arrays
+            else:
+                result[k] = [d[k]]
+    d.close()
+    for k,v in fit.result.params.items():
+        result[k] = [v.value]
+        result[k+'_err'] = [v.stderr]
+    result['folded_time'] = [t]
+    result['folded_data'] = [folded]
+    result['folded_model'] = [fit.model(x=t)]
+    result['residuals'] = [fit.model(x=t)-np.abs(folded)]
+    result['noise_rms'] = [folded[:len(folded)//5].std()]
+    result['folded_peak_mag'] = [np.abs(folded).max()]
+    if cryostat is None:
+        cryostat = kid_readout.analysis.resources.experiments.default_cryostat
+    if cryostat.lower() == 'hpd':
+        primary_package_temperature, secondary_package_temperature, primary_load_temperature, secondary_load_temperature = kid_readout.utils.hpd_temps.get_temperatures_at(result['time'][0])
+    else:
+        primary_package_temperature, secondary_package_temperature, primary_load_temperature, secondary_load_temperature = kid_readout.utils.starcryo_temps.get_temperatures_at(result['time'][0])
+    result['primary_package_temperature'] = [primary_package_temperature]
+    result['secondary_package_temperature'] = [secondary_package_temperature]
+    result['primary_load_temperature'] = [primary_load_temperature]
+    result['secondary_load_temperature'] = [secondary_load_temperature]
+    return pd.DataFrame(result,index=[0])
+
 def get_time_constant_from_file(filename,pulse_period=10e-3, debug=False,filter_cutoff=100e3,
                                 fine_fold=False):
     d = np.load(filename)
