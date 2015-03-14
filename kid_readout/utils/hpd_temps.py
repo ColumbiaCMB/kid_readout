@@ -11,7 +11,10 @@ import bisect
 import numpy as np
 import netCDF4
 
-rx102a_dat = np.loadtxt('/home/gjones/RX-102A.tbl')
+try:
+    rx102a_dat = np.loadtxt('/home/gjones/RX-102A.tbl')
+except IOError:
+    raise ImportError("Could not find /home/gjones/RX-102A.tbl so can't work with HPD temperatures")
 order = rx102a_dat[:,1].argsort()
 rx102a_dat = rx102a_dat[order,:]
 
