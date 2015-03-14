@@ -9,8 +9,8 @@ import copy
 import scipy.signal
 from kid_readout.utils.fftfilt import fftfilt
 import pandas as pd
+import kid_readout.utils.starcryo_temps
 try:
-    import kid_readout.utils.starcryo_temps
     import kid_readout.utils.hpd_temps
 except ImportError:
     print "no temperatures available"
