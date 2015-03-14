@@ -16,7 +16,7 @@ except ImportError:
     print "no temperatures available"
 import kid_readout.analysis.resources.experiments
 
-def process_time_constant_rtl_file(filename,pulse_period=None,debug=False,filter_cutoff=200e3,fine_fold=False,
+def process_time_constant_rtl_file(filename,pulse_period=10e-3,debug=False,filter_cutoff=200e3,fine_fold=False,
                                    cryostat=None):
     result = {}
     tau,fit,t,folded = get_time_constant_from_file(filename,pulse_period=pulse_period, debug=debug,filter_cutoff=filter_cutoff,
