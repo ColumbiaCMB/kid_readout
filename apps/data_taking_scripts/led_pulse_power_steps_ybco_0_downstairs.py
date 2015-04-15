@@ -10,6 +10,7 @@ from kid_readout.analysis.resonator import fit_best_resonator
 import kid_readout.equipment.agilent_33220
 
 fg = kid_readout.equipment.agilent_33220.FunctionGenerator(addr=('192.168.1.145',5025))
+fg.set_load_ohms(10000)
 
 mmw_source_frequency = np.nan
 
@@ -57,8 +58,8 @@ start = time.time()
 
 max_fit_error = 0.5
 use_fmin = False
-attenlist = [33]#[45,43,41,39,37,35,33,31]
-led_voltages=[1.0,1.5,1.7,2.0,2.2]
+attenlist = [24,21,18,15,12]#[45,43,41,39,37,35,33,31]
+led_voltages=np.linspace(2,10,5)#[1.0,1.5,1.7,2.0,2.2]
 for led_voltage in led_voltages:
 
     nsamp = 2**18
@@ -78,6 +79,7 @@ for led_voltage in led_voltages:
     measured_freqs = sweeps.prepare_sweep(ri,f0binned,offsets,nsamp=nsamp)
     print "loaded waveforms in", (time.time()-start),"seconds"
 
+    """
     sweep_data = sweeps.do_prepared_sweep(ri, nchan_per_step=atonce, reads_per_step=1)
     orig_sweep_data = sweep_data
     meas_cfs = []
@@ -129,7 +131,8 @@ for led_voltage in led_voltages:
     sys.stdout.flush()
     time.sleep(1)
 
-
+    """
+    orig_sweep_data= None
     df = data_file.DataFile(suffix=suffix)
     df.nc.mmw_atten_turns=mmw_atten_turns
     for k,atten in enumerate(attenlist):
@@ -145,7 +148,7 @@ for led_voltage in led_voltages:
         for m in range(len(f0s)):
             fr,s21,errors = sweep_data.select_by_freq(f0s[m])
             thiscf = f0s[m]*source_on_freq_scale
-            s21 = s21*np.exp(2j*np.pi*delay*fr)
+            #s21 = s21*np.exp(2j*np.pi*delay*fr)
             res = fit_best_resonator(fr,s21,errors=errors) #Resonator(fr,s21,errors=errors)
             fmin = fr[np.abs(s21).argmin()]
             print "s21 fmin", fmin, "original guess",thiscf,"this fit", res.f_0
@@ -175,7 +178,13 @@ for led_voltage in led_voltages:
             print "offsets:", ((ri.tone_bins[best_bank,:]*ri.fs/ri.tone_nsamp)-meas_cfs)
             ri.select_bank(best_bank)
         ri._sync()
+
+        fg.set_pulse(period=1/mmw_source_modulation_freq,width=10e-6,low_level=0,high_level=led_voltage)
+        fg.enable_output(True)
+        ri.set_modulation_output(rate=7)
+
         time.sleep(0.5)
+
 
 
         df.log_hw_state(ri)
@@ -195,29 +204,5 @@ for led_voltage in led_voltages:
                                          zbd_voltage=x)
             df.sync()
             print "done with sweep"
-
-    # Take modulated data
-    ri.set_dac_attenuator(attenlist[0])
-    ri.select_bank(ri.tone_bins.shape[0]-1)
-    fg.set_pulse(period=1/mmw_source_modulation_freq,width=2e-6,low_level=0,high_level=led_voltage)
-    fg.enable_output(True)
-    ri.set_modulation_output(rate=7)
-    df.log_hw_state(ri)
-    nsets = len(meas_cfs)/atonce
-    tsg = None
-    for iset in range(nsets):
-        selection = range(len(meas_cfs))[iset::nsets]
-        ri.select_fft_bins(selection)
-        ri._sync()
-        time.sleep(0.4)
-        t0 = time.time()
-        dmod,addr = ri.get_data_seconds(30)
-        x = led_voltage
-
-        tsg = df.add_timestream_data(dmod, ri, t0, tsg=tsg, mmw_source_freq=mmw_source_frequency,
-                                     mmw_source_modulation_freq=mmw_source_modulation_freq,
-                                     zbd_voltage=x)
-        df.sync()
-        print "done with sweep"
 
 print "completed in",((time.time()-start)/60.0),"minutes"

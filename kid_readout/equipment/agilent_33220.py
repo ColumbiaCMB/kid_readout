@@ -36,8 +36,11 @@ class FunctionGenerator(object):
         self.enable_output(False)
         self.send("FUNC PULSE")
         self.send("FUNC:PULSE:HOLD WIDTH")
+        time.sleep(2)
         self.send("PULSE:PERIOD %f" % period)
+        time.sleep(0.3)
         self.send("PULSE:WIDTH %f" % width)
+        time.sleep(0.3)
         self.send("VOLT:HIGH %f" % high_level)
         self.send("VOLT:LOW %f" % low_level)
         time.sleep(1)  # this sleep is required so that the output can be enabled immediately after, otherwise it
