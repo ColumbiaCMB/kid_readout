@@ -51,6 +51,7 @@ boffile_delay_estimates = {  # 'bb2xpfb10mcr11_2014_Jan_20_1049.bof',
                              'bb2xpfb14mcr11_2014_Jan_17_1721.bof' : -63.3e-6,
                              'bb2xpfb14mcr16_2014_Sep_23_1157.bof' : -63.3e-6,
                              'bb2xpfb14mcr17_2014_Oct_12_1745.bof' : -63.3e-6,
+                             'bb2xpfb14mcr17b_2015_Apr_21_1159.bof' : -63.3e-6,
                              #'bb2xpfb15mcr1_2013_Jul_24_1504.bof',
                              #'bb2xpfb15mcr1_2013_Jul_27_2342.bof',
                              #'bb2xpfb15mcr4_2013_Jul_31_0004.bof'

@@ -263,8 +263,8 @@ class RoachInterface(object):
         else:
             load_dram = self._load_dram_katcp
         nbytes = data.nbytes
-        bank_size = (
-        64 * 2 ** 20)  # PPC can only access 64MB at a time, so need to break the data into chunks of this size
+        # PPC can only access 64MB at a time, so need to break the data into chunks of this size
+        bank_size = (64 * 2 ** 20)
         nbanks, rem = divmod(nbytes, bank_size)
         if rem:
             nbanks += 1
@@ -556,7 +556,8 @@ class RoachBaseband(RoachInterface):
         # self.boffile = 'bb2xpfb14mcr5_2013_Jul_31_1301.bof'
         #        self.boffile = 'bb2xpfb14mcr7_2013_Oct_31_1332.bof'
         #        self.boffile = 'bb2xpfb14mcr11_2014_Jan_17_1721.bof'
-        self.boffile = 'bb2xpfb14mcr17_2014_Oct_12_1745.bof'
+        #self.boffile = 'bb2xpfb14mcr17_2014_Oct_12_1745.bof'
+        self.boffile = 'bb2xpfb14mcr17b_2015_Apr_21_1159.bof'
 
         if initialize:
             self.initialize()
