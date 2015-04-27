@@ -618,7 +618,8 @@ class RoachBaseband(RoachInterface):
         # self.r.write_int('dram_mask', data.shape[0]/4 - 1)
         self._load_dram(data, start_offset=start_offset, fast=fast)
 
-    def set_tone_freqs(self, freqs, nsamp, amps=None, load=True, normfact=None, readout_selection=None):
+    def set_tone_freqs(self, freqs, nsamp, amps=None, load=True, normfact=None, readout_selection=None,
+                       phases=None):
         """
         Set the stimulus tones to generate
         
@@ -637,7 +638,7 @@ class RoachBaseband(RoachInterface):
         """
         bins = np.round((freqs / self.fs) * nsamp).astype('int')
         actual_freqs = self.fs * bins / float(nsamp)
-        self.set_tone_bins(bins, nsamp, amps=amps, load=load, normfact=normfact)
+        self.set_tone_bins(bins, nsamp, amps=amps, load=load, normfact=normfact,phases=phases)
         self.fft_bins = self.calc_fft_bins(bins, nsamp)
         self.select_bank(0)
         if readout_selection is None:
@@ -661,7 +662,7 @@ class RoachBaseband(RoachInterface):
         self.save_state()
         return actual_freqs
 
-    def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None):
+    def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None,phases=None):
         """
         Set the stimulus tones by specific integer bins
         
@@ -682,7 +683,8 @@ class RoachBaseband(RoachInterface):
         spec = np.zeros((nwaves, nsamp / 2 + 1), dtype='complex')
         self.tone_bins = bins.copy()
         self.tone_nsamp = nsamp
-        phases = np.random.random(bins.shape[1]) * 2 * np.pi
+        if phases is None:
+            phases = np.random.random(bins.shape[1]) * 2 * np.pi
         self.phases = phases.copy()
         if amps is None:
             amps = 1.0
