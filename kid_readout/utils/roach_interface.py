@@ -590,7 +590,6 @@ class RoachBaseband(RoachInterface):
             return 0  # if mask is not set, bank is undefined, so call it 0
         self.bank = bank_reg / (mask_reg + 1)
 
-    # TODO: this selects a waveform but doesn't change fft_readout_selection.
     def select_bank(self, bank):
         dram_addr_per_bank = self.tone_nsamp / 2  # number of dram addresses per bank
         mask_reg = dram_addr_per_bank - 1
@@ -600,6 +599,7 @@ class RoachBaseband(RoachInterface):
         self.r.write_int('dram_mask', mask_reg)
         self._unpause_dram()
         self.bank = bank
+        self.select_fft_bins(self.readout_selection)
 
     def load_waveform(self, wave, start_offset=0, fast=True):
         """
