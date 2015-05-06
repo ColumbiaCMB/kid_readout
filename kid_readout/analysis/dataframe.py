@@ -6,10 +6,9 @@ Only the functions that use groupby should return the DataFrame.
 from __future__ import division
 from copy import deepcopy
 import numpy as np
-import pandas as pd
+import lmfit
 from kid_readout.analysis.khalil import qi_error
 from kid_readout.analysis import archive
-import lmfit
 
 
 def analyze(df, channel_to_location=None, maximum_fractional_f_r_error=1e-5, maximum_iQi_error=1e-5):
@@ -18,10 +17,16 @@ def analyze(df, channel_to_location=None, maximum_fractional_f_r_error=1e-5, max
     add_channel(df)
     if channel_to_location is not None:
         add_location(df, channel_to_location)
-    add_zbd_power(df)
     add_resonator_fit_good(df, maximum_fractional_f_r_error, maximum_iQi_error)
     df = archive.add_noise_fits(df)
-    df = archive.add_total_mmw_attenuator_turns(df)
+    try:
+        add_zbd_power(df)
+    except AttributeError:
+        pass
+    try:
+        df = archive.add_total_mmw_attenuator_turns(df)
+    except AttributeError:
+        pass
     return df
 
 
@@ -87,6 +92,10 @@ def X_model(params, P):
     return X(P, params['P_0'].value, params['P_star'].value, params['X_0'].value)
 
 
+def dX_dP(P, P_0, P_star, X_0):
+    return X_0 * (2 * P_star) ** -1 * (1 + (P + P_0) / P_star) ** (-1 / 2)
+
+
 def X_inverse(X, P_0, P_star, X_0):
     return P_star * ((1 + X / X_0) ** 2 - 1) - P_0
 
@@ -101,6 +110,10 @@ def I(P, P_0, P_star, I_0, I_C):
 
 def I_model(params, P):
     return I(P, params['P_0'].value, params['P_star'].value, params['I_0'].value, params['I_C'].value)
+
+
+def dI_dP(P, P_0, P_star, I_0):
+    return I_0 * (2 * P_star) ** -1 * (1 + (P + P_0) / P_star) ** (-1 / 2)
 
 
 def I_inverse(I, P_0, P_star, I_0, I_C):
@@ -120,6 +133,7 @@ def fit(P, X_data, I_data, initial, X_errors=1, I_errors=1, **kwargs):
     return lmfit.minimize(residual, initial, args=(P, X_data, I_data, X_errors, I_errors), **kwargs)
 
 
+# TODO: write a function that actually guesses
 def guess(P, X_data, I_data):
     return parameters(4e-8, 1e-6, 20e-6, 5e-6, 5e-6)
 
@@ -134,14 +148,6 @@ def parameters(P_0, P_star, X_0, I_0, I_C):
     return params
 
 
-def dX_dP(P, P_0, P_star, X_0):
-    return X_0 / (2 * n_qp_over_n_star(P, P_0, P_star))
-
-
-def dI_dP(P, P_0, P_star, I_0):
-    return I_0 / (2 * n_qp_over_n_star(P, P_0, P_star))
-
-
 def add_XI_responsivity(df, power='zbd_power', masker=None):
     def XI_responsivity(group):
         if masker is None:
@@ -150,14 +156,15 @@ def add_XI_responsivity(df, power='zbd_power', masker=None):
             mask = masker(group)
         #group.sort(power, inplace=True)
         f_r_max_row = group[mask][group[mask].f_r == group[mask].f_r.max()]
-        f_r_max = float(f_r_max_row.f_r)
-        f_r_max_err = float(f_r_max_row.f_r_err)
-        group.loc[mask, '{}_f_r_max'.format(power)] = f_r_max
-        group.loc[mask, '{}_f_r_max_err'.format(power)] = f_r_max_err
-        group.loc[mask, '{}_X'.format(power)] = f_r_max / group.f_r - 1
-        group.loc[mask, '{}_X_err'.format(power)] = ((f_r_max_err / f_r_max)**2 + (group.f_r_err / group.f_r)**2)**(1/2)
-        group.loc[mask, '{}_I'.format(power)] = group.Q_i**-1
-        group.loc[mask, '{}_I_err'.format(power)] = group.Q_i**-2 * group.Q_i_err
+        if f_r_max_row.shape[0] > 0:  # If no data is left after masking, return
+            f_r_max = float(f_r_max_row.f_r)
+            f_r_max_err = float(f_r_max_row.f_r_err)
+            group.loc[mask, '{}_f_r_max'.format(power)] = f_r_max
+            group.loc[mask, '{}_f_r_max_err'.format(power)] = f_r_max_err
+            group.loc[mask, '{}_X'.format(power)] = f_r_max / group.f_r - 1
+            group.loc[mask, '{}_X_err'.format(power)] = ((f_r_max_err / f_r_max)**2 + (group.f_r_err / group.f_r)**2)**(1/2)
+            group.loc[mask, '{}_I'.format(power)] = group.Q_i**-1
+            group.loc[mask, '{}_I_err'.format(power)] = group.Q_i**-2 * group.Q_i_err
         return group
     return df.groupby(('channel', 'atten')).apply(XI_responsivity).reset_index(drop=True)
 
@@ -166,7 +173,6 @@ def add_XI_responsivity(df, power='zbd_power', masker=None):
 def fit_XI_responsivity(df, initial, power='zbd_power', masker=lambda group: np.ones(group.shape[0], dtype=np.bool)):
     def XI_responsivity(group):
         mask = masker(group)
-        # Add try...except for cases where the fit fails because too many points are masked.
         try:
             result = fit(group[mask][power], group[mask]['{}_X'.format(power)], group[mask]['{}_I'.format(power)],
                          deepcopy(initial),  # This is crucial because minimize modifies the input Parameters.
@@ -188,7 +194,7 @@ def fit_XI_responsivity(df, initial, power='zbd_power', masker=lambda group: np.
 def add_NEP2(df, power='zbd_power'):
     df['{}_NEP2_device'.format(power)] = df.noise_fit_device_noise / df['{}_dX_dP'.format(power)] ** 2
     df['{}_NEP2_amplifier'.format(power)] = df.noise_fit_amplifier_noise / df['{}_dX_dP'.format(power)] ** 2
-    return df
+
 
 # TODO: these are deprecated; remove
 def z(params, P):

@@ -8,10 +8,17 @@ def extract_and_pickle(nc_filename):
         print("Processing {}".format(nc_filename))
         snms = []
         rnc = ReadoutNetCDF(nc_filename)
+        if len(rnc.sweeps) != len(rnc.timestreams):
+            raise ValueError("The number of sweeps does not match the number of timestreams in {}".format(nc_filename))
         for index, (sweep, timestream) in enumerate(zip(rnc.sweeps, rnc.timestreams)):
             for resonator_index in set(sweep.index):
-                snms.append(SweepNoiseMeasurement(nc_filename, sweep_group_index=index, timestream_group_index=index,
-                                                  resonator_index=resonator_index))
+                snm = SweepNoiseMeasurement(nc_filename, sweep_group_index=index, timestream_group_index=index,
+                                            resonator_index=resonator_index)
+                try:
+                    snm.zbd_voltage = timestream.zbd_voltage[0]
+                except AttributeError:
+                    pass
+                snms.append(snm)
         rnc.close()
         # We decided to keep the .pkl files in /home/data regardless of origin.
         pkl_filename = os.path.join('/home/data/pkl', os.path.splitext(os.path.split(nc_filename)[1])[0] + '.pkl')

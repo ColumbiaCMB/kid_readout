@@ -599,7 +599,10 @@ class RoachBaseband(RoachInterface):
         self.r.write_int('dram_mask', mask_reg)
         self._unpause_dram()
         self.bank = bank
-        self.select_fft_bins(self.readout_selection)
+        try:
+            self.select_fft_bins(self.readout_selection)
+        except AttributeError:
+            self.select_fft_bins(np.arange(self.tone_bins.shape[1]))
 
     def load_waveform(self, wave, start_offset=0, fast=True):
         """
@@ -641,9 +644,8 @@ class RoachBaseband(RoachInterface):
         self.set_tone_bins(bins, nsamp, amps=amps, load=load, normfact=normfact,phases=phases)
         self.fft_bins = self.calc_fft_bins(bins, nsamp)
         self.select_bank(0)
-        if readout_selection is None:
-            readout_selection = np.arange(self.fft_bins.shape[1])
-        self.select_fft_bins(readout_selection)
+        if readout_selection is not None:
+            self.select_fft_bins(readout_selection)
         self.save_state()
         return actual_freqs
 

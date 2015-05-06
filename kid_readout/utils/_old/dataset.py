@@ -1,3 +1,6 @@
+"""
+This module hasn't been used for a long time.
+"""
 from __future__ import division
 import numpy as np
 import netCDF4
@@ -58,7 +61,7 @@ class FineSweep(OrderedDict):
 
     Keywords:
     fit_subsweeps -- if True, the class will attempt to fit the data
-    correponding to each index using the current resonator defaults.
+    corresponding to each index using the current resonator defaults.
     scale_frequency -- frequency values from the data are multiplied
     by this number; the default of 1e6 assumes that the frequency is
     stored in MHz and converts it to Hz.
@@ -117,7 +120,7 @@ class FineSweep(OrderedDict):
         # This is a poor man's second derivative.
         k = np.array([1, -2, 1])
         x = np.convolve(k, abs(data), mode='same')
-        # This supuriously flags the (k.size - )/2 points at each end
+        # This spuriously flags the (k.size - )/2 points at each end
         # due to zero padding; it also flags one point on either side
         # of a single-point glitch. 
         glitch = abs(x) > threshold * np.std(x)

@@ -12,13 +12,12 @@ lockin = lockin_controller.lockinController()
 print lockin.get_idn()
 ri = roach_interface.RoachBaseband()
 
-print "modulating at:", ri.set_modulation_output(rate=7)
-
 f0s = np.load('/home/data2/resonances/2014-12-06_140825_0813f8_fit_16.npy')
 
-suffix = "mmw"
-mmw_source_modulation_freq = ri.get_modulation_rate_hz()
-mmw_atten_turns = (7, 7)
+suffix = "mmw_frequency_sweep"
+mmw_source_modulation_freq = ri.set_modulation_output(rate=7)
+mmw_atten_turns = (7.0, 7.0)
+print "modulating at: {}".format(mmw_source_modulation_freq),
 
 nf = len(f0s)
 atonce = 16
@@ -39,11 +38,10 @@ print f0s
 print offsets * 1e6
 print len(f0s)
 
-mmw_freqs = np.linspace(135e9, 165e9, 500)
-fundamental_freqs = mmw_freqs / 12.0
+mmw_freqs = np.linspace(140e9, 165e9, 500)
 
 use_fmin = False
-attenlist = [39]
+attenlist = [41]
 start = time.time()
 for atten in attenlist:
     hittite.off()
@@ -135,9 +133,6 @@ for atten in attenlist:
     ri.select_bank(ri.tone_bins.shape[0] - 1)
     ri._sync()
     time.sleep(0.5)
-
-
-    #raw_input("turn on LED take data")
 
     hittite.on()
     hittite.set_power(0)

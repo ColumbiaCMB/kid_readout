@@ -13,7 +13,6 @@ print lockin.get_idn()
 
 ri = roach_interface.RoachBaseband()
 
-
 def source_on():
     return ri.set_modulation_output(rate='low')
 
@@ -28,25 +27,30 @@ def source_modulate(rate=7):
 
 # Wideband
 mmw_source_frequency = -1.0
-#suffix = "mmwnoisestep"
-suffix = "load_step_with_mmw_noise"
+suffix = "mmwnoisestep"
 
 # Narrowband
 #suffix = "mmwtonestep"
-#mmw_source_frequency = 156e9
+#f_mmw_source = 149e9
 #hittite = hittite_controller.hittiteController()
 #hittite.set_power(0)  # in dBm
-#hittite.set_freq(mmw_source_frequency/12)  # in Hz
+#hittite.set_freq(f_mmw_source/12)  # in Hz
 #hittite.on()
 
-f0s = np.load('/home/data2/resonances/2014-12-06_140825_0813f8_fit_16.npy')
+#f0s = np.load('/home/data2/resonances/2014-12-06_140825_0813f8_fit_16.npy')
+f0s = np.load('/home/flanigan/f_r_3p5_turns.npy')
+
+# hackalicious ... these are now the source-off resonances
+original_f0s = np.load('/home/data2/resonances/2014-12-06_140825_0813f8_fit_16.npy')
 # This was set to 0.999 and was causing a problem with duplicate tones.
 source_on_freq_scale = 1.0  # nominally 1 if low-ish power
 
+# Allow for downward movement
+downward_shift = 54
 coarse_exponent = 19
 coarse_n_samples = 2**coarse_exponent
 coarse_frequency_resolution = ri.fs / coarse_n_samples  # about 1 kHz
-coarse_offset_integers = acquire.offset_integers[coarse_exponent][:-1] - 55  # Allow for downward movement
+coarse_offset_integers = acquire.offset_integers[coarse_exponent][:-1] - downward_shift
 coarse_offset_freqs = coarse_frequency_resolution * coarse_offset_integers
 
 fine_exponent = 21
@@ -72,6 +76,7 @@ while True:
     else:
         mmw_atten_turns = eval(mmw_atten_str)
 
+    # Do a coarse sweep with the source on
     mmw_source_modulation_freq = source_on()
     print "setting attenuator to", attenlist[0]
     ri.set_dac_attenuator(attenlist[0])
@@ -114,8 +119,10 @@ while True:
 
     meas_cfs = np.array(meas_cfs)
     f0binned_meas = fine_frequency_resolution * np.round(meas_cfs / fine_frequency_resolution)
+
     # Why is this here?
     f0s = f0binned_meas
+
     measured_freqs = sweeps.prepare_sweep(ri, f0binned_meas, fine_offset_freqs, nsamp=fine_n_samples)
     print "loaded updated waveforms in", (time.time() - start), "seconds"
 
@@ -124,14 +131,19 @@ while True:
 
     df = data_file.DataFile(suffix=suffix)
     df.nc.mmw_atten_turns = mmw_atten_turns
+
     for k, atten in enumerate(attenlist):
         ri.set_dac_attenuator(atten)
         print "measuring at attenuation", atten
+
+        # At the first attenuation, record the coarse sweep data with the fine sweep data; at other attenuations, there
+        # is only fine sweep data
         df.log_hw_state(ri)
         if k != 0:
             orig_sweep_data = None
         sweep_data = sweeps.do_prepared_sweep(ri, nchan_per_step=f0s.size, reads_per_step=2, sweep_data=orig_sweep_data)
         df.add_sweep(sweep_data)
+
         meas_cfs = []
         idxs = []
         for m in range(len(f0s)):
@@ -158,9 +170,12 @@ while True:
             idx = np.unravel_index(abs(measured_freqs - meas_cfs[-1]).argmin(), measured_freqs.shape)
             idxs.append(idx)
         print meas_cfs
+
+        # At the first attenuation, add a new bank containing the measured resonances;
         if k == 0:
             ri.add_tone_freqs(np.array(meas_cfs))
             ri.select_bank(ri.tone_bins.shape[0] - 1)
+        # otherwise, use the tone bank for which index 0 is closest to the fit resonance.
         else:
             best_bank = (np.abs((ri.tone_bins[:, 0] * ri.fs / ri.tone_nsamp) - meas_cfs[0]).argmin())
             print "using bank", best_bank
@@ -180,14 +195,14 @@ while True:
             t0 = time.time()
             dmod, addr = ri.get_data_seconds(30)
             x, y, r, theta = lockin.get_data()
-
+            # Record the timestream data taken using the selected tone bank.
             tsg = df.add_timestream_data(dmod, ri, t0, tsg=tsg, mmw_source_freq=mmw_source_frequency,
                                          mmw_source_modulation_freq=mmw_source_modulation_freq,
                                          zbd_voltage=x)
             df.sync()
             print "done with sweep"
 
-    # Source modulated.
+    # Take a timestream at the first attenuation using the tone bank corresponding to this attenuation.
     ri.set_dac_attenuator(attenlist[0])
     mmw_source_modulation_freq = source_modulate()
     ri.select_bank(ri.tone_bins.shape[0] - 1)
@@ -213,8 +228,15 @@ while True:
     mmw_source_modulation_freq = source_off()
     print "setting attenuator to", attenlist[0]
     ri.set_dac_attenuator(attenlist[0])
-    f0binned = coarse_frequency_resolution * np.round(f0s / coarse_frequency_resolution)
-    measured_freqs = sweeps.prepare_sweep(ri, f0binned, coarse_offset_freqs, nsamp=coarse_n_samples)
+    # Above, the line
+    # f0s = f0binned_meas
+    # changes this variable to correspond to the source-on fine resolution fit frequencies, which may be much lower than
+    # the originals. Using the coarse offsets in the sweep may cause the sweep to miss the resonances entirely.
+    f0binned = coarse_frequency_resolution * np.round(original_f0s / coarse_frequency_resolution)
+    # To measure with the source off, remove the downward shift in the offsets.
+    measured_freqs = sweeps.prepare_sweep(ri, f0binned,
+                                          coarse_offset_freqs + coarse_frequency_resolution * downward_shift,
+                                          nsamp=coarse_n_samples)
     print "loaded waveforms in", (time.time() - start), "seconds"
 
     sweep_data = sweeps.do_prepared_sweep(ri, nchan_per_step=f0s.size, reads_per_step=2)
@@ -222,9 +244,9 @@ while True:
     meas_cfs = []
     idxs = []
     delays = []
-    for m in range(len(f0s)):
-        fr, s21, errors = sweep_data.select_by_freq(f0s[m])
-        thiscf = f0s[m]
+    for m in range(len(original_f0s)):
+        fr, s21, errors = sweep_data.select_by_freq(original_f0s[m])
+        thiscf = original_f0s[m]
         res = fit_best_resonator(fr[1:-1], s21[1:-1], errors=errors[1:-1])  # Resonator(fr,s21,errors=errors)
         delay = res.delay
         delays.append(delay)
@@ -288,6 +310,9 @@ while True:
         idxs.append(idx)
 
     print meas_cfs
+
+    ri.add_tone_freqs(np.array(meas_cfs))
+    ri.select_bank(ri.tone_bins.shape[0] - 1)
 
     df.log_hw_state(ri)
     nsets = len(meas_cfs) / f0s.size

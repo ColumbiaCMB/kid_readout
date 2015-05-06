@@ -1,4 +1,5 @@
 from __future__ import division
+import warnings
 import numpy as np
 import scipy.stats
 from kid_readout.analysis import fitter
@@ -75,7 +76,7 @@ def fit_best_resonator(*args, **kwargs):
 # todo: move this elsewhere
 def normalized_s21_to_detuning(s21, resonator):
     if 'a' in resonator.result.params:
-        print "warning: inverse not yet defined for bifurcation model, proceeding anyway"
+        warnings.warn("warning: inverse not yet defined for bifurcation model, proceeding anyway")
     Q = resonator.Q
     Qe = resonator.Q_e
     x = 1j * (Qe * (s21 - 1) + Q) / (2 * Qe * Q * (s21 - 1))
