@@ -1,16 +1,25 @@
 import socket
 
 class hittiteController():
-    def __init__(self, addr='192.168.001.070', port=50000, terminator='\r'):
-        self.address=(addr,port)
+    def __init__(self, addr=None, port=50000, terminator='\r'):
+        if addr:
+            self.address=(addr,port)
+        else:
+            self.address=('192.168.001.070',port)
+            try:
+                self.connect()
+                self.disconnect()
+            except socket.error:
+                self.address=('192.168.0.070',port)
+
         self.terminator=terminator
         self.connect()
         
     def connect(self):
         s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
-        s.connect(self.address)
         s.settimeout(0.5)
+        s.connect(self.address)
         self.s = s
         return
     def disconnect(self):
