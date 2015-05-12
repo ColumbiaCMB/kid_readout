@@ -24,7 +24,7 @@ try:
     have_numexpr = True
 except ImportError:
     have_numexpr = False
-CONFIG_FILE_NAME = '/home/data/roach_config.npz'
+
 
 
 class RoachBaseband(RoachInterface):

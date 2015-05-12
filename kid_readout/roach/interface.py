@@ -2,10 +2,11 @@ import os
 import sys
 import time
 import numpy as np
-from kid_readout.roach.baseband import CONFIG_FILE_NAME
+import borph_utils
 
 __author__ = 'gjones'
 
+CONFIG_FILE_NAME = '/home/data/roach_config.npz'
 
 class RoachInterface(object):
     """
