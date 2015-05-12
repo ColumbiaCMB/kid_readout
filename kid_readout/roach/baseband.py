@@ -66,7 +66,7 @@ class RoachBaseband(RoachInterface):
                 time.sleep(0.1)
 
         if adc_valon is None:
-            import valon
+            from kid_readout.utils import valon
             ports = valon.find_valons()
             if len(ports) == 0:
                 self.adc_valon_port = None
@@ -82,7 +82,7 @@ class RoachBaseband(RoachInterface):
                     except:
                         pass
         elif type(adc_valon) is str:
-            import valon
+            from kid_readout.utils import valon
             self.adc_valon_port = adc_valon
             self.adc_valon = valon.Synthesizer(self.adc_valon_port)
         else:
