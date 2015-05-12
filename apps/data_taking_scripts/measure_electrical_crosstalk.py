@@ -1,15 +1,14 @@
+from kid_readout.roach import baseband
+
 __author__ = 'gjones'
 
 import numpy as np
 import time
-import sys
-from kid_readout.utils import roach_interface, data_file, sweeps
-from kid_readout.analysis.resonator import Resonator
+from kid_readout.utils import data_file, sweeps
 from kid_readout.analysis.resonator import fit_best_resonator
-from kid_readout.equipment import hittite_controller
 from kid_readout.utils import acquire
 
-ri = roach_interface.RoachBaseband()
+ri = baseband.RoachBaseband()
 
 
 def source_on():
@@ -87,7 +86,8 @@ for res_id in range(len(meas_cfs)):
     print "blinking resonator",res_id
     on_amps = np.ones(meas_cfs.shape,dtype='float')
     off_amps = np.ones(meas_cfs.shape,dtype='float')
-    off_amps[res_id] = 0
+    off_amps[-1] = 0
+    meas_cfs[-1]+=3.0
     normfact = 0.1
     nsamp = 2**22
     ri.set_tone_freqs(meas_cfs,nsamp=nsamp,load=False,normfact=normfact,amps=on_amps)
@@ -109,3 +109,5 @@ for res_id in range(len(meas_cfs)):
         dmod,addr = ri.get_data_seconds(15)
 
         tsg = df.add_timestream_data(dmod, ri, t0, mmw_source_freq=mmw_source_frequency,)
+    break
+

@@ -1,17 +1,19 @@
-import numpy as np
 import time
 import sys
-from kid_readout.utils import roach_interface, data_file, sweeps
-from kid_readout.analysis.resonator import Resonator
+
+import numpy as np
+
+from kid_readout.roach import baseband
+from kid_readout.utils import data_file, sweeps
 from kid_readout.analysis.resonator import fit_best_resonator
-from kid_readout.equipment import hittite_controller
 from kid_readout.equipment import lockin_controller
 from kid_readout.utils import acquire
+
 
 lockin = lockin_controller.lockinController()
 print lockin.get_idn()
 
-ri = roach_interface.RoachBaseband()
+ri = baseband.RoachBaseband()
 
 def source_on():
     return ri.set_modulation_output(rate='low')
@@ -27,7 +29,7 @@ def source_modulate(rate=7):
 
 # Wideband
 mmw_source_frequency = -1.0
-suffix = "mmwnoisestep"
+suffix = "mmwnoise_narrow_no_output_filter"
 
 # Narrowband
 #suffix = "mmwtonestep"
@@ -37,8 +39,8 @@ suffix = "mmwnoisestep"
 #hittite.set_freq(f_mmw_source/12)  # in Hz
 #hittite.on()
 
-#f0s = np.load('/home/data2/resonances/2014-12-06_140825_0813f8_fit_16.npy')
-f0s = np.load('/home/flanigan/f_r_3p5_turns.npy')
+f0s = np.load('/home/data2/resonances/2014-12-06_140825_0813f8_fit_16.npy')
+#f0s = np.load('/home/flanigan/f_r_3p5_turns.npy')
 
 # hackalicious ... these are now the source-off resonances
 original_f0s = np.load('/home/data2/resonances/2014-12-06_140825_0813f8_fit_16.npy')
@@ -46,7 +48,7 @@ original_f0s = np.load('/home/data2/resonances/2014-12-06_140825_0813f8_fit_16.n
 source_on_freq_scale = 1.0  # nominally 1 if low-ish power
 
 # Allow for downward movement
-downward_shift = 54
+downward_shift = 0
 coarse_exponent = 19
 coarse_n_samples = 2**coarse_exponent
 coarse_frequency_resolution = ri.fs / coarse_n_samples  # about 1 kHz

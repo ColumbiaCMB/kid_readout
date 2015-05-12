@@ -1,7 +1,9 @@
-import numpy as np
 import time
-import sys
-from kid_readout.utils import roach_interface, data_file, sweeps, acquire
+
+import numpy as np
+
+from kid_readout.roach import baseband
+from kid_readout.utils import data_file, sweeps, acquire
 from kid_readout.equipment import lockin_controller
 from kid_readout.equipment.agilent_33220 import FunctionGenerator
 
@@ -49,7 +51,7 @@ fg.set_dc_voltage(heater_voltage)
 lockin = lockin_controller.lockinController()
 print lockin.get_idn()
 
-roach = roach_interface.RoachBaseband()
+roach = baseband.RoachBaseband()
 
 suffix = "mmw_noise_step_with_load"
 mmw_source_frequency = -1.0

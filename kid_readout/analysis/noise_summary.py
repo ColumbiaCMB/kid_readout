@@ -17,7 +17,7 @@ from kid_readout.analysis import iqnoise
 import scipy.signal
 
 from kid_readout.utils.fftfilt import fftfilt
-from kid_readout.utils.roach_utils import ntone_power_correction
+from kid_readout.roach.tools import ntone_power_correction
 
 from kid_readout.utils.despike import deglitch_window
 
@@ -32,7 +32,6 @@ import os
 import glob
 
 import cPickle
-import random
 
 scale = 4.0/3.814e-6 #amplitude scaling between s21 and time series. Need to fix this in data files eventually
 phasecorr = 397.93/2.0 #radians per MHz correction

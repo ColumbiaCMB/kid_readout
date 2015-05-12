@@ -1,15 +1,17 @@
 import matplotlib
+
+from kid_readout.roach import baseband
+
 matplotlib.use('agg')
 import numpy as np
 import time
 import sys
-from kid_readout.utils import roach_interface,data_file,sweeps
-from kid_readout.analysis.resonator import Resonator
+from kid_readout.utils import data_file,sweeps
 from kid_readout.analysis.resonator import fit_best_resonator
 from kid_readout.equipment.agilent_33220 import FunctionGenerator
 
 fg = FunctionGenerator()
-ri = roach_interface.RoachBasebandWide()
+ri = baseband.RoachBasebandWide()
 ri.initialize()
 #ri.set_fft_gain(6)
 #f0s = np.load('/home/gjones/workspace/apps/f8_fit_resonances.npy')

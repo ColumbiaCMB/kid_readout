@@ -1,8 +1,10 @@
 from __future__ import division
-import numpy as np
 import time
-import sys
-from kid_readout.utils import roach_interface, data_file, sweeps, acquire
+
+import numpy as np
+
+from kid_readout.roach import baseband
+from kid_readout.utils import data_file, sweeps, acquire
 from kid_readout.equipment import lockin_controller
 
 
@@ -20,7 +22,7 @@ def main(f_initial_off, f_initial_on, attenuations, f_mmw_source=0, suffix="mmw"
     lockin = lockin_controller.lockinController()
     print(lockin.get_idn())
 
-    roach = roach_interface.RoachBaseband()
+    roach = baseband.RoachBaseband()
 
     n_coarse_samples = 2 ** coarse_exponent
     n_fine_samples = 2 ** fine_exponent

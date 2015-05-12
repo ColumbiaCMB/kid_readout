@@ -1,11 +1,12 @@
-import numpy as np
 import time
 
-from kid_readout.utils import roach_interface, sweeps, data_file, data_block
+import numpy as np
+
+from kid_readout.roach import baseband
+from kid_readout.utils import data_file, data_block
 
 
-
-ri = roach_interface.RoachBaseband()
+ri = baseband.RoachBaseband()
 #ri.initialize()
 df = data_file.DataFile()
 print(df.filename)

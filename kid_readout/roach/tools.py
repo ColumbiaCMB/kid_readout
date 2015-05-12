@@ -3,6 +3,7 @@ Misc utils related to the ROACH hardware
 """
 
 import numpy as np
+import scipy.signal
 
 
 def ntone_power_correction(ntones):
@@ -59,3 +60,12 @@ boffile_delay_estimates = {  # 'bb2xpfb10mcr11_2014_Jan_20_1049.bof',
 
 nfft_delay_estimates = {2**11 : -7.29e-6,
                         2**14 : -63.3e-6}
+
+
+def compute_window(npfb=2 ** 15, taps=2, wfunc=scipy.signal.flattop):
+    wv = wfunc(npfb * taps)
+    sc = np.sinc(np.arange(npfb * taps) / float(npfb) - taps / 2.0)
+    coeff = wv * sc
+    mag = np.abs(np.fft.fft(coeff, npfb * taps * 2 ** 5)[:2 ** 7])
+    mag = mag / mag.max()
+    return mag

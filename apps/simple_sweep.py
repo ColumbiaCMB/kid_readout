@@ -1,27 +1,22 @@
-from basic_sweep_ui import Ui_SweepDialog
+import IPython
+import bisect
+import threading
+import sys
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-
-
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
 from matplotlib.figure import Figure
-import matplotlib
 from matplotlib import pyplot as plt
 import numpy as np
-import IPython
-import time
-import bisect
 
-import threading
-
-import sys
-
-import kid_readout.utils.roach_interface
+from basic_sweep_ui import Ui_SweepDialog
+import kid_readout.roach.baseband
 import kid_readout.utils.sweeps
 from kid_readout.utils.data_block import SweepData
 from kid_readout.utils import data_file
+
 #from kid_readout.utils.PeakFind01 import peakdetect
 
 
@@ -85,7 +80,9 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         
         self.line_dac_gain.setText("-2.0")
         
-        self.ri = kid_readout.utils.roach_interface.RoachBaseband()
+        self.ri = kid_readout.roach.baseband.RoachBaseband(initialize=False)
+        self.ri.boffile = 'bb2xpfb14mcr17b_2015_Apr_21_1159.bof'
+        self.ri.initialize()
         #self.ri.set_adc_attenuator(31)
         self.ri.set_dac_attenuator(36)
         
@@ -364,7 +361,7 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         self.total_subsweeps = nsubstep
         base_freqs = np.arange(start,stop+1e-3,step)
         ntones = base_freqs.shape[0]
-        ntones_corr = kid_readout.utils.roach_interface.ntone_power_correction(ntones)
+        ntones_corr = kid_readout.roach.baseband.ntone_power_correction(ntones)
         try:
             dac_gain = float(self.line_dac_gain.text())
         except:
@@ -421,7 +418,7 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         self.total_subsweeps = len(offsets)
         
         ntones = flist.shape[0]
-        ntones_corr = kid_readout.utils.roach_interface.ntone_power_correction(ntones)
+        ntones_corr = kid_readout.roach.baseband.ntone_power_correction(ntones)
         try:
             dac_gain = float(self.line_dac_gain.text())
         except:
@@ -521,7 +518,7 @@ def main():
     form.setAttribute(Qt.WA_QuitOnClose)
     form.setAttribute(Qt.WA_DeleteOnClose)
     try:
-        from kid_readout.utils.borph_utils import check_output
+        from kid_readout.roach.borph_utils import check_output
         cmd = ('git log -1 --pretty=format:"%%ci" %s' % __file__)
 #        print cmd
         dcode = check_output(cmd, shell=True)

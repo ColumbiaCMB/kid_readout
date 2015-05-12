@@ -1,8 +1,10 @@
 import numpy as np
 
-from kid_readout.utils import roach_interface, sweeps, data_file, data_block
+from kid_readout.roach import baseband
+from kid_readout.utils import sweeps, data_file, data_block
 
-ri = roach_interface.RoachBaseband()
+
+ri = baseband.RoachBaseband()
 df = data_file.DataFile()
 
 ri.set_adc_attenuator(31)

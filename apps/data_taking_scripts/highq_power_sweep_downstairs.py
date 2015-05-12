@@ -1,26 +1,28 @@
 import matplotlib
+
+from kid_readout.roach import baseband
+
 matplotlib.use('agg')
 import numpy as np
 import time
 import sys
-from kid_readout.utils import roach_interface,data_file,sweeps
-from kid_readout.analysis.resonator import Resonator
+from kid_readout.utils import data_file,sweeps
 from kid_readout.analysis.resonator import fit_best_resonator
 
-ri = roach_interface.RoachBasebandWide()
+ri = baseband.RoachBaseband()
 ri.initialize()
 #ri.set_fft_gain(6)
 #f0s = np.load('/home/gjones/workspace/apps/f8_fit_resonances.npy')
 #f0s = np.load('/home/gjones/workspace/apps/first_pass_sc3x3_0813f9.npy')
 #f0s = np.load('/home/gjones/workspace/apps/sc5x4_0813f10_first_pass.npy')#[:4]
 #f0s = np.load('/home/gjones/workspace/readout/apps/sc3x3_0813f9_2014-02-11.npy')
-f0s = np.load('/home/gjones/workspace/readout/apps/sc3x3_0813f5_2014-04-15.npy')
+#f0s = np.load('/home/gjones/workspace/readout/apps/sc3x3_0813f5_2014-04-15.npy')
+f0s = np.load('/home/gjones/readout/kid_readout/apps/2015-05-07-jpl5x4.npy')
 #f0s = np.load('/home/gjones/workspace/apps/sc5x4_0813f12.npy')
 f0s.sort()
-f0s = f0s*0.9992
 
 nf = len(f0s)
-atonce = 4
+atonce = 8
 if nf % atonce > 0:
     print "extending list of resonators to make a multiple of ",atonce
     f0s = np.concatenate((f0s,np.arange(1,1+atonce-(nf%atonce))+f0s.max()))
@@ -55,43 +57,55 @@ if False:
     time.sleep(600)
 start = time.time()
 
-attenlist = [40,43,46,49] #np.linspace(43,45,6)
+first = True
+
+attenlist = [27,24,21,18,15,12]
 for atten in attenlist:
     print "setting attenuator to",atten
     ri.set_dac_attenuator(atten)
-    measured_freqs = sweeps.prepare_sweep(ri,f0binned,offsets,nsamp=nsamp)
-    print "loaded waveforms in", (time.time()-start),"seconds"
-    
-    sweep_data = sweeps.do_prepared_sweep(ri, nchan_per_step=atonce, reads_per_step=8)
-    orig_sweep_data = sweep_data
-    meas_cfs = []
-    idxs = []
-    delays = []
-    for m in range(len(f0s)):
-        fr,s21,errors = sweep_data.select_by_freq(f0s[m])
-        thiscf = f0s[m]
-        res = fit_best_resonator(fr[1:-1],s21[1:-1],errors=errors[1:-1]) #Resonator(fr,s21,errors=errors)
-        delay = res.delay
-        delays.append(delay)
-        s21 = s21*np.exp(2j*np.pi*res.delay*fr)
-        res = fit_best_resonator(fr,s21,errors=errors)
-        fmin = fr[np.abs(s21).argmin()]
-        print "s21 fmin", fmin, "original guess",thiscf,"this fit", res.f_0, "delay",delay,"resid delay",res.delay
-        if abs(res.f_0 - thiscf) > 0.1:
-            if abs(fmin - thiscf) > 0.1:
-                print "using original guess"
-                meas_cfs.append(thiscf)
+    if first:
+        nsamp = 2**20
+        step = 1
+        f0binned = np.round(f0s*nsamp/512.0)*512.0/nsamp
+        offset_bins = np.arange(-21,21)*step
+        offsets = offset_bins*512.0/nsamp
+        offsets = np.concatenate(([-20e-3,],offsets,[20e-3]))
+        measured_freqs = sweeps.prepare_sweep(ri,f0binned,offsets,nsamp=nsamp)
+        print "loaded waveforms in", (time.time()-start),"seconds"
+
+        sweep_data = sweeps.do_prepared_sweep(ri, nchan_per_step=atonce, reads_per_step=8)
+        orig_sweep_data = sweep_data
+        meas_cfs = []
+        idxs = []
+        delays = []
+        for m in range(len(f0s)):
+            fr,s21,errors = sweep_data.select_by_freq(f0s[m])
+            thiscf = f0s[m]
+            res = fit_best_resonator(fr[1:-1],s21[1:-1],errors=errors[1:-1]) #Resonator(fr,s21,errors=errors)
+            delay = res.delay
+            delays.append(delay)
+            s21 = s21*np.exp(2j*np.pi*res.delay*fr)
+            res = fit_best_resonator(fr,s21,errors=errors)
+            fmin = fr[np.abs(s21).argmin()]
+            print "s21 fmin", fmin, "original guess",thiscf,"this fit", res.f_0, "delay",delay,"resid delay",res.delay
+            if abs(res.f_0 - thiscf) > 0.1:
+                if abs(fmin - thiscf) > 0.1:
+                    print "using original guess"
+                    meas_cfs.append(thiscf)
+                else:
+                    print "using fmin"
+                    meas_cfs.append(fmin)
             else:
-                print "using fmin"
-                meas_cfs.append(fmin)
-        else:
-            print "using this fit"
-            meas_cfs.append(res.f_0)
-        idx = np.unravel_index(abs(measured_freqs - meas_cfs[-1]).argmin(),measured_freqs.shape)
-        idxs.append(idx)
-    
-    delay = np.median(delays)
-    print "median delay is ",delay
+                print "using this fit"
+                meas_cfs.append(res.f_0)
+            idx = np.unravel_index(abs(measured_freqs - meas_cfs[-1]).argmin(),measured_freqs.shape)
+            idxs.append(idx)
+
+        delay = np.median(delays)
+        print "median delay is ",delay
+        first = False
+    else:
+        orig_sweep_data = None
     nsamp = 2**22
     step = 1
     f0binned = np.round(f0s*nsamp/512.0)*512.0/nsamp
@@ -114,7 +128,7 @@ for atten in attenlist:
 
     df = data_file.DataFile() #(suffix='led')
     df.log_hw_state(ri)
-    sweep_data = sweeps.do_prepared_sweep(ri, nchan_per_step=atonce, reads_per_step=8)#, sweep_data=orig_sweep_data)
+    sweep_data = sweeps.do_prepared_sweep(ri, nchan_per_step=atonce, reads_per_step=8, sweep_data=orig_sweep_data)
     df.add_sweep(sweep_data)
     meas_cfs = []
     idxs = []

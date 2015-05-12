@@ -1,11 +1,12 @@
 from __future__ import division
-import numpy as np
 import time
 
-from kid_readout.utils import roach_interface, data_file, sweeps
-from kid_readout.analysis.resonator import Resonator, fit_resonator
-from kid_readout.analysis.khalil import delayed_generic_s21, delayed_auto_guess
+import numpy as np
+
+from kid_readout.utils import data_file, sweeps
+from kid_readout.analysis.resonator import Resonator
 from kid_readout.analysis.khalil import bifurcation_s21, bifurcation_guess
+
 
 BYTES_PER_SAMPLE = 4
 EFFECTIVE_DRAM_CAPACITY = 2 ** 28  # 256 MB

@@ -1,16 +1,19 @@
-import numpy as np
 import time
 import sys
-from kid_readout.utils import roach_interface, data_file, sweeps
-from kid_readout.analysis.resonator import Resonator, fit_best_resonator
+
+import numpy as np
+
+from kid_readout.roach import baseband
+from kid_readout.utils import data_file, sweeps
+from kid_readout.analysis.resonator import fit_best_resonator
 from kid_readout.equipment import hittite_controller, lockin_controller
-from kid_readout.equipment.agilent_33220 import FunctionGenerator
+
 
 # fg = FunctionGenerator()
 hittite = hittite_controller.hittiteController()
 lockin = lockin_controller.lockinController()
 print lockin.get_idn()
-ri = roach_interface.RoachBaseband()
+ri = baseband.RoachBaseband()
 
 f0s = np.load('/home/data2/resonances/2014-12-06_140825_0813f8_fit_16.npy')
 

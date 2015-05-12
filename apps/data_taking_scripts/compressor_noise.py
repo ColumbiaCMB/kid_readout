@@ -1,14 +1,17 @@
 from __future__ import division
-import numpy as np
 import time
 
-from kid_readout.utils import roach_interface, data_file, acquire
+import numpy as np
+
+from kid_readout.roach import baseband
+from kid_readout.utils import data_file, acquire
 from kid_readout.equipment import lockin_controller
+
 
 def main(f_initial, attenuation, stream_time=30, suffix='compressor_noise', coarse_exponent=19, fine_exponent=21,
          modulation_state='high', modulation_rate=7, transient_wait=10, f_mmw_source=0,
          mmw_atten_turns=(np.nan, np.nan)):
-    roach = roach_interface.RoachBaseband()
+    roach = baseband.RoachBaseband()
     roach.set_modulation_output(modulation_state)
     roach.set_dac_attenuator(attenuation)
     df = data_file.DataFile(suffix=suffix)

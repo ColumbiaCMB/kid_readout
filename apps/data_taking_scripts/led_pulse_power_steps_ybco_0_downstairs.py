@@ -1,11 +1,13 @@
 from __builtin__ import enumerate
+
 import matplotlib
+
+from kid_readout.roach import baseband
+
 matplotlib.use('agg')
 import numpy as np
 import time
-import sys
-from kid_readout.utils import roach_interface,data_file,sweeps
-from kid_readout.analysis.resonator import Resonator
+from kid_readout.utils import data_file,sweeps
 from kid_readout.analysis.resonator import fit_best_resonator
 import kid_readout.equipment.agilent_33220
 
@@ -16,7 +18,7 @@ mmw_source_frequency = np.nan
 
 source_on_freq_scale = 1.0  # nominally 1 if low-ish power
 
-ri = roach_interface.RoachBaseband()
+ri = baseband.RoachBaseband()
 f0s = np.load('/home/gjones/readout/kid_readout/apps/ybco_4_element_2015-03-01.npy')
 #f0s = np.array([157.315, 201.49])
 

@@ -1,13 +1,14 @@
-import numpy as np
 import netCDF4
-import types
 import bisect
 import warnings
 from collections import OrderedDict
-from kid_readout.utils.roach_utils import ntone_power_correction
+
+import numpy as np
+
+from kid_readout.roach.tools import ntone_power_correction
 import kid_readout.utils.fftfilt
 from kid_readout.utils.data_block import lpf
-import kid_readout.utils.roach_utils
+import kid_readout.roach.tools
 
 
 class TimestreamGroup(object):
@@ -177,9 +178,9 @@ class ReadoutNetCDF(object):
                 nfft = self.sweeps[0].timestream_group.nfft[0]
             except IndexError:
                 raise Exception("could not find any means to estimate the delay for %s" % self.filename)
-            return kid_readout.utils.roach_utils.get_delay_estimate_for_nfft(nfft)
+            return kid_readout.roach.tools.get_delay_estimate_for_nfft(nfft)
         else:
-            return kid_readout.utils.roach_utils.get_delay_estimate_for_boffile(self.boffile)
+            return kid_readout.roach.tools.get_delay_estimate_for_boffile(self.boffile)
 
     def _get_hwstate_index_at(self,epoch):
         """

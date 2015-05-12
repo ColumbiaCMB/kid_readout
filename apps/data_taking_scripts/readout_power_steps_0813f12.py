@@ -1,10 +1,12 @@
 import matplotlib
+
+from kid_readout.roach import baseband
+
 matplotlib.use('agg')
 import numpy as np
 import time
 import sys
-from kid_readout.utils import roach_interface,data_file,sweeps
-from kid_readout.analysis.resonator import Resonator
+from kid_readout.utils import data_file,sweeps
 from kid_readout.analysis.resonator import fit_best_resonator
 from kid_readout.equipment import hittite_controller
 from kid_readout.equipment import lockin_controller
@@ -16,7 +18,7 @@ hittite = hittite_controller.hittiteController()
 lockin = lockin_controller.lockinController()
 print lockin.get_idn()
 
-ri = roach_interface.RoachBaseband(initialize=False)
+ri = baseband.RoachBaseband(initialize=False)
 ri.boffile = 'bb2xpfb14mcr16_2014_Sep_23_1157.bof'
 ri.initialize()
 f0s = np.load('/home/gjones/kid_readout/apps/sc5x4_0813f12.npy')

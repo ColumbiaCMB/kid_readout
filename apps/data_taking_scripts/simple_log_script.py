@@ -1,10 +1,13 @@
-import numpy as np
 import time
 
-from kid_readout.utils import data_block,roach_interface,data_file
+import numpy as np
+
+from kid_readout.roach import baseband
+from kid_readout.utils import data_block, data_file
 from sim900 import sim900Client
 
-ri = roach_interface.RoachBaseband()
+
+ri = baseband.RoachBaseband()
 df = data_file.DataFile()
 sc = sim900Client.sim900Client()
 

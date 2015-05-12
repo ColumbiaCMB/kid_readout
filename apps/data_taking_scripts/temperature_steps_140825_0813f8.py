@@ -1,6 +1,9 @@
-import numpy as np
 import time
-from kid_readout.utils import roach_interface, data_file, sweeps, acquire
+
+import numpy as np
+
+from kid_readout.roach import baseband
+from kid_readout.utils import data_file, sweeps, acquire
 from kid_readout.equipment import lockin_controller
 
 
@@ -43,7 +46,7 @@ def sweep_and_stream(df, roach, lockin, n_channels, approximate_stream_length, b
 lockin = lockin_controller.lockinController()
 print lockin.get_idn()
 
-roach = roach_interface.RoachBaseband()
+roach = baseband.RoachBaseband()
 
 suffix = "temperature_step_with_mmw_noise"
 mmw_source_frequency = -1.0

@@ -1,6 +1,7 @@
 import numpy as np
 
-from kid_readout.utils import roach_interface, sweeps, data_file, data_block
+from kid_readout.roach import baseband
+from kid_readout.utils import sweeps, data_file
 
 
 default_segments_hz = [#np.arange(0,200e3,8e3)-490e3,
@@ -11,7 +12,7 @@ default_segments_hz = [#np.arange(0,200e3,8e3)-490e3,
 
 default_segments_mhz = [x/1e6 for x in default_segments_hz]
 
-ri = roach_interface.RoachBaseband()
+ri = baseband.RoachBaseband()
 #ri.initialize()
 df = data_file.DataFile()
 

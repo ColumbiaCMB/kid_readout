@@ -1,13 +1,15 @@
 import matplotlib
+
+from kid_readout.roach import baseband
+
 matplotlib.use('agg')
 import numpy as np
 import time
 
-from kid_readout.utils import data_block,roach_interface,data_file,sweeps
-from kid_readout.analysis.resonator import Resonator
+from kid_readout.utils import data_block, data_file,sweeps
 #from sim900 import sim900Client
 
-ri = roach_interface.RoachBasebandWide10()
+ri = baseband.RoachBasebandWide10()
 #ri.initialize()
 ri.set_fft_gain(4)
 df = data_file.DataFile()

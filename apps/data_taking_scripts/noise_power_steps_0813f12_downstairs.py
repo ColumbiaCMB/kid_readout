@@ -1,18 +1,21 @@
 from __builtin__ import enumerate
+
 import matplotlib
+
+from kid_readout.roach import baseband
+
 matplotlib.use('agg')
 import numpy as np
 import time
 import sys
-from kid_readout.utils import roach_interface,data_file,sweeps
-from kid_readout.analysis.resonator import Resonator
+from kid_readout.utils import data_file,sweeps
 from kid_readout.analysis.resonator import fit_best_resonator
 
 mmw_source_frequency = np.nan
 
 source_on_freq_scale = 0.993  # nominally 1 if low-ish power
 
-ri = roach_interface.RoachBaseband()
+ri = baseband.RoachBaseband()
 f0s = np.load('/home/gjones/readout/kid_readout/apps/sc5x4_0813f12.npy')
 f0s.sort()
 f0s = f0s[[0,1,2,3,4,5,6,7,8,9,10,13,14,15,16,17]]  # remove close packed resonators to enable reading out all simultaneously
