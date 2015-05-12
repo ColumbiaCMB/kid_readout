@@ -475,7 +475,7 @@ class SweepNoiseMeasurement(object):
         """
         Get the timestream group from the netcdf file
         """
-        if self._use_sweep_group_timestream:
+        if hasattr(self,'_use_sweep_group_timestream') and self._use_sweep_group_timestream:
             self._open_sweep_file()
             return self._sweep_file.sweeps[self.sweep_group_index].timestream_group
         else:
@@ -599,7 +599,7 @@ class SweepNoiseMeasurement(object):
     #    ax2b.set_xlim(ax2.get_xlim())
         ax2.grid()
         ax2b.grid(color='r')
-        if not self._use_sweep_group_timestream:
+        if not(hasattr(self,'_use_sweep_group_timestream') and self._use_sweep_group_timestream):
             ax2.set_xlim(self.pca_freq[1],self.pca_freq[-1])
         ax2.set_ylabel('1/Hz')
         ax2.set_xlabel('Hz')
