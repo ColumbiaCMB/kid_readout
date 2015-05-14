@@ -91,7 +91,7 @@ class RoachBaseband(RoachInterface):
         if host_ip is None:
             hostname = socket.gethostname()
             if hostname == 'detectors':
-                host_ip = '192.168.4.2'
+                host_ip = '192.168.1.1'
             else:
                 host_ip = '192.168.1.1'
         self.host_ip = host_ip
@@ -104,6 +104,7 @@ class RoachBaseband(RoachInterface):
         self.phases = None
         self.modulation_output = 0
         self.modulation_rate = 0
+        self.lo_frequency = 0.0
         self.bof_pid = None
         self.roachip = roachip
         #self.boffile = 'bb2xpfb14mcr5_2013_Jul_31_1301.bof'
@@ -134,33 +135,6 @@ class RoachBaseband(RoachInterface):
         self._window_mag = tools.compute_window(npfb=2 * self.nfft, taps=2, wfunc=scipy.signal.flattop)
         self.bank = self.get_current_bank()
 
-    # TODO: this should raise a RoachError or return None if no bank is selected or the Roach isn't programmed.
-    def get_current_bank(self):
-        """
-        Determine what tone bank the ROACH is currently set to use
-        """
-        try:
-            bank_reg = self.r.read_int('dram_bank')
-            mask_reg = self.r.read_int('dram_mask')
-        except RuntimeError:
-            return 0  # this catches the case that the ROACH is not yet programmed
-        if mask_reg == 0:
-            return 0  # if mask is not set, bank is undefined, so call it 0
-        self.bank = bank_reg / (mask_reg + 1)
-
-    def select_bank(self, bank):
-        dram_addr_per_bank = self.tone_nsamp / 2  # number of dram addresses per bank
-        mask_reg = dram_addr_per_bank - 1
-        bank_reg = dram_addr_per_bank * bank
-        self._pause_dram()
-        self.r.write_int('dram_bank', bank_reg)
-        self.r.write_int('dram_mask', mask_reg)
-        self._unpause_dram()
-        self.bank = bank
-        try:
-            self.select_fft_bins(self.readout_selection)
-        except AttributeError:
-            self.select_fft_bins(np.arange(self.tone_bins.shape[1]))
 
     def load_waveform(self, wave, start_offset=0, fast=True):
         """
@@ -364,15 +338,6 @@ class RoachBaseband(RoachInterface):
                 demod[:, n] = np.conjugate(demod[:, n])
         return demod
 
-    def get_data_udp(self, nread=2, demod=True):
-        chan_offset = 1
-        nch = self.fpga_fft_readout_indexes.shape[0]
-        data, seqnos = udp_catcher.get_udp_data(self, npkts=nread * 16 * nch, streamid=1,
-                                                chans=self.fpga_fft_readout_indexes + chan_offset,
-                                                nfft=self.nfft, addr=(self.host_ip, 12345))  # , stream_reg, addr)
-        if demod:
-            data = self.demodulate_data(data)
-        return data, seqnos
 
     def get_data(self, nread=2, demod=True):
         return self.get_data_udp(nread=nread, demod=demod)
@@ -460,9 +425,8 @@ class RoachBaseband(RoachInterface):
         if self.adc_valon is None:
             print "Could not set Valon; none available"
             return
-        self.adc_valon.set_frequency_a(fs,
-                                       chan_spacing=chan_spacing)  # for now the baseband readout uses both valon outputs,
-        self.adc_valon.set_frequency_b(fs, chan_spacing=chan_spacing)  # one for ADC, one for DAC
+        self.adc_valon.set_frequency_a(fs, chan_spacing=chan_spacing)  # for now the baseband readout uses both valon
+        #  outputs,
         self.fs = fs
 
 

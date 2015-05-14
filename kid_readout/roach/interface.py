@@ -3,6 +3,7 @@ import sys
 import time
 import numpy as np
 import borph_utils
+import udp_catcher
 
 __author__ = 'gjones'
 
@@ -74,6 +75,35 @@ class RoachInterface(object):
         self.r.write_int('fftshift', fftshift)
         self.save_state()
 
+    # TODO: this should raise a RoachError or return None if no bank is selected or the Roach isn't programmed.
+    def get_current_bank(self):
+        """
+        Determine what tone bank the ROACH is currently set to use
+        """
+        try:
+            bank_reg = self.r.read_int('dram_bank')
+            mask_reg = self.r.read_int('dram_mask')
+        except RuntimeError:
+            self.bank = 0  # this catches the case that the ROACH is not yet programmed
+        if mask_reg == 0:
+            self.bank = 0  # if mask is not set, bank is undefined, so call it 0
+        self.bank = bank_reg / (mask_reg + 1)
+
+    def select_bank(self, bank):
+        dram_addr_per_bank = self.tone_nsamp / 2  # number of dram addresses per bank
+        mask_reg = dram_addr_per_bank - 1
+        bank_reg = dram_addr_per_bank * bank
+        self._pause_dram()
+        self.r.write_int('dram_bank', bank_reg)
+        self.r.write_int('dram_mask', mask_reg)
+        self._unpause_dram()
+        self.bank = bank
+        try:
+            self.select_fft_bins(self.readout_selection)
+        except AttributeError:
+            self.select_fft_bins(np.arange(self.tone_bins.shape[1]))
+
+
     def set_modulation_output(self, rate='low'):
         """
         rate: can be 'high', 'low', 1-8.
@@ -122,7 +152,8 @@ class RoachInterface(object):
                  tone_bins=self.tone_bins,
                  phases=self.phases,
                  modulation_rate=self.modulation_rate,
-                 modulation_output=self.modulation_output)
+                 modulation_output=self.modulation_output,
+                 lo_frequency=self.lo_frequency)
         try:
             os.chmod(CONFIG_FILE_NAME, 0777)
         except:
@@ -190,6 +221,7 @@ class RoachInterface(object):
             self.phases = state['phases']
             self.modulation_output = state['modulation_output'][()]
             self.modulation_rate = state['modulation_rate'][()]
+            self.lo_frequency = state['lo_frequency'][()]
 
     def measure_fs(self):
         """
@@ -335,6 +367,16 @@ class RoachInterface(object):
         res = np.interp(np.abs(fr) * 2 ** 7, np.arange(2 ** 7), self._window_mag)
         res = 1 / res
         return res
+
+    def get_data_udp(self, nread=2, demod=True):
+        chan_offset = 1
+        nch = self.fpga_fft_readout_indexes.shape[0]
+        data, seqnos = udp_catcher.get_udp_data(self, npkts=nread * 16 * nch, streamid=1,
+                                                chans=self.fpga_fft_readout_indexes + chan_offset,
+                                                nfft=self.nfft, addr=(self.host_ip, 12345))  # , stream_reg, addr)
+        if demod:
+            data = self.demodulate_data(data)
+        return data, seqnos
 
     ### Tried and true readout function
     def _read_data(self, nread, bufname, verbose=False):

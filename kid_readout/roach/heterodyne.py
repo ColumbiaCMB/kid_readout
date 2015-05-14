@@ -1,9 +1,11 @@
+import socket
 import time
 
 import numpy as np
 import scipy.signal
 from kid_readout.roach.interface import RoachInterface
 from kid_readout.roach.tools import compute_window
+import kid_readout.roach.udp_catcher
 
 
 try:
@@ -16,7 +18,7 @@ except ImportError:
 
 class RoachHeterodyne(RoachInterface):
 
-    def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None):
+    def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None, host_ip=None):
         """
         Class to represent the heterodyne readout system (high-frequency (1.5 GHz), IQ mixers)
 
@@ -70,10 +72,27 @@ class RoachHeterodyne(RoachInterface):
         else:
             self.adc_valon = adc_valon
 
-        self.adc_atten = -1
+        self.adc_atten = 31.5
         self.dac_atten = -1
+        self.fft_bins = None
+        self.tone_nsamp = None
+        self.tone_bins = None
+        self.phases = None
+        self.modulation_output = 0
+        self.modulation_rate = 0
+        self.lo_frequency = 0.0
+        self.get_current_bank()
+
         self.bof_pid = None
         self.roachip = roachip
+        if host_ip is None:
+            hostname = socket.gethostname()
+            if hostname == 'detectors':
+                host_ip = '192.168.1.1'
+            else:
+                host_ip = '192.168.1.1'
+        self.host_ip = host_ip
+
         try:
             self.fs = self.adc_valon.get_frequency_a()
         except:
@@ -129,41 +148,55 @@ class RoachHeterodyne(RoachInterface):
         if self.fft_bins.shape[0] > 4:
             readout_selection = range(4)
         else:
-            readout_selection = range(self.fft_bins.shape[0])
+            readout_selection = range(self.fft_bins.shape[1])
 
         self.select_fft_bins(readout_selection)
         return actual_freqs
 
-    def set_tone_bins(self, bins, nsamp, amps=None):
+    def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None,phases=None):
         """
         Set the stimulus tones by specific integer bins
 
         bins : array of bins at which tones should be placed
-        For Heterodyne system, negative frequencies should be placed in cannonical FFT order
-
+            For Heterodyne system, negative frequencies should be placed in cannonical FFT order
+            If 2d, interpret as (nwaves,ntones)
         nsamp : int, must be power of 2
-        number of samples in the playback buffer. Frequency resolution will be fs/nsamp
-
+            number of samples in the playback buffer. Frequency resolution will be fs/nsamp
         amps : optional array of floats, same length as bins array
             specify the relative amplitude of each tone. Can set to zero to read out a portion
             of the spectrum with no stimulus tone.
+        load : bool (debug only). If false, don't actually load the waveform, just calculate it.
         """
-        spec = np.zeros((nsamp,), dtype='complex')
+
+        if bins.ndim == 1:
+            bins.shape = (1, bins.shape[0])
+        nwaves = bins.shape[0]
+        spec = np.zeros((nwaves, nsamp), dtype='complex')
         self.tone_bins = bins.copy()
         self.tone_nsamp = nsamp
-        phases = np.random.random(len(bins)) * 2 * np.pi
+        if phases is None:
+            phases = np.random.random(bins.shape[1]) * 2 * np.pi
         self.phases = phases.copy()
         if amps is None:
             amps = 1.0
         self.amps = amps
-        spec[bins] = amps * np.exp(1j * phases)
-        wave = np.fft.ifft(spec)
+        for k in range(nwaves):
+            spec[k, bins[k, :]] = amps * np.exp(1j * phases)
+        wave = np.fft.ifft(spec, axis=1)
         self.wavenorm = np.abs(wave).max()
-        i_wave = np.round((wave.real / self.wavenorm) * (2 ** 15 - 1024)).astype('>i2')
-        q_wave = np.round((wave.imag / self.wavenorm) * (2 ** 15 - 1024)).astype('>i2')
-        self.i_wave = i_wave
-        self.q_wave = q_wave
-        self.load_waveforms(i_wave, q_wave)
+        if normfact is not None:
+            wn = (2.0 / normfact) * len(bins) / float(nsamp)
+            print "ratio of current wavenorm to optimal:", self.wavenorm / wn
+            self.wavenorm = wn
+        q_rwave = np.round((wave.real / self.wavenorm) * (2 ** 15 - 1024)).astype('>i2')
+        q_iwave = np.round((wave.imag / self.wavenorm) * (2 ** 15 - 1024)).astype('>i2')
+        q_rwave.shape = (q_rwave.shape[0] * q_rwave.shape[1],)
+        q_iwave.shape = (q_iwave.shape[0] * q_iwave.shape[1],)
+        self.q_rwave = q_rwave
+        self.q_iwave = q_iwave
+        if load:
+            self.load_waveforms(q_rwave,q_iwave)
+        self.save_state()
 
     def calc_fft_bins(self, tone_bins, nsamp):
         """
@@ -202,12 +235,12 @@ class RoachHeterodyne(RoachInterface):
             indexes into the self.fft_bins array to specify the bins to read out
         """
         offset = 4
-        idxs = self.fft_bin_to_index(self.fft_bins[readout_selection])
+        idxs = self.fft_bin_to_index(self.fft_bins[self.bank,readout_selection])
         order = idxs.argsort()
         idxs = idxs[order]
         self.readout_selection = np.array(readout_selection)[order]
         self.fpga_fft_readout_indexes = idxs
-        self.readout_fft_bins = self.fft_bins[self.readout_selection]
+        self.readout_fft_bins = self.fft_bins[self.bank, self.readout_selection]
 
         binsel = np.zeros((self.fpga_fft_readout_indexes.shape[0] + 1,), dtype='>i4')
         # evenodd = np.mod(self.fpga_fft_readout_indexes,2)
@@ -227,12 +260,13 @@ class RoachHeterodyne(RoachInterface):
 
         returns : demodulated data in an array of the same shape and dtype as *data*
         """
+        bank = self.bank
         demod = np.zeros_like(data)
         t = np.arange(data.shape[0])
         for n, ich in enumerate(self.readout_selection):
             phi0 = self.phases[ich]
-            k = self.tone_bins[ich]
-            m = self.fft_bins[ich]
+            k = self.tone_bins[bank,ich]
+            m = self.fft_bins[bank,ich]
             if m >= self.nfft / 2:
                 sign = -1.0
                 doconj = True
@@ -247,7 +281,20 @@ class RoachHeterodyne(RoachInterface):
                 demod[:, n] = np.conjugate(demod[:, n])
         return demod
 
-    def get_data(self, nread=10, demod=True):
+    def get_data(self, nread=2, demod=True):
+        return self.get_data_udp(nread=nread, demod=demod)
+
+    def get_data_udp(self, nread=2, demod=True):
+        chan_offset = 1
+        nch = self.fpga_fft_readout_indexes.shape[0]
+        data, seqnos = kid_readout.roach.udp_catcher.get_udp_data(self, npkts=nread * 16 * nch, streamid=1,
+                                                chans=self.fpga_fft_readout_indexes//2 + chan_offset,
+                                                nfft=self.nfft//2, addr=(self.host_ip, 12345))  # , stream_reg, addr)
+        if demod:
+            data = self.demodulate_data(data)
+        return data, seqnos
+
+    def get_data_katcp(self, nread=10, demod=True):
         """
         Get a chunk of data
 
@@ -288,8 +335,10 @@ class RoachHeterodyne(RoachInterface):
         lomhz: float, frequency in MHz
         """
         #TODO: Fix this after valon is updated
-        self.adc_valon.set_power(8,2)
+        self.adc_valon.set_rf_level(8,2)
         self.adc_valon.set_frequency_b(lomhz, chan_spacing=chan_spacing)
+        self.lo_frequency = lomhz
+        self.save_state()
 
     def set_dac_attenuator(self, attendb):
         if attendb < 0 or attendb > 63:
