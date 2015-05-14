@@ -30,7 +30,11 @@ def prepare_sweep(ri,center_freqs,offsets,nsamp=2**21):
     freqs = center_freqs[None,:] + offsets[:,None]
     return ri.set_tone_freqs(freqs,nsamp=nsamp)
     
-def do_prepared_sweep(ri,nchan_per_step=8,reads_per_step=2,callback = None, sweep_data=None, banks=None):
+def do_prepared_sweep(ri,nchan_per_step=8,reads_per_step=2,callback = None, sweep_data=None, banks=None,demod=True):
+    if nchan_per_step > ri.fft_bins.shape[1]:
+        nchan_per_step = ri.fft_bins.shape[1]
+    if ri.fft_bins.shape[1] % nchan_per_step:
+        print "Warning: number of channels is not a multiple of nchan_per_step. Not all channels will be read."
     if sweep_data is not None:
         swp = sweep_data
     else:
@@ -46,6 +50,9 @@ def do_prepared_sweep(ri,nchan_per_step=8,reads_per_step=2,callback = None, swee
         toread = set(range(nchan))
         for k in range(nstep):
             if len(toread) == 0:
+                break
+            if len(toread) < nchan_per_step:
+                print "couldn't read last %d channels because number of channels is not a multiple of nchan_per_step" % len(toread)
                 break
             if len(toread) > nchan_per_step:
                 start = k
@@ -64,7 +71,7 @@ def do_prepared_sweep(ri,nchan_per_step=8,reads_per_step=2,callback = None, swee
             time.sleep(0.2)
             epoch = time.time()
             try:
-                dmod,addr = ri.get_data(reads_per_step)
+                dmod,addr = ri.get_data(reads_per_step,demod=demod)
             except Exception,e:
                 print e
                 continue
