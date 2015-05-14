@@ -75,5 +75,5 @@ def main(f_initial, attenuation, stream_time=30, suffix='compressor_noise', coar
 
 
 if __name__ == "__main__":
-    main(np.load('/home/data2/resonances/2014-12-06_140825_0813f8_fit_16.npy'), 32, stream_time=30,
-         suffix='compressor_noise', modulation_state='high')
+    main(np.load('/home/data2/resonances/2014-12-06_140825_0813f8_fit_16.npy'), 32, stream_time=60,
+         suffix='compressor_noise_60_s', modulation_state='high')
