@@ -7,11 +7,10 @@ from kid_readout.utils import data_block
 
 import socket
 
-hostname = socket.gethostbyname()
-if hostname in ['readout', 'detectors']:
-    BASE_DATA_DIR = os.path.join('/data',hostname)
-else:
-    print "hostname",hostname,"not recognized, defaulting to /data for storing data"
+hostname = socket.gethostname()
+BASE_DATA_DIR = os.path.join('/data',hostname)
+if not os.path.exists(BASE_DATA_DIR):
+    print "no data directory set up for",hostname,"defaulting to /data"
     BASE_DATA_DIR = '/data'
 
 
