@@ -62,7 +62,7 @@ def main():
     try: 
         header = "time, diode ch1 temp, dio ch 2 temp, dio 3 temp, dio 4 temp, dio 1 volts, dio 2 volts, dio 3 volts, dio 4 volts, rox 1 temp, rox 1 res, rox 2 temp, rox 2 res, rox 3 temp, rox 3 res"
         timestr = time.strftime("%Y%m%d-%H%M%S")
-        filename = "/home/data/SRS/%s.txt" %timestr
+        filename = "/data/readout/SRS/%s.txt" %timestr
         print("Writing to {}".format(filename))
         f = open(filename, 'w+')
         # Change the owner and group to someone:readout, where someone is the user running this script.
