@@ -6,11 +6,13 @@ from kid_readout.utils.valon import check_output
 from kid_readout.utils import data_block
 
 import socket
-#readout has run out of disk space on /home/data, so we start storing data in /home/data2
-if socket.gethostname() == 'readout':
-    BASE_DATA_DIR = '/home/data2'
+
+hostname = socket.gethostbyname()
+if hostname in ['readout', 'detectors']:
+    BASE_DATA_DIR = os.path.join('/data',hostname)
 else:
-    BASE_DATA_DIR = '/home/data'
+    print "hostname",hostname,"not recognized, defaulting to /data for storing data"
+    BASE_DATA_DIR = '/data'
 
 
 class DataFile():
