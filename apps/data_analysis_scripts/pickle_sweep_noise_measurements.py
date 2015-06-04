@@ -21,7 +21,7 @@ def extract_and_pickle(nc_filename):
                 snms.append(snm)
         rnc.close()
         # We decided to keep the .pkl files in /home/data regardless of origin.
-        pkl_filename = os.path.join('/home/data/pkl', os.path.splitext(os.path.split(nc_filename)[1])[0] + '.pkl')
+        pkl_filename = os.path.join('/data/readout/pkl', os.path.splitext(os.path.split(nc_filename)[1])[0] + '.pkl')
         save_noise_pkl(pkl_filename, snms)
         print("Saved {}".format(pkl_filename))
     except KeyboardInterrupt:

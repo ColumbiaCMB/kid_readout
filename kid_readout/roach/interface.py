@@ -7,7 +7,7 @@ import udp_catcher
 
 __author__ = 'gjones'
 
-CONFIG_FILE_NAME = '/home/data/roach_config.npz'
+CONFIG_FILE_NAME = '/data/readout/roach_config.npz'
 
 class RoachInterface(object):
     """

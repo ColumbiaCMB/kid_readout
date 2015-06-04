@@ -27,7 +27,7 @@ def build_simple_archive(pklnames, index_to_id = None, archive_name=None):
 
     if archive_name is None:
         archive_name = os.path.splitext(os.path.basename(pklnames[0]))[0]
-    archname = '/home/data/archive/%s.npy' % archive_name
+    archname = '/data/readout/archive/%s.npy' % archive_name
 
     data = []
     for pklname in pklnames:

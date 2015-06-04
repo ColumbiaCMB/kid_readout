@@ -45,6 +45,9 @@ def find_nc_file(filename):
     """
     if os.path.exists(filename):
         return filename
+    data_filename = os.path.join('/data/readout',filename)
+    if os.path.exists(data_filename):
+        return data_filename
     data_filename = os.path.join('/home/data2',filename)
     if os.path.exists(data_filename):
         return data_filename

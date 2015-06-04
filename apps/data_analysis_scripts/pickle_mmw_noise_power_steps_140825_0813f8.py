@@ -82,7 +82,7 @@ def process_file(filename):
                     noise_off_sweeps=noise_off_sweep_params)
         blah, fbase = os.path.split(filename)
         fbase, ext = os.path.splitext(fbase)
-        pklname = os.path.join('/home/data/pkl', fbase + '.pkl')
+        pklname = os.path.join('/data/readout/pkl', fbase + '.pkl')
         save_noise_pkl(pklname, data)
         return data
     except KeyboardInterrupt:

@@ -9,13 +9,14 @@ if __name__ == '__main__':
         print("Usage!")
 
     # Defaults
-    f_off = np.load('/home/data2/resonances/current.npy')
+    f_off = np.load('/data/readout/resonances/current.npy')
     f_on = f_off.copy()
     shift_ppm = 0
     f_mmw = 0
     suffix = "mmw"
     # Add option?
-    attenuation_list = [41, 38, 35, 32, 29, 26, 23]
+    #attenuation_list = [41, 38, 35, 32, 29, 26, 23]
+    attenuation_list = [41, 32]
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "f:n:s:m:x:", ("off=", "on=", "shift_ppm=", "mmw_ghz=", "suffix="))

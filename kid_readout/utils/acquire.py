@@ -84,7 +84,7 @@ def timestream(roach, frequencies, time_in_seconds, pow2=True, overwrite_last=Fa
 
 def mmw_source_sweep_and_stream(df, roach, lockin, approximate_stream_time, overwrite_last, f_mmw_source,
                                 sweep_modulation_rate, stream_modulation_rate, measurement_modulation_rate,
-                                transient_wait=10, lockin_wait=5, verbose=True):
+                                roach_wait=10, lockin_wait=5, verbose=True):
     f_sweep_modulation = roach.set_modulation_output(sweep_modulation_rate)
     if verbose:
         print("Sweep modulation state {}: frequency {:.2f} Hz.".format(sweep_modulation_rate, f_sweep_modulation))
@@ -111,7 +111,7 @@ def mmw_source_sweep_and_stream(df, roach, lockin, approximate_stream_time, over
     # After 2015-05-05, select_fft_bins is no longer necessary since select_bank now selects FFT bins too.
     roach.select_bank(roach.fft_bins.shape[0] - 1)
     roach._sync()
-    time.sleep(transient_wait)  # The above commands somehow create a transient that takes about 5 seconds to decay.
+    time.sleep(roach_wait)  # The above commands somehow create a transient that takes about 5 seconds to decay.
     df.log_hw_state(roach)
     start_time = time.time()
     stream, addresses = roach.get_data_seconds(approximate_stream_time, pow2=True)
