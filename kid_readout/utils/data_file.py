@@ -1,6 +1,7 @@
 import netCDF4
 import time
 import os
+import getpass
 import numpy as np
 from kid_readout.utils.valon import check_output
 from kid_readout.utils import data_block
@@ -36,6 +37,7 @@ class DataFile():
         except:
             gitinfo = ''
         self.nc.gitinfo = gitinfo
+        self.nc.created_by = getpass.getuser()
         self.sweeps = self.nc.createGroup('sweeps')
         self.timestreams = self.nc.createGroup('timestreams')
         self.cryo = self.nc.createGroup('cryo')
