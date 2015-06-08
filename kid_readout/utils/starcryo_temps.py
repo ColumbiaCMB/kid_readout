@@ -1,6 +1,6 @@
 """
 Routines for getting temperature data for starcryo cryostat
-Currently assumes SRS logs are in /home/data/SRS
+Currently assumes SRS logs are in /data/readout/SRS
 """
 
 import glob

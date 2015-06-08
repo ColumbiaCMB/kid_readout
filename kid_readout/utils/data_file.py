@@ -6,14 +6,7 @@ import numpy as np
 from kid_readout.utils.valon import check_output
 from kid_readout.utils import data_block
 
-import socket
-
-hostname = socket.gethostname()
-BASE_DATA_DIR = os.path.join('/data',hostname)
-if not os.path.exists(BASE_DATA_DIR):
-    print "no data directory set up for",hostname,"defaulting to /data"
-    BASE_DATA_DIR = '/data'
-
+from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
 
 class DataFile():
     def __init__(self, base_dir=BASE_DATA_DIR, suffix=''):
