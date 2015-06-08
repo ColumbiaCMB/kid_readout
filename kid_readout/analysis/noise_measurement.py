@@ -15,14 +15,14 @@ from kid_readout.analysis.resonator import fit_best_resonator
 from kid_readout.analysis.khalil import qi_error
 from kid_readout.analysis import iqnoise
 from kid_readout.utils import readoutnc
+from kid_readout.analysis.resources.local_settings import hostname,BASE_DATA_DIR
 
 #from kid_readout.utils.fftfilt import fftfilt
 from kid_readout.utils.filters import low_pass_fir
 
 from kid_readout.utils.despike import deglitch_window
 
-import socket
-if socket.gethostname() == 'detectors':
+if hostname == 'detectors':
     from kid_readout.utils.hpd_temps import get_temperatures_at
 else:
     from kid_readout.utils.starcryo_temps import get_temperatures_at
@@ -48,13 +48,10 @@ def find_nc_file(filename):
     data_filename = os.path.join('/data/readout',filename)
     if os.path.exists(data_filename):
         return data_filename
-    data_filename = os.path.join('/home/data2',filename)
+    data_filename = os.path.join('/data/detectors',filename)
     if os.path.exists(data_filename):
         return data_filename
-    data_filename = os.path.join('/home/data',filename)
-    if os.path.exists(data_filename):
-        return data_filename
-    raise IOError("Could not find file %s in any of /, /home/data, or /home/data2" % filename)
+    raise IOError("Could not find file %s in any of /data/detectors or /data/readout" % filename)
 
 
 def plot_noise_nc(fglob,**kwargs):
@@ -99,7 +96,7 @@ def plot_noise_nc(fglob,**kwargs):
                         try:
                             if pdf is None:
                                 chipfname = nm.chip_name.replace(' ','_').replace(',','')
-                                pdfname = '/home/data/plots/%s_%s.pdf' % (fbase,chipfname)
+                                pdfname = os.path.join(BASE_DATA_DIR,'plots/%s_%s.pdf') % (fbase,chipfname)
                                 pdf = PdfPages(pdfname)
                                 try:
                                     os.chmod(pdfname,0666)
@@ -126,7 +123,7 @@ def plot_noise_nc(fglob,**kwargs):
                 pdf.close()
                 pdf = None
             rnc.close()
-            pklname = os.path.join('/home/data','noise_sweeps_' +fbase+'.pkl')
+            pklname = os.path.join(BASE_DATA_DIR,'noise_sweeps_' +fbase+'.pkl')
             fh = open(pklname,'w')
             cPickle.dump(nms,fh,-1)
             fh.close()

@@ -11,13 +11,13 @@ import kid_readout.analysis.resonator
 from kid_readout.analysis.resonator import normalized_s21_to_detuning
 import kid_readout.utils.readoutnc
 import kid_readout.analysis.resources.skip5x4
-
+from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
 
 file_id_to_res_id = [0,1,2,3,4,5,6,7,8,17,16,15,14,13,10,9]
 
 def plot_file_with_air_spacer_reference(filename):
-    d1 = np.load('/home/data2/mmw_sweeps/2014-09-03_150009_140.000_161.000_10.0.npz')
-    d2 = np.load('/home/data2/mmw_sweeps/2014-09-11_105355_135.000_165.000_10.0.npz')
+    d1 = np.load(os.path.join(BASE_DATA_DIR,'mmw_sweeps/2014-09-03_150009_140.000_161.000_10.0.npz'))
+    d2 = np.load(os.path.join(BASE_DATA_DIR,'mmw_sweeps/2014-09-11_105355_135.000_165.000_10.0.npz'))
     waveguide_freq = d1['mmw_freq']
     waveguide_response = d1['power_watts']/d1['power_watts'].max()
     optics_freq = d2['mmw_freq']
@@ -33,7 +33,7 @@ def plot_file(filename,num_resonators=16,reference_spectrum=None):
     mmws = [MmwResponse(filename,k) for k in range(num_resonators)]
     blah, fbase = os.path.split(filename)
     fbase,ext = os.path.splitext(fbase)
-    pdfname = '/home/data/plots/%s.pdf' % (fbase,)
+    pdfname = os.path.join(BASE_DATA_DIR,'plots/%s.pdf') % (fbase,)
     pdf = PdfPages(pdfname)
     try:
         os.chmod(pdfname,0666)
