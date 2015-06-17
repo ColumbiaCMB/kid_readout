@@ -162,8 +162,6 @@ def normalize_f0(x):
 def save_archive(df,archname):
     try:
         np.save(archname,df.to_records())
-        if pwd is not None:
-            os.chown(archname, os.getuid(), pwd.getpwnam('readout').pw_gid)
     except Exception,e:
         print "failed to pickle",e
 

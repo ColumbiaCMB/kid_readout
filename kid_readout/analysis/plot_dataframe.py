@@ -65,7 +65,10 @@ def plot_responsivity(df, nrows=4, ncols=4, figsize=(6, 6), loglog=False, power=
                       X_scale=1e6, X_limits=None, X_label='$10^6 X$',
                       I_scale=1e6, I_limits=None, I_label='$10^6 Q_i^{-1}$',
                       X_color='blue', I_color='green'):
-    masked = df[~df['{}_XI_fit_redchi'.format(power)].isnull()]
+    if fits:
+        masked = df[~df['{}_XI_fit_redchi'.format(power)].isnull()]
+    else:
+        masked = df[~df['{}_X'.format(power)].isnull()]
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize)
     # This ensures that axes is always a numpy array of AxesSubplot objects.
     if nrows == ncols == 1:
