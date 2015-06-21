@@ -1,5 +1,10 @@
 import serial
 import time
+import numpy as np
+
+sensitivities = ((np.array([1,2,5])[None,:])*((10.**np.arange(-9,1))[:,None])).flatten()[1:-2]
+time_constants = ((np.array([1,3])[None,:])*((10.**np.arange(-5,5))[:,None])).flatten()
+
 
 class lockinController():
 ### Initialization ###
