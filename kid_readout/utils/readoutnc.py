@@ -33,8 +33,16 @@ class TimestreamGroup(object):
 #        self.nfft = ncgroup.variables['nfft'][:]
 #        self.dt = ncgroup.variables['dt'][:] # the dt property is actually misleading at this point, so leaving it out
         self.adc_sampling_freq = ncgroup.variables['fs'][:]
-        self.measurement_freq = self.adc_sampling_freq*self.tonebin/(1.0*self.tone_nsamp)
-        self.sample_rate = self.adc_sampling_freq*1e6/(2*self.nfft)
+        self.baseband_measurement_freq = self.adc_sampling_freq*self.tonebin/(1.0*self.tone_nsamp)
+        if self.parent.heterodyne:
+            self.baseband_measurement_freq = np.where(self.baseband_measurement_freq>=self.adc_sampling_freq/2,
+                                                      self.baseband_measurement_freq-self.adc_sampling_freq,
+                                                      self.baseband_measurement_freq)
+            self.measurement_freq = self.lo + self.baseband_measurement_freq
+            self.sample_rate = self.adc_sampling_freq*1e6/(self.nfft)
+        else:
+            self.measurement_freq = self.baseband_measurement_freq
+            self.sample_rate = self.adc_sampling_freq*1e6/(2*self.nfft)
 #        if ncgroup.variables.has_key('wavenorm'):
 #            self.wavenorm = ncgroup.variables['wavenorm'][:]
 #        else:
@@ -99,25 +107,32 @@ class SweepGroup(object):
     
     @property
     def errors(self):
+        return self._get_errors()
+
+    def _get_errors(self,mask = None):
         if self.timestream_group.wavenorm is None:
             wavenorm = 1
         else:
             wavenorm = self.timestream_group.wavenorm[0]
-        errors = np.zeros(self.timestream_group.data.shape[0], dtype='complex')
-        for index in range(self.timestream_group.data.shape[0]):
-            filtered = kid_readout.utils.fftfilt.fftfilt(lpf, self.timestream_group.data[index,:])[len(lpf):]
+        if mask is None:
+            indexes_to_calculate = np.arange(self.timestream_group.data.shape[0],dtype='int')
+        else:
+            indexes_to_calculate = np.flatnonzero(mask)
+        errors = np.zeros(indexes_to_calculate.shape[0], dtype='complex')
+        for output_index,input_index in enumerate(indexes_to_calculate):
+            filtered = kid_readout.utils.fftfilt.fftfilt(lpf, self.timestream_group.data[input_index,:])[len(lpf):]
             # the standard deviation is scaled by the number of independent samples
             # to compute the error on the mean.
             error_scaling = np.sqrt(float(len(filtered))/len(lpf))
             real_error = filtered.real.std()/error_scaling
             imag_error = filtered.imag.std()/error_scaling
-            errors[index] = real_error + 1j*imag_error
+            errors[output_index] = real_error + 1j*imag_error
 
         return errors
 
     def select_by_index(self,index):
         mask = self.index == index
-        freq,s21,errors = self.frequency[mask], self.s21[mask], self.errors[mask]
+        freq,s21,errors = self.frequency[mask], self.s21[mask], self._get_errors(mask)
         order = freq.argsort()
         return freq[order], s21[order], errors[order]
     
@@ -134,6 +149,11 @@ class ReadoutNetCDF(object):
         self.hardware_state_epoch = hwgroup.variables['epoch'][:]
         self.adc_atten = hwgroup.variables['adc_atten'][:]
         self.dac_atten = hwgroup.variables['dac_atten'][:]
+        try:
+            self.heterodyne = bool(self.ncroot.heterodyne)
+        except AttributeError:
+            self.heterodyne = False
+
         if 'ntones' in hwgroup.variables:
             self.num_tones = hwgroup.variables['ntones'][:]
         else:
