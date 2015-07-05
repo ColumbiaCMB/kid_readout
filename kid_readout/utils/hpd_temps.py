@@ -129,6 +129,7 @@ def get_temperature_from_nc(ncname):
                 unix = mjd_to_unix(mjd)
 
             done = True
+            nc.close()
         except:
             print "retrying..."
             nc.close()
