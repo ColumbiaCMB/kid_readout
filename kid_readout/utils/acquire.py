@@ -254,7 +254,6 @@ def record_sweep(roach, center_frequencies, offset_frequencies, attenuation, n_s
     return df.filename, resonators
 
 
-# TODO: fix broken references
 def record_sweeps_on_off(roach, nominal_frequencies, attenuation, n_samples, suffix):
     df = data_file.DataFile(suffix=suffix)
     roach.set_dac_attenuator(attenuation)

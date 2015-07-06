@@ -7,8 +7,10 @@ from __future__ import division
 from copy import deepcopy
 import numpy as np
 import lmfit
+from equipment.VDI import zbd
 from kid_readout.analysis.khalil import qi_error
 from kid_readout.analysis import archive
+
 
 
 def analyze(df, channel_to_location=None, maximum_fractional_f_r_error=1e-5, maximum_iQi_error=1e-5):
@@ -19,32 +21,20 @@ def analyze(df, channel_to_location=None, maximum_fractional_f_r_error=1e-5, max
         add_location(df, channel_to_location)
     add_resonator_fit_good(df, maximum_fractional_f_r_error, maximum_iQi_error)
     df = archive.add_noise_fits(df)
-    try:
-        add_zbd_power(df)
-    except AttributeError:
-        pass
-    try:
-        df = archive.add_total_mmw_attenuator_turns(df)
-    except AttributeError:
-        pass
     return df
 
 
-def analyze_mmw_power_steps(df, channel_to_location=None, maximum_X_error=1e-6, maximum_I_error=1e-5,
-                            initial_responsivity=None, masker = lambda g: np.array((g.timestream_modulation_duty_cycle==0) &
-                            g.resonator_fit_good)):
-    pass
-    """
-    if initial_responsivity is None:
-        # implement guess
-        raise NotImplementedError()
-    if masker is None:
-        masker = lambda g: np.array((g.timestream_modulation_duty_cycle==0) &
-                                    g.resonator_fit_good)
-    df = add_responsivities(df, initial_responsivity, masker=masker)
-    df = add_NEP2(df)
+def analyze_mmw_source_data(df, zbd_fraction, optical_frequency=None):
+    try:
+        df.rename(columns={'zbd_voltage': 'lockin_rms_voltage'}, inplace=True)
+    except AttributeError:
+        pass
+    add_zbd_voltage(df)
+    add_zbd_power(df, optical_frequency)
+    add_source_power(df, zbd_fraction)
+    df = archive.add_total_mmw_attenuator_turns(df)
     return df
-    """
+
 
 def rename_f(df):
     df.rename(columns={'f_0': 'f_r', 'f_0_err': 'f_r_err'}, inplace=True)
@@ -67,9 +57,34 @@ def add_location(df, channel_to_location):
     df['location'] = channel_to_location[np.array(df.channel)]
 
 
-# TODO: upgrade to use ZBD responsivity and account for lock-in
-def add_zbd_power(df, zbd_volts_per_watt=2200):
-    df['zbd_power'] = df.zbd_voltage / zbd_volts_per_watt
+def add_zbd_voltage(df):
+    """
+    The modulated square wave has minimum 0 and maximum V_z, equivalent to an offset square wave with peak V_z / 2.
+    The lock-in measures the Fourier component at the reference frequency and reports RMS voltage, so in this case it
+    will report
+    V_l = (V_z / 2) (4 / \pi) 2^{-1/2} = (2^{1/2} / \pi) V_z.
+    The peak ZBD voltage is thus
+    V_z = 2^{-1/2} \pi V_l
+    """
+    df['zbd_voltage'] = 2**(-1/2) * np.pi * df.lockin_rms_voltage
+
+
+def add_zbd_power(df, optical_frequency=None):
+    """
+    :param df: The dataframe.
+    :param optical_frequency: The frequency in hertz detected by the ZBD.
+    :return: None; the dataframe is modified.
+    """
+    if optical_frequency is None:
+        zbd_volts_per_watt = 2200
+    else:
+        z = zbd.ZBD()
+        zbd_volts_per_watt = z.responsivity(optical_frequency)
+    df['zbd_power'] = df['zbd_voltage'] / zbd_volts_per_watt
+
+
+def add_source_power(df, zbd_fraction):
+    df['source_power'] = df.zbd_power / zbd_fraction
 
 
 def add_resonator_fit_good(df, maximum_fractional_f_r_error, maximum_iQi_error):
@@ -148,8 +163,8 @@ def parameters(P_0, P_star, X_0, I_0, I_C):
     return params
 
 
-def add_XI_responsivity(df, power='zbd_power', masker=None):
-    def XI_responsivity(group):
+def add_XI_response(df, power, masker=None):
+    def XI_response(group):
         if masker is None:
             mask = np.ones(group.shape[0], dtype=np.bool)
         else:
@@ -166,12 +181,12 @@ def add_XI_responsivity(df, power='zbd_power', masker=None):
             group.loc[mask, '{}_I'.format(power)] = group.Q_i**-1
             group.loc[mask, '{}_I_err'.format(power)] = group.Q_i**-2 * group.Q_i_err
         return group
-    return df.groupby(('channel', 'atten')).apply(XI_responsivity).reset_index(drop=True)
+    return df.groupby(('channel', 'atten')).apply(XI_response).reset_index(drop=True)
 
 
 # Remove bad data and power-off points before fitting.
-def fit_XI_responsivity(df, initial, power='zbd_power', masker=lambda group: np.ones(group.shape[0], dtype=np.bool)):
-    def XI_responsivity(group):
+def fit_XI_response(df, initial, power, masker=lambda group: np.ones(group.shape[0], dtype=np.bool)):
+    def XI_response(group):
         mask = masker(group)
         try:
             result = fit(group[mask][power], group[mask]['{}_X'.format(power)], group[mask]['{}_I'.format(power)],
@@ -188,10 +203,10 @@ def fit_XI_responsivity(df, initial, power='zbd_power', masker=lambda group: np.
         except TypeError:
             pass
         return group
-    return df.groupby(('channel', 'atten')).apply(XI_responsivity).reset_index(drop=True)
+    return df.groupby(('channel', 'atten')).apply(XI_response).reset_index(drop=True)
 
 
-def add_NEP2(df, power='zbd_power'):
+def add_NEP2(df, power):
     df['{}_NEP2_device'.format(power)] = df.noise_fit_device_noise / df['{}_dX_dP'.format(power)] ** 2
     df['{}_NEP2_amplifier'.format(power)] = df.noise_fit_amplifier_noise / df['{}_dX_dP'.format(power)] ** 2
 
