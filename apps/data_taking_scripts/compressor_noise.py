@@ -66,7 +66,7 @@ def main(f_initial, attenuation, stream_time=30, suffix='compressor_noise', coar
         x, y, r, theta = lockin.get_data()
         roach.set_modulation_output('high')
     else:
-        x=0
+        x = np.nan
     df.add_timestream_data(stream_off, roach, off_start_time, mmw_source_freq=f_mmw_source, zbd_voltage=x)
 
     df.sync()
@@ -76,4 +76,4 @@ def main(f_initial, attenuation, stream_time=30, suffix='compressor_noise', coar
 
 if __name__ == "__main__":
     main(np.load('/data/readout/resonances/current.npy'), 41, stream_time=30,
-         suffix='compressor_noise', modulation_state='high')
+         suffix='compressor_noise_0.200_K', modulation_state='high')
