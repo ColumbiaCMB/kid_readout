@@ -82,6 +82,73 @@ def timestream(roach, frequencies, time_in_seconds, pow2=True, overwrite_last=Fa
     return data, address
 
 
+# TODO: rename
+def sweeps_and_streams(f_initial, attenuations, suffix='', coarse_exponent=19, fine_exponent=21, long_stream_time=30,
+                       short_stream_time=4, roach_wait=10):
+    roach = baseband.RoachBaseband()
+    f_modulation = roach.set_modulation_output('high')
+
+    n_coarse_samples = 2 ** coarse_exponent
+    n_fine_samples = 2 ** fine_exponent
+    coarse_frequency_resolution = roach.fs / n_coarse_samples
+    fine_frequency_resolution = roach.fs / n_fine_samples
+    coarse_offset_integers = offset_integers[coarse_exponent]
+    fine_offset_integers = offset_integers[fine_exponent]
+    f_coarse_offset = coarse_frequency_resolution * coarse_offset_integers
+    f_fine_offset = fine_frequency_resolution * fine_offset_integers
+
+    start_time = time.time()
+    df = data_file.DataFile(suffix=suffix)
+    maximum_attenuation = max(attenuations)
+    print("Setting DAC attenuator to maximum requested attenuation of {:.1f} dB.".format(maximum_attenuation))
+    roach.set_dac_attenuator(maximum_attenuation)
+
+    # At the lowest readout power, record a coarse sweep and a short stream
+    sweeps.prepare_sweep(roach, f_initial, f_coarse_offset, n_coarse_samples)
+    df.log_hw_state(roach)
+    coarse_sweep_data = sweeps.do_prepared_sweep(roach, nchan_per_step=roach.tone_bins.shape[0], reads_per_step=2)
+    df.add_sweep(coarse_sweep_data)
+    df.sync()
+    coarse_f_fit = np.array([r.f_0 for r in fit_sweep_data(coarse_sweep_data)])
+    print("coarse - initial [Hz]: " + ', '.join(['{:.0f}'.format(1e6 * diff) for diff in coarse_f_fit - f_initial]))
+    roach.add_tone_freqs(coarse_f_fit, overwrite_last=True)
+    roach.select_bank(roach.fft_bins.shape[0] - 1)
+    roach._sync()
+    time.sleep(roach_wait)  # The above commands somehow create a transient that takes about 5 seconds to decay.
+    df.log_hw_state(roach)
+    stream_start_time = time.time()
+    stream, addresses = roach.get_data_seconds(short_stream_time, pow2=True)
+    df.add_timestream_data(stream, roach, stream_start_time, mmw_source_modulation_freq=f_modulation)
+    df.sync()
+
+    # Use these frequencies for all subsequent sweeps, and add an additional waveform for each stream.
+    print("\nSetting fine sweep frequencies.")
+    sweeps.prepare_sweep(roach, coarse_f_fit, f_fine_offset, n_fine_samples)
+
+    for k, attenuation in enumerate(attenuations):
+        print("\nMeasurement {} of {}: DAC attenuator at {:.1f} dB.".format(k + 1, len(attenuations), attenuation))
+        roach.set_dac_attenuator(attenuation)
+        fine_sweep_data = sweeps.do_prepared_sweep(roach, nchan_per_step=roach.tone_bins.shape[0], reads_per_step=2)
+        df.add_sweep(fine_sweep_data)
+        df.sync()
+        fine_f_fit = np.array([r.f_0 for r in fit_sweep_data(fine_sweep_data)])
+        print("fine - coarse [Hz]: " + ', '.join(['{:.0f}'.format(1e6 * diff) for diff in fine_f_fit - coarse_f_fit]))
+        f_stream = roach.add_tone_freqs(coarse_f_fit, overwrite_last=k>0)  # Overwrite after the first
+        print("stream detuning [ppm]: " + ', '.join(['{:.0f}'.format(1e6 * x) for x in (f_stream / fine_f_fit - 1)]))
+        roach.select_bank(roach.fft_bins.shape[0] - 1)
+        roach._sync()
+        time.sleep(roach_wait)  # The above commands somehow create a transient that takes about 5 seconds to decay.
+        df.log_hw_state(roach)
+        stream_start_time = time.time()
+        stream, addresses = roach.get_data_seconds(long_stream_time, pow2=True)
+        df.add_timestream_data(stream, roach, stream_start_time, mmw_source_modulation_freq=f_modulation)
+        df.sync()
+
+    df.close()
+    print("Completed in {:.0f} minutes: {}".format((time.time() - start_time) / 60, df.filename))
+
+
+
 def mmw_source_sweep_and_stream(df, roach, lockin, approximate_stream_time, overwrite_last, f_mmw_source,
                                 sweep_modulation_rate, stream_modulation_rate, measurement_modulation_rate,
                                 roach_wait=10, lockin_wait=5, verbose=True):
@@ -254,7 +321,6 @@ def record_sweep(roach, center_frequencies, offset_frequencies, attenuation, n_s
     return df.filename, resonators
 
 
-# TODO: fix broken references
 def record_sweeps_on_off(roach, nominal_frequencies, attenuation, n_samples, suffix):
     df = data_file.DataFile(suffix=suffix)
     roach.set_dac_attenuator(attenuation)
