@@ -51,7 +51,7 @@ def _plot_phase_on_axis(extracted, axis, plot_masked):
     axis.plot(extracted['f_0'], np.angle(extracted['model_0']),
               linestyle='None', marker = '.', markersize=3, color='brown', label='$f_0$')
 
-def amplitude(r, title="", xlabel='frequency [MHz]', ylabel='$|S_{21}|$ [dB]',
+def amplitude(r, title="", xlabel='frequency [MHz]', ylabel='$|S_{21}|^2$ [dB]',
               plot_masked=True, **kwds):
     """
     Plot the data, fit, and f_0.
@@ -74,7 +74,7 @@ def amplitude(r, title="", xlabel='frequency [MHz]', ylabel='$|S_{21}|$ [dB]',
         plt.show()
     return fig
 
-def amplitude_and_phase(r, title="", xlabel='frequency [MHz]', amp_label='$|S_{21}|$ [dB]', phase_label='phase [rad]',
+def amplitude_and_phase(r, title="", xlabel='frequency [MHz]', amp_label='$|S_{21}|^2$ [dB]', phase_label='phase [rad]',
                         plot_masked=True, **kwds):
     interactive = plt.isinteractive()
     plt.ioff()
