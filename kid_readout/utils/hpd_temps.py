@@ -12,22 +12,22 @@ import numpy as np
 import netCDF4
 
 try:
-    rx102a_dat = np.loadtxt('/home/gjones/RX-102A.tbl')
+    rx102a_dat = np.loadtxt('/data/detectors/RX-102A.tbl')
 except IOError:
-    raise ImportError("Could not find /home/gjones/RX-102A.tbl so can't work with HPD temperatures")
+    raise ImportError("Could not find /data/detectors/RX-102A.tbl so can't work with HPD temperatures")
 order = rx102a_dat[:,1].argsort()
 rx102a_dat = rx102a_dat[order,:]
 
 def rx102a_curve(R):
     return np.interp(R,rx102a_dat[:,1],rx102a_dat[:,0])
 
-nc_dir = "/home/data/adc_mount"
+nc_dir = "/data/adc"
 
 _filecache = {}
 
 def get_nc_list():
     # First the original logs
-    ncs = glob.glob(os.path.join(nc_dir,'cooldown_logs/2014*.nc'))
+    ncs = glob.glob(os.path.join(nc_dir,'cooldown_logs/20140*.nc'))
     ncs.sort()
     if len(ncs) == 0:
         raise Exception("Could not find any nc files; is the data directory mounted properly?")
@@ -37,8 +37,7 @@ def get_nc_list():
         epochs.append(time.mktime(time.strptime(fname,'%Y%m%d_%H%M%S.nc')) - 5*3600) # this will certainly break with DST...
         
     # Then the interim logs
-    ncs2 = glob.glob(os.path.join(nc_dir,'garbage_cooldown_logs/2014*.nc'))
-    ncs2 += glob.glob(os.path.join(nc_dir,'garbage_cooldown_logs/2015*.nc'))
+    ncs2 = glob.glob(os.path.join(nc_dir,'cooldown_logs/201*-*.nc'))
     ncs2.sort()
     if len(ncs2) == 0:
         raise Exception("Could not find any nc files; is the data directory mounted properly?")
@@ -111,10 +110,10 @@ def mjd_to_unix(mjd):
 def get_temperature_from_nc(ncname):
     tic = time.time()
     done = False
-    while (not done) and (time.time() - tic < 30):
+    while (not done) and (time.time() - tic < 300):
         try:
             nc = netCDF4.Dataset(ncname)
-            if ncname.find('garbage_cooldown_logs') >= 0:
+            if ncname.find('20140') < 0:
                 unix = nc.groups['sim900'].variables['time'][:]
                 res = nc.groups['sim900'].variables['bridge_res_value'][:]
                 temps = rx102a_curve(res)
