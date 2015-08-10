@@ -183,16 +183,25 @@ class SweepNoiseMeasurement(object):
             
             
         """
-        
-        self.sweep_filename = sweep_filename
-        if timestream_filename:
-            self.timestream_filename = timestream_filename
+
+        if type(sweep_filename) is str:
+            self.sweep_filename = sweep_filename
+            if timestream_filename:
+                self.timestream_filename = timestream_filename
+            else:
+                self.timestream_filename = self.sweep_filename
+            self._sweep_file = None
+            self._timestream_file = None
+            self._close_file = True
         else:
-            self.timestream_filename = self.sweep_filename
+            # TODO: Fix this to allow different timestream file
+            self._sweep_file = sweep_filename
+            self._timestream_file = sweep_filename
+            self._close_file = False
+            self.sweep_filename = self._sweep_file.filename
+            self.timestream_filename = self._timestream_file.filename
         self.sweep_group_index = sweep_group_index
         self.timestream_group_index = timestream_group_index
-        self._sweep_file = None
-        self._timestream_file = None
         self._use_sweep_group_timestream = use_sweep_group_timestream
         
         self.sweep_epoch = self.sweep.start_epoch
@@ -431,8 +440,11 @@ class SweepNoiseMeasurement(object):
             
         if thresh is None:
             thresh = self.deglitch_threshold
+        if thresh is None:
+            deglitched_timeseries = projected_timeseries
+        else:
+            deglitched_timeseries = deglitch_window(projected_timeseries,window,thresh=thresh)
 
-        deglitched_timeseries = deglitch_window(projected_timeseries,window,thresh=thresh)
         return deglitched_timeseries
     
     def get_projected_fractional_fluctuation_spectra(self,NFFT=2**12,window=mlab.window_none):
@@ -527,10 +539,12 @@ class SweepNoiseMeasurement(object):
         
     def _close_files(self):
         if self._sweep_file:
-            self._sweep_file.close()
+            if self._close_file:
+                self._sweep_file.close()
             self._sweep_file = None
         if self._timestream_file:
-            self._timestream_file.close()
+            if self._close_file:
+                self._timestream_file.close()
             self._timestream_file = None
 
     def _restore_resonator_model(self):
