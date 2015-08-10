@@ -56,9 +56,11 @@ boffile_delay_estimates = {  # 'bb2xpfb10mcr11_2014_Jan_20_1049.bof',
                              #'bb2xpfb15mcr1_2013_Jul_24_1504.bof',
                              #'bb2xpfb15mcr1_2013_Jul_27_2342.bof',
                              #'bb2xpfb15mcr4_2013_Jul_31_0004.bof'
+                             'iq2xpfb14mcr6_2015_May_11_2241.bof' : -31.3e-6,
                               }
 
 nfft_delay_estimates = {2**11 : -7.29e-6,
+                        2**13 : -31.3e-6,
                         2**14 : -63.3e-6}
 
 

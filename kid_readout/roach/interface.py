@@ -4,10 +4,9 @@ import time
 import numpy as np
 import borph_utils
 import udp_catcher
+from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
 
-__author__ = 'gjones'
-
-CONFIG_FILE_NAME = '/data/readout/roach_config.npz'
+CONFIG_FILE_NAME = os.path.join(BASE_DATA_DIR,'roach_config.npz')
 
 class RoachInterface(object):
     """
@@ -83,11 +82,12 @@ class RoachInterface(object):
         try:
             bank_reg = self.r.read_int('dram_bank')
             mask_reg = self.r.read_int('dram_mask')
+            if mask_reg == 0:
+                self.bank = 0  # if mask is not set, bank is undefined, so call it 0
+            else:
+                self.bank = bank_reg / (mask_reg + 1)
         except RuntimeError:
             self.bank = 0  # this catches the case that the ROACH is not yet programmed
-        if mask_reg == 0:
-            self.bank = 0  # if mask is not set, bank is undefined, so call it 0
-        self.bank = bank_reg / (mask_reg + 1)
 
     def select_bank(self, bank):
         dram_addr_per_bank = self.tone_nsamp / 2  # number of dram addresses per bank
@@ -98,10 +98,10 @@ class RoachInterface(object):
         self.r.write_int('dram_mask', mask_reg)
         self._unpause_dram()
         self.bank = bank
-        try:
-            self.select_fft_bins(self.readout_selection)
-        except AttributeError:
-            self.select_fft_bins(np.arange(self.tone_bins.shape[1]))
+#        try:
+#            self.select_fft_bins(self.readout_selection)
+#        except AttributeError:
+#            self.select_fft_bins(np.arange(self.tone_bins.shape[1]))
 
 
     def set_modulation_output(self, rate='low'):
@@ -290,11 +290,11 @@ class RoachInterface(object):
             tries = tries - 1
         raise Exception("Writing to dram failed!")
 
-    def _load_dram_ssh(self, data, offset_bytes=0, roach_root='/srv/roach_boot/etch', datafile='boffiles/dram.bin'):
+    def _load_dram_ssh(self, data, offset_bytes=0, datafile='boffiles/dram.bin'):
         offset_blocks = offset_bytes / 512  #dd uses blocks of 512 bytes by default
         self._update_bof_pid()
         self._pause_dram()
-        data.tofile(os.path.join(roach_root, datafile))
+        data.tofile(os.path.join(self.nfs_root, datafile))
         dram_file = '/proc/%d/hw/ioreg/dram_memory' % self.bof_pid
         datafile = '/' + datafile
         result = borph_utils.check_output(
@@ -303,10 +303,14 @@ class RoachInterface(object):
         self._unpause_dram()
 
     # TODO: call from the functions that require it so we can stop calling it externally.
-    def _sync(self):
-        self.r.write_int('sync', 0)
-        self.r.write_int('sync', 1)
-        self.r.write_int('sync', 0)
+    def _sync(self,loopback=False):
+        if loopback:
+            base_value = 2
+        else:
+            base_value = 0
+        self.r.write_int('sync', 0+base_value)
+        self.r.write_int('sync', 1+base_value)
+        self.r.write_int('sync', 0+base_value)
 
     ### Other hardware functions (attenuator, valon)
     def set_attenuator(self, attendb, gpio_reg='gpioa', data_bit=0x08, clk_bit=0x04, le_bit=0x02):

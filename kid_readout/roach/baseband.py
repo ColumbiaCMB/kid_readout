@@ -29,7 +29,8 @@ except ImportError:
 
 class RoachBaseband(RoachInterface):
 
-    def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None, host_ip=None, initialize=True):
+    def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None, host_ip=None, initialize=True,
+                 nfs_root='/srv/roach_boot/etch'):
         """
         Class to represent the baseband readout system (low-frequency (150 MHz), no mixers)
 
@@ -105,6 +106,7 @@ class RoachBaseband(RoachInterface):
         self.modulation_output = 0
         self.modulation_rate = 0
         self.lo_frequency = 0.0
+        self.heterodyne = False
         self.bof_pid = None
         self.roachip = roachip
         #self.boffile = 'bb2xpfb14mcr5_2013_Jul_31_1301.bof'
@@ -112,11 +114,13 @@ class RoachBaseband(RoachInterface):
         #self.boffile = 'bb2xpfb14mcr11_2014_Jan_17_1721.bof'
         #self.boffile = 'bb2xpfb14mcr17_2014_Oct_12_1745.bof'
         self.boffile = 'bb2xpfb14mcr17b_2015_Apr_21_1159.bof'
+        self.nfs_root = nfs_root
+
 
         try:
-            self.delay_estimate = tools.boffile_delay_estimates[self.boffile]
+            self.hardware_delay_estimate = tools.boffile_delay_estimates[self.boffile]
         except KeyError:
-            self.delay_estimate = tools.nfft_delay_estimates[self.nfft]
+            self.hardware_delay_estimate = tools.nfft_delay_estimates[self.nfft]
 
         if initialize:
             self.initialize()

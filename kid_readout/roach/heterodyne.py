@@ -18,7 +18,8 @@ except ImportError:
 
 class RoachHeterodyne(RoachInterface):
 
-    def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None, host_ip=None):
+    def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None, host_ip=None,
+                 nfs_root='/srv/roach_boot/etch'):
         """
         Class to represent the heterodyne readout system (high-frequency (1.5 GHz), IQ mixers)
 
@@ -74,6 +75,7 @@ class RoachHeterodyne(RoachInterface):
 
         self.adc_atten = 31.5
         self.dac_atten = -1
+        self.fft_gain = 0
         self.fft_bins = None
         self.tone_nsamp = None
         self.tone_bins = None
@@ -81,7 +83,9 @@ class RoachHeterodyne(RoachInterface):
         self.modulation_output = 0
         self.modulation_rate = 0
         self.lo_frequency = 0.0
+        self.heterodyne = True
         self.get_current_bank()
+        self.demodulator = Demodulator()
 
         self.bof_pid = None
         self.roachip = roachip
@@ -102,12 +106,18 @@ class RoachHeterodyne(RoachInterface):
         self.dac_ns = 2 ** 16  # number of samples in the dac buffer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
         self.nfft = 2 ** 14
-        self.boffile = 'iq2xpfb14mcr4_2013_Aug_02_1446.bof'
+#        self.boffile = 'iq2xpfb14mcr4_2013_Aug_02_1446.bof'
         self.boffile = 'iq2xpfb14mcr6_2015_May_11_2241.bof'
+        self.nfs_root = nfs_root
+        try:
+            self.hardware_delay_estimate = kid_readout.roach.tools.boffile_delay_estimates[self.boffile]
+        except KeyError:
+            self.hardware_delay_estimate = kid_readout.roach.tools.nfft_delay_estimates[self.nfft//2]
+
         self.bufname = 'ppout%d' % wafer
         self._window_mag = compute_window(npfb=self.nfft, taps=2, wfunc=scipy.signal.flattop)
 
-    def load_waveforms(self, i_wave, q_wave, fast=True):
+    def load_waveforms(self, i_wave, q_wave, fast=True, start_offset=0):
         """
         Load waveforms for the two DACs
 
@@ -121,10 +131,14 @@ class RoachHeterodyne(RoachInterface):
         data[1::4] = i_wave[1::2]
         data[2::4] = q_wave[::2]
         data[3::4] = q_wave[1::2]
-        self.r.write_int('dram_mask', data.shape[0] / 4 - 1)
-        self._load_dram(data, fast=fast)
+        self._load_dram(data, fast=fast, start_offset=start_offset*data.shape[0])
 
     def set_tone_freqs(self, freqs, nsamp, amps=None):
+        baseband_freqs = freqs-self.lo_frequency
+        actual_baseband_freqs = self.set_tone_baseband_freqs(baseband_freqs,nsamp,amps=amps)
+        return actual_baseband_freqs + self.lo_frequency
+
+    def set_tone_baseband_freqs(self, freqs, nsamp, amps=None):
         """
         Set the stimulus tones to generate
 
@@ -145,13 +159,36 @@ class RoachHeterodyne(RoachInterface):
         bins[bins < 0] = nsamp + bins[bins < 0]
         self.set_tone_bins(bins, nsamp, amps=amps)
         self.fft_bins = self.calc_fft_bins(bins, nsamp)
-        if self.fft_bins.shape[0] > 4:
+        if self.fft_bins.shape[1] > 4:
             readout_selection = range(4)
         else:
             readout_selection = range(self.fft_bins.shape[1])
-
+        self.select_bank(0)
         self.select_fft_bins(readout_selection)
+        self.save_state()
         return actual_freqs
+
+    def add_tone_freqs(self, freqs, amps=None, overwrite_last=False):
+        baseband_freqs = freqs-self.lo_frequency
+        actual_baseband_freqs = self.add_tone_baseband_freqs(baseband_freqs, amps=amps, overwrite_last=overwrite_last)
+        return actual_baseband_freqs + self.lo_frequency
+
+    def add_tone_baseband_freqs(self, freqs, amps=None, overwrite_last=False):
+        if freqs.shape[0] != self.tone_bins.shape[1]:
+            raise ValueError("freqs array must contain same number of tones as original waveforms")
+        # This is a hack that doesn't handle bank selection at all and may have additional problems.
+        if overwrite_last:  # Delete the last waveform and readout selection entry.
+            self.tone_bins = self.tone_bins[:-1, :]
+            self.fft_bins = self.fft_bins[:-1, :]
+        nsamp = self.tone_nsamp
+        bins = np.round((freqs / self.fs) * nsamp).astype('int')
+        actual_freqs = self.fs * bins / float(nsamp)
+        bins[bins < 0] = nsamp + bins[bins < 0]
+        self.add_tone_bins(bins, amps=amps)
+        self.fft_bins = np.vstack((self.fft_bins, self.calc_fft_bins(bins, nsamp)))
+        self.save_state()
+        return actual_freqs
+
 
     def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None,phases=None):
         """
@@ -197,6 +234,24 @@ class RoachHeterodyne(RoachInterface):
         if load:
             self.load_waveforms(q_rwave,q_iwave)
         self.save_state()
+
+    def add_tone_bins(self, bins, amps=None):
+        nsamp = self.tone_nsamp
+        spec = np.zeros((nsamp,), dtype='complex')
+        self.tone_bins = np.vstack((self.tone_bins, bins))
+        phases = self.phases
+        if amps is None:
+            amps = 1.0
+        # self.amps = amps  # TODO: Need to figure out how to deal with this
+
+        spec[bins] = amps * np.exp(1j * phases)
+        wave = np.fft.ifft(spec)
+        q_rwave = np.round((wave.real / self.wavenorm) * (2 ** 15 - 1024)).astype('>i2')
+        q_iwave = np.round((wave.imag / self.wavenorm) * (2 ** 15 - 1024)).astype('>i2')
+        start_offset = self.tone_bins.shape[0] - 1
+        self.load_waveforms(q_rwave, q_iwave, start_offset=start_offset)
+        self.save_state()
+
 
     def calc_fft_bins(self, tone_bins, nsamp):
         """
@@ -250,7 +305,18 @@ class RoachHeterodyne(RoachInterface):
         binsel[-1] = -1
         self.r.write('chans', binsel.tostring())
 
-    def demodulate_data(self, data):
+    def demodulate_data(self,data):
+        bank = self.bank
+        demod = np.zeros_like(data)
+        for n, ich in enumerate(self.readout_selection):
+            demod[:,n] = self.demodulator.demodulate(data[:,n],
+                                            tone_bin=self.tone_bins[bank,ich],
+                                            tone_num_samples=self.tone_nsamp,
+                                            tone_phase=self.phases[ich],
+                                            fft_bin=self.fft_bins[bank,ich])
+        return demod
+
+    def demodulate_data_original(self, data):
         """
         Demodulate the data from the FFT bin
 
@@ -287,8 +353,9 @@ class RoachHeterodyne(RoachInterface):
     def get_data_udp(self, nread=2, demod=True):
         chan_offset = 1
         nch = self.fpga_fft_readout_indexes.shape[0]
+        udp_channel = (self.fpga_fft_readout_indexes//2 + chan_offset) % (self.nfft//2)
         data, seqnos = kid_readout.roach.udp_catcher.get_udp_data(self, npkts=nread * 16 * nch, streamid=1,
-                                                chans=self.fpga_fft_readout_indexes//2 + chan_offset,
+                                                chans=udp_channel,
                                                 nfft=self.nfft//2, addr=(self.host_ip, 12345))  # , stream_reg, addr)
         if demod:
             data = self.demodulate_data(data)
@@ -342,7 +409,7 @@ class RoachHeterodyne(RoachInterface):
 
     def set_dac_attenuator(self, attendb):
         if attendb < 0 or attendb > 63:
-            raise ValueError("ADC Attenuator must be between 0 and 63 dB. Value given was: %s" % str(attendb))
+            raise ValueError("DAC Attenuator must be between 0 and 63 dB. Value given was: %s" % str(attendb))
 
         if attendb > 31.5:
             attena = 31.5
@@ -371,3 +438,48 @@ class RoachHeterodyne(RoachInterface):
             return
         self.adc_valon.set_frequency_a(fs, chan_spacing=chan_spacing)
         self.fs = fs
+
+
+class Demodulator(object):
+    def __init__(self,nfft=2**14,num_taps=2,window=scipy.signal.flattop,interpolation_factor=64):
+        self.nfft = nfft
+        self.num_taps = num_taps
+        self.window_function = window
+        self.interpolation_factor = interpolation_factor
+        self._window_frequency,self._window_response = self.compute_window_frequency_response(self.compute_pfb_window(),
+                                                                       interpolation_factor=interpolation_factor)
+
+    def compute_pfb_window(self):
+        raw_window = self.window_function(self.nfft*self.num_taps)
+        sinc = np.sinc(np.arange(self.nfft*self.num_taps)/(1.*self.nfft) - self.num_taps/2.0)
+        return raw_window*sinc
+
+    def compute_window_frequency_response(self,window,interpolation_factor=64):
+        response = np.abs(np.fft.fftshift(np.fft.fft(window,window.shape[0]*interpolation_factor)))
+        response = response/response.max()
+        normalized_frequency = (np.arange(-len(response)/2.,len(response)/2.)/interpolation_factor)/2.
+        return normalized_frequency,response
+
+    def compute_pfb_response(self,normalized_frequency):
+        return 1/np.interp(normalized_frequency,self._window_frequency,self._window_response)
+
+    def demodulate(self,data,tone_bin,tone_num_samples,tone_phase,fft_bin):
+        phi0 = tone_phase
+        k = tone_bin
+        m = fft_bin
+        nfft = self.nfft
+        ns = tone_num_samples
+        foffs = tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft)
+        wc = self.compute_pfb_response(foffs)
+        t = np.arange(data.shape[0])
+        demod = wc*np.exp(-1j * (2 * np.pi * foffs * t + phi0)) * data
+        return demod
+
+
+def tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft):
+    k = tone_bin
+    m = fft_bin
+    nfft = nfft
+    ns = tone_num_samples
+    return nfft * (k / float(ns)) - m
+
