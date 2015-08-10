@@ -11,7 +11,7 @@ class DataBlock():
     def __init__(self, data, tone, fftbin, 
                      nsamp, nfft, wavenorm, t0 = 0, fs = 512e6,
                      sweep_index = 0, mmw_source_freq=0.0, mmw_source_modulation_freq=0.0,
-                     zbd_power_dbm=0.0, zbd_voltage=0.0):
+                     zbd_power_dbm=0.0, zbd_voltage=0.0, lo=0.0, heterodyne=False, hardware_delay_estimate=0.0):
         self.data = data
         self.tone = tone
         self.fftbin = fftbin
@@ -20,6 +20,9 @@ class DataBlock():
         self.wavenorm = wavenorm
         self.dt = 1/(fs/nfft)
         self.fs = fs
+        self.lo = lo
+        self.heterodyne = heterodyne
+        self.hardware_delay_estimate=hardware_delay_estimate
         self.t0 = t0
         self.sweep_index = sweep_index
         self.mmw_source_freq = mmw_source_freq
@@ -52,11 +55,19 @@ class SweepData():
         self.sweep_id = sweep_id
         self.blocks = []
         self._freqs = []
+        self._los = []
         self._sweep_indexes = []
+        self.hardware_delay_estimate = None
     def add_block(self,block):
-        f = (block.fs*block.tone)/block.nsamp
-        idx = bisect.bisect(self._freqs, f)
-        self._freqs.insert(idx,f)
+        if self.hardware_delay_estimate is None:
+            self.hardware_delay_estimate = block.hardware_delay_estimate
+        baseband_freq = (block.fs*block.tone)/block.nsamp
+        if block.heterodyne and (baseband_freq>block.fs/2.):
+            baseband_freq = baseband_freq - block.fs
+        freq = block.lo + baseband_freq
+        idx = bisect.bisect(self._freqs, freq)
+        self._freqs.insert(idx,freq)
+        self._los.insert(idx,block.lo)
         self._sweep_indexes.insert(idx,block.sweep_index)
         self.blocks.insert(idx,block)
         
@@ -75,6 +86,9 @@ class SweepData():
     @property
     def freqs(self):
         return np.array(self._freqs)
+    @property
+    def lo(self):
+        return np.array(self._los)
     @property
     def data(self):
         return np.array([x.mean() for x in self.blocks])

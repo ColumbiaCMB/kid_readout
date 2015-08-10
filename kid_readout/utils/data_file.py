@@ -70,6 +70,8 @@ class DataFile():
         self.hw_modulation_output[idx] = ri.modulation_output
         if not 'boffile' in self.nc.ncattrs():
             self.nc.boffile = ri.boffile
+        if not 'heterodyne' in self.nc.ncattrs():
+            self.nc.heterodyne = np.uint8(ri.heterodyne)
         
     def log_adc_snap(self,ri):
         t0 = time.time()
@@ -100,6 +102,7 @@ class DataFile():
         nfft = dbg.createVariable('nfft',np.int32,('epoch',))
         dt = dbg.createVariable('dt',np.float64,('epoch',))
         fs = dbg.createVariable('fs',np.float64,('epoch',))
+        lo = dbg.createVariable('lo',np.float64,('epoch',))
         wavenorm = dbg.createVariable('wavenorm',np.float64,('epoch'))
         data = dbg.createVariable('data',self.cdf64,('epoch','sample'))
         sweep_index = dbg.createVariable('sweep_index',np.int32,('epoch'))
@@ -116,6 +119,7 @@ class DataFile():
                 blocklist.append(newblk)
         data[:] = np.concatenate(blocklist,axis=0).astype('complex64').view(self.c64)
         fs[:] = np.array([x.fs for x in blocks])
+        lo[:] = np.array([x.lo for x in blocks])
         t0[:] = np.array([x.t0 for x in blocks])
         tone[:] = np.array([x.tone for x in blocks])
         nfft[:] = np.array([x.nfft for x in blocks])
@@ -136,7 +140,7 @@ class DataFile():
             block = data_block.DataBlock(data = data[:,m], tone=tones[m], fftbin = chids[m], 
                      nsamp = nsamp, nfft = ri.nfft, wavenorm = ri.wavenorm, t0 = t0, fs = ri.fs,
                      mmw_source_freq=mmw_source_freq, mmw_source_modulation_freq=mmw_source_modulation_freq,
-                     zbd_voltage=zbd_voltage, zbd_power_dbm=zbd_power_dbm)
+                     zbd_voltage=zbd_voltage, zbd_power_dbm=zbd_power_dbm, lo=ri.lo_frequency, heterodyne=ri.heterodyne)
             tsg = self.add_block_to_timestream(block, tsg=tsg)
         return tsg
 
@@ -157,6 +161,7 @@ class DataFile():
             nfft = tsg.createVariable('nfft',np.int32,('epoch',))
             dt = tsg.createVariable('dt',np.float64,('epoch',))
             fs = tsg.createVariable('fs',np.float64,('epoch',))
+            lo = tsg.createVariable('lo',np.float64,('epoch',))
             wavenorm = tsg.createVariable('wavenorm',np.float64,('epoch'))
             mmw_source_freq = tsg.createVariable('mmw_source_freq',np.float64,('epoch'))
             mmw_source_modulation_freq = tsg.createVariable('mmw_source_modulation_freq',np.float64,('epoch'))
@@ -171,6 +176,7 @@ class DataFile():
             nfft = tsg.variables['nfft']
             dt = tsg.variables['dt']
             fs = tsg.variables['fs']
+            lo = tsg.variables['lo']
             wavenorm = tsg.variables['wavenorm']
             mmw_source_freq = tsg.variables['mmw_source_freq']
             mmw_source_modulation_freq = tsg.variables['mmw_source_modulation_freq']
@@ -181,6 +187,7 @@ class DataFile():
         data[idx] = block.data.astype('complex64').view(self.c64)
         t0[idx] = block.t0
         fs[idx] = block.fs
+        lo[idx] = block.lo
         tone[idx] = block.tone
         nsamp[idx] = block.nsamp
         fftbin[idx] = block.fftbin
