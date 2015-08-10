@@ -30,7 +30,8 @@ def prepare_sweep(ri,center_freqs,offsets,nsamp=2**21):
     freqs = center_freqs[None,:] + offsets[:,None]
     return ri.set_tone_freqs(freqs,nsamp=nsamp)
     
-def do_prepared_sweep(ri,nchan_per_step=8,reads_per_step=2,callback = None, sweep_data=None, banks=None,demod=True):
+def do_prepared_sweep(ri,nchan_per_step=8,reads_per_step=2,callback = None, sweep_data=None, banks=None,demod=True,
+                      loopback=False):
     if nchan_per_step > ri.fft_bins.shape[1]:
         nchan_per_step = ri.fft_bins.shape[1]
     if ri.fft_bins.shape[1] % nchan_per_step:
@@ -64,10 +65,8 @@ def do_prepared_sweep(ri,nchan_per_step=8,reads_per_step=2,callback = None, swee
                 toread = set()
             selection.sort()
             ri.select_fft_bins(selection)
-            ri.r.write_int('sync',0)
-            ri.r.write_int('sync',1)
-            ri.r.write_int('sync',0)
-    
+            ri._sync(loopback=loopback)
+
             time.sleep(0.2)
             epoch = time.time()
             try:
@@ -80,10 +79,12 @@ def do_prepared_sweep(ri,nchan_per_step=8,reads_per_step=2,callback = None, swee
             tones = ri.tone_bins[bank,ri.readout_selection]
             abort = False
             for m in range(len(chids)):
-                sweep_index = selection[m]# np.abs(actual_freqs - ri.fs*tones[m]/nsamp).argmin()
+                #print "m:",m,"selection[m]",selection[m],tones[m]*ri.fs*1.0/nsamp,ri.readout_selection[m]
+                sweep_index = ri.readout_selection[m]# np.abs(actual_freqs - ri.fs*tones[m]/nsamp).argmin()
                 block = DataBlock(data = dmod[:,m], tone=tones[m], fftbin = chids[m], 
                          nsamp = nsamp, nfft = ri.nfft, wavenorm = ri.wavenorm, t0 = epoch, fs = ri.fs, 
-                         sweep_index=sweep_index)
+                         sweep_index=sweep_index, heterodyne=ri.heterodyne, lo=ri.lo_frequency,
+                         hardware_delay_estimate=ri.hardware_delay_estimate)
                 block.progress = (k+1)/float(nstep)
                 swp.add_block(block)
                 if callback:
