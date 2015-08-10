@@ -2,6 +2,43 @@ from kid_readout.utils.time_tools import date_to_unix_time
 
 
 by_unix_time_table = [
+    dict(date='2015-06-29',
+         description='STAR Cryo 150509 2015-04 nevins dual pol test chip Al horn package, AR chip, aluminum tape over '
+                     'horns',
+         optical_state='dark',
+         chip_id='150509 2015-04 nevins',
+    ),
+    dict(date='2015-06-15',
+         description='ASU-1 2015-04 nevins dual pol test chip Al horn package, AR chip, aluminum tape over '
+                     'horns',
+         optical_state='dark',
+         chip_id='ASU-1 2015-04 nevins',
+    ),
+    dict(date='2015-05-06',
+         description='JPL 5x4 array in Al horn package in superdark tamale with magnetic field test coil',
+         optical_state='dark',
+         chip_id='JPL 5x4',
+    ),
+    dict(date='2015-04-29',
+         description='JPL 5x4 array with Stycast filter and blackbody load',
+         optical_state='light',
+         chip_id='JPL 5x4',
+    ),
+    dict(date='2015-02-27',
+         description='YBCO 141217-3 4 element frontside illuminated with LEDs',
+         optical_state='light',
+         chip_id='YBCO 141217-3 4 element',
+    ),
+    dict(date='2015-01-30',
+         description='YBCO 141217-3 9 element frontside illuminated with LEDs',
+         optical_state='light',
+         chip_id='YBCO 141217-3 9 element',
+    ),
+    dict(date='2015-01-13',
+         description='YBCO 141217-3 9 element backside illuminated with LEDs',
+         optical_state='light',
+         chip_id='YBCO 141217-3 9 element',
+    ),
     dict(date='2014-12-11',
          description='STAR Cryo 4x5 130919 0813f12 ASU Al horn package, AR chip, aluminum tape over horns, '
                      'copper shield soldered shut around package, steelcast coax filters, small hole in copper and '
