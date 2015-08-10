@@ -64,6 +64,7 @@ class FunctionGenerator(object):
             s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
             s.connect(self.addr)
             s.send(cmd+'\n')
+            time.sleep(0.2)
         finally:
             s.close()
         

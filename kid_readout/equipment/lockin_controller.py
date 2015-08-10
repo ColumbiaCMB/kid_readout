@@ -82,7 +82,7 @@ class lockinController():
             sens = sensitivities[self.sensitivity_value]
             if debug:
                 print "setting sensitivity to %g. new value %g" % (r*10,sens)
-            time.sleep(0.1)
+            time.sleep(0.5)
             x,y,r,theta = self.get_data()
         if sens > 100e-9:
             while r < sens/1000.0:
@@ -90,7 +90,7 @@ class lockinController():
                 sens = sensitivities[self.sensitivity_value]
                 if debug:
                     print "setting sensitivity to %g. new value %g" % (r/1000,sens)
-                time.sleep(0.1)
+                time.sleep(0.5)
                 x,y,r,theta = self.get_data()
         return r, sens
 
