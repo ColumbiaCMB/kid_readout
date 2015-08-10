@@ -47,7 +47,13 @@ def fit_resonator(freq, s21, mask=None, errors=None, min_a=0.08, fstat_thresh=0.
     fstat = scipy.stats.distributions.f.cdf(fval, rr.result.nfree, bif.result.nfree)
     aval = bif.result.params['a'].value
     aerr = bif.result.params['a'].stderr
+    bif_residual = np.sum(np.abs(bif.residual())**2)
+    rr_residual = np.sum(np.abs(rr.residual())**2)
     reasons = []
+    prefer_bif = True
+    if rr_residual < bif_residual:
+        reasons.append("Residual on bifurcation model is greater than linear model")
+        prefer_bif = False
     if aval <= aerr:
         prefer_bif = False
         reasons.append("Error on bifurcation parameter exceeds fitted value")
@@ -60,8 +66,6 @@ def fit_resonator(freq, s21, mask=None, errors=None, min_a=0.08, fstat_thresh=0.
             if False:  #fstat < fstat_thresh:
                 prefer_bif = False
                 reasons.append("F-statistic %f is less than threshold %f" % (fstat, fstat_thresh))
-            else:
-                prefer_bif = True
     if verbose and not prefer_bif:
         print "Not using bifurcation model because:", (','.join(reasons))
     return rr, bif, prefer_bif
