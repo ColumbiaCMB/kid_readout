@@ -1,20 +1,18 @@
-from adc_plot_ui import Ui_AdcPlotDialog
+import IPython
+import time
+import sys
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
 from matplotlib.figure import Figure
 import matplotlib
 import numpy as np
-import IPython
-import time
 
-import sys
-
-import kid_readout.utils.roach_interface
+from adc_plot_ui import Ui_AdcPlotDialog
+import kid_readout.roach.baseband
 
 class AdcPlotDialog(QDialog,Ui_AdcPlotDialog):
     def __init__(self,  qApp, parent=None):
@@ -44,7 +42,7 @@ class AdcPlotDialog(QDialog,Ui_AdcPlotDialog):
         
         self.pause_update = False
         
-        self.ri = kid_readout.utils.roach_interface.RoachBasebandWide()
+        self.ri = kid_readout.roach.baseband.RoachBasebandWide()
         self.ri.set_tone_freqs(np.array([77.915039]),nsamp=2**22)
         
 #        self.adc_atten_spin.editingFinished.connect(self.on_adc_atten)

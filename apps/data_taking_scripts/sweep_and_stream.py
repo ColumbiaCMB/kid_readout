@@ -23,7 +23,7 @@ if True:
     fits = []
     for k in np.unique(coarse_sweep.sweep_indexes):
         fr,s21,err = coarse_sweep.select_index(k)
-        res = kid_readout.analysis.resonator.fit_best_resonator(fr,s21,errors=err,delay_estimate=ri.delay_estimate*1e6)
+        res = kid_readout.analysis.resonator.fit_best_resonator(fr,s21,errors=err,delay_estimate=ri.hardware_delay_estimate*1e6)
         fits.append(res)
         fit_f0s.append(res.f_0)
     fits.sort(key=lambda r: r.f_0)

@@ -4,6 +4,8 @@ from kid_readout.analysis.noise_measurement import SweepNoiseMeasurement, save_n
 
 
 def extract_and_pickle(nc_filename):
+    basedir = os.path.split(nc_filename)[0] # should make this more robust, currently assumes all nc files are in top
+    #  level of /data/<machine>/*.nc
     try:
         print("Processing {}".format(nc_filename))
         snms = []
@@ -21,7 +23,7 @@ def extract_and_pickle(nc_filename):
                 snms.append(snm)
         rnc.close()
         # We decided to keep the .pkl files in /home/data regardless of origin.
-        pkl_filename = os.path.join('/data/readout/pkl', os.path.splitext(os.path.split(nc_filename)[1])[0] + '.pkl')
+        pkl_filename = os.path.join(basedir,'pkl', os.path.splitext(os.path.split(nc_filename)[1])[0] + '.pkl')
         save_noise_pkl(pkl_filename, snms)
         print("Saved {}".format(pkl_filename))
     except KeyboardInterrupt:

@@ -361,7 +361,7 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         self.total_subsweeps = nsubstep
         base_freqs = np.arange(start,stop+1e-3,step)
         ntones = base_freqs.shape[0]
-        ntones_corr = kid_readout.roach.baseband.ntone_power_correction(ntones)
+        ntones_corr = kid_readout.roach.tools.ntone_power_correction(ntones)
         try:
             dac_gain = float(self.line_dac_gain.text())
         except:

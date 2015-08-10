@@ -94,6 +94,13 @@ def process_file(filename):
         return None
 
 
+def process_file_mp(filename):
+    try:
+        blah = process_file(filename)
+        return blah
+    except Exception, e:
+        return e
+
 if __name__ == "__main__":
     import glob
     import multiprocessing
@@ -103,16 +110,22 @@ if __name__ == "__main__":
     #fns = glob.glob('/home/data2/2014-10-17*mmwnoisestep*.nc')
     #fns = glob.glob('/home/data2/2014-10-18*mmwnoisestep*.nc')
     #fns = glob.glob('/home/data2/2014-*mmw*step*.nc')
+    fns = glob.glob('/home/data/2015*led.nc')
     #fns.sort()
-    fns = glob.glob(sys.argv[1])
+#    fns = glob.glob(sys.argv[1])
     fns.sort()
+    errors = {}
     if True:
         pool = multiprocessing.Pool(6)
-        pool.map(process_file,fns)
+        pool.map(process_file_mp,fns)
 
     else:
         for fn in fns:
-            blah = process_file(fn)
+            try:
+                blah = process_file(fn)
+            except Exception,e:
+                errors[fn] = e
+                blah = 1.0
             if blah is None:
                 break
-
+    print errors
