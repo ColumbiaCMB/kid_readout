@@ -80,7 +80,7 @@ def add_zbd_power(df, optical_frequency=None):
     if optical_frequency is None:
         zbd_volts_per_watt = 2200
     else:
-        from equipment.vdiI import zbd
+        from equipment.vdi import zbd
         zbd_volts_per_watt = zbd.ZBD().responsivity(optical_frequency)
     df['zbd_power'] = df['zbd_voltage'] / zbd_volts_per_watt
 
