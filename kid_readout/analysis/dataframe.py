@@ -7,7 +7,6 @@ from __future__ import division
 from copy import deepcopy
 import numpy as np
 import lmfit
-from equipment.VDI import zbd
 from kid_readout.analysis.khalil import qi_error
 from kid_readout.analysis import archive
 
@@ -81,8 +80,8 @@ def add_zbd_power(df, optical_frequency=None):
     if optical_frequency is None:
         zbd_volts_per_watt = 2200
     else:
-        z = zbd.ZBD()
-        zbd_volts_per_watt = z.responsivity(optical_frequency)
+        from equipment.vdiI import zbd
+        zbd_volts_per_watt = zbd.ZBD().responsivity(optical_frequency)
     df['zbd_power'] = df['zbd_voltage'] / zbd_volts_per_watt
 
 
