@@ -94,6 +94,31 @@ def add_resonator_fit_good(df, maximum_fractional_f_r_error, maximum_iQi_error):
                                 (df.Q_i_err / df.Q_i**2 < maximum_iQi_error) &
                                 (df.Q_i > 0))  # This shouldn't be necessary, but it currently is.
 
+def add_temperature_groups(df,temperature_deviation_K=5e-3,temperature_field='sweep_primary_package_temperature',
+                           debug=False):
+    levels = []
+    mask = None
+    current_data = df[temperature_field]
+    group_field = temperature_field+'_group'
+    df.loc[:,group_field] = np.nan
+    while True:
+        level = current_data.iloc[0]
+        new_mask = np.abs(df[temperature_field] - level) < temperature_deviation_K
+        level_mean = df[temperature_field][new_mask].mean()
+        level = np.round(level_mean/temperature_deviation_K)*temperature_deviation_K
+        if debug:
+            print "found level", level, "matching", (new_mask.sum()), "data points. Mean of this set:",level_mean
+        df.loc[new_mask,group_field] = level
+        if mask is None:
+            mask = new_mask
+        else:
+            mask = mask | new_mask
+        current_data = df[temperature_field][~mask]
+        if debug:
+            print len(current_data),"points remaining"
+        levels.append(level)
+        if len(current_data) == 0:
+            return levels
 
 # TODO: implement this in a separate module
 def fit_XI_temperature_response():
