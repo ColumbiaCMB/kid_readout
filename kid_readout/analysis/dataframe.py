@@ -12,7 +12,7 @@ from kid_readout.analysis import archive
 
 
 def analyze(df, channel_to_location=None, maximum_fractional_f_r_error=1e-5, maximum_iQi_error=1e-5):
-    # TODO: the next three functions should be deprecated when the underlying code is updated
+    # TODO: the next three function calls should be deprecated when the underlying code is updated
     rename_f(df)
     add_Q_i_err(df)
     add_channel(df)
@@ -24,13 +24,13 @@ def analyze(df, channel_to_location=None, maximum_fractional_f_r_error=1e-5, max
     return df
 
 
-def analyze_mmw_source_data(df, zbd_fraction, optical_frequency=None):
-    # TODO: this is a hack that should be deprecated eventually the voltages in other code are updated
+def analyze_mmw_source_data(df, zbd_fraction, optical_frequency=None, linearize=True):
+    # TODO: this is a hack that should be deprecated when the voltages in other code are updated
     try:
         df.rename(columns={'zbd_voltage': 'lockin_rms_voltage'}, inplace=True)
     except AttributeError:
         pass
-    add_zbd_voltage(df)
+    add_zbd_voltage(df, linearize)
     add_zbd_power(df, optical_frequency)
     add_source_power(df, zbd_fraction)
     df = archive.add_total_mmw_attenuator_turns(df)
@@ -58,7 +58,7 @@ def add_location(df, channel_to_location):
     df['location'] = channel_to_location[np.array(df.channel)]
 
 
-def add_zbd_voltage(df):
+def add_zbd_voltage(df, linearize):
     """
     The modulated square wave has minimum 0 and maximum V_z, equivalent to an offset square wave with peak V_z / 2.
     The lock-in measures the Fourier component at the reference frequency and reports RMS voltage, so in this case it
@@ -66,8 +66,17 @@ def add_zbd_voltage(df):
     V_l = (V_z / 2) (4 / \pi) 2^{-1/2} = (2^{1/2} / \pi) V_z.
     The peak ZBD voltage is thus
     V_z = 2^{-1/2} \pi V_l
+
+    :param df: The dataframe.
+    :param linearize: If True, the measured ZBD voltage is corrected based on the measured linearity.
+    :return: None; the dataframe is modified.
     """
-    df['zbd_voltage'] = 2**(-1/2) * np.pi * df.lockin_rms_voltage
+    measured_zbd_voltage = 2**(-1/2) * np.pi * df.lockin_rms_voltage
+    if linearize:
+        from equipment.vdi.zbd import ZBD
+        df['zbd_voltage'] = measured_zbd_voltage / ZBD().linearity(measured_zbd_voltage)
+    else:
+        df['zbd_voltage'] = measured_zbd_voltage
 
 
 def add_zbd_power(df, optical_frequency=None):
@@ -80,8 +89,8 @@ def add_zbd_power(df, optical_frequency=None):
     if optical_frequency is None:
         zbd_volts_per_watt = 2200
     else:
-        from equipment.vdi import zbd
-        zbd_volts_per_watt = zbd.ZBD().responsivity(optical_frequency)
+        from equipment.vdi.zbd import ZBD
+        zbd_volts_per_watt = ZBD().responsivity(optical_frequency)
     df['zbd_power'] = df['zbd_voltage'] / zbd_volts_per_watt
 
 
@@ -201,9 +210,9 @@ def fit_XI_power_response(df, initial, power, masker=lambda group: np.ones(group
                 group.loc[mask, '{}_XI_fit_{}'.format(power, p.name)] = p.value
                 group.loc[mask, '{}_XI_fit_{}_err'.format(power, p.name)] = p.stderr
             group.loc[mask, '{}_XI_fit_redchi'.format(power)] = result.redchi
-            group.loc[mask, '{}_dX_dP'.format(power)] = dX_dP(group[power], result.params['P_0'].value,
+            group.loc[mask, '{}_XI_fit_dX_dP'.format(power)] = dX_dP(group[power], result.params['P_0'].value,
                                                               result.params['P_star'].value, result.params['X_0'].value)
-            group.loc[mask, '{}_dI_dP'.format(power)] = dI_dP(group[power], result.params['P_0'].value,
+            group.loc[mask, '{}_XI_fit_dI_dP'.format(power)] = dI_dP(group[power], result.params['P_0'].value,
                                                               result.params['P_star'].value, result.params['I_0'].value)
         except TypeError:
             pass
@@ -211,6 +220,107 @@ def fit_XI_power_response(df, initial, power, masker=lambda group: np.ones(group
     return df.groupby(('channel', 'atten')).apply(XI_power_response).reset_index(drop=True)
 
 
-def add_NEP2(df, power):
-    df['{}_NEP2_device'.format(power)] = df.noise_fit_device_noise / df['{}_dX_dP'.format(power)] ** 2
-    df['{}_NEP2_amplifier'.format(power)] = df.noise_fit_amplifier_noise / df['{}_dX_dP'.format(power)] ** 2
+def lagrange(x, x_data, k):
+    return np.product([(x - x_data[j]) / (x_data[k] - x_data[j])
+                       for j in range(x_data.size) if j != k])
+
+
+def lagrange_interpolate(x, x_data, y_data):
+    return np.sum([y_data[k] * lagrange(x, x_data, k) for k in range(x_data.size)])
+
+
+def dydx_2(x0, x1, y0, y1):
+    """
+    Return
+    :param x0:
+    :param x1:
+    :param y0:
+    :param y1:
+    :return:
+    """
+    return ((y1 - y0) /
+            (x1 - x0))
+
+
+def dydx_2_err(x0, x1, dy0, dy1):
+    """
+    Return
+    :param x0:
+    :param x1:
+    :param y0:
+    :param y1:
+    :return:
+    """
+    return ((dy1 + dy0) /
+            (x1 - x0))
+
+
+def center_dydx_3(x0, x1, x2, y0, y1, y2):
+    """
+    Return...
+    :param x0:
+    :param x1:
+    :param x2:
+    :param y0:
+    :param y1:
+    :param y2:
+    :return: the three-point finite-difference derivative at x1.
+    """
+    return (y0 * ((x1 - x2) /
+                  ((x0 - x1) * (x0 - x2))) +
+            y1 * ((2 * x1 - x0 - x2) /
+                  ((x1 - x0) * (x1 - x2))) +
+            y2 * ((x1 - x0) /
+                  ((x2 - x0) * (x2 - x1))))
+
+
+def center_dydx_3_err(x0, x1, x2, dy0, dy1, dy2):
+    """
+    Return
+    :param x0:
+    :param x1:
+    :param x2:
+    :param dy0:
+    :param dy1:
+    :param dy2:
+    :return:
+    """
+    return (dy0 * np.abs((x1 - x2) /
+                         ((x0 - x1) * (x0 - x2))) +
+            dy1 * np.abs((2 * x1 - x0 - x2) /
+                         ((x1 - x0) * (x1 - x2))) +
+            dy2 * np.abs((x1 - x0) /
+                         ((x2 - x0) * (x2 - x1))))
+
+
+def add_finite_difference_XI_power_response(df, power, masker=lambda group: np.ones(group.shape[0], dtype=np.bool)):
+    def calculate(x, y, y_err):
+        dydx = []
+        dydx_err = []
+        dydx.append(dydx_2(x[0], x[1], y[0], y[1]))
+        dydx_err.append(dydx_2(x[0], x[1], y_err[0], y_err[1]))
+        for (x0, y0, dy0), (x1, y1, dy1), (x2, y2, dy2) in zip(zip(x[:-2], y[:-2], y_err[:-2]),
+                                                               zip(x[1:-1], y[1:-1], y_err[1:-1]),
+                                                               zip(x[2:], y[2:], y_err[2:])):
+            dydx.append(center_dydx_3(x0, x1, x2, y0, y1, y2))
+            dydx_err.append(center_dydx_3_err(x0, x1, x2, dy0, dy1, dy2))
+        dydx.append(dydx_2(x[-2], x[-1], y[-2], y[-1]))
+        dydx_err.append(dydx_2(x[-2], x[-1], y_err[-2], y_err[-1]))
+        return dydx, dydx_err
+
+    def finite_difference_XI_power_response(group):
+        group = group.sort(power)
+        mask = masker(group)
+        gm = group[mask]
+        dX_dP, dX_dP_err = calculate(np.array(gm[power]),
+                                     np.array(gm['{}_X'.format(power)]),
+                                     np.array(gm['{}_X_err'.format(power)]))
+        group.loc[mask, '{}_XI_fd_dX_dP'.format(power)] = dX_dP
+        group.loc[mask, '{}_XI_fd_dX_dP_err'.format(power)] = dX_dP_err
+        dI_dP, dI_dP_err = calculate(np.array(gm[power]),
+                                     np.array(gm['{}_I'.format(power)]),
+                                     np.array(gm['{}_I_err'.format(power)]))
+        group.loc[mask, '{}_XI_fd_dI_dP'.format(power)] = dI_dP
+        group.loc[mask, '{}_XI_fd_dI_dP_err'.format(power)] = dI_dP_err
+        return group
+    return df.groupby(('channel', 'atten')).apply(finite_difference_XI_power_response).reset_index(drop=True)

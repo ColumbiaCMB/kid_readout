@@ -53,7 +53,7 @@ def plot_sweeps_IQ(df, k, select_key='channel', color_key=None, norm=matplotlib.
 
 
 def plot_pca_noise(df, k, select_key='channel', color_key=None, norm=matplotlib.colors.LogNorm,
-                   colormap=plt.cm.coolwarm, legend=False, plot_row_1=True, plot_row_0=True):
+                   colormap=plt.cm.coolwarm, legend=False, plot_row_1=True, plot_row_0=True, plot_fit=False):
     fig, ax = plt.subplots()
     r = df[(df[select_key]==k)]
     if color_key is not None:
@@ -69,6 +69,12 @@ def plot_pca_noise(df, k, select_key='channel', color_key=None, norm=matplotlib.
                 ax.loglog(row.pca_freq, row.pca_eigvals[1], label=str(atten), color=color)
             if plot_row_0:
                 ax.loglog(row.pca_freq, row.pca_eigvals[0], color=color)
+            if plot_fit:  # upgrade this to accommodate other models
+                f = np.logspace(np.log10(row.pca_freq[1]), np.log10(row.pca_freq[-1]), 1e3)
+                ax.loglog(f,
+                          (row.noise_fit_device_noise / (1 + (f / row.noise_fit_fc)**2) +
+                           row.noise_fit_amplifier_noise),
+                          '--', color=color)
     if legend:
         ax.legend(loc='best')
     ax.set_title('{}: {}'.format(select_key, k))
