@@ -20,14 +20,17 @@ def build_simple_archives(pklglob,index_to_id=None):
         dfs.append(build_simple_archive([pklname],index_to_id=index_to_id))
     return pd.concat(dfs,ignore_index=True)
 
-def build_simple_archive(pklnames, index_to_id = None, archive_name=None):
+def build_simple_archive(pklnames, index_to_id = None, archive_name=None, archive_path=None):
 
     if not type(pklnames) is list:
         pklnames = glob.glob(pklnames)
+    pklnames.sort()
 
     if archive_name is None:
         archive_name = os.path.splitext(os.path.basename(pklnames[0]))[0]
-    archname = '/data/readout/archive/%s.npy' % archive_name
+    if archive_path is None:
+        archive_path = os.path.join(os.path.split(os.path.split(pklnames[0])[0])[0],'archive')
+    archname = os.path.join(archive_path,('%s.npy' % archive_name))
 
     data = []
     for pklname in pklnames:
