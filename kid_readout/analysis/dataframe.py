@@ -203,8 +203,8 @@ def parameters(P_0, P_star, X_0, I_0, I_C):
     return params
 
 
-def add_XI_response(df, key, masker=None):
-    def XI_response(group):
+def add_response(df, key, masker=None):
+    def response(group):
         if masker is None:
             mask = np.ones(group.shape[0], dtype=np.bool)
         else:
@@ -220,29 +220,29 @@ def add_XI_response(df, key, masker=None):
             group.loc[mask, '{}_I'.format(key)] = group.Q_i**-1
             group.loc[mask, '{}_I_err'.format(key)] = group.Q_i**-2 * group.Q_i_err
         return group
-    return df.groupby(('channel', 'atten')).apply(XI_response).reset_index(drop=True)
+    return df.groupby(('channel', 'atten')).apply(response).reset_index(drop=True)
 
 
 # Remove bad data and power-off points before fitting.
-def fit_XI_power_response(df, initial, power, masker=lambda group: np.ones(group.shape[0], dtype=np.bool)):
-    def XI_power_response(group):
+def add_fit_power_response(df, initial, power, masker=lambda group: np.ones(group.shape[0], dtype=np.bool)):
+    def fit_power_response(group):
         mask = masker(group)
         try:
             result = fit(group[mask][power], group[mask]['{}_X'.format(power)], group[mask]['{}_I'.format(power)],
                          deepcopy(initial),  # This is crucial because minimize modifies the input Parameters.
                          X_errors=group[mask]['{}_X_err'.format(power)], I_errors=group[mask]['{}_I_err'.format(power)])
             for p in result.params.values():
-                group.loc[mask, '{}_XI_fit_{}'.format(power, p.name)] = p.value
-                group.loc[mask, '{}_XI_fit_{}_err'.format(power, p.name)] = p.stderr
-            group.loc[mask, '{}_XI_fit_redchi'.format(power)] = result.redchi
-            group.loc[mask, '{}_XI_fit_dX_dP'.format(power)] = dX_dP(group[power], result.params['P_0'].value,
+                group.loc[mask, '{}_fit_{}'.format(power, p.name)] = p.value
+                group.loc[mask, '{}_fit_{}_err'.format(power, p.name)] = p.stderr
+            group.loc[mask, '{}_fit_redchi'.format(power)] = result.redchi
+            group.loc[mask, '{}_fit_dX_dP'.format(power)] = dX_dP(group[power], result.params['P_0'].value,
                                                               result.params['P_star'].value, result.params['X_0'].value)
-            group.loc[mask, '{}_XI_fit_dI_dP'.format(power)] = dI_dP(group[power], result.params['P_0'].value,
+            group.loc[mask, '{}_fit_dI_dP'.format(power)] = dI_dP(group[power], result.params['P_0'].value,
                                                               result.params['P_star'].value, result.params['I_0'].value)
         except TypeError:
             pass
         return group
-    return df.groupby(('channel', 'atten')).apply(XI_power_response).reset_index(drop=True)
+    return df.groupby(('channel', 'atten')).apply(fit_power_response).reset_index(drop=True)
 
 
 def lagrange(x, x_data, k):
@@ -318,7 +318,7 @@ def center_dydx_3_err(x0, x1, x2, dy0, dy1, dy2):
                          ((x2 - x0) * (x2 - x1))))
 
 
-def add_finite_difference_XI_power_response(df, power, masker=lambda group: np.ones(group.shape[0], dtype=np.bool)):
+def add_finite_difference_power_response(df, power, masker=lambda group: np.ones(group.shape[0], dtype=np.bool)):
     def calculate(x, y, y_err):
         dydx = []
         dydx_err = []
@@ -333,19 +333,19 @@ def add_finite_difference_XI_power_response(df, power, masker=lambda group: np.o
         dydx_err.append(dydx_2(x[-2], x[-1], y_err[-2], y_err[-1]))
         return dydx, dydx_err
 
-    def finite_difference_XI_power_response(group):
+    def finite_difference_power_response(group):
         group = group.sort(power)
         mask = masker(group)
         gm = group[mask]
         dX_dP, dX_dP_err = calculate(np.array(gm[power]),
                                      np.array(gm['{}_X'.format(power)]),
                                      np.array(gm['{}_X_err'.format(power)]))
-        group.loc[mask, '{}_XI_fd_dX_dP'.format(power)] = dX_dP
-        group.loc[mask, '{}_XI_fd_dX_dP_err'.format(power)] = dX_dP_err
+        group.loc[mask, '{}_fd_dX_dP'.format(power)] = dX_dP
+        group.loc[mask, '{}_fd_dX_dP_err'.format(power)] = dX_dP_err
         dI_dP, dI_dP_err = calculate(np.array(gm[power]),
                                      np.array(gm['{}_I'.format(power)]),
                                      np.array(gm['{}_I_err'.format(power)]))
-        group.loc[mask, '{}_XI_fd_dI_dP'.format(power)] = dI_dP
-        group.loc[mask, '{}_XI_fd_dI_dP_err'.format(power)] = dI_dP_err
+        group.loc[mask, '{}_fd_dI_dP'.format(power)] = dI_dP
+        group.loc[mask, '{}_fd_dI_dP_err'.format(power)] = dI_dP_err
         return group
-    return df.groupby(('channel', 'atten')).apply(finite_difference_XI_power_response).reset_index(drop=True)
+    return df.groupby(('channel', 'atten')).apply(finite_difference_power_response).reset_index(drop=True)
