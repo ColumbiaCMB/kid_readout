@@ -89,7 +89,7 @@ def plot_response(df, value, nrows=4, ncols=4, figsize=(6, 6), loglog=False, fit
     if label is None:
         label = value.replace('_', ' ')
     if fits:
-        masked = df[~df['{}_XI_fit_redchi'.format(value)].isnull()]
+        masked = df[~df['{}_fit_redchi'.format(value)].isnull()]
     else:
         masked = df[~df['{}_X'.format(value)].isnull()]
     fig, X_axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize)
@@ -134,11 +134,11 @@ def plot_response(df, value, nrows=4, ncols=4, figsize=(6, 6), loglog=False, fit
                       marker='.', color=I_color, linestyle='None')
 
         if fits:
-            P_0 = group['{}_XI_fit_P_0'.format(value)].iloc[0]
-            P_star = group['{}_XI_fit_P_star'.format(value)].iloc[0]
-            X_0 = group['{}_XI_fit_X_0'.format(value)].iloc[0]
-            I_0 = group['{}_XI_fit_I_0'.format(value)].iloc[0]
-            I_C = group['{}_XI_fit_I_C'.format(value)].iloc[0]
+            P_0 = group['{}_fit_P_0'.format(value)].iloc[0]
+            P_star = group['{}_fit_P_star'.format(value)].iloc[0]
+            X_0 = group['{}_fit_X_0'.format(value)].iloc[0]
+            I_0 = group['{}_fit_I_0'.format(value)].iloc[0]
+            I_C = group['{}_fit_I_C'.format(value)].iloc[0]
             X_ax.plot(scale * fit_values, X_scale * dataframe.X(fit_values, P_0, P_star, X_0), color=X_color)
             I_ax.plot(scale * fit_values, I_scale * dataframe.I(fit_values, P_0, P_star, I_0, I_C), color=I_color)
 
