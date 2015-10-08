@@ -28,9 +28,9 @@ def plot_file_with_air_spacer_reference(filename):
     plot_file(filename,reference_spectrum=(total_freq,total_response*9))
 
 
-def plot_file(filename,num_resonators=16,reference_spectrum=None):
+def plot_file(filename,num_resonators=16,reference_spectrum=None,data_is_aligned=True):
     plt.rcParams['font.size'] = 16
-    mmws = [MmwResponse(filename,k) for k in range(num_resonators)]
+    mmws = [MmwResponse(filename,k,data_is_aligned=data_is_aligned) for k in range(num_resonators)]
     blah, fbase = os.path.split(filename)
     fbase,ext = os.path.splitext(fbase)
     pdfname = os.path.join(BASE_DATA_DIR,'plots/%s.pdf') % (fbase,)
@@ -107,8 +107,13 @@ def plot_file(filename,num_resonators=16,reference_spectrum=None):
         pdf.savefig(fig,bbox_inches='tight')
     pdf.close()
 
+def determine_timestream_index_by_frequency(timestream_group,freq,num_resonators):
+    meas_freq = timestream_group.measurement_freq[:num_resonators]
+    index = np.argmin(np.abs(meas_freq-freq))
+    return index
+
 class MmwResponse(object):
-    def __init__(self,ncfilename,resonator_index):
+    def __init__(self,ncfilename,resonator_index,data_is_aligned=True):
         rnc = kid_readout.utils.readoutnc.ReadoutNetCDF(ncfilename)
         self.resonator_index=resonator_index
         sweep = rnc.sweeps[0]
@@ -125,11 +130,13 @@ class MmwResponse(object):
         self.dac_atten = rnc.dac_atten[0]
         timestream = rnc.timestreams[0]
         modulation_freq = timestream.mmw_source_modulation_freq[0]
-        self.measurement_freq = timestream.measurement_freq[self.resonator_index]
+        self.timestream_index = determine_timestream_index_by_frequency(timestream,self.sweep_freq.mean(),
+                                                                    num_resonators=num_resonators)
+        self.measurement_freq = timestream.measurement_freq[self.timestream_index]
         sample_rate = timestream.sample_rate[0]
         samples_per_period = int(np.round(sample_rate/modulation_freq))
         total_num_timestreams = timestream.epoch.shape[0]
-        timestream_indexes = range(self.resonator_index,total_num_timestreams,num_resonators)
+        timestream_indexes = range(self.timestream_index,total_num_timestreams,num_resonators)
         num_timestreams = len(timestream_indexes)
         self.raw_high = np.zeros((num_timestreams,),dtype='complex')
         self.raw_low = np.zeros((num_timestreams,),dtype='complex')
@@ -143,8 +150,16 @@ class MmwResponse(object):
             data = timestream.get_data_index(index)
             num_periods = data.shape[0]//samples_per_period
             data = data[:samples_per_period*num_periods].reshape((num_periods,samples_per_period)).mean(0)
-            high,low,rising_edge = kid_readout.analysis.fit_pulses.find_high_low(data-self.s0)
-            self.aligned_data[k,:] = np.roll(data,-rising_edge)
+            if data_is_aligned:
+                high = np.mean(data[samples_per_period//4-samples_per_period//8:samples_per_period//4+samples_per_period//8])
+                low = np.mean(data[samples_per_period*3//4-samples_per_period//8:samples_per_period*3//4
+                                                                                 +samples_per_period//8])
+                high = high - self.s0
+                low = low - self.s0
+                self.aligned_data[k,:] = data
+            else:
+                high,low,rising_edge = kid_readout.analysis.fit_pulses.find_high_low(data-self.s0)
+                self.aligned_data[k,:] = np.roll(data,-rising_edge)
             self.raw_high[k] = high+self.s0
             self.raw_low[k] = low+self.s0
             self.mmw_freq[k] = timestream.mmw_source_freq[index]

@@ -27,6 +27,7 @@ def extract_and_pickle(nc_filename, deglitch_threshold=5):
     #  level of /data/<machine>/*.nc
     machine = os.path.split(basedir)[1]
     cryostat = cryostats[machine]
+    print cryostat
     try:
         print("Processing {}".format(nc_filename))
         snms = []
@@ -58,15 +59,18 @@ def extract_and_pickle(nc_filename, deglitch_threshold=5):
             if this_deglitch_threshold is None:
                 print "Found modulation, not deglitching"
             for resonator_index in resonator_indexes:
+                tic = time.time()
                 snm = SweepNoiseMeasurement(rnc, sweep_group_index=sweep_index,
                                             timestream_group_index=timestream_index,
                                             resonator_index=resonator_index, cryostat=cryostat,
                                             deglitch_threshold=this_deglitch_threshold)
+                print "created snm for",rnc.filename,timestream_index,resonator_index,deglitch_threshold,"in",\
+                    (time.time()-tic)
                 try:
                     snm.zbd_voltage = timestream.zbd_voltage[0]
                 except AttributeError:
                     pass
-                
+                tic = time.time()
                 if snm.timestream_modulation_period_samples != 0:
                     snm.folded_projected_timeseries = snm.projected_timeseries.reshape((-1, snm.timestream_modulation_period_samples))
                     folded = snm.folded_projected_timeseries.mean(0)
@@ -76,6 +80,7 @@ def extract_and_pickle(nc_filename, deglitch_threshold=5):
                     snm.folded_normalized_timeseries = np.roll(
                         snm.normalized_timeseries.reshape((-1,snm.timestream_modulation_period_samples)),
                         -rising_edge, axis=1).mean(0)
+                    print "folded time series in ",(time.time()-tic)
                 
                 pkld = cPickle.dumps(snm,cPickle.HIGHEST_PROTOCOL)
                 del snm
