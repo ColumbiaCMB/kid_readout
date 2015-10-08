@@ -95,7 +95,7 @@ def add_noise_fits(df):
 
 def add_total_mmw_attenuator_turns(df):
     df['mmw_atten_total_turns'] = np.nan
-    df.ix[~df.mmw_atten_turns.isnull(),'mmw_atten_total_turns'] = np.array([x.sum() for x in df[~df.mmw_atten_turns.isnull()].mmw_atten_turns])
+    df.ix[~df.mmw_atten_turns.isnull(),'mmw_atten_total_turns'] = np.array([np.sum(x) for x in df[~df.mmw_atten_turns.isnull()].mmw_atten_turns])
     return df
 
 def get_constant_package_temperature_data(df,center_temperature=0.183,peak_excursion=0.005):
