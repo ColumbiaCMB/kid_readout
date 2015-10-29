@@ -315,7 +315,7 @@ class RoachInterface(object):
             print "Requested sampling rate %.1f MHz. Estimated sampling rate %.1f MHz" % (fs, estfs)
             if start_udp:
                 print "starting udp server process on PPC"
-                borph_utils.start_server(self.bof_pid)
+                borph_utils.start_server(self.bof_pid, self.roachip)
             self.adc_atten = 31.5
             self.dac_atten = np.nan
             self.fft_bins = None

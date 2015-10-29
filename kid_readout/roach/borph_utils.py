@@ -43,9 +43,9 @@ except ImportError:
 def get_bof_pid(roachip = 'roach'):
     return int(check_output(('ssh root@%s "pgrep -f bof$"' % roachip), shell=True))
 
-def start_server(bof_pid):
+def start_server(bof_pid,roachip='roach'):
     try:
-        c = check_output('ssh root@roach pkill -f kid_ppc', shell=True)
+        c = check_output(('ssh root@%s pkill -f kid_ppc' % roachip), shell=True)
         print 'process killed'
     except subprocess.CalledProcessError:
         pass
@@ -53,6 +53,6 @@ def start_server(bof_pid):
     
     # remote_command = 'ssh root@roach "/boffiles/udp/channel_pingpong_fileserver %s %s"' % (a,buff_name)
     #remote_command = 'nohup ssh root@roach "/boffiles/udp/channel_pingpong_fileserver %s %s" < /dev/null &> /dev/null &' % (a, buff_name)
-    remote_command = 'ssh root@roach "nohup /boffiles/udp/kid_ppc %s < /dev/null &> /dev/null &"' % (bof_pid,)
+    remote_command = 'ssh root@%s "nohup /boffiles/udp/kid_ppc %s < /dev/null &> /dev/null &"' % (roachip,bof_pid)
     print remote_command
     b = check_output(remote_command, shell=True)
