@@ -36,7 +36,7 @@ class RoachBaseband(RoachInterface):
 
         roach: an FpgaClient instance for communicating with the ROACH.
                 If not specified, will try to instantiate one connected to *roachip*
-        wafer: 0 or 1. 
+        wafer: 0 or 1.
                 In baseband mode, each of the two DAC and ADC connections can be used independantly to
                 readout a single wafer each. This parameter indicates which connection you want to use.
         roachip: (optional). Network address of the ROACH if you don't want to provide an FpgaClient
@@ -54,91 +54,19 @@ class RoachBaseband(RoachInterface):
         initialize: Default True, will call self.initialize() which will try to load state from saved config
                 Set to False if you don't want this to happen.
         """
-        if roach:
-            self.r = roach
-        else:
-            from corr.katcp_wrapper import FpgaClient
-            self.r = FpgaClient(roachip)
-            t1 = time.time()
-            timeout = 10
-            while not self.r.is_connected():
-                if (time.time() - t1) > timeout:
-                    raise Exception("Connection timeout to roach")
-                time.sleep(0.1)
+        super(RoachBaseband,self).__init__(roach=roach, roachip=roachip, adc_valon=adc_valon, host_ip=host_ip,
+                 nfs_root=nfs_root)
 
-        if adc_valon is None:
-            from kid_readout.utils import valon
-            ports = valon.find_valons()
-            if len(ports) == 0:
-                self.adc_valon_port = None
-                self.adc_valon = None
-                print "Warning: No valon found!"
-            else:
-                for port in ports:
-                    try:
-                        self.adc_valon_port = port
-                        self.adc_valon = valon.Synthesizer(port)
-                        f = self.adc_valon.get_frequency_a()
-                        break
-                    except:
-                        pass
-        elif type(adc_valon) is str:
-            from kid_readout.utils import valon
-            self.adc_valon_port = adc_valon
-            self.adc_valon = valon.Synthesizer(self.adc_valon_port)
-        else:
-            self.adc_valon = adc_valon
-
-        if host_ip is None:
-            hostname = socket.gethostname()
-            if hostname == 'detectors':
-                host_ip = '192.168.1.1'
-            else:
-                host_ip = '192.168.1.1'
-        self.host_ip = host_ip
-        self.adc_atten = 31.5
-        self.dac_atten = -1
-        self.fft_gain = 0
-        self.fft_bins = None
-        self.tone_nsamp = None
-        self.tone_bins = None
-        self.phases = None
-        self.modulation_output = 0
-        self.modulation_rate = 0
         self.lo_frequency = 0.0
         self.heterodyne = False
-        self.bof_pid = None
-        self.roachip = roachip
-        #self.boffile = 'bb2xpfb14mcr5_2013_Jul_31_1301.bof'
-        #self.boffile = 'bb2xpfb14mcr7_2013_Oct_31_1332.bof'
-        #self.boffile = 'bb2xpfb14mcr11_2014_Jan_17_1721.bof'
-        #self.boffile = 'bb2xpfb14mcr17_2014_Oct_12_1745.bof'
         self.boffile = 'bb2xpfb14mcr17b_2015_Apr_21_1159.bof'
-        self.nfs_root = nfs_root
 
-
-        try:
-            self.hardware_delay_estimate = tools.boffile_delay_estimates[self.boffile]
-        except KeyError:
-            self.hardware_delay_estimate = tools.nfft_delay_estimates[self.nfft]
-
-        if initialize:
-            self.initialize()
-        else:
-            print "Not initializing"
-        try:
-            self.fs = self.adc_valon.get_frequency_a()
-        except:
-            print "warning couldn't get valon frequency, assuming 512 MHz"
-            self.fs = 512.0
         self.wafer = wafer
-        self.dac_ns = 2 ** 16  # number of samples in the dac buffer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
         self.nfft = 2 ** 14
-        self.bufname = 'ppout%d' % wafer
-        self._window_mag = tools.compute_window(npfb=2 * self.nfft, taps=2, wfunc=scipy.signal.flattop)
-        self.bank = self.get_current_bank()
+        self._fpga_output_buffer = 'ppout%d' % wafer
 
+        self._general_setup()
 
     def load_waveform(self, wave, start_offset=0, fast=True):
         """
@@ -431,7 +359,7 @@ class RoachBaseband(RoachInterface):
             return
         self.adc_valon.set_frequency_a(fs, chan_spacing=chan_spacing)  # for now the baseband readout uses both valon
         #  outputs,
-        self.fs = fs
+        self.fs = float(fs)
 
 
 class RoachBasebandWide(RoachBaseband):
@@ -522,7 +450,7 @@ class RoachBasebandWide(RoachBaseband):
         #self.boffile = 'bb2xpfb11mcr8_2013_Nov_04_2151.bof'
         self.boffile = 'bb2xpfb11mcr11_2014_Feb_01_1106.bof'
         #self.boffile = 'bb2xpfb11mcr12_2014_Feb_26_1028.bof'
-        self.bufname = 'ppout%d' % wafer
+        self._fpga_output_buffer = 'ppout%d' % wafer
         self._window_mag = tools.compute_window(npfb=2 * self.nfft, taps=2, wfunc=scipy.signal.flattop)
 
     def demodulate_data(self, data):
@@ -635,7 +563,7 @@ class RoachBasebandWide10(RoachBasebandWide):
         self.nfft = 2 ** 10
         # self.boffile = 'bb2xpfb10mcr8_2013_Nov_18_0706.bof'
         self.boffile = 'bb2xpfb10mcr11_2014_Jan_20_1049.bof'
-        self.bufname = 'ppout%d' % wafer
+        self._fpga_output_buffer = 'ppout%d' % wafer
         self._window_mag = tools.compute_window(npfb=2 * self.nfft, taps=2, wfunc=scipy.signal.flattop)
 
     def demodulate_data(self, data):

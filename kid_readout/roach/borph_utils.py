@@ -40,8 +40,8 @@ try:
     from subprocess import check_output
 except ImportError:
     check_output = _check_output    
-def get_bof_pid():
-    return int(check_output('ssh root@roach "pgrep -f bof$"', shell=True))
+def get_bof_pid(roachip = 'roach'):
+    return int(check_output(('ssh root@%s "pgrep -f bof$"' % roachip), shell=True))
 
 def start_server(bof_pid):
     try:
