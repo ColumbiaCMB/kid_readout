@@ -43,7 +43,8 @@ class RoachHeterodyne(RoachInterface):
 
         self.lo_frequency = 0.0
         self.heterodyne = True
-        self.boffile = 'iq2xpfb14mcr6_2015_May_11_2241.bof'
+        #self.boffile = 'iq2xpfb14mcr6_2015_May_11_2241.bof'
+        self.boffile = 'iq2xpfb14mcr7_2015_Nov_25_0907.bof'
 
         self.wafer = wafer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
@@ -226,7 +227,7 @@ class RoachHeterodyne(RoachInterface):
         readout_selection : array of ints
             indexes into the self.fft_bins array to specify the bins to read out
         """
-        offset = 4
+        offset = 2
         idxs = self.fft_bin_to_index(self.fft_bins[self.bank,readout_selection])
         order = idxs.argsort()
         idxs = idxs[order]
@@ -288,7 +289,7 @@ class RoachHeterodyne(RoachInterface):
         return self.get_data_udp(nread=nread, demod=demod)
 
     def get_data_udp(self, nread=2, demod=True):
-        chan_offset = 1
+        chan_offset = 2
         nch = self.fpga_fft_readout_indexes.shape[0]
         udp_channel = (self.fpga_fft_readout_indexes//2 + chan_offset) % (self.nfft//2)
         data, seqnos = kid_readout.roach.udp_catcher.get_udp_data(self, npkts=nread * 16 * nch, streamid=1,
@@ -363,6 +364,14 @@ class RoachHeterodyne(RoachInterface):
             raise ValueError("ADC Attenuator must be between 0 and 31.5 dB. Value given was: %s" % str(attendb))
         self.set_attenuator(attendb, le_bit=0x02)
         self.adc_atten = int(attendb * 2) / 2.0
+        
+    def get_fftout_snap(self):
+        self.r.wselfte_int('fftout_ctrl',0)
+        self.r.wselfte_int('fftout_ctrl',1)
+        self._sync()
+        while self.r.read_int('fftout_status') != 0x8000:
+            pass
+        return np.fromstselfng(self.r.read('fftout_bram',2**15),dtype='>i2').astype('float').view('complex')
 
     def _set_fs(self, fs, chan_spacing=2.0):
         """
