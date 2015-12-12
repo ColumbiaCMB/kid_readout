@@ -1,5 +1,6 @@
 from kid_readout.utils.time_tools import date_to_unix_time
 
+thermometry_2015_10_28 = dict(package=9, load=11, waveguide=1)
 thermometry_2015_06_26 = dict(package=9, load=11, waveguide=1)
 thermometry_2015_06_12 = dict(package=9, load=11, waveguide=1)
 thermometry_2015_05_29 = dict(package=9, load=11, waveguide=1)
@@ -12,6 +13,13 @@ thermometry_2014_10_10 = dict(package=9, load=1, stage=11, waveguide=2)
 thermometry_2014_03_19 = dict(package=11, load=2, stage=13, copper=1)
 
 by_unix_time_table = [
+    dict(date='2015-10-28',
+         description='STAR Cryo dual pol 2015-04 nevins Al horn package, LPF, waveguide with teflon spacer and 90 '
+                     'deg twist, absorber tied to 1 K, all horns open',
+         optical_state='light',
+         thermometry_config=thermometry_2015_10_28,
+         chip_id='2015-04 nevins'),
+
     dict(date='2015-06-26',
          description='STAR Cryo 4x5 140825 0813f8 BEC Al horn package 1, AR chip, LPF, copper shield, waveguide with teflon spacer, absorber tied to 1 K, all horns taped over, waveguide 90 degree twist',
          optical_state='light',

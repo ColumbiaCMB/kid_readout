@@ -63,6 +63,25 @@ def cable_delay(params, f):
     return np.exp(1j * (-2 * np.pi * (f - f_min) * delay + phi))
 
 
+def general_cable(params, f):
+    delay = params['delay'].value
+    phi = params['phi'].value
+    f_min = params['f_phi'].value
+    A_mag = params['A_mag'].value
+    A_slope = params['A_slope'].value
+    phase_term =  np.exp(1j * (-2 * np.pi * (f - f_min) * delay + phi))
+    magnitude_term = (f-f_min)*A_slope + A_mag
+    return magnitude_term*phase_term
+
+def basic_resonator(params,f):
+    f_0 = params['f_0'].value
+    Q = params['Q'].value
+    Q_e = (params['Q_e_real'].value +
+           1j * params['Q_e_imag'].value)
+    return (1 - (Q * Q_e**-1 /
+                     (1 + 2j * Q * (f - f_0) / f_0)))
+
+
 def generic_s21(params, f):
     """
     This is Equation 11, except that the parameter A is a complex
@@ -78,6 +97,15 @@ def generic_s21(params, f):
     return A * (1 - (Q * Q_e**-1 /
                      (1 + 2j * Q * (f - f_0) / f_0)))
 
+def resonator_model(params,f):
+    return general_cable(params,f) * basic_resonator(params,f)
+
+def resonator_guess(f,s21):
+    params = delayed_auto_guess(f,s21)
+    slope,offset = np.polyfit(f-f.min(),np.abs(s21),1)
+    params.add('A_slope',value =slope, min =slope-.5*np.abs(slope),max=slope+.5*np.abs(slope))
+    del params['A_phase']
+    return params
 
 def create_model(f_0=100e6, Q=1e4, Q_e=2e4, A=1.0, delay=0.0, a=0.0):
     p = Parameters()
@@ -171,12 +199,12 @@ def generic_guess(f, s21):
     bw = f.max() - f.min()
     # Allow f_0 to vary by +/- the bandwidth over which we have data
     p.add('f_0', value=f[np.argmin(abs(s21))],
-          min=f.min() - bw, max=f.max() + bw)
+          min=f.min() - bw*.1, max=f.max() + bw*.1)
     p.add('A_mag', value=np.mean((np.abs(s21[0]), np.abs(s21[-1]))),
           min=0, max=1e6)
     p.add('A_phase', value=np.mean(np.angle(s21)),
           min=-np.pi, max=np.pi)
-    p.add('Q', value=5e4, min=0, max=1e7)
+    p.add('Q', value=5e4, min=f.mean()/f.ptp(), max=f.mean()/np.diff(f).min())
     p.add('Q_e_real', value=4e4, min=0, max=1e6)
     p.add('Q_e_imag', value=0, min=-1e6, max=1e6)
     return p

@@ -37,7 +37,6 @@ class hittiteController():
         #    self.disconnect()
             
     def send_and_receive(self,msg):
-        self.connect()
         try:
             self.s.send(msg+self.terminator)
             response=self.s.recv(1024)
@@ -46,8 +45,7 @@ class hittiteController():
             print e
             raise e
         finally:
-            self.disconnect()
-        
+            pass
             
     def on(self):
         self.send('OUTP ON')
