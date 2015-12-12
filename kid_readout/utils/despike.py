@@ -54,3 +54,37 @@ def despike_full(data, window_length, rejection_threshold=7, preprocess_function
     nspikes = spike_flags.sum()
     data[spike_flags] = np.array(random.sample(data[~spike_flags],nspikes))
     return data
+
+def deglitch_mask_block_mad(ts,thresh=5,mask_extend=50,debug=False):
+    median = np.median(ts)
+    deviations = np.abs(ts-median)
+    mad = np.median(deviations)
+    mask = deviations > (mad*thresh)
+    if debug:
+        from matplotlib import pyplot as plt
+        plt.plot(deviations)
+        plt.plot(mask*deviations.max(),'o')
+    new_mask = mask.copy()
+    for offset in range(1,mask_extend):
+        new_mask[:-offset] |= mask[offset:]
+        new_mask[offset:] |= mask[:-offset]
+    mask = new_mask
+#    mask[:-mask_extend] = (~mask[:-mask_extend] | ~mask[mask_extend:])
+#    mask[mask_extend:] = mask[mask_extend:] | mask[:-mask_extend]
+    if debug:
+        plt.plot(mask*deviations.max(),'x',mew=2)
+    return mask
+def deglitch_mask_mad(ts,thresh=5,mask_extend=50,window_length=2**8):
+    full_mask = np.zeros(ts.shape,dtype='bool')
+    step = window_length//2
+    nstep = ts.shape[0]//step
+    for k in xrange(nstep):
+        start = k-1
+        if start < 0:
+            start = 0
+        chunk = ts[start*step:(k+1)*step]
+        mask = deglitch_mask_block_mad(chunk,thresh=thresh,mask_extend=mask_extend)
+        full_mask[start*step:((start+1)*step)] |= mask[:step]
+    full_mask[start*step:start*step+len(mask)] |= mask
+    return full_mask
+
