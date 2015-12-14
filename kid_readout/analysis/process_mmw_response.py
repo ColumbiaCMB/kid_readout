@@ -28,9 +28,9 @@ def plot_file_with_air_spacer_reference(filename):
     plot_file(filename,reference_spectrum=(total_freq,total_response*9))
 
 
-def plot_file(filename,num_resonators=16,reference_spectrum=None):
+def plot_file(filename,num_resonators=16,reference_spectrum=None,data_is_aligned=True):
     plt.rcParams['font.size'] = 16
-    mmws = [MmwResponse(filename,k) for k in range(num_resonators)]
+    mmws = [MmwResponse(filename,k,data_is_aligned=data_is_aligned) for k in range(num_resonators)]
     blah, fbase = os.path.split(filename)
     fbase,ext = os.path.splitext(fbase)
     pdfname = os.path.join(BASE_DATA_DIR,'plots/%s.pdf') % (fbase,)
@@ -107,15 +107,28 @@ def plot_file(filename,num_resonators=16,reference_spectrum=None):
         pdf.savefig(fig,bbox_inches='tight')
     pdf.close()
 
+def determine_timestream_index_by_frequency(timestream_group,freq,num_resonators):
+    meas_freq = timestream_group.measurement_freq[:num_resonators]
+    index = np.argmin(np.abs(meas_freq-freq))
+    return index
+
+
+
 class MmwResponse(object):
-    def __init__(self,ncfilename,resonator_index):
+    def __init__(self,ncfilename,resonator_index,data_is_aligned=True,use_bifurcation_model=False):
         rnc = kid_readout.utils.readoutnc.ReadoutNetCDF(ncfilename)
         self.resonator_index=resonator_index
+        self.filename = ncfilename
         sweep = rnc.sweeps[0]
         num_resonators = len(np.unique(sweep.index))
         self.sweep_freq, self.sweep_s21, self.sweep_s21_error = sweep.select_by_index(self.resonator_index)
+        if use_bifurcation_model:
+            min_a = 0.08
+        else:
+            min_a = 1.
         self.resonator = kid_readout.analysis.resonator.fit_best_resonator(self.sweep_freq,self.sweep_s21,
-                                                                           errors=self.sweep_s21_error)
+                                                                           errors=self.sweep_s21_error,min_a=min_a,
+                                                                           delay_estimate=-31.3)
 
         try:
             self.mmw_atten_turns = rnc.ncroot.mmw_atten_turns[:]
@@ -125,30 +138,67 @@ class MmwResponse(object):
         self.dac_atten = rnc.dac_atten[0]
         timestream = rnc.timestreams[0]
         modulation_freq = timestream.mmw_source_modulation_freq[0]
-        self.measurement_freq = timestream.measurement_freq[self.resonator_index]
+        self.timestream_index = determine_timestream_index_by_frequency(timestream,self.sweep_freq.mean(),
+                                                                    num_resonators=num_resonators)
+        self.measurement_freq = timestream.measurement_freq[self.timestream_index]
         sample_rate = timestream.sample_rate[0]
         samples_per_period = int(np.round(sample_rate/modulation_freq))
         total_num_timestreams = timestream.epoch.shape[0]
-        timestream_indexes = range(self.resonator_index,total_num_timestreams,num_resonators)
+        timestream_indexes = range(self.timestream_index,total_num_timestreams,num_resonators)
         num_timestreams = len(timestream_indexes)
+        if num_timestreams < 2:
+            print "this doesn't appear to be a valid mmw sweep file"
+        self.raw_detuning = np.zeros((num_timestreams,samples_per_period),dtype='complex')
+        self.aligned_data = np.zeros((num_timestreams,samples_per_period),dtype='complex')
+
+        num_samples = timestream.get_data_index(0).shape[0]
+        walsh_sin = np.zeros((num_samples))
+        walsh_cos = np.zeros((num_samples))
+        walsh_sin[np.mod(np.arange(num_samples),samples_per_period)<samples_per_period//2] = -1
+        walsh_sin[np.mod(np.arange(num_samples),samples_per_period)>=samples_per_period//2] = 1
+        walsh_cos[np.mod(np.arange(num_samples)+samples_per_period//4,samples_per_period)<samples_per_period//2] = -1
+        walsh_cos[np.mod(np.arange(num_samples)+samples_per_period//4,samples_per_period)>=samples_per_period//2] = 1
+
         self.raw_high = np.zeros((num_timestreams,),dtype='complex')
         self.raw_low = np.zeros((num_timestreams,),dtype='complex')
         self.mmw_freq = np.zeros((num_timestreams,))
         self.zbd_voltage = np.zeros((num_timestreams,))
-        self.aligned_data = np.zeros((num_timestreams,samples_per_period),dtype='complex')
         #self.s0 = self.resonator.model(x=self.measurement_freq)
         self.s0 = self.resonator.s21_data[np.abs(self.resonator.freq_data-self.measurement_freq).argmin()]
         self.ns0 = self.resonator.normalized_model(self.measurement_freq)
         for k,index in enumerate(timestream_indexes):
             data = timestream.get_data_index(index)
             num_periods = data.shape[0]//samples_per_period
+
+            normalized_data = self.resonator.normalize(self.measurement_freq,data)
+            detuning = normalized_s21_to_detuning(normalized_data,self.resonator)
+
+            amplitude = np.pi*((detuning*walsh_sin).mean() + 1j*((detuning*walsh_cos).mean()))
+
+            shift = int(np.round(np.angle(amplitude)*samples_per_period/(np.pi*2)))
+
             data = data[:samples_per_period*num_periods].reshape((num_periods,samples_per_period)).mean(0)
-            high,low,rising_edge = kid_readout.analysis.fit_pulses.find_high_low(data-self.s0)
-            self.aligned_data[k,:] = np.roll(data,-rising_edge)
-            self.raw_high[k] = high+self.s0
-            self.raw_low[k] = low+self.s0
+            if data_is_aligned:
+                high = np.mean(data[samples_per_period//4-samples_per_period//8:samples_per_period//4+samples_per_period//8])
+                low = np.mean(data[samples_per_period*3//4-samples_per_period//8:samples_per_period*3//4
+                                                                                 +samples_per_period//8])
+                high = high - self.s0
+                low = low - self.s0
+                self.aligned_data[k,:] = data
+            else:
+                #high,low,rising_edge = kid_readout.analysis.fit_pulses.find_high_low(data-self.s0)
+                self.aligned_data[k,:] = np.roll(data,shift)
+            self.raw_high[k] = np.mean(self.aligned_data[k,
+                               samples_per_period//4-samples_per_period//8:samples_per_period//4+samples_per_period
+                                                                                                 //8])#high+self.s0
+            self.raw_low[k] = np.mean(self.aligned_data[k,
+                              samples_per_period*3//4-samples_per_period//8:samples_per_period*3//4
+                                                                                 +samples_per_period//8])#low+self.s0
             self.mmw_freq[k] = timestream.mmw_source_freq[index]
-            self.zbd_voltage[k] = timestream.zbd_voltage[index]
+            try:
+                self.zbd_voltage[k] = timestream.zbd_voltage[index]
+            except AttributeError:
+                pass
 
         self.normalized_high = self.resonator.normalize(self.measurement_freq,self.raw_high)
         self.normalized_low = self.resonator.normalize(self.measurement_freq,self.raw_low)

@@ -38,84 +38,22 @@ class RoachHeterodyne(RoachInterface):
                 Finally, for test suites, you can directly pass a Valon class or a class with the same
                 interface.
         """
-        if roach:
-            self.r = roach
-        else:
-            from corr.katcp_wrapper import FpgaClient
-            self.r = FpgaClient(roachip)
-            t1 = time.time()
-            timeout = 10
-            while not self.r.is_connected():
-                if (time.time() - t1) > timeout:
-                    raise Exception("Connection timeout to roach")
-                time.sleep(0.1)
+        super(RoachHeterodyne,self).__init__(roach=roach, roachip=roachip, adc_valon=adc_valon, host_ip=host_ip,
+                 nfs_root=nfs_root)
 
-        if adc_valon is None:
-            from kid_readout.utils import valon
-            ports = valon.find_valons()
-            if len(ports) == 0:
-                self.adc_valon_port = None
-                self.adc_valon = None
-                print "Warning: No valon found!"
-            else:
-                for port in ports:
-                    try:
-                        self.adc_valon_port = port
-                        self.adc_valon = valon.Synthesizer(port)
-                        f = self.adc_valon.get_frequency_a()
-                        break
-                    except:
-                        pass
-        elif type(adc_valon) is str:
-            from kid_readout.utils import valon
-            self.adc_valon_port = adc_valon
-            self.adc_valon = valon.Synthesizer(self.adc_valon_port)
-        else:
-            self.adc_valon = adc_valon
-
-        self.adc_atten = 31.5
-        self.dac_atten = -1
-        self.fft_gain = 0
-        self.fft_bins = None
-        self.tone_nsamp = None
-        self.tone_bins = None
-        self.phases = None
-        self.modulation_output = 0
-        self.modulation_rate = 0
         self.lo_frequency = 0.0
         self.heterodyne = True
-        self.get_current_bank()
-        self.demodulator = Demodulator()
+        #self.boffile = 'iq2xpfb14mcr6_2015_May_11_2241.bof'
+        self.boffile = 'iq2xpfb14mcr7_2015_Nov_25_0907.bof'
 
-        self.bof_pid = None
-        self.roachip = roachip
-        if host_ip is None:
-            hostname = socket.gethostname()
-            if hostname == 'detectors':
-                host_ip = '192.168.1.1'
-            else:
-                host_ip = '192.168.1.1'
-        self.host_ip = host_ip
-
-        try:
-            self.fs = self.adc_valon.get_frequency_a()
-        except:
-            print "warning couldn't get valon frequency, assuming 512 MHz"
-            self.fs = 512.0
         self.wafer = wafer
-        self.dac_ns = 2 ** 16  # number of samples in the dac buffer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
         self.nfft = 2 ** 14
-#        self.boffile = 'iq2xpfb14mcr4_2013_Aug_02_1446.bof'
-        self.boffile = 'iq2xpfb14mcr6_2015_May_11_2241.bof'
-        self.nfs_root = nfs_root
-        try:
-            self.hardware_delay_estimate = kid_readout.roach.tools.boffile_delay_estimates[self.boffile]
-        except KeyError:
-            self.hardware_delay_estimate = kid_readout.roach.tools.nfft_delay_estimates[self.nfft//2]
+        self._fpga_output_buffer = 'ppout%d' % wafer
 
-        self.bufname = 'ppout%d' % wafer
-        self._window_mag = compute_window(npfb=self.nfft, taps=2, wfunc=scipy.signal.flattop)
+        self._general_setup()
+
+        self.demodulator = Demodulator()
 
     def load_waveforms(self, i_wave, q_wave, fast=True, start_offset=0):
         """
@@ -289,7 +227,7 @@ class RoachHeterodyne(RoachInterface):
         readout_selection : array of ints
             indexes into the self.fft_bins array to specify the bins to read out
         """
-        offset = 4
+        offset = 2
         idxs = self.fft_bin_to_index(self.fft_bins[self.bank,readout_selection])
         order = idxs.argsort()
         idxs = idxs[order]
@@ -351,7 +289,7 @@ class RoachHeterodyne(RoachInterface):
         return self.get_data_udp(nread=nread, demod=demod)
 
     def get_data_udp(self, nread=2, demod=True):
-        chan_offset = 1
+        chan_offset = 2
         nch = self.fpga_fft_readout_indexes.shape[0]
         udp_channel = (self.fpga_fft_readout_indexes//2 + chan_offset) % (self.nfft//2)
         data, seqnos = kid_readout.roach.udp_catcher.get_udp_data(self, npkts=nread * 16 * nch, streamid=1,
@@ -426,6 +364,14 @@ class RoachHeterodyne(RoachInterface):
             raise ValueError("ADC Attenuator must be between 0 and 31.5 dB. Value given was: %s" % str(attendb))
         self.set_attenuator(attendb, le_bit=0x02)
         self.adc_atten = int(attendb * 2) / 2.0
+        
+    def get_fftout_snap(self):
+        self.r.wselfte_int('fftout_ctrl',0)
+        self.r.wselfte_int('fftout_ctrl',1)
+        self._sync()
+        while self.r.read_int('fftout_status') != 0x8000:
+            pass
+        return np.fromstselfng(self.r.read('fftout_bram',2**15),dtype='>i2').astype('float').view('complex')
 
     def _set_fs(self, fs, chan_spacing=2.0):
         """

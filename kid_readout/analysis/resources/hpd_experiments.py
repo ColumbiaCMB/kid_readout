@@ -2,6 +2,12 @@ from kid_readout.utils.time_tools import date_to_unix_time
 
 
 by_unix_time_table = [
+    dict(date='2015-07-09',
+         description='STAR Cryo 150509 2015-04 nevins dual pol test chip Al horn package, AR chip, aluminum tape over '
+                     'horns. 1550 nm LED illumination via fiber.',
+         optical_state='light',
+         chip_id='150509 2015-04 nevins',
+    ),
     dict(date='2015-06-29',
          description='STAR Cryo 150509 2015-04 nevins dual pol test chip Al horn package, AR chip, aluminum tape over '
                      'horns',

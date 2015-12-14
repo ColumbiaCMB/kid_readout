@@ -142,7 +142,8 @@ class SweepNoiseMeasurement(object):
     def __init__(self,sweep_filename,sweep_group_index=0,timestream_filename=None,timestream_group_index=0,
                  resonator_index=0,low_pass_cutoff_Hz=4.0,
                  dac_chain_gain = -49, delay_estimate=None,
-                 deglitch_threshold=5, cryostat=None, mask_sweep_indicies=None, use_sweep_group_timestream=False):
+                 deglitch_threshold=5, cryostat=None, mask_sweep_indicies=None, use_sweep_group_timestream=False,
+                 conjugate_data=False):
         """
         sweep_filename : str
             NetCDF4 file with at least the sweep data. By default, this is also used for the timestream data.
@@ -233,6 +234,9 @@ class SweepNoiseMeasurement(object):
 
         # This uses the error calculation in readoutnc.SweepGroup
         self.sweep_freqs_MHz, self.sweep_s21, self.sweep_errors = self.sweep.select_by_index(resonator_index)
+        self.conjugate_data = conjugate_data
+        if conjugate_data:
+            self.sweep_s21 = np.conj(self.sweep_s21)
         
         # find the time series that was measured closest to the sweep frequencies
         # this is a bit sloppy...
@@ -257,6 +261,8 @@ class SweepNoiseMeasurement(object):
         self.timestream_index = timestream_index
         
         original_timeseries = self.timestream.get_data_index(timestream_index)
+        if conjugate_data:
+            original_timeseries = np.conj(original_timeseries)
         self.adc_sampling_freq_MHz = self.timestream.adc_sampling_freq[timestream_index]
         self.noise_measurement_freq_MHz = self.timestream.measurement_freq[timestream_index]
         self.nfft = self.timestream.nfft[timestream_index]
@@ -392,6 +398,11 @@ class SweepNoiseMeasurement(object):
         """
         get the original demodulated timeseries
         """
+        try:
+            if self.conjugate_data:
+                return np.conj(self.timestream.get_data_index(self.timestream_index))
+        except AttributeError:
+            pass
         return self.timestream.get_data_index(self.timestream_index)
     
     @property
@@ -598,8 +609,8 @@ class SweepNoiseMeasurement(object):
         ax1b.plot(frm,20*np.log10(abs(self.sweep_model_normalized_s21)))
                 
         freqs_fine,prr_fine,pii_fine = self.get_projected_fractional_fluctuation_spectra(NFFT=2**18)
-        ax2.loglog(freqs_fine[1:],prr_fine[1:],'b',label='Srr')
-        ax2.loglog(freqs_fine[1:],pii_fine[1:],'g',label='Sii')
+        #ax2.loglog(freqs_fine[1:],prr_fine[1:],'b',label='Srr')
+        #ax2.loglog(freqs_fine[1:],pii_fine[1:],'g',label='Sii')
         ax2.loglog(self.freqs_coarse[1:],self.prr_coarse[1:],'y',lw=2)
         ax2.loglog(self.freqs_coarse[1:],self.pii_coarse[1:],'m',lw=2)
         ax2.loglog(self.pca_freq[1:],self.pca_eigvals[:,1:].T,'k',lw=2)
@@ -626,7 +637,7 @@ class SweepNoiseMeasurement(object):
         ax3.plot(t,tsl.real,'b',lw=2,label = 'LPF timeseries real')
         ax3.plot(t,tsl.imag,'g',lw=2,label = 'LPF timeseries imag')
         load_fluctuations_mK = (self.timestream_primary_load_temperature - self.timestream_primary_load_temperature.mean())*1000.0
-        ax3.plot(self.timestream_temperatures_sample_times,load_fluctuations_mK,'r',lw=2)
+#        ax3.plot(self.timestream_temperatures_sample_times,load_fluctuations_mK,'r',lw=2)
         ax3.set_ylabel('Hz')
         ax3.set_xlabel('seconds')
         ax3.legend(prop=dict(size='xx-small'))

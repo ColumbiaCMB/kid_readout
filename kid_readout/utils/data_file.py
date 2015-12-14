@@ -167,6 +167,7 @@ class DataFile():
             mmw_source_modulation_freq = tsg.createVariable('mmw_source_modulation_freq',np.float64,('epoch'))
             zbd_voltage = tsg.createVariable('zbd_voltage',np.float64,('epoch'))
             zbd_power_dbm = tsg.createVariable('zbd_power_dbm',np.float64,('epoch'))
+            sweep_index = tsg.createVariable('sweep_index',np.int32,('epoch'))
             data = tsg.createVariable('data',self.cdf64,('epoch','sample'))
         else:
             t0 = tsg.variables['epoch']
@@ -182,6 +183,7 @@ class DataFile():
             mmw_source_modulation_freq = tsg.variables['mmw_source_modulation_freq']
             zbd_voltage = tsg.variables['zbd_voltage']
             zbd_power_dbm = tsg.variables['zbd_power_dbm']
+            sweep_index = tsg.variables['sweep_index']
             data = tsg.variables['data']
         idx = len(tsg.dimensions['epoch'])
         data[idx] = block.data.astype('complex64').view(self.c64)
@@ -198,6 +200,7 @@ class DataFile():
         mmw_source_modulation_freq[idx] = block.mmw_source_modulation_freq
         zbd_power_dbm[idx] = block.zbd_power_dbm
         zbd_voltage[idx] = block.zbd_voltage
+        sweep_index[idx] = block.sweep_index
         return tsg
     
     def add_cryo_data(self,cryod):

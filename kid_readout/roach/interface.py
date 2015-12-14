@@ -2,11 +2,15 @@ import os
 import sys
 import time
 import numpy as np
+import socket
+import scipy
 import borph_utils
 import udp_catcher
 from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
+from kid_readout.roach import tools
 
-CONFIG_FILE_NAME = os.path.join(BASE_DATA_DIR,'roach_config.npz')
+
+CONFIG_FILE_NAME_TEMPLATE = os.path.join(BASE_DATA_DIR,'%s_config.npz')
 
 class RoachInterface(object):
     """
@@ -16,18 +20,125 @@ class RoachInterface(object):
     heterodyne readout systems.
     """
 
-    def __init__(self):
-        raise NotImplementedError("Abstract class, instantiate a subclass instead of this class")
+    def __init__(self, roach=None, roachip='roach', adc_valon=None, host_ip=None,
+                 nfs_root='/srv/roach_boot/etch'):
+        """
+        Class to represent the baseband readout system (low-frequency (150 MHz), no mixers)
+
+        roach: an FpgaClient instance for communicating with the ROACH.
+                If not specified, will try to instantiate one connected to *roachip*
+        wafer: 0 or 1.
+                In baseband mode, each of the two DAC and ADC connections can be used independantly to
+                readout a single wafer each. This parameter indicates which connection you want to use.
+        roachip: (optional). Network address of the ROACH if you don't want to provide an FpgaClient
+        adc_valon: a Valon class, a string, or None
+                Provide access to the Valon class which controls the Valon synthesizer which provides
+                the ADC and DAC sampling clock.
+                The default None value will use the valon.find_valon function to locate a synthesizer
+                and create a Valon class for you.
+                You can alternatively pass a string such as '/dev/ttyUSB0' to specify the port for the
+                synthesizer, which will then be used for creating a Valon class.
+                Finally, for test suites, you can directly pass a Valon class or a class with the same
+                interface.
+        host_ip: Override IP address to which the ROACH should send it's data. If left as None,
+                the host_ip will be set appropriately based on the hostname.
+        initialize: Default True, will call self.initialize() which will try to load state from saved config
+                Set to False if you don't want this to happen.
+        """
+        if roach:
+            self.r = roach
+        else:
+            from corr.katcp_wrapper import FpgaClient
+            self.r = FpgaClient(roachip)
+            t1 = time.time()
+            timeout = 10
+            while not self.r.is_connected():
+                if (time.time() - t1) > timeout:
+                    raise Exception("Connection timeout to roach")
+                time.sleep(0.1)
+
+        if adc_valon is None:
+            from kid_readout.utils import valon
+            ports = valon.find_valons()
+            if len(ports) == 0:
+                self.adc_valon_port = None
+                self.adc_valon = None
+                print "Warning: No valon found!"
+            else:
+                for port in ports:
+                    try:
+                        self.adc_valon_port = port
+                        self.adc_valon = valon.Synthesizer(port)
+                        f = self.adc_valon.get_frequency_a()
+                        break
+                    except:
+                        pass
+        elif type(adc_valon) is str:
+            from kid_readout.utils import valon
+            self.adc_valon_port = adc_valon
+            self.adc_valon = valon.Synthesizer(self.adc_valon_port)
+        else:
+            self.adc_valon = adc_valon
+
+        if host_ip is None:
+            hostname = socket.gethostname()
+            if hostname == 'detectors':
+                host_ip = '192.168.1.1'
+            else:
+                host_ip = '192.168.1.1'
+        self.host_ip = host_ip
+        self.roachip = roachip
+        self.nfs_root = nfs_root
+        self._config_file_name = CONFIG_FILE_NAME_TEMPLATE % self.roachip
+
+        self.adc_atten = 31.5
+        self.dac_atten = -1
+        self.fft_gain = 0
+        self.fft_bins = None
+        self.tone_nsamp = None
+        self.tone_bins = None
+        self.phases = None
+        self.modulation_output = 0
+        self.modulation_rate = 0
+
+        # Things to be configured by subclasses
+        self.lo_frequency = 0.0
+        self.heterodyne = False
+        self.bof_pid = None
+        self.boffile = None
+        self.wafer = None
+        self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
+        self.nfft = None
+        # Boffile specific register names
+        self._fpga_output_buffer = None
+
+
+    def _general_setup(self):
+        """
+        Intended to be called after or at the end of subclass __init__
+        """
+        self._window_mag = tools.compute_window(npfb=2 * self.nfft, taps=2, wfunc=scipy.signal.flattop)
+        try:
+            self.hardware_delay_estimate = tools.boffile_delay_estimates[self.boffile]
+        except KeyError:
+            self.hardware_delay_estimate = tools.nfft_delay_estimates[self.nfft]
+
+        try:
+            self.fs = self.adc_valon.get_frequency_a()
+        except:
+            print "warning couldn't get valon frequency, assuming 512 MHz"
+            self.fs = 512.0
+        self.bank = self.get_current_bank()
 
     # FPGA Functions
     def _update_bof_pid(self):
         if self.bof_pid:
             return
         try:
-            self.bof_pid = borph_utils.get_bof_pid()
+            self.bof_pid = borph_utils.get_bof_pid(self.roachip)
         except Exception, e:
             self.bof_pid = None
-            raise e
+#            raise e
 
     def get_raw_adc(self):
         """
@@ -141,7 +252,7 @@ class RoachInterface(object):
             return rate_in_hz
 
     def save_state(self):
-        np.savez(CONFIG_FILE_NAME,
+        np.savez(self._config_file_name,
                  boffile=self.boffile,
                  adc_atten=self.adc_atten,
                  dac_atten=self.dac_atten,
@@ -155,7 +266,7 @@ class RoachInterface(object):
                  modulation_output=self.modulation_output,
                  lo_frequency=self.lo_frequency)
         try:
-            os.chmod(CONFIG_FILE_NAME, 0777)
+            os.chmod(self._config_file_name, 0777)
         except:
             pass
 
@@ -168,8 +279,8 @@ class RoachInterface(object):
         """
         if use_config:
             try:
-                state = np.load(CONFIG_FILE_NAME)
-                print "Loaded ROACH state from", CONFIG_FILE_NAME
+                state = np.load(self._config_file_name)
+                print "Loaded ROACH state from", self._config_file_name
             except IOError:
                 print "Could not load previous state"
                 state = None
@@ -187,13 +298,16 @@ class RoachInterface(object):
             print "Reinitializing system"
             print "Deprogramming"
             self._set_fs(fs)
-            self.r.progdev('')
+            try:
+                self.r.progdev('')
+            except RuntimeError, e:
+                pass
             print "Programming", self.boffile
             self.r.progdev(self.boffile)
             self.bof_pid = None
             self._update_bof_pid()
             self.set_fft_gain(4)
-            self.r.write_int('dacctrl', 0)
+            self.r.write_int('dacctrl', 2)
             self.r.write_int('dacctrl', 1)
             estfs = self.measure_fs()
             if np.abs(fs - estfs) > 2.0:
@@ -201,7 +315,7 @@ class RoachInterface(object):
             print "Requested sampling rate %.1f MHz. Estimated sampling rate %.1f MHz" % (fs, estfs)
             if start_udp:
                 print "starting udp server process on PPC"
-                borph_utils.start_server(self.bof_pid)
+                borph_utils.start_server(self.bof_pid, self.roachip)
             self.adc_atten = 31.5
             self.dac_atten = np.nan
             self.fft_bins = None
@@ -231,20 +345,6 @@ class RoachInterface(object):
         returns: fs, the approximate sampling rate in MHz
         """
         return 2 * self.r.est_brd_clk()
-
-        # ### Add back in these abstract methods once the interface stablilizes
-
-    #    def select_fft_bins(self,bins):
-    #        raise NotImplementedError("Abstract base class")
-    #
-    #    def set_channel(self,ch,dphi=None,amp=-3):
-    #        raise NotImplementedError("Abstract base class")
-    #    def get_data(self,nread=10):
-    #        raise NotImplementedError("Abstract base class")
-    #    def set_tone(self,f0,dphi=None,amp=-3):
-    #        raise NotImplementedError("Abstract base class")
-    #    def select_bin(self,ibin):
-    #        raise NotImplementedError("Abstract base class")
 
     def _pause_dram(self):
         self.r.write_int('dram_rst', 0)

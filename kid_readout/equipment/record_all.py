@@ -17,6 +17,7 @@ def main():
         print("{}     {}".format(port, device.__class__.__name__))
 
     # Set up the SIMs
+    sim1 = sim900.ports['1']
     ruox3628 = sim900.ports['4']
     ruox3882 = sim900.ports['6']
     diodes = sim900.ports['8']
@@ -27,6 +28,13 @@ def main():
     range = 6  # 20 kOhm
     time_constant = 2  # 3 s
     display_temperature = True
+
+    sim1.reset()
+    sim1.excitation = excitation
+    sim1.excitation_mode = excitation_mode
+    sim1.range = range
+    sim1.time_constant = time_constant
+
 
     ruox3628.reset()
     ruox3628.excitation = excitation
@@ -76,7 +84,8 @@ def main():
             rox1_temp = ruox3628.temperature
             rox2_res = ruox3882.resistance
             rox2_temp = ruox3882.temperature
-            rox3_res = rox3_temp = 0
+            rox3_res = sim1.resistance
+            rox3_temp = sim1.temperature
 
             current_time = time.strftime("%Y%m%d-%H%M%S")
             all_values = ", ".join([str(n) for n in

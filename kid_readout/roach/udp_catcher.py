@@ -50,7 +50,7 @@ hdr_fmt = ">4HI"
 hdr_size = struct.calcsize(hdr_fmt)
 pkt_size = hdr_size + 1024
 null_pkt = "\x00"*1024
-def decode_packets(plist,streamid,chans,nfft,pkts_per_chunk = 16,capture_failures=True):
+def decode_packets(plist,streamid,chans,nfft,pkts_per_chunk = 16,capture_failures=False):
     nchan = chans.shape[0]    
     mcnt_inc = nfft*2**12/nchan    
     next_seqno = None
