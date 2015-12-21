@@ -13,8 +13,10 @@ import kid_readout.utils.parse_srs
 
 import kid_readout.analysis.resources.experiments
 
-
-temperature_log_file_dir = '/data/readout/SRS/'
+if os.path.exists('/data/readout'):
+    temperature_log_file_dir = '/data/readout/SRS/'
+else:
+    temperature_log_file_dir = '/artemis/readout/SRS/'
 
 _filecache = {}
 epochs = []
