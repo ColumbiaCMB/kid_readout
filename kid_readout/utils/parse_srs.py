@@ -36,9 +36,10 @@ def convtime(tstr):
     return time.mktime(time.strptime(tstr,'%Y%m%d-%H%M%S'))
 def get_load_log(fname):
     try:
-        tdata = np.genfromtxt(fname,delimiter=',',converters={0:convtime},skiprows=1,invalid_raise=False)
+        tdata = np.genfromtxt(fname,delimiter=',',converters={0:convtime},skip_header=1,invalid_raise=False)
         dt = [datetime.datetime.fromtimestamp(x) for x in tdata[:,0]]
-    except:
+    except Exception, e:
+        print "using pandas to parse temperature logs because", e
         from pandas import read_table
         df = read_table(fname,sep='[ ,]+',skiprows=1,converters={0:convtime},header=None)
         dt = [datetime.datetime.fromtimestamp(x) for x in df[0]]
