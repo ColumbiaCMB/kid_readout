@@ -13,6 +13,13 @@ thermometry_2014_10_10 = dict(package=9, load=1, stage=11, waveguide=2)
 thermometry_2014_03_19 = dict(package=11, load=2, stage=13, copper=1)
 
 by_unix_time_table = [
+    dict(date='2016-01-06',
+         description='JPL 2015-10 park-1 dual pol 160 um. Package 160-1B/-1H. LPF, waveguide with teflon spacer and 90 '
+                     'degree twist, absorber tied to 1K, horns open',
+         optical_state='light',
+         thermometry_config=thermometry_2015_10_28,
+         chip_id='2015-10 park JPL-1'),
+
     dict(date='2015-10-28',
          description='STAR Cryo dual pol 2015-04 nevins Al horn package, LPF, waveguide with teflon spacer and 90 '
                      'deg twist, absorber tied to 1 K, all horns open',
