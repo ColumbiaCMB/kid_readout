@@ -35,6 +35,7 @@ class Roach2Baseband(RoachBaseband):
         self.boffile = 'r2bb2xpfb14mcr21_2015_Oct_07_1708.bof'
         self.boffile = 'r2bb2xpfb14mcr21_2015_Oct_08_1422.bof'  # This boffile was giving ADC glitches 2015-10-19
         self.boffile = 'r2bb2xpfb14mcr21_2015_Oct_08_2247.bof'
+        self.boffile = 'r2bb2xpfb14mcr23_2015_Oct_27_1357.bof'
 
         self.wafer = wafer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
