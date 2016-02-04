@@ -52,6 +52,9 @@ class Roach2Heterodyne(RoachHeterodyne):
             q = qdr.Qdr(self.r,'qdr0')
             q.qdr_cal(verbosity=1)
 
+    def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None,phases=None,iq_delay=-1):
+        super(Roach2Heterodyne,self).set_tone_bins(bins=bins, nsamp=nsamp, amps=amps, load=load, normfact=normfact, phases=phases, iq_delay=iq_delay)
+
     def load_waveforms(self, i_wave, q_wave, fast=True, start_offset=0):
         """
         Load waveforms for the two DACs
@@ -61,11 +64,12 @@ class Roach2Heterodyne(RoachHeterodyne):
         fast : boolean
             decide what method for loading the dram
         """
+        #somehow the r2 qdr has the dac0/1 outputs switched...
         data = np.zeros((2 * i_wave.shape[0],), dtype='>i2')
-        data[0::4] = i_wave[::2]
-        data[1::4] = i_wave[1::2]
-        data[2::4] = q_wave[::2]
-        data[3::4] = q_wave[1::2]
+        data[0::4] = q_wave[::2]
+        data[1::4] = q_wave[1::2]
+        data[2::4] = i_wave[::2]
+        data[3::4] = i_wave[1::2]
 
         self.r.blindwrite('qdr0_memory', data.tostring())
         self._unpause_dram()
@@ -90,5 +94,4 @@ class Roach2Heterodyne(RoachHeterodyne):
         i = sb[::2].copy().view('>i2') / 16.
         q = sb[1::2].copy().view('>i2') / 16.
         return i, q
-
 

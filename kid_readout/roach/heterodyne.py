@@ -6,6 +6,7 @@ import scipy.signal
 from kid_readout.roach.interface import RoachInterface
 from kid_readout.roach.tools import compute_window
 import kid_readout.roach.udp_catcher
+import requests
 
 
 try:
@@ -54,6 +55,7 @@ class RoachHeterodyne(RoachInterface):
         self._general_setup()
 
         self.demodulator = Demodulator()
+        self.attenuator = Attenuator()
 
     def load_waveforms(self, i_wave, q_wave, fast=True, start_offset=0):
         """
@@ -128,7 +130,7 @@ class RoachHeterodyne(RoachInterface):
         return actual_freqs
 
 
-    def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None,phases=None):
+    def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None,phases=None,iq_delay=0):
         """
         Set the stimulus tones by specific integer bins
 
@@ -165,6 +167,7 @@ class RoachHeterodyne(RoachInterface):
             self.wavenorm = wn
         q_rwave = np.round((wave.real / self.wavenorm) * (2 ** 15 - 1024)).astype('>i2')
         q_iwave = np.round((wave.imag / self.wavenorm) * (2 ** 15 - 1024)).astype('>i2')
+        q_iwave = np.roll(q_iwave, iq_delay, axis=1)    
         q_rwave.shape = (q_rwave.shape[0] * q_rwave.shape[1],)
         q_iwave.shape = (q_iwave.shape[0] * q_iwave.shape[1],)
         self.q_rwave = q_rwave
@@ -317,7 +320,7 @@ class RoachHeterodyne(RoachInterface):
         """
         print "getting data"
         bufname = 'ppout%d' % self.wafer
-        chan_offset = 1
+        chan_offset = 2
         draw, addr, ch = self._read_data(nread, bufname)
         if not np.all(ch == ch[0]):
             print "all channel registers not the same; this case not yet supported"
@@ -333,11 +336,13 @@ class RoachHeterodyne(RoachInterface):
             dout = self.demodulate_data(dout)
         return dout, addr
 
-    def set_lo(self, lomhz=1200.0, chan_spacing=2.0):
+    def set_lo(self, lomhz=1200.0, chan_spacing=2.0, modulator_lo_power=5, demodulator_lo_power=5):
         """
         Set the local oscillator frequency for the IQ mixers
 
         lomhz: float, frequency in MHz
+
+        lo_level: LO power level on the valon. options are [-4, -1, 2, 5]
         """
         #TODO: Fix this after valon is updated
         if self.lo_valon is None:
@@ -348,8 +353,14 @@ class RoachHeterodyne(RoachInterface):
         else:
             #out1 goes to demod at 0dBm
             #out2 goes to mod at 5dBm
-            self.lo_valon.set_rf_level(0,-4) 
-            self.lo_valon.set_rf_level(8, 2)
+            power_settings = [-4, -1, 2, 5]
+            if lo_level in power_settings:
+                self.lo_valon.set_rf_level(0,demodulator_lo_power) 
+                self.lo_valon.set_rf_level(8,modulator_lo_power)
+            else:
+                print "lo_level not available, using full power" 
+                self.lo_valon.set_rf_level(0,5) 
+                self.lo_valon.set_rf_level(8,5)
             self.lo_valon.set_frequency_a(lomhz, chan_spacing=chan_spacing)
             self.lo_valon.set_frequency_b(lomhz, chan_spacing=chan_spacing)
             self.lo_frequency = lomhz
@@ -441,20 +452,19 @@ def tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft):
 
 class Attenuator(object):
     def __init__(self,tempip='http://192.168.1.211/'):
-        import requests
         self.ip = tempip
-        try:
-            self.att = self.get_att()
-        except ConnectionError:
-            print "can't find the attenuator, check ip"
+        self.att = self.get_att()
 
     def get_att(self):
-        query = self.ip+"ATT??"
-        return requests.get(query)
+        return self.get_query("ATT??")
     
     def set_att(self, newatt):
         if newatt > 62:
             print "Setting attenuation too high.  Max is 62"
-        query = self.ip+"SETATT="+str(newatt)
-        return requests.get(query)
-
+        qatt = "SETATT="+str(newatt)
+        return self.get_query(qatt)
+    
+    def get_query(self, query):
+        query = self.ip + query
+        q = requests.get(query)
+        return q.content
