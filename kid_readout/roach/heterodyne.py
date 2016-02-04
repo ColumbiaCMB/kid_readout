@@ -19,7 +19,7 @@ except ImportError:
 class RoachHeterodyne(RoachInterface):
 
     def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None, host_ip=None,
-                 nfs_root='/srv/roach_boot/etch'):
+                 nfs_root='/srv/roach_boot/etch', lo_valon=None):
         """
         Class to represent the heterodyne readout system (high-frequency (1.5 GHz), IQ mixers)
 
@@ -39,7 +39,7 @@ class RoachHeterodyne(RoachInterface):
                 interface.
         """
         super(RoachHeterodyne,self).__init__(roach=roach, roachip=roachip, adc_valon=adc_valon, host_ip=host_ip,
-                 nfs_root=nfs_root)
+                 nfs_root=nfs_root, lo_valon=lo_valon)
 
         self.lo_frequency = 0.0
         self.heterodyne = True
@@ -340,10 +340,20 @@ class RoachHeterodyne(RoachInterface):
         lomhz: float, frequency in MHz
         """
         #TODO: Fix this after valon is updated
-        self.adc_valon.set_rf_level(8,2)
-        self.adc_valon.set_frequency_b(lomhz, chan_spacing=chan_spacing)
-        self.lo_frequency = lomhz
-        self.save_state()
+        if self.lo_valon is None:
+            self.adc_valon.set_rf_level(8,2)
+            self.adc_valon.set_frequency_b(lomhz, chan_spacing=chan_spacing)
+            self.lo_frequency = lomhz
+            self.save_state()
+        else:
+            #out1 goes to demod at 0dBm
+            #out2 goes to mod at 5dBm
+            self.lo_valon.set_rf_level(0,-4) 
+            self.lo_valon.set_rf_level(8, 2)
+            self.lo_valon.set_frequency_a(lomhz, chan_spacing=chan_spacing)
+            self.lo_valon.set_frequency_b(lomhz, chan_spacing=chan_spacing)
+            self.lo_frequency = lomhz
+            self.save_state()
 
     def set_dac_attenuator(self, attendb):
         if attendb < 0 or attendb > 63:
@@ -428,4 +438,23 @@ def tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft):
     nfft = nfft
     ns = tone_num_samples
     return nfft * (k / float(ns)) - m
+
+class Attenuator(object):
+    def __init__(self,tempip='http://192.168.1.211/'):
+        import requests
+        self.ip = tempip
+        try:
+            self.att = self.get_att()
+        except ConnectionError:
+            print "can't find the attenuator, check ip"
+
+    def get_att(self):
+        query = self.ip+"ATT??"
+        return requests.get(query)
+    
+    def set_att(self, newatt):
+        if newatt > 62:
+            print "Setting attenuation too high.  Max is 62"
+        query = self.ip+"SETATT="+str(newatt)
+        return requests.get(query)
 

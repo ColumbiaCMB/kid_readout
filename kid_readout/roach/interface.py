@@ -21,7 +21,7 @@ class RoachInterface(object):
     """
 
     def __init__(self, roach=None, roachip='roach', adc_valon=None, host_ip=None,
-                 nfs_root='/srv/roach_boot/etch'):
+                 nfs_root='/srv/roach_boot/etch', lo_valon=None):
         """
         Class to represent the baseband readout system (low-frequency (150 MHz), no mixers)
 
@@ -79,6 +79,13 @@ class RoachInterface(object):
             self.adc_valon = valon.Synthesizer(self.adc_valon_port)
         else:
             self.adc_valon = adc_valon
+
+        if type(lo_valon) is str:
+            from kid_readout.utils import valon
+            self.lo_valon_port = lo_valon
+            self.lo_valon = valon.Synthesizer(self.lo_valon_port)
+        else:
+            self.lo_valon = lo_valon
 
         if host_ip is None:
             hostname = socket.gethostname()
