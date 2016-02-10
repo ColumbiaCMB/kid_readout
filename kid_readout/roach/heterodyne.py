@@ -18,6 +18,23 @@ except ImportError:
 
 
 class RoachHeterodyne(RoachInterface):
+    initial_values_for_writeable_registers = {
+        'chans': -1,  # this isn't a register, but this will make the read table invalid
+        'dacctrl': 0,
+        'debug': 0,
+        'dout_ctrl': 0,
+        'dram_bank': 0,
+        'dram_mask': 0,
+        'dram_rst': 0,
+        'fftout_ctrl': 0,
+        'fftshift': 0,
+        'gpioa': 0,
+        'gpiob': 0,
+        'i0_ctrl': 0,
+        'q0_ctrl': 0,
+        'streamid': 0,
+        'sync': 0,
+    }
 
     def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None, host_ip=None,
                  nfs_root='/srv/roach_boot/etch', lo_valon=None, attenuator=None):
@@ -46,6 +63,7 @@ class RoachHeterodyne(RoachInterface):
         self.heterodyne = True
         #self.boffile = 'iq2xpfb14mcr6_2015_May_11_2241.bof'
         self.boffile = 'iq2xpfb14mcr7_2015_Nov_25_0907.bof'
+        self.iq_delay = 4
 
         self.wafer = wafer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
@@ -130,7 +148,7 @@ class RoachHeterodyne(RoachInterface):
         return actual_freqs
 
 
-    def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None,phases=None,iq_delay=0):
+    def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None,phases=None):
         """
         Set the stimulus tones by specific integer bins
 
@@ -167,7 +185,7 @@ class RoachHeterodyne(RoachInterface):
             self.wavenorm = wn
         q_rwave = np.round((wave.real / self.wavenorm) * (2 ** 15 - 1024)).astype('>i2')
         q_iwave = np.round((wave.imag / self.wavenorm) * (2 ** 15 - 1024)).astype('>i2')
-        q_iwave = np.roll(q_iwave, iq_delay, axis=1)    
+        q_iwave = np.roll(q_iwave, self.iq_delay, axis=1)
         q_rwave.shape = (q_rwave.shape[0] * q_rwave.shape[1],)
         q_iwave.shape = (q_iwave.shape[0] * q_iwave.shape[1],)
         self.q_rwave = q_rwave
@@ -189,6 +207,7 @@ class RoachHeterodyne(RoachInterface):
         wave = np.fft.ifft(spec)
         q_rwave = np.round((wave.real / self.wavenorm) * (2 ** 15 - 1024)).astype('>i2')
         q_iwave = np.round((wave.imag / self.wavenorm) * (2 ** 15 - 1024)).astype('>i2')
+        q_iwave = np.roll(q_iwave, self.iq_delay, axis=1)
         start_offset = self.tone_bins.shape[0] - 1
         self.load_waveforms(q_rwave, q_iwave, start_offset=start_offset)
         self.save_state()
