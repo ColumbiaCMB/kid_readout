@@ -354,12 +354,15 @@ class RoachHeterodyne(RoachInterface):
             #out1 goes to demod at 0dBm
             #out2 goes to mod at 5dBm
             power_settings = [-4, -1, 2, 5]
-            if lo_level in power_settings:
+            if demodulator_lo_power in power_settings:
                 self.lo_valon.set_rf_level(0,demodulator_lo_power) 
+            else:
+                print "demodulator_lo_level not available, using full power" 
+                self.lo_valon.set_rf_level(0,5) 
+            if modulator_lo_power in power_settings:
                 self.lo_valon.set_rf_level(8,modulator_lo_power)
             else:
-                print "lo_level not available, using full power" 
-                self.lo_valon.set_rf_level(0,5) 
+                print "modulator_lo_level not available, using full power" 
                 self.lo_valon.set_rf_level(8,5)
             self.lo_valon.set_frequency_a(lomhz, chan_spacing=chan_spacing)
             self.lo_valon.set_frequency_b(lomhz, chan_spacing=chan_spacing)
@@ -456,13 +459,13 @@ class Attenuator(object):
         self.att = self.get_att()
 
     def get_att(self):
-        return self.get_query("ATT??")
+        return float(self.get_query("ATT??"))
     
     def set_att(self, newatt):
         if newatt > 62:
             print "Setting attenuation too high.  Max is 62"
         qatt = "SETATT="+str(newatt)
-        return self.get_query(qatt)
+        return float(self.get_query(qatt))
     
     def get_query(self, query):
         query = self.ip + query
