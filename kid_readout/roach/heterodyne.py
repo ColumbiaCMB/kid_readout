@@ -20,7 +20,7 @@ except ImportError:
 class RoachHeterodyne(RoachInterface):
 
     def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None, host_ip=None,
-                 nfs_root='/srv/roach_boot/etch', lo_valon=None):
+                 nfs_root='/srv/roach_boot/etch', lo_valon=None, attenuator=None):
         """
         Class to represent the heterodyne readout system (high-frequency (1.5 GHz), IQ mixers)
 
@@ -55,7 +55,7 @@ class RoachHeterodyne(RoachInterface):
         self._general_setup()
 
         self.demodulator = Demodulator()
-        self.attenuator = Attenuator()
+        self.attenuator = attenuator
 
     def load_waveforms(self, i_wave, q_wave, fast=True, start_offset=0):
         """
@@ -370,18 +370,21 @@ class RoachHeterodyne(RoachInterface):
             self.save_state()
 
     def set_dac_attenuator(self, attendb):
-        if attendb < 0 or attendb > 63:
-            raise ValueError("DAC Attenuator must be between 0 and 63 dB. Value given was: %s" % str(attendb))
+        if self.attenuator is None:
+            if attendb < 0 or attendb > 63:
+                raise ValueError("DAC Attenuator must be between 0 and 63 dB. Value given was: %s" % str(attendb))
 
-        if attendb > 31.5:
-            attena = 31.5
-            attenb = attendb - attena
-        else:
-            attena = attendb
-            attenb = 0
-        self.set_attenuator(attena, le_bit=0x01)
-        self.set_attenuator(attenb, le_bit=0x80)
-        self.dac_atten = int(attendb * 2) / 2.0
+            if attendb > 31.5:
+                attena = 31.5
+                attenb = attendb - attena
+            else:
+                attena = attendb
+                attenb = 0
+            self.set_attenuator(attena, le_bit=0x01)
+            self.set_attenuator(attenb, le_bit=0x80)
+            self.dac_atten = int(attendb * 2) / 2.0
+        else :
+            self.attenuator.set_att(attendb)
 
     def set_adc_attenuator(self, attendb):
         if attendb < 0 or attendb > 31.5:
