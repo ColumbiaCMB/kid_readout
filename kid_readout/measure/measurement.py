@@ -176,7 +176,6 @@ class SweepStream(Measurement):
         self._psd_frequency = None
         self._psd_ii = None
         self._psd_xx = None
-        self._noise = None
         super(SweepStream, self).__init__(state, analyze)
 
     def analyze(self):
@@ -184,7 +183,6 @@ class SweepStream(Measurement):
         self._set_stream_s21_normalized_deglitched()
         self._set_i_and_x()
         self._set_psd_i_and_x()
-        self._fit_noise_i_and_x()
 
     def to_group(self, group, numpy_to_netcdf):
         super(SweepStream, self).to_group(group, numpy_to_netcdf)
@@ -240,9 +238,13 @@ class SweepStream(Measurement):
             self._set_i_and_x()
         return self._x
 
-    def _set_i_and_x(self):
+    def _set_i_and_x(self, deglitch=True):
+        if deglitch:
+            s21 = self.stream_s21_normalized_deglitched
+        else:
+            s21 = self.stream_s21_normalized
         iQ_e = 1 / self.sweep.resonator.Q_e
-        z = iQ_e / (1 - self.stream_s21_normalized_deglitched)
+        z = iQ_e / (1 - s21)
         self._i = z.real - iQ_e.real
         self._x = 1 / 2 * z.imag
 
@@ -264,6 +266,7 @@ class SweepStream(Measurement):
             self._set_psd_i_and_x()
         return self._psd_xx
 
+    # TODO: calculate errors in PSDs
     def _set_psd_i_and_x(self, NFFT=None, window=plt.mlab.window_none, **kwargs):
         # Use the same length calculation as SweepNoiseMeasurement
         if NFFT is None:
@@ -274,37 +277,6 @@ class SweepStream(Measurement):
         self._psd_ii = psd_ii
         self._psd_xx = psd_xx
 
-    def _fit_noise_i_and_x(self):
-        self.noise_ii = noise_fit.fit_single_pole_noise(self.psd_frequency[1:], self.psd_ii[1:],
-                                                        errors=1e-18*np.ones(self.psd_ii.size-1),
-                                                        max_num_masked=8)
-        self.noise_xx = noise_fit.fit_single_pole_noise(self.psd_frequency[1:], self.psd_xx[1:],
-                                                        errors=1e-18*np.ones(self.psd_xx.size-1),
-                                                        max_num_masked=8)
-
-    # This isn't working yet.
-    def _fit_full_noise_i_and_x(self):
-        f_r = (1e6 * self.sweep.resonator.f_0) / (2 * self.sweep.resonator.Q)
-        f_qp = 10 * self.psd_frequency.max()
-
-        guess_ii = noise.bandwidth_limited_guess(self.psd_frequency[1:], self.psd_ii[1:], f_r)
-        guess_ii['f_r'].vary = False
-        guess_ii['f_qp'].vary = False
-        guess_ii['S_TLS'].value = 0
-        guess_ii['S_TLS'].vary = False
-        self.full_noise_ii = fitter.Fitter(self.psd_frequency[1:], self.psd_ii[1:], model=noise.model,
-                                           guess=lambda f, S: guess_ii,
-                                           errors=1e-18*np.ones(self.psd_frequency.size - 1),
-                                           xtol=1e-12)
-
-        guess_xx = noise.bandwidth_limited_guess(self.psd_frequency[1:], self.psd_xx[1:], f_r)
-        guess_xx['f_r'].vary = False
-        guess_xx['f_qp'].vary = False
-        self.full_noise_xx = fitter.Fitter(self.psd_frequency[1:], self.psd_xx[1:], model=noise.model,
-                                           guess=lambda f, S: guess_xx,
-                                           errors=1e-18*np.ones(self.psd_frequency.size - 1),
-                                           xtol=1e-12)
-
     # TODO: move this forward to a usable version.
     def to_dataframe(self):
         data = {}
@@ -312,14 +284,6 @@ class SweepStream(Measurement):
             data['resonator_{}'.format(param.name)] = [param.value]
             data['resonator_{}_error'.format(param.name)] = [param.stderr]
         data['resonator_redchi'] = self.sweep.resonator.result.redchi
-        for param in self.noise_ii.result.params.values():
-            data['noise_ii_{}'.format(param.name)] = [param.value]
-            data['noise_ii_{}_error'.format(param.name)] = [param.stderr]
-        data['noise_ii_redchi'] = self.noise_ii.result.redchi
-        for param in self.noise_xx.result.params.values():
-            data['noise_xx_{}'.format(param.name)] = [param.value]
-            data['noise_xx_{}_error'.format(param.name)] = [param.stderr]
-        data['noise_xx_redchi'] = self.noise_xx.result.redchi
         # temperatures
         # roach state
         return pd.DataFrame(data, index=[0])
