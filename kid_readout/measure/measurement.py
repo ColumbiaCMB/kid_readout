@@ -4,32 +4,102 @@ import numpy as np
 # TODO: replace with a scipy PSD estimator
 import matplotlib.pyplot as plt
 import pandas as pd
-from kid_readout.measure.nc import Measurement
 from kid_readout.measure import noise
 from kid_readout.analysis import resonator, fitter
 from kid_readout.analysis import noise_fit
 from kid_readout.utils.despike import deglitch_window
 
 
+RESERVED_NAMES = ['__name__']
+
+class Writer(object):
+    """
+    An abstract class that describes the interface that writer classes must implement.
+    """
+
+    def __init__(self, root):
+        raise NotImplementedError()
+
+    def write(self, thing, location, name):
+        pass
+
+    def new(self, location, name):
+        pass
+
+
+class Reader(object):
+
+    def __init__(self, root):
+        raise NotImplementedError()
+
+    def read(self, location=None):
+        pass
+
+
+class Measurement(object):
+    """
+    This is an abstract class that represents a measurement for a single channel.
+
+    Measurements are hierarchical: a Measurement can contain other Measurements.
+
+    Each Measurement should be self-contained, meaning that it should contain all data and metadata necessary to
+    analyze and understand it. Can this include temperature data?
+
+    Caching: all raw data attributes are public and all special or processed data attributes are private.
+    """
+
+    def __init__(self, state=None, analyze=False):
+        self._parent = None
+        if state is None:
+            self.state = {}
+        if analyze:
+            self.analyze()
+
+    def analyze(self):
+        """
+        analyze the raw data and create all data products.
+        :return: None
+        """
+        pass
+
+    def to_dataframe(self):
+        """
+        :return: a DataFrame containing all of the instance attributes.
+        """
+        pass
+
+    @staticmethod
+    def create(writer, location, name):
+        return writer.create(location, name)
+
+    def write(self, writer, location):
+        writer.write(self.__class__.__name__, location, '__name__')
+        for name, thing in self.__dict__.items():
+            if not name.startswith('_'):
+                if isinstance(thing, Measurement):
+                    new_location = writer.new(location, name)
+                    thing.write(writer, new_location)
+                elif isinstance(thing, MeasurementTuple):
+                    tuple_location = writer.new(location, name)
+                    writer.write(thing.__class__.__name__, tuple_location, '__name__')
+                    for index, m in enumerate(thing):
+                        index_location = writer.new(tuple_location, str(index))
+                        m.write(writer, index_location)
+                else:
+                    writer.write(thing, location, name)
+
+
+class MeasurementTuple(tuple):
+    """
+    This is a dummy class that exists so that Measurements can contain other Measurements.
+    """
+    pass
+
+
 class Stream(Measurement):
     """
     This class represents time-ordered data from a single channel.
     """
-
-    netcdf_dimensions = OrderedDict(s21=None)
-
-    netcdf_variables = OrderedDict(frequency=Measurement.Variable(netcdf_name='frequency',
-                                                                  data_type=np.float64,
-                                                                  dimensions=()),
-                                   s21=Measurement.Variable(netcdf_name='s21',
-                                                            data_type=np.complex64,
-                                                            dimensions=('s21',)),
-                                   start_epoch=Measurement.Variable(netcdf_name='start_epoch',
-                                                                    data_type=np.float64,
-                                                                    dimensions=()),
-                                   end_epoch=Measurement.Variable(netcdf_name='end_epoch',
-                                                                  data_type=np.float64,
-                                                                  dimensions=()))
 
     def __init__(self, frequency=0, s21=np.array([1]), start_epoch=0, end_epoch=1, state=None, analyze=False):
         self.frequency = float(frequency)
@@ -76,21 +146,9 @@ class FrequencySweep(Measurement):
     This class represents a set of streams.
     """
 
-    # If we save no derived data, then we can't use these in the file.
-    """
-    netcdf_dimensions = OrderedDict(frequency=None)
-    netcdf_variables = {'frequency': Measurement.Variable(netcdf_name='frequency',
-                                                          data_type=np.float64,
-                                                          dimensions=('frequency',)),
-                        's21': Measurement.Variable(netcdf_name='s21',
-                                                    data_type=np.complex64,
-                                                    dimensions=('frequency',))}
-    """
-
     def __init__(self, streams=(), state=None, analyze=False):
         # Don't sort by frequency so that non-monotonic order can be preserved if needed.
-        # self.streams = tuple(sorted(streams, key=lambda s: s.frequency))
-        self.streams = tuple(streams)
+        self.streams = MeasurementTuple(streams)
         for stream in self.streams:
             stream._parent = self
         self._frequency = None
@@ -115,23 +173,6 @@ class FrequencySweep(Measurement):
         if self._s21_error is None:
             self._s21_error = np.array([stream.s21_mean_error for stream in self.streams])
         return self._s21_error
-
-    def to_group(self, group, numpy_to_netcdf):
-        super(FrequencySweep, self).to_group(group, numpy_to_netcdf)
-        streams_group = group.createGroup('streams')
-        for n, stream in enumerate(self.streams):
-            stream_group = streams_group.createGroup("Stream_{}".format(n))
-            stream.to_group(stream_group, numpy_to_netcdf)
-
-    def from_group(self, group):
-        super(FrequencySweep, self).from_group(group)
-        stream_list = []
-        for stream_group in group.groups['streams'].groups.values():
-            stream = Stream().from_group(stream_group)
-            stream._parent = self
-            stream_list.append(stream)
-        self.streams = tuple(stream_list)
-        return self
 
 
 class ResonatorSweep(FrequencySweep):
@@ -183,21 +224,6 @@ class SweepStream(Measurement):
         self._set_stream_s21_normalized_deglitched()
         self._set_i_and_x()
         self._set_psd_i_and_x()
-
-    def to_group(self, group, numpy_to_netcdf):
-        super(SweepStream, self).to_group(group, numpy_to_netcdf)
-        sweep_group = group.createGroup('sweep')
-        self.sweep.to_group(sweep_group, numpy_to_netcdf)
-        stream_group = group.createGroup('stream')
-        self.stream.to_group(stream_group, numpy_to_netcdf)
-
-    def from_group(self, group):
-        super(SweepStream, self).from_group(group)
-        self.sweep = ResonatorSweep().from_group(group.groups['sweep'])
-        self.sweep._parent = self
-        self.stream = Stream().from_group(group.groups['stream'])
-        self.sweep._parent = self
-        return self
 
     @property
     def sweep_s21_normalized(self):
