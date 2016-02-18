@@ -7,7 +7,7 @@ import scipy
 import borph_utils
 import udp_catcher
 from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
-from kid_readout.roach import tools
+from kid_readout.roach import tools, valon
 
 
 CONFIG_FILE_NAME_TEMPLATE = os.path.join(BASE_DATA_DIR,'%s_config.npz')
@@ -58,7 +58,6 @@ class RoachInterface(object):
                 time.sleep(0.1)
 
         if adc_valon is None:
-            from kid_readout.utils import valon
             ports = valon.find_valons()
             if len(ports) == 0:
                 self.adc_valon_port = None

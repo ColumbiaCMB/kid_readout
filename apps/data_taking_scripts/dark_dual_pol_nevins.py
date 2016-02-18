@@ -5,7 +5,7 @@ import numpy as np
 
 from kid_readout.roach import heterodyne
 from kid_readout.utils import data_file, sweeps
-from kid_readout.analysis.resonator import fit_best_resonator
+from kid_readout.analysis.resonator.resonator import fit_best_resonator
 from kid_readout.utils import acquire
 
 

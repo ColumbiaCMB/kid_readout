@@ -1,8 +1,11 @@
+import random
+
 import numpy as np
 from scipy.ndimage import filters
 import scipy.signal
-from kid_readout.utils.fftfilt import fftfilt
-import random
+
+from kid_readout.timedomain import fftfilt
+
 
 def lpf256(ts):
     return fftfilt(scipy.signal.firwin(256,1/256.),ts)

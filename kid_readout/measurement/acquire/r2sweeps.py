@@ -2,7 +2,7 @@ __author__ = 'gjones'
 
 import time
 import numpy as np
-from kid_readout.utils.data_block import SweepData, DataBlock
+from kid_readout.measurement.io.data_block import SweepData, DataBlock
 
 def do_sweep(ri,center_freqs,offsets,nsamp,
              nchan_per_step=8,reads_per_step=2,callback = None, sweep_data=None,

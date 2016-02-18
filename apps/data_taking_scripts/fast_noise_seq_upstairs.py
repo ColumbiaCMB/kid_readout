@@ -1,4 +1,5 @@
 import matplotlib
+from kid_readout.measurement.io import data_block
 
 from kid_readout.roach import baseband
 
@@ -6,8 +7,8 @@ matplotlib.use('agg')
 import numpy as np
 import time
 import sys
-from kid_readout.utils import data_block, data_file,sweeps
-from kid_readout.analysis.resonator import Resonator
+from kid_readout.utils import data_file,sweeps
+from kid_readout.resonator.resonator import Resonator
 #from sim900 import sim900Client
 
 ri = baseband.RoachBasebandWide()

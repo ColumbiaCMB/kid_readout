@@ -2,16 +2,17 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 import kid_readout.analysis.demodulate_rtl
+from kid_readout.timedomain import fftfilt
+
+
 reload(kid_readout.analysis.demodulate_rtl)
 import kid_readout.analysis.fit_pulses
 import kid_readout.analysis.fitter
-import copy
 import scipy.signal
-from kid_readout.utils.fftfilt import fftfilt
 import pandas as pd
-import kid_readout.utils.starcryo_temps
+import kid_readout.equipment.starcryo_temps
 try:
-    import kid_readout.utils.hpd_temps
+    import kid_readout.equipment.hpd_temps
 except ImportError:
     print "no temperatures available"
 import kid_readout.analysis.resources.experiments
@@ -41,9 +42,9 @@ def process_time_constant_rtl_file(filename,pulse_period=10e-3,debug=False,filte
     if cryostat is None:
         cryostat = kid_readout.analysis.resources.experiments.default_cryostat
     if cryostat.lower() == 'hpd':
-        primary_package_temperature, secondary_package_temperature, primary_load_temperature, secondary_load_temperature = kid_readout.utils.hpd_temps.get_temperatures_at(result['time'][0])
+        primary_package_temperature, secondary_package_temperature, primary_load_temperature, secondary_load_temperature = kid_readout.equipment.hpd_temps.get_temperatures_at(result['time'][0])
     else:
-        primary_package_temperature, secondary_package_temperature, primary_load_temperature, secondary_load_temperature = kid_readout.utils.starcryo_temps.get_temperatures_at(result['time'][0])
+        primary_package_temperature, secondary_package_temperature, primary_load_temperature, secondary_load_temperature = kid_readout.equipment.starcryo_temps.get_temperatures_at(result['time'][0])
     result['primary_package_temperature'] = [primary_package_temperature]
     result['secondary_package_temperature'] = [secondary_package_temperature]
     result['primary_load_temperature'] = [primary_load_temperature]

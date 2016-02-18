@@ -1,5 +1,5 @@
 import os
-from kid_readout.utils.readoutnc import ReadoutNetCDF
+from kid_readout.measurement.io.readoutnc import ReadoutNetCDF
 from kid_readout.analysis.noise_measurement import SweepNoiseMeasurement, save_noise_pkl
 
 

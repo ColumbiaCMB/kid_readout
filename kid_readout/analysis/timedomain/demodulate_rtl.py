@@ -1,7 +1,9 @@
 import numpy as np
 from matplotlib import pyplot as plt
-import kid_readout.utils.data_block
-import kid_readout.utils.fftfilt
+
+import kid_readout.measurement.io.data_block
+import kid_readout.timedomain.fftfilt
+
 
 def fft_bin_to_freq(bin,n):
     N = (n-1)//2 + 1
@@ -22,7 +24,7 @@ def demodulate(data,poly_degree=7,debug=False):
     peak_freq = find_peak_freq(data)
     num_points = data.shape[0]
     demod = data * np.exp(-2j*np.pi*peak_freq*np.arange(num_points))
-    demod3 =  kid_readout.utils.fftfilt.fftfilt(kid_readout.utils.data_block.lpf,demod)
+    demod3 =  kid_readout.timedomain.fftfilt.fftfilt(kid_readout.measurement.io.data_block.lpf,demod)
     interval = num_points//10000
     if interval == 0:
         interval = 1

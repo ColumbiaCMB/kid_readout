@@ -6,7 +6,7 @@ from collections import OrderedDict
 import numpy as np
 
 from kid_readout.roach.tools import ntone_power_correction
-import kid_readout.utils.fftfilt
+import kid_readout.timedomain.fftfilt
 from kid_readout.utils.data_block import lpf
 import kid_readout.roach.tools
 
@@ -120,7 +120,7 @@ class SweepGroup(object):
             indexes_to_calculate = np.flatnonzero(mask)
         errors = np.zeros(indexes_to_calculate.shape[0], dtype='complex')
         for output_index,input_index in enumerate(indexes_to_calculate):
-            filtered = kid_readout.utils.fftfilt.fftfilt(lpf, self.timestream_group.data[input_index,:])[len(lpf):]
+            filtered = kid_readout.timedomain.fftfilt.fftfilt(lpf, self.timestream_group.data[input_index,:])[len(lpf):]
             # the standard deviation is scaled by the number of independent samples
             # to compute the error on the mean.
             error_scaling = np.sqrt(float(len(filtered))/len(lpf))

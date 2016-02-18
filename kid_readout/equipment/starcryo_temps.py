@@ -7,11 +7,12 @@ import glob
 import os
 import time
 import bisect
-import numpy as np
-import netCDF4
-import kid_readout.utils.parse_srs
 
+import numpy as np
+
+import kid_readout.equipment.parse_srs
 import kid_readout.analysis.resources.experiments
+
 
 if os.path.exists('/data/readout'):
     temperature_log_file_dir = '/data/readout/SRS/'
@@ -81,7 +82,7 @@ def get_temperatures_at(t):
         time.time() - end_time) > 20 * 60:  # if we're looking for data from more than 20 minutes ago, look in the cache
         datetime_timestamp, data = _filecache[filename]
     else:
-        datetime_timestamp, data = kid_readout.utils.parse_srs.get_load_log(filename)
+        datetime_timestamp, data = kid_readout.equipment.parse_srs.get_load_log(filename)
         _filecache[filename] = (datetime_timestamp, data)
 
     info = kid_readout.analysis.resources.experiments.get_experiment_info_at(start_time, cryostat='StarCryo')
