@@ -1,111 +1,10 @@
 from __future__ import division
 import numpy as np
-# TODO: replace with a scipy PSD estimator
-import matplotlib.pyplot as plt
+from matplotlib.pyplot import mlab  # TODO: replace with a scipy PSD estimator
 import pandas as pd
+from kid_readout.measurement.core import Measurement, MeasurementTuple
 from kid_readout.analysis import resonator
 from kid_readout.utils.despike import deglitch_window
-
-
-CLASS_NAME = '_class_name'  # This is the string used by writer objects to save class names.
-RESERVED_NAMES = [CLASS_NAME]
-
-
-# TODO: add plugin functionality for classes
-def get_class(class_name):
-    return globals()[class_name]
-
-
-def is_sequence(class_):
-    return issubclass(class_, MeasurementSequence)
-
-
-class Measurement(object):
-    """
-    This is an abstract class that represents a measurement for a single channel.
-
-    Measurements are hierarchical: a Measurement can contain other Measurements.
-
-    Each Measurement should be self-contained, meaning that it should contain all data and metadata necessary to
-    analyze and understand it. Can this include temperature data?
-
-    Caching: all raw data attributes are public and all special or processed data attributes are private.
-    """
-
-    def __init__(self, state=None, analyze=False):
-        self._parent = None
-        if state is None:
-            self.state = {}
-        else:
-            self.state = state
-        if analyze:
-            self.analyze()
-
-    def analyze(self):
-        """
-        Analyze the raw data and create all data products.
-
-        :return: None
-        """
-        pass
-
-    def to_dataframe(self):
-        """
-        :return: a DataFrame containing all of the instance attributes.
-        """
-        pass
-
-    def write(self, writer, location, name):
-        """
-        Write this measurement to disk using the given writer object. The abstraction used here is that a location is
-        a container for hierarchically-organized data.
-
-        :param writer: an object that implements the writer interface.
-        :param location: the existing root location into which this object will be written.
-        :param name: the name of the location containing this object.
-        :return: None
-
-        For example, when called with parameters (writer, 'root', 'measurement0'), the location "root" must already
-        exist and the data from this measurement will be stored within the location root/measurement0
-        """
-        self_location = writer.new(location, name)
-        writer.write(self.__class__.__name__, self_location, CLASS_NAME)
-        for name, thing in self.__dict__.items():
-            if not name.startswith('_'):
-                if isinstance(thing, Measurement):
-                    thing.write(writer, self_location, name)
-                elif isinstance(thing, MeasurementSequence):
-                    sequence_location = writer.new(self_location, name)
-                    writer.write(thing.__class__.__name__, sequence_location, CLASS_NAME)
-                    for index, meas in enumerate(thing):
-                        meas.write(writer, sequence_location, str(index))
-                else:
-                    writer.write(thing, self_location, name)
-        return self_location
-
-
-class MeasurementSequence(object):
-    """
-    This is a dummy class that exists so that Measurements can contain sequences of other Measurements.
-    """
-    pass
-
-
-class MeasurementTuple(tuple, MeasurementSequence):
-    """
-    Measurements containing tuples of Measurements should use instances of this class so that loading and saving are
-    handled automatically.
-    """
-    pass
-
-
-class MeasurementList(list, MeasurementSequence):
-    """
-    Measurements containing lists of Measurements should use instances of this class so that loading and saving are
-    handled automatically.
-    """
-    pass
-
 
 
 class Stream(Measurement):
@@ -305,12 +204,12 @@ class SweepStream(Measurement):
         return self._psd_xx
 
     # TODO: calculate errors in PSDs
-    def _set_psd_i_and_x(self, NFFT=None, window=plt.mlab.window_none, **kwargs):
+    def _set_psd_i_and_x(self, NFFT=None, window=mlab.window_none, **kwargs):
         # Use the same length calculation as SweepNoiseMeasurement
         if NFFT is None:
             NFFT = int(2**(np.floor(np.log2(self.stream.s21.size)) - 3))
-        psd_ii, f = plt.mlab.psd(self.i, Fs=self.stream.sample_frequency, NFFT=NFFT, window=window, **kwargs)
-        psd_xx, f = plt.mlab.psd(self.x, Fs=self.stream.sample_frequency, NFFT=NFFT, window=window, **kwargs)
+        psd_ii, f = mlab.psd(self.i, Fs=self.stream.sample_frequency, NFFT=NFFT, window=window, **kwargs)
+        psd_xx, f = mlab.psd(self.x, Fs=self.stream.sample_frequency, NFFT=NFFT, window=window, **kwargs)
         self._psd_frequency = f
         self._psd_ii = psd_ii
         self._psd_xx = psd_xx
