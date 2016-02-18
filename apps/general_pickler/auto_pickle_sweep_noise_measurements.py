@@ -63,7 +63,8 @@ def extract_and_pickle(nc_filename, deglitch_threshold=5):
                 snm = SweepNoiseMeasurement(rnc, sweep_group_index=sweep_index,
                                             timestream_group_index=timestream_index,
                                             resonator_index=resonator_index, cryostat=cryostat,
-                                            deglitch_threshold=this_deglitch_threshold)
+                                            deglitch_threshold=this_deglitch_threshold,
+                                            )
                 print "created snm for",rnc.filename,timestream_index,resonator_index,deglitch_threshold,"in",\
                     (time.time()-tic)
                 try:

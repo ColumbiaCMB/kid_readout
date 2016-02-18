@@ -10,7 +10,7 @@ from kid_readout.equipment import lockin_controller
 
 def main(f_initial, attenuation, stream_time=30, suffix='compressor_noise', coarse_exponent=19, fine_exponent=21,
          modulation_state='high', modulation_rate=7, transient_wait=10, f_mmw_source=0,
-         mmw_atten_turns=(np.nan, np.nan)):
+         mmw_atten_turns=(np.nan, np.nan),num_streams=1):
     roach = baseband.RoachBaseband()
     roach.set_modulation_output(modulation_state)
     roach.set_dac_attenuator(attenuation)
@@ -75,5 +75,5 @@ def main(f_initial, attenuation, stream_time=30, suffix='compressor_noise', coar
 
 
 if __name__ == "__main__":
-    main(np.load('/data/readout/resonances/current.npy'), 41, stream_time=30,
-         suffix='compressor_noise_0.200_K', modulation_state='high')
+    main(np.load('/data/readout/resonances/current.npy')[range(11)+range(13,18)], 35, stream_time=30,
+         suffix='compressor_noise_0.08_K', modulation_state='high')
