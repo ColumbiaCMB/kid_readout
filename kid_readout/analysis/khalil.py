@@ -70,7 +70,7 @@ def general_cable(params, f):
     A_mag = params['A_mag'].value
     A_slope = params['A_slope'].value
     phase_term =  np.exp(1j * (-2 * np.pi * (f - f_min) * delay + phi))
-    magnitude_term = (f-f_min)*A_slope + A_mag
+    magnitude_term = ((f-f_min)*A_slope + 1)* A_mag
     return magnitude_term*phase_term
 
 def basic_resonator(params,f):
