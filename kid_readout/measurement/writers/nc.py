@@ -1,7 +1,7 @@
 import os
 import netCDF4
 import numpy as np
-from kid_readout.measure import measurement
+from kid_readout.measurement import core
 
 
 npy_to_netcdf = {np.dtype('complex64'): {'datatype': np.dtype([('real', 'f4'), ('imag', 'f4')]),
@@ -31,7 +31,7 @@ def write(thing, group, name):
         variable[:] = thing.view(npy_datatype)
     elif isinstance(thing, dict):
         dict_group = group.createGroup(name)
-        setattr(dict_group, measurement.CLASS_NAME, 'dict')
+        setattr(dict_group, core.CLASS_NAME, 'dict')
         for k, v in thing.items():
             write(v, dict_group, k)
     else:
@@ -43,13 +43,13 @@ def read(top):
 
 
 def _visit(parent, location):
-    class_name = getattr(location, measurement.CLASS_NAME)
+    class_name = getattr(location, core.CLASS_NAME)
     if class_name == 'dict':
         current = _visit_dict(location)
     else:
-        class_ = measurement.get_class(class_name)
+        class_ = core.get_class(class_name)
         names = location.groups.keys()  # NB: keep unicode
-        if measurement.is_sequence(class_):
+        if core.is_sequence(class_):
             current = class_([_visit(None, location.groups[name])
                               for name in sorted(names, key=int)])
             for meas in current:
@@ -74,7 +74,7 @@ def _visit_dict(group):
     # Note that
     # k is measurement.CLASS_NAME == False
     # because netCDF4 returns all strings as unicode.
-    return dict([(k, v) for k, v in group.__dict__.items() if k != measurement.CLASS_NAME] +
+    return dict([(k, v) for k, v in group.__dict__.items() if k != core.CLASS_NAME] +
                 [(name, _visit_dict(group)) for name, group in group.groups.items()])
 
 
