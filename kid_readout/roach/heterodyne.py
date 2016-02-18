@@ -207,7 +207,7 @@ class RoachHeterodyne(RoachInterface):
         wave = np.fft.ifft(spec)
         q_rwave = np.round((wave.real / self.wavenorm) * (2 ** 15 - 1024)).astype('>i2')
         q_iwave = np.round((wave.imag / self.wavenorm) * (2 ** 15 - 1024)).astype('>i2')
-        q_iwave = np.roll(q_iwave, self.iq_delay, axis=1)
+        q_iwave = np.roll(q_iwave, self.iq_delay, axis=0)
         start_offset = self.tone_bins.shape[0] - 1
         self.load_waveforms(q_rwave, q_iwave, start_offset=start_offset)
         self.save_state()
