@@ -9,7 +9,7 @@ import socket
 import numpy as np
 import scipy.signal
 
-import udp_catcher
+import kid_readout.roach.r2_udp_catcher
 import tools
 from interface import RoachInterface
 from heterodyne import RoachHeterodyne
@@ -25,14 +25,15 @@ except ImportError:
 
 
 class Roach2Heterodyne(RoachHeterodyne):
-    def __init__(self,roach=None, wafer=0, roachip='r2kid', adc_valon=None, host_ip=None, initialize=True,
+    def __init__(self,roach=None, wafer=0, roachip='r2kid', adc_valon=None, host_ip='10.0.0.1', initialize=True,
                  nfs_root='/srv/roach_boot/etch', lo_valon=None):
         super(Roach2Heterodyne,self).__init__(roach=roach,wafer=wafer,roachip=roachip, adc_valon=adc_valon,
                                             host_ip=host_ip, nfs_root=nfs_root, lo_valon=lo_valon)
 
         self.lo_frequency = 0.0
         self.heterodyne = True
-        self.boffile = 'r2iq2xpfb14mcr8_2016_Feb_03_1221.bof'
+        #self.boffile = 'r2iq2xpfb14mcr8_2016_Feb_03_1221.bof'
+        self.boffile = 'r2iq2xpfb14mcr9gb_2016_Feb_17_1802.bof'
 
         self.wafer = wafer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
@@ -45,8 +46,9 @@ class Roach2Heterodyne(RoachHeterodyne):
             self.initialize()
 
     def initialize(self, fs=512.0, cal_qdr=True, use_config=True):
-	#hetero
         super(Roach2Heterodyne,self).initialize(fs=fs,start_udp=False,use_config=use_config)
+        self.r.write_int('destip',np.fromstring(socket.inet_aton(self.host_ip),dtype='!u4')[0])
+        self.r.write_int('destport',55555)
         if cal_qdr:
             import qdr
             q = qdr.Qdr(self.r,'qdr0')
@@ -95,3 +97,10 @@ class Roach2Heterodyne(RoachHeterodyne):
         q = sb[1::2].copy().view('>i2') / 16.
         return i, q
 
+    def get_data_udp(self, nread=2, demod=True):
+        data, seqnos = kid_readout.roach.r2_udp_catcher.get_udp_data(self, npkts=nread,
+                                                                     nchans=self.fft_bins.shape[1],
+                                                                     addr=(self.host_ip, 55555))  # , stream_reg, addr)
+        if demod:
+            data = self.demodulate_data(data)
+        return data, seqnos
