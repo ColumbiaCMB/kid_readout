@@ -1,39 +1,23 @@
 from __future__ import division
-from collections import OrderedDict
 import numpy as np
 # TODO: replace with a scipy PSD estimator
 import matplotlib.pyplot as plt
 import pandas as pd
-from kid_readout.measure import noise
-from kid_readout.analysis import resonator, fitter
-from kid_readout.analysis import noise_fit
+from kid_readout.analysis import resonator
 from kid_readout.utils.despike import deglitch_window
 
 
-RESERVED_NAMES = ['__name__']
-
-class Writer(object):
-    """
-    An abstract class that describes the interface that writer classes must implement.
-    """
-
-    def __init__(self, root):
-        raise NotImplementedError()
-
-    def write(self, thing, location, name):
-        pass
-
-    def new(self, location, name):
-        pass
+CLASS_NAME = '_class_name'  # This is the string used by writer objects to save class names.
+RESERVED_NAMES = [CLASS_NAME]
 
 
-class Reader(object):
+# TODO: add plugin functionality for classes
+def get_class(class_name):
+    return globals()[class_name]
 
-    def __init__(self, root):
-        raise NotImplementedError()
 
-    def read(self, location=None):
-        pass
+def is_sequence(class_):
+    return issubclass(class_, MeasurementSequence)
 
 
 class Measurement(object):
@@ -52,12 +36,15 @@ class Measurement(object):
         self._parent = None
         if state is None:
             self.state = {}
+        else:
+            self.state = state
         if analyze:
             self.analyze()
 
     def analyze(self):
         """
-        analyze the raw data and create all data products.
+        Analyze the raw data and create all data products.
+
         :return: None
         """
         pass
@@ -68,32 +55,57 @@ class Measurement(object):
         """
         pass
 
-    @staticmethod
-    def create(writer, location, name):
-        return writer.create(location, name)
+    def write(self, writer, location, name):
+        """
+        Write this measurement to disk using the given writer object. The abstraction used here is that a location is
+        a container for hierarchically-organized data.
 
-    def write(self, writer, location):
-        writer.write(self.__class__.__name__, location, '__name__')
+        :param writer: an object that implements the writer interface.
+        :param location: the existing root location into which this object will be written.
+        :param name: the name of the location containing this object.
+        :return: None
+
+        For example, when called with parameters (writer, 'root', 'measurement0'), the location "root" must already
+        exist and the data from this measurement will be stored within the location root/measurement0
+        """
+        self_location = writer.new(location, name)
+        writer.write(self.__class__.__name__, self_location, CLASS_NAME)
         for name, thing in self.__dict__.items():
             if not name.startswith('_'):
                 if isinstance(thing, Measurement):
-                    new_location = writer.new(location, name)
-                    thing.write(writer, new_location)
-                elif isinstance(thing, MeasurementTuple):
-                    tuple_location = writer.new(location, name)
-                    writer.write(thing.__class__.__name__, tuple_location, '__name__')
-                    for index, m in enumerate(thing):
-                        index_location = writer.new(tuple_location, str(index))
-                        m.write(writer, index_location)
+                    thing.write(writer, self_location, name)
+                elif isinstance(thing, MeasurementSequence):
+                    sequence_location = writer.new(self_location, name)
+                    writer.write(thing.__class__.__name__, sequence_location, CLASS_NAME)
+                    for index, meas in enumerate(thing):
+                        meas.write(writer, sequence_location, str(index))
                 else:
-                    writer.write(thing, location, name)
+                    writer.write(thing, self_location, name)
+        return self_location
 
 
-class MeasurementTuple(tuple):
+class MeasurementSequence(object):
     """
-    This is a dummy class that exists so that Measurements can contain other Measurements.
+    This is a dummy class that exists so that Measurements can contain sequences of other Measurements.
     """
     pass
+
+
+class MeasurementTuple(tuple, MeasurementSequence):
+    """
+    Measurements containing tuples of Measurements should use instances of this class so that loading and saving are
+    handled automatically.
+    """
+    pass
+
+
+class MeasurementList(list, MeasurementSequence):
+    """
+    Measurements containing lists of Measurements should use instances of this class so that loading and saving are
+    handled automatically.
+    """
+    pass
+
 
 
 class Stream(Measurement):
@@ -313,4 +325,3 @@ class SweepStream(Measurement):
         # temperatures
         # roach state
         return pd.DataFrame(data, index=[0])
-

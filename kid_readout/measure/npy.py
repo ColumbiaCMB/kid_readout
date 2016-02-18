@@ -1,11 +1,7 @@
 import os
-import cPickle as pickle
+import json
 import numpy as np
-from kid_readout.measure.measurement import (RESERVED_NAMES, Measurement, MeasurementTuple, Stream, FrequencySweep, ResonatorSweep,
-                                             SweepStream)
-
-def create(location, name):
-    return new(location, name)
+from kid_readout.measure import measurement
 
 
 def new(location, name):
@@ -19,7 +15,7 @@ def write(thing, location, name):
         np.save(os.path.join(location, name + '.npy'), thing)
     else:
         with open(os.path.join(location, name), 'w') as f:
-            pickle.dump(thing, f)
+            json.dump(thing, f)
 
 
 def read(top, memmap=False):
@@ -32,21 +28,22 @@ def read(top, memmap=False):
 
 def _visit(parent, location, mmap_mode):
     names = [f for f in os.listdir(location) if os.path.isdir(os.path.join(location, f))]
-    with open(os.path.join(location, '__name__')) as f:
-        class_name = pickle.load(f)
-    if class_name == 'MeasurementTuple':
-        current = MeasurementTuple([_visit(None, os.path.join(location, name), mmap_mode)
-                                    for name in sorted(names, key=int)])
-        for m in current:
-            m._parent = parent  # Preserve the current convention.
+    with open(os.path.join(location, measurement.CLASS_NAME)) as f:
+        class_name = json.load(f)
+    class_ = measurement.get_class(class_name)
+    if measurement.is_sequence(class_):
+        current = class_([_visit(None, os.path.join(location, name), mmap_mode)
+                          for name in sorted(names, key=int)])
+        for meas in current:
+            meas._parent = parent  # Preserve the current convention.
     else:
-        current = globals()[class_name]()
+        current = class_()
         for name in names:
             setattr(current, name, _visit(current, os.path.join(location, name), mmap_mode))
     current._parent = parent
     # Load files
     filenames = [filename for filename in os.listdir(location)
-                 if filename not in RESERVED_NAMES and os.path.isfile(os.path.join(location, filename))]
+                 if filename not in measurement.RESERVED_NAMES and os.path.isfile(os.path.join(location, filename))]
     for filename in filenames:
         full = os.path.join(location, filename)
         name, extension = os.path.splitext(filename)
@@ -54,5 +51,5 @@ def _visit(parent, location, mmap_mode):
             setattr(current, name, np.load(full, mmap_mode=mmap_mode))
         else:
             with open(full, 'r') as f:
-                setattr(current, name, pickle.load(f))
+                setattr(current, name, json.load(f))
     return current
