@@ -1,3 +1,6 @@
+"""
+This module implements reading and writing of Measurement subclasses to disk using numpy ndarrays.
+"""
 import os
 import netCDF4
 import numpy as np
@@ -20,7 +23,7 @@ def new(group, name):
 
 def write(thing, group, name):
     if isinstance(thing, np.ndarray):
-        dimension = group.createDimension(name, None)
+        dimension = group.createDimension(name, thing.size)
         try:
             npy_datatype = npy_to_netcdf[thing.dtype]['datatype']
             netcdf_datatype = group.createCompoundType(npy_to_netcdf[thing.dtype]['datatype'],

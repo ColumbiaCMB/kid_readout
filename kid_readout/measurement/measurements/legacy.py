@@ -6,6 +6,11 @@ from kid_readout.measurement.core import Measurement, get_class
 
 
 class _SweepNoiseMeasurement(Measurement):
+    """
+    This class is intended to be a port of SweepNoiseMeasurement code to the Measurement paradigm.
+
+    It's currently broken because it's nearly a copy-paste of the SweepNoiseMeasurement code.
+    """
     def __init__(self):
         """
         sweep_filename : str
@@ -454,6 +459,8 @@ def stream_from_rnc(rnc, stream_index, channel):
                                  tg.epoch[tg_channel_index] + tg.data_len_seconds[tg_channel_index])
     return stream
 
+
+# These functions are intended to use the new code to read old data.
 
 def sweep_from_rnc(rnc, sweep_index, channel):
     sg = rnc.sweeps[sweep_index]
