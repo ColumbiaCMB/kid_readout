@@ -1,5 +1,6 @@
 import numpy as np
 import time
+import sys
 
 from data_block import DataBlock, SweepData
 
@@ -29,6 +30,16 @@ def prepare_sweep(ri,center_freqs,offsets,nsamp=2**21):
         raise ValueError("total number of waveforms (%d) times number of samples (%d) exceeds DRAM capacity" % (len(offsets),nsamp))
     freqs = center_freqs[None,:] + offsets[:,None]
     return ri.set_tone_freqs(freqs,nsamp=nsamp)
+
+def prepare_heterodyne_sweep(ri,baseband_freqs,offsets,nsamp=2**18):
+    if nsamp*4*len(offsets) > 2**28:
+        raise ValueError("total number of waveforms (%d) times number of samples (%d) exceeds DRAM capacity" % (len(offsets),nsamp))
+
+    freqs = baseband_freqs[None,:] + offsets[:,None]
+    freqs[:,baseband_freqs<0] = baseband_freqs[baseband_freqs<0][None,:] - offsets[:,None]
+    freqs = freqs + ri.lo_frequency
+    return ri.set_tone_freqs(freqs,nsamp=nsamp)
+
     
 def do_prepared_sweep(ri,nchan_per_step=8,reads_per_step=2,callback = None, sweep_data=None, banks=None,demod=True,
                       loopback=False):
@@ -44,12 +55,13 @@ def do_prepared_sweep(ri,nchan_per_step=8,reads_per_step=2,callback = None, swee
     nsamp = ri.tone_nsamp
     if banks is None:
         banks = range(nbanks)
-    for bank in banks:
+    for ibank,bank in enumerate(banks):
         ri.select_bank(bank)
         nchan = ri.fft_bins.shape[1]
         nstep = int(np.ceil(nchan/float(nchan_per_step)))
         toread = set(range(nchan))
         for k in range(nstep):
+            print ("%.1f" % (100.*(ibank*nstep+k)/(nstep*len(banks)))),
             if len(toread) == 0:
                 break
             if len(toread) < nchan_per_step:
