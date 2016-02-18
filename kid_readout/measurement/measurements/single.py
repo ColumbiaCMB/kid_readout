@@ -1,3 +1,6 @@
+"""
+This module contains classes that represent single-channel measurements.
+"""
 from __future__ import division
 import numpy as np
 from matplotlib.pyplot import mlab  # TODO: replace with a scipy PSD estimator
