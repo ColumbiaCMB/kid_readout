@@ -14,7 +14,7 @@ def _load_measurements():
         module_name, extension = os.path.splitext(filename)
         module = importlib.import_module('.' + module_name, 'kid_readout.measurement.measurements')
         _measurements.update((name, class_) for name, class_ in module.__dict__.items()
-                             if isclass(class_) and not name.startswith('_'))
+                             if isclass(class_) and issubclass(class_, (Measurement, MeasurementSequence)))
 
 
 def get_class(class_name):
