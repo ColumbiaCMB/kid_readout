@@ -5,12 +5,12 @@ import scipy.stats
 from kid_readout.analysis import fitter
 
 # To use different defaults, change these three import statements.
-from kid_readout.analysis.khalil import delayed_generic_s21 as default_model
-from kid_readout.analysis.khalil import delayed_generic_guess as default_guess
-from kid_readout.analysis.khalil import generic_functions as default_functions
+from kid_readout.analysis.resonator.khalil import delayed_generic_s21 as default_model
+from kid_readout.analysis.resonator.khalil import delayed_generic_guess as default_guess
+from kid_readout.analysis.resonator.khalil import generic_functions as default_functions
 
 # todo: move this elsewhere
-from kid_readout.analysis.khalil import bifurcation_s21, bifurcation_guess
+from kid_readout.analysis.resonator.khalil import bifurcation_s21, bifurcation_guess
 
 # todo: move this elsewhere
 def fit_resonator(freq, s21, mask=None, errors=None, min_a=0.08, fstat_thresh=0.999,

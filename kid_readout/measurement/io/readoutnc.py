@@ -6,8 +6,8 @@ from collections import OrderedDict
 import numpy as np
 
 from kid_readout.roach.tools import ntone_power_correction
-import kid_readout.timedomain.fftfilt
-from kid_readout.utils.data_block import lpf
+import kid_readout.analysis.timedomain.fftfilt
+from kid_readout.measurement.io.data_block import lpf
 import kid_readout.roach.tools
 
 

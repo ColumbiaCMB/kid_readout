@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 from matplotlib.pyplot import mlab
 from kid_readout.measurement.core import Measurement, get_class
+#from kid_readout.measurement.measurements.single import Sweep, Stream, SweepStream
+#from kid_readout.measurement.measurements.array import SweepArray, StreamArray, SweepStreamArray
 
 
 class _SweepNoiseMeasurement(Measurement):
@@ -449,6 +451,7 @@ class _SweepNoiseMeasurement(Measurement):
 
         return pd.DataFrame(data,index=[0])
 
+# These functions are intended to use the new code to read old data.
 
 def stream_from_rnc(rnc, stream_index, channel):
     tg = rnc.timestreams[stream_index]
@@ -460,7 +463,18 @@ def stream_from_rnc(rnc, stream_index, channel):
     return stream
 
 
-# These functions are intended to use the new code to read old data.
+def streamarray_from_rnc(rnc, stream_index):
+    tg = rnc.timestreams[stream_index]
+    tg_channel_index = tg.measurement_freq.argsort()
+    frequency = tg.measurement_freq[tg_channel_index]
+    epoch = np.linspace(tg.epoch[tg_channel_index],
+                        tg.epoch[tg_channel_index] + tg.data_len_seconds[tg_channel_index],
+                        n_samples)
+    stream = get_class('Stream')(tg.measurement_freq[tg_channel_index],
+                                 tg.get_data_index(tg_channel_index),
+                                 )
+    return StreamArray(frequency, epoch, s21)
+
 
 def sweep_from_rnc(rnc, sweep_index, channel):
     sg = rnc.sweeps[sweep_index]

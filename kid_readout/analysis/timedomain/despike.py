@@ -1,14 +1,13 @@
 import random
-
 import numpy as np
 from scipy.ndimage import filters
 import scipy.signal
-
-from kid_readout.timedomain import fftfilt
+from kid_readout.analysis.timedomain import fftfilt
 
 
 def lpf256(ts):
     return fftfilt(scipy.signal.firwin(256,1/256.),ts)
+
 
 def medmadmask(ts,thresh=8,axis=0):
     med = np.median(ts,axis=axis)
@@ -16,6 +15,7 @@ def medmadmask(ts,thresh=8,axis=0):
     mad = np.median(deviations,axis=axis)
     mask = deviations > thresh*mad
     return mask
+
 
 def deglitch_block(ts,thresh=5):
     tsl = np.roll(np.abs(fftfilt(scipy.signal.firwin(16,1/16.),ts)),-8)
@@ -30,6 +30,7 @@ def deglitch_block(ts,thresh=5):
     except ValueError:
         print "more masked values than samples to draw from!"    
     return out
+
 
 def deglitch_window(data, window_length, thresh=6):
     out = np.empty_like(data)
@@ -58,6 +59,7 @@ def despike_full(data, window_length, rejection_threshold=7, preprocess_function
     data[spike_flags] = np.array(random.sample(data[~spike_flags],nspikes))
     return data
 
+
 def deglitch_mask_block_mad(ts,thresh=5,mask_extend=50,debug=False):
     median = np.median(ts)
     deviations = np.abs(ts-median)
@@ -77,6 +79,8 @@ def deglitch_mask_block_mad(ts,thresh=5,mask_extend=50,debug=False):
     if debug:
         plt.plot(mask*deviations.max(),'x',mew=2)
     return mask
+
+
 def deglitch_mask_mad(ts,thresh=5,mask_extend=50,window_length=2**8):
     full_mask = np.zeros(ts.shape,dtype='bool')
     step = window_length//2
