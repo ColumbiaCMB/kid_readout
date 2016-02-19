@@ -15,7 +15,7 @@ from basic_sweep_ui import Ui_SweepDialog
 import kid_readout.roach.baseband
 import kid_readout.utils.sweeps
 from kid_readout.measurement.io.data_block import SweepData
-from kid_readout.utils import data_file
+from kid_readout.measurement.io import data_file
 
 #from kid_readout.utils.PeakFind01 import peakdetect
 
