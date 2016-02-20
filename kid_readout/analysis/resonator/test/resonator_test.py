@@ -1,7 +1,7 @@
 from __future__ import division
 import unittest 
 import kid_readout.analysis.resonator as resonator
-import kid_readout.analysis.khalil as khalil
+import kid_readout.analysis.resonator.khalil as khalil
 import numpy as np
 from scipy.special import cbrt
 
