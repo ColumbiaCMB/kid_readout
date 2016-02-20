@@ -1,5 +1,5 @@
 __author__ = 'gjones'
-
+"""
 from kid_readout.roach.heterodyne import RoachHeterodyne
 
 class TestHeterodyne():
@@ -17,3 +17,4 @@ class TestHeterodyne():
     def test_2(self):
         print "reading test_2",self.ri.r.read_int('sync')
         self.ri.r.write_int('sync',2)
+"""
