@@ -47,15 +47,19 @@ class Roach2Heterodyne(RoachHeterodyne):
 
     def initialize(self, fs=512.0, cal_qdr=True, use_config=True):
         super(Roach2Heterodyne,self).initialize(fs=fs,start_udp=False,use_config=use_config)
-        self.r.write_int('destip',np.fromstring(socket.inet_aton(self.host_ip),dtype='!u4')[0])
+        self.r.write_int('destip',np.fromstring(socket.inet_aton(self.host_ip),dtype='>u4')[0])
         self.r.write_int('destport',55555)
+        self.r.write_int('txrst',3)
+        self.r.write_int('txrst',2)
+        self.r.tap_start('gbe','one_GbE',0x021111123456,0x0A000002,12345)
+
         if cal_qdr:
             import qdr
             q = qdr.Qdr(self.r,'qdr0')
             q.qdr_cal(verbosity=1)
 
-    def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None,phases=None,iq_delay=-1):
-        super(Roach2Heterodyne,self).set_tone_bins(bins=bins, nsamp=nsamp, amps=amps, load=load, normfact=normfact, phases=phases, iq_delay=iq_delay)
+    def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None,phases=None):
+        super(Roach2Heterodyne,self).set_tone_bins(bins=bins, nsamp=nsamp, amps=amps, load=load, normfact=normfact, phases=phases)
 
     def load_waveforms(self, i_wave, q_wave, fast=True, start_offset=0):
         """

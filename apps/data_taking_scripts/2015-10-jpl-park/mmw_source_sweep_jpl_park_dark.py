@@ -17,6 +17,7 @@ hittite.on()
 lockin = lockin_controller.lockinController()
 print lockin.get_idn()
 ri = heterodyne.RoachHeterodyne(adc_valon='/dev/ttyUSB0')
+ri.initialize(use_config=False)
 ri.iq_delay = 0
 #group_1_lo = 1020.0
 #group_2_lo = 1410.0
@@ -41,8 +42,8 @@ group_2_f0 = all_f0s[all_f0s>1300]
 group_1_lo = 1030.0
 group_2_lo = 1420.0
 
-f0s = group_1_f0
-ri.set_lo(group_1_lo)
+f0s = group_2_f0
+ri.set_lo(group_2_lo)
 #responsive_resonances = np.load('/data/readout/resonances/2015-11-26-jpl-nevins-responsive-resonances.npy')
 
 suffix = "mmw_frequency_sweep"

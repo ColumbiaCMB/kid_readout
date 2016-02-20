@@ -15,15 +15,15 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 mlab = plt.mlab
 
-from kid_readout.analysis.resonator import fit_best_resonator
-from kid_readout.analysis.khalil import qi_error
-from kid_readout.analysis import iqnoise
+from kid_readout.analysis.resonator.resonator import fit_best_resonator
+from kid_readout.analysis.resonator.khalil import qi_error
+from kid_readout.analysis.timedomain import iqnoise
 from kid_readout.analysis.resources.local_settings import hostname,BASE_DATA_DIR
 
 #from kid_readout.utils.fftfilt import fftfilt
-from kid_readout.timedomain.filters import low_pass_fir
+from kid_readout.analysis.timedomain.filters import low_pass_fir
 
-from kid_readout.timedomain.despike import deglitch_window
+from kid_readout.analysis.timedomain.despike import deglitch_window
 
 if hostname == 'detectors':
     from kid_readout.equipment.hpd_temps import get_temperatures_at

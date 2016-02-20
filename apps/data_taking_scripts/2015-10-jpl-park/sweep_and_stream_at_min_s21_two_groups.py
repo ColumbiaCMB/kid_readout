@@ -22,13 +22,22 @@ ri.set_lo(1410.0)
 
 #group_1_f0 = all_f0s[all_f0s < 1300]
 #group_2_f0 = all_f0s[all_f0s > 1300]
-
+"""
 all_f0s = np.load('/data/readout/resonances/2016-02-12-jpl-park-100nm-32-resonances.npy')
 group_1_f0 = all_f0s[all_f0s<1500]
 group_2_f0 = all_f0s[all_f0s>1800]
 
 group_1_lo = 1220.0
 group_2_lo = 1810.0
+"""
+
+all_f0s = np.load('/data/readout/resonances/2016-02-20-jpl-park-2015-10-40nm-al-niobium-gp-two-groups.npy')
+group_1_f0 = all_f0s[all_f0s<1300]
+group_2_f0 = all_f0s[all_f0s>1300]
+
+group_1_lo = 1030.0
+group_2_lo = 1420.0
+
 
 #responsive_resonances = np.load('/data/readout/resonances/2015-11-26-jpl-nevins-responsive-resonances.npy')
 
