@@ -2,7 +2,7 @@ import numpy as np
 import time
 import sys
 
-from data_block import DataBlock, SweepData
+from kid_readout.measurement.io.data_block import DataBlock, SweepData
 
 default_segments_hz = [#np.arange(0,200e3,8e3)-490e3,
                        #np.arange(200e3,360e3,4e3)-490e3,

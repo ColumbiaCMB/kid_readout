@@ -4,8 +4,9 @@ import sys
 import numpy as np
 
 from kid_readout.roach import heterodyne
-from kid_readout.utils import data_file, sweeps
-from kid_readout.analysis.resonator import fit_best_resonator
+from kid_readout.measurement.io import data_file
+from kid_readout.measurement.acquire import sweeps
+from kid_readout.analysis.resonator.resonator import fit_best_resonator
 from kid_readout.equipment import hittite_controller, lockin_controller
 
 
@@ -24,13 +25,21 @@ ri.iq_delay = 0
 #group_1_f0 = all_f0s[all_f0s < 1300]
 #group_2_f0 = all_f0s[all_f0s > 1300]
 
+"""
 all_f0s = np.load('/data/readout/resonances/2016-02-12-jpl-park-100nm-32-resonances.npy')
 group_1_f0 = all_f0s[all_f0s<1500]
 group_2_f0 = all_f0s[all_f0s>1800]
 
 group_1_lo = 1220.0
 group_2_lo = 1810.0
+"""
 
+all_f0s = np.load('/data/readout/resonances/2016-02-20-jpl-park-2015-10-40nm-al-niobium-gp-two-groups.npy')
+group_1_f0 = all_f0s[all_f0s<1300]
+group_2_f0 = all_f0s[all_f0s>1300]
+
+group_1_lo = 1030.0
+group_2_lo = 1420.0
 
 f0s = group_1_f0
 ri.set_lo(group_1_lo)

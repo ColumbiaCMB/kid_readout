@@ -7,11 +7,11 @@ import kid_readout.utils.data_file
 
 import kid_readout.equipment.hittite_controller
 
-hc = kid_readout.equipment.hittite_controller.hittiteController(addr='192.168.0.200')
+#hc = kid_readout.equipment.hittite_controller.hittiteController(addr='192.168.0.200')
 
-hc.set_freq(12.95833e9)
-hc.on()
-hc.set_power(0)
+#hc.set_freq(12.95833e9)
+#hc.on()
+#hc.set_power(0)
 
 
 
