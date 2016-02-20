@@ -1,3 +1,9 @@
+addons:
+  apt:
+    packages:
+      scipy
+      matplotlib
+      pandas
 language: python
 python:
   - "2.7"
