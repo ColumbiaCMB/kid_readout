@@ -2,7 +2,7 @@ import random
 import numpy as np
 from scipy.ndimage import filters
 import scipy.signal
-from kid_readout.analysis.timedomain import fftfilt
+from kid_readout.analysis.timedomain.fftfilt import fftfilt
 
 
 def lpf256(ts):

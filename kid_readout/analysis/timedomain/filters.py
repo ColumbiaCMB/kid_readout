@@ -1,6 +1,6 @@
 import scipy.signal
 
-from kid_readout.timedomain import fftfilt
+from kid_readout.analysis.timedomain.fftfilt import fftfilt
 
 
 def low_pass_fir(data, num_taps=256, cutoff=1/256.,nyquist_freq=1.0,decimate_by=1):
