@@ -2,6 +2,8 @@ kid_readout
 ===========
 Code for the ROACH CUKIDS readout and analysis.
 
+[![Build Status](https://travis-ci.org/ColumbiaCMB/kid_readout.svg?branch=master)](https://travis-ci.org/ColumbiaCMB/kid_readout)
+
 Disclaimer
 ----------
 This code is provided in the hope that it may be useful to others, but is still very much a work in progress.
