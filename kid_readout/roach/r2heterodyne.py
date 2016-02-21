@@ -32,8 +32,7 @@ class Roach2Heterodyne(RoachHeterodyne):
 
         self.lo_frequency = 0.0
         self.heterodyne = True
-        #self.boffile = 'r2iq2xpfb14mcr8_2016_Feb_03_1221.bof'
-        self.boffile = 'r2iq2xpfb14mcr9gb_2016_Feb_17_1802.bof'
+        self.boffile = 'r2iq2xpfb14mcr12gb_2016_Feb_20_0948.bof'
 
         self.wafer = wafer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
