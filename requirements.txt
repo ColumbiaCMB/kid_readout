@@ -4,3 +4,4 @@ matplotlib
 pandas
 lmfit
 requests
+emcee
