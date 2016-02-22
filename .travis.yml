@@ -18,5 +18,5 @@ install:
 after_success:
   - codecov
 # command to run tests
-script: nosetests
+script: nosetests --cover-erase --cover-html --cover-xml --with-coverage
 
