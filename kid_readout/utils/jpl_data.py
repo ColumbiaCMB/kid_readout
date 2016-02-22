@@ -15,9 +15,9 @@ from glob import glob
 from collections import OrderedDict
 import numpy as np
 
-from kid_readout.analysis.resonator import Resonator
-from kid_readout.analysis.khalil import generic_guess, generic_s21
-from kid_readout.analysis.khalil import delayed_generic_s21, delayed_generic_guess
+from kid_readout.analysis.resonator.resonator import Resonator
+from kid_readout.analysis.resonator.khalil import generic_guess, generic_s21
+from kid_readout.analysis.resonator.khalil import delayed_generic_s21, delayed_generic_guess
 
 
 def read_sweep(filename):

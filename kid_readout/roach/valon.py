@@ -1,10 +1,11 @@
 import valon_synth
+import warnings
 try:
     ver = valon_synth.valon_synth.__version__
     if float(ver) < 1.0:
-        raise Exception('insufficient valon_synth version')
+        warnings.warn('insufficient valon_synth version')
 except AttributeError:
-    raise Exception('insufficient valon_synth version')
+    warnings.warn('insufficient valon_synth version')
 from valon_synth import Synthesizer, SYNTH_A, SYNTH_B
 import numpy as np
 import os

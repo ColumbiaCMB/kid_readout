@@ -3,7 +3,7 @@ import time
 import os
 import getpass
 import numpy as np
-from kid_readout.utils.valon import check_output
+from subprocess import check_output
 from kid_readout.utils import data_block
 
 from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
