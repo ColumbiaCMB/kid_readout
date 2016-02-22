@@ -7,7 +7,7 @@ from kid_readout.roach import baseband
 from kid_readout.measurement.io import data_file
 from kid_readout.measurement.acquire import sweeps
 from kid_readout.analysis.resonator.resonator import Resonator
-from kid_readout.analysis.khalil import bifurcation_s21, bifurcation_guess
+from kid_readout.analysis.resonator.khalil import bifurcation_s21, bifurcation_guess
 from kid_readout.equipment import lockin_controller
 
 # TODO: move the memory management to the Roach class
