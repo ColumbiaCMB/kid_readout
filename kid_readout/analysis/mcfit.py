@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.misc import logsumexp
 import emcee
-import triangle
 import lmfit
 from kid_readout.analysis.fitter import Fitter
 from kid_readout.analysis.resonator import Resonator

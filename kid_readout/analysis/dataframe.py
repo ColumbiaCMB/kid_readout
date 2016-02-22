@@ -7,7 +7,7 @@ from __future__ import division
 from copy import deepcopy
 import numpy as np
 import lmfit
-from kid_readout.analysis.khalil import qi_error
+from kid_readout.analysis.resonator.khalil import qi_error
 from kid_readout.analysis import archive
 
 

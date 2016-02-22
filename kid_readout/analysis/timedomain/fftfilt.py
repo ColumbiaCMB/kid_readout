@@ -1,5 +1,9 @@
 """
 Filter data with an FIR filter using the overlap-add method.
+
+
+    This code is originally from here:
+    https://github.com/scipy/scipy/issues/1364
 """
 
 from numpy import abs, min, log2, ceil, floor, argmin, \
@@ -16,7 +20,9 @@ def fftfilt(b, x, *n):
     coefficients in b using the overlap-add method. If the FFT
     length n is not specified, it and the overlap-add block length
     are selected so as to minimize the computational cost of
-    the filtering operation."""
+    the filtering operation.
+
+    """
     
     N_x = len(x)
     N_b = len(b)

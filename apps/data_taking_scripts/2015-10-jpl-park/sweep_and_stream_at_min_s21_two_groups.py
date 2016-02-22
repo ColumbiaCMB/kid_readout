@@ -66,7 +66,7 @@ for group_num,(lo,f0s) in enumerate(zip([group_1_lo,group_2_lo],[group_1_f0,grou
 
     offsets = offset_bins * 512.0 / nsamp
     measured_freqs = sweeps.prepare_sweep(ri, f0binned, offsets, nsamp=nsamp)
-    for atten_index,dac_atten in enumerate([14,8,2,0,20]):
+    for atten_index,dac_atten in enumerate([2]):#[14,8,2,0,20]):
         print "at dac atten", dac_atten
         ri.set_dac_atten(dac_atten)
         ri.set_modulation_output('high')
@@ -87,6 +87,7 @@ for group_num,(lo,f0s) in enumerate(zip([group_1_lo,group_2_lo],[group_1_f0,grou
         time.sleep(0.5)
 
         print "taking data with source off"
+        raw_input("press enter to start")
         ri.set_modulation_output('high')
         df.log_hw_state(ri)
         nsets = len(f0s) / atonce
@@ -103,6 +104,7 @@ for group_num,(lo,f0s) in enumerate(zip([group_1_lo,group_2_lo],[group_1_f0,grou
             tsg = df.add_timestream_data(dmod, ri, t0, tsg=tsg)
             df.sync()
 
+        raw_input("finished")
         print "taking data with source modulated"
         ri.set_modulation_output(7)
         df.log_hw_state(ri)

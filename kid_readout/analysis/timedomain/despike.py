@@ -61,6 +61,19 @@ def despike_full(data, window_length, rejection_threshold=7, preprocess_function
 
 
 def deglitch_mask_block_mad(ts,thresh=5,mask_extend=50,debug=False):
+    """
+
+    Parameters
+    ----------
+    ts
+    thresh
+    mask_extend
+    debug
+
+    Returns
+    -------
+
+    """
     median = np.median(ts)
     deviations = np.abs(ts-median)
     mad = np.median(deviations)

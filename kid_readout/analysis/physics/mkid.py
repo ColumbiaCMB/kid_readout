@@ -1,7 +1,7 @@
 from scipy.constants import c, h, k as k_B, pi
 from scipy.special import psi
 import lmfit
-from physics.mkid import noroozian
+#from kid_readout.analysis.physics.mkid import noroozian
 from kid_readout.analysis import fitter
 
 
