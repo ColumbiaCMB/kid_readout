@@ -13,6 +13,10 @@ install:
   - conda create -q -n test-environment python=2.7 numpy scipy nose pandas matplotlib
   - source activate test-environment
   - pip install -r requirements.txt
+  - pip install codecov
 #  - python setup.py install
+after_success:
+  - codecov
 # command to run tests
 script: nosetests
+
