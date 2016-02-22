@@ -10,13 +10,15 @@ import time
 import bisect
 import numpy as np
 import netCDF4
+import warnings
 
 try:
     rx102a_dat = np.loadtxt('/data/detectors/RX-102A.tbl')
+    order = rx102a_dat[:,1].argsort()
+    rx102a_dat = rx102a_dat[order,:]
+
 except IOError:
-    raise ImportError("Could not find /data/detectors/RX-102A.tbl so can't work with HPD temperatures")
-order = rx102a_dat[:,1].argsort()
-rx102a_dat = rx102a_dat[order,:]
+    warnings.warn("Could not find /data/detectors/RX-102A.tbl so can't work with HPD temperatures")
 
 def rx102a_curve(R):
     return np.interp(R,rx102a_dat[:,1],rx102a_dat[:,0])
@@ -50,8 +52,10 @@ def get_nc_list():
         
     epochs = np.array(epochs) 
     return epochs,ncs
-
-epochs,ncs = get_nc_list()
+try:
+    epochs,ncs = get_nc_list()
+except Exception, e:
+    warnings.warn(e)
 
 def get_temperatures_at(t,get_load_temp=False):
     global epochs

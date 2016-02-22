@@ -3,7 +3,7 @@ from scipy.misc import logsumexp
 import emcee
 import lmfit
 from kid_readout.analysis.fitter import Fitter
-from kid_readout.analysis.resonator import Resonator
+from kid_readout.analysis.resonator.resonator import Resonator
 
 
 parameter_list = ['f_0',

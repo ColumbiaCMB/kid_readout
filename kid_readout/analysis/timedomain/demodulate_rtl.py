@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 import kid_readout.measurement.io.data_block
-import kid_readout.timedomain.fftfilt
+import kid_readout.analysis.timedomain.fftfilt
 
 
 def fft_bin_to_freq(bin,n):
