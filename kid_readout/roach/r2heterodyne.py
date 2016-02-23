@@ -26,19 +26,21 @@ except ImportError:
 
 class Roach2Heterodyne(RoachHeterodyne):
     def __init__(self,roach=None, wafer=0, roachip='r2kid', adc_valon=None, host_ip='10.0.0.1', initialize=True,
-                 nfs_root='/srv/roach_boot/etch', lo_valon=None):
+                 nfs_root='/srv/roach_boot/etch', lo_valon=None, iq_delay=0):
         super(Roach2Heterodyne,self).__init__(roach=roach,wafer=wafer,roachip=roachip, adc_valon=adc_valon,
                                             host_ip=host_ip, nfs_root=nfs_root, lo_valon=lo_valon)
 
         self.lo_frequency = 0.0
         self.heterodyne = True
         #self.boffile = 'r2iq2xpfb14mcr8_2016_Feb_03_1221.bof'
-        self.boffile = 'r2iq2xpfb14mcr9gb_2016_Feb_17_1802.bof'
+        #self.boffile = 'r2iq2xpfb14mcr10gb_2016_Feb_18_1410.bof'
+        self.boffile = 'r2iq2xpfb14mcr11gb_2016_Feb_19_1432.bof'
 
         self.wafer = wafer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
         self.nfft = 2 ** 14
         self._fpga_output_buffer = 'ppout%d' % wafer
+        self.iq_delay = iq_delay
 
         self._general_setup()
 
@@ -47,15 +49,18 @@ class Roach2Heterodyne(RoachHeterodyne):
 
     def initialize(self, fs=512.0, cal_qdr=True, use_config=True):
         super(Roach2Heterodyne,self).initialize(fs=fs,start_udp=False,use_config=use_config)
-        self.r.write_int('destip',np.fromstring(socket.inet_aton(self.host_ip),dtype='!u4')[0])
+        self.r.write_int('txrst', 3)
+        self.r.tap_start('gb10', 'one_GbE', 0x02111111112, 0x0a000002, 12345)
+        self.r.write_int('destip',np.fromstring(socket.inet_aton(self.host_ip),dtype='>u4')[0])
         self.r.write_int('destport',55555)
+        self.r.write_int('txrst', 2)
         if cal_qdr:
             import qdr
             q = qdr.Qdr(self.r,'qdr0')
             q.qdr_cal(verbosity=1)
 
-    def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None,phases=None,iq_delay=-1):
-        super(Roach2Heterodyne,self).set_tone_bins(bins=bins, nsamp=nsamp, amps=amps, load=load, normfact=normfact, phases=phases, iq_delay=iq_delay)
+    def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None,phases=None):
+        super(Roach2Heterodyne,self).set_tone_bins(bins=bins, nsamp=nsamp, amps=amps, load=load, normfact=normfact, phases=phases)
 
     def load_waveforms(self, i_wave, q_wave, fast=True, start_offset=0):
         """

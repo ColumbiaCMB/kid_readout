@@ -43,9 +43,15 @@ def decode_packets(plist,nchans):
     packet_counter = []
     raw_data = []
     for pkt in plist:
-        all_data = np.fromstring(pkt,'<u4')
+        try: 
+            all_data = np.fromstring(pkt,'<u4')
+        except ValueError:
+            #could put some code to avoid crashes here. ie just append zeros(257)
+            print "got bad packet"
+            continue 
         if all_data.shape[0] != 257:
             print "got weird packet",all_data.shape
+            continue 
         raw_data.append(all_data[:-1])
         packet_counter.append(all_data[-1])
     data = np.hstack(raw_data)
