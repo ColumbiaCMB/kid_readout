@@ -1,10 +1,9 @@
 import numpy as np
 from scipy.misc import logsumexp
 import emcee
-import triangle
 import lmfit
 from kid_readout.analysis.fitter import Fitter
-from kid_readout.analysis.resonator import Resonator
+from kid_readout.analysis.resonator.resonator import Resonator
 
 
 parameter_list = ['f_0',
@@ -193,10 +192,3 @@ class MCMCResonator(Resonator,MCMCFitter):
             if value > max or value < min:
                 return -np.inf
         return 0.
-
-import kid_readout.analysis.kid_eqns
-
-class MCMCDarkKID(kid_readout.analysis.kid_eqns.DarkKIDModelFractional,MCMCFitter):
-    def __init__(self, *args, **kwargs):
-        kid_readout.analysis.kid_eqns.DarkKIDModelFractional.__init__(self,*args,**kwargs)
-        self.parameter_list = self.params.keys()

@@ -48,7 +48,7 @@ print offsets*1e6
 print len(f0s)
 
 if False:
-    from kid_readout.utils.parse_srs import get_all_temperature_data
+    from kid_readout.equipment.parse_srs import get_all_temperature_data
     while True:
         temp = get_all_temperature_data()[1][-1]
         print "mk stage at", temp

@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from kid_readout.utils.readoutnc import ReadoutNetCDF
+from kid_readout.measurement.io.readoutnc import ReadoutNetCDF
 from kid_readout.analysis.resonator import fit_best_resonator
 from kid_readout.analysis.noise_measurement import SweepNoiseMeasurement, save_noise_pkl
 from kid_readout.analysis.fit_pulses import find_high_low

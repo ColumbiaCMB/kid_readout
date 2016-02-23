@@ -6,7 +6,7 @@ import sys
 import kid_readout.analysis.fit_pulses
 from kid_readout.analysis.noise_measurement import SweepNoiseMeasurement, save_noise_pkl
 import kid_readout.analysis.resonator
-import kid_readout.utils.readoutnc
+import kid_readout.measurement.io.readoutnc
 import kid_readout.analysis.resources.skip5x4
 import kid_readout.analysis.fit_pulses
 from matplotlib.backends.backend_pdf import PdfPages
@@ -19,7 +19,7 @@ file_id_to_res_id = [0, 1, 2, 3, 4, 5, 6, 7, 8, 17, 16, 15, 14, 13, 10, 9]
 def process_file(filename):
     print filename
     try:
-        rnc = kid_readout.utils.readoutnc.ReadoutNetCDF(filename)
+        rnc = kid_readout.measurement.io.readoutnc.ReadoutNetCDF(filename)
         num_timestreams = len(rnc.timestreams)
         num_sweeps = len(rnc.sweeps)
         if num_timestreams == num_sweeps:

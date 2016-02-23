@@ -1,0 +1,24 @@
+python:
+  # We don't actually use the Travis Python, but this keeps it organized.
+  - "2.7"
+install:
+  - wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  # Useful for debugging any issues with conda
+  - conda info -a
+  - conda create -q -n test-environment python=2.7 numpy scipy nose pandas matplotlib pyserial netcdf4
+  - source activate test-environment
+  - pip install -r requirements.txt
+  - pip install codecov
+  - git clone https://github.com/nrao/ValonSynth.git
+  - cd ValonSynth; python setup.py install; cd ..
+#  - python setup.py installl
+after_success:
+  - codecov
+# command to run tests
+script: nosetests --cover-erase --cover-xml --with-coverage --cover-inclusive --cover-package=kid_readout --exclude=".*equipment.*"
+

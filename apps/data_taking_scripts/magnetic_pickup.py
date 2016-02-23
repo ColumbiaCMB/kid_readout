@@ -1,7 +1,8 @@
 from __future__ import division
 import time
 import numpy as np
-from kid_readout.utils import roach_interface, data_file, acquire
+from kid_readout.measurement.acquire import acquire
+from kid_readout.utils import roach_interface, data_file
 from kid_readout.equipment import agilent_33220
 
 

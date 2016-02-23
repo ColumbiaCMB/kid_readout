@@ -6,10 +6,10 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
-import kid_readout.analysis.fit_pulses
+import kid_readout.analysis.timedomain.fit_pulses
 import kid_readout.analysis.resonator
-from kid_readout.analysis.resonator import normalized_s21_to_detuning
-import kid_readout.utils.readoutnc
+from kid_readout.analysis.resonator.resonator import normalized_s21_to_detuning
+import kid_readout.measurement.io.readoutnc
 import kid_readout.analysis.resources.skip5x4
 from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
 
@@ -116,7 +116,7 @@ def determine_timestream_index_by_frequency(timestream_group,freq,num_resonators
 
 class MmwResponse(object):
     def __init__(self,ncfilename,resonator_index,data_is_aligned=True,use_bifurcation_model=False):
-        rnc = kid_readout.utils.readoutnc.ReadoutNetCDF(ncfilename)
+        rnc = kid_readout.measurement.io.readoutnc.ReadoutNetCDF(ncfilename)
         self.resonator_index=resonator_index
         self.filename = ncfilename
         sweep = rnc.sweeps[0]
@@ -126,7 +126,7 @@ class MmwResponse(object):
             min_a = 0.08
         else:
             min_a = 1.
-        self.resonator = kid_readout.analysis.resonator.fit_best_resonator(self.sweep_freq,self.sweep_s21,
+        self.resonator = kid_readout.analysis.resonator.resonator.fit_best_resonator(self.sweep_freq,self.sweep_s21,
                                                                            errors=self.sweep_s21_error,min_a=min_a,
                                                                            delay_estimate=-31.3)
 

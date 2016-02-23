@@ -37,4 +37,5 @@ if __name__ == '__main__':
 
     f_on *= 1 - 1e-6 * shift_ppm
 
-    acquire.mmw_source_power_step(f_off, f_on, attenuation_list, f_mmw_source=f_mmw, suffix=suffix)
+    acquire.mmw_source_power_step(f_off, f_on, attenuation_list, f_mmw_source=f_mmw, suffix=suffix,
+                                  modulated_stream_time=30)

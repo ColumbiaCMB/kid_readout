@@ -7,7 +7,7 @@ import numpy as np
 import time
 import sys
 from kid_readout.utils import data_file,sweeps
-from kid_readout.analysis.resonator import fit_best_resonator
+from kid_readout.analysis.resonator.resonator import fit_best_resonator
 
 ri = baseband.RoachBasebandWide()
 ri.initialize()
@@ -50,7 +50,7 @@ print len(f0s)
 
 
 if False:
-    from kid_readout.utils.parse_srs import get_all_temperature_data
+    from kid_readout.equipment.parse_srs import get_all_temperature_data
     while True:
         temp = get_all_temperature_data()[1][-1]
         print "mk stage at", temp
