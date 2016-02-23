@@ -32,13 +32,7 @@ class Roach2Heterodyne(RoachHeterodyne):
 
         self.lo_frequency = 0.0
         self.heterodyne = True
-<<<<<<< HEAD
-        #self.boffile = 'r2iq2xpfb14mcr8_2016_Feb_03_1221.bof'
-        #self.boffile = 'r2iq2xpfb14mcr10gb_2016_Feb_18_1410.bof'
-        self.boffile = 'r2iq2xpfb14mcr11gb_2016_Feb_19_1432.bof'
-=======
         self.boffile = 'r2iq2xpfb14mcr12gb_2016_Feb_20_0948.bof'
->>>>>>> 65382ead5d778bd3d52283dec58ab0146399ccdd
 
         self.wafer = wafer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
@@ -53,20 +47,12 @@ class Roach2Heterodyne(RoachHeterodyne):
 
     def initialize(self, fs=512.0, cal_qdr=True, use_config=True):
         super(Roach2Heterodyne,self).initialize(fs=fs,start_udp=False,use_config=use_config)
-<<<<<<< HEAD
-        self.r.write_int('txrst', 3)
-        self.r.tap_start('gb10', 'one_GbE', 0x02111111112, 0x0a000002, 12345)
-        self.r.write_int('destip',np.fromstring(socket.inet_aton(self.host_ip),dtype='>u4')[0])
-        self.r.write_int('destport',55555)
-        self.r.write_int('txrst', 2)
-=======
         self.r.write_int('destip',np.fromstring(socket.inet_aton(self.host_ip),dtype='>u4')[0])
         self.r.write_int('destport',55555)
         self.r.write_int('txrst',3)
         self.r.write_int('txrst',2)
         self.r.tap_start('gbe','one_GbE',0x021111123456,0x0A000002,12345)
 
->>>>>>> 65382ead5d778bd3d52283dec58ab0146399ccdd
         if cal_qdr:
             import qdr
             q = qdr.Qdr(self.r,'qdr0')
