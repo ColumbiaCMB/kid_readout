@@ -355,7 +355,7 @@ class RoachHeterodyne(RoachInterface):
             dout = self.demodulate_data(dout)
         return dout, addr
 
-    def set_lo_freq(self, lomhz=1200.0, chan_spacing=2.0, modulator_lo_power=5, demodulator_lo_power=5):
+    def set_lo(self, lomhz=1200.0, chan_spacing=2.0, modulator_lo_power=5, demodulator_lo_power=5):
         """
         Set the local oscillator frequency for the IQ mixers
 
