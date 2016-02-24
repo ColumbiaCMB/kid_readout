@@ -26,9 +26,9 @@ except ImportError:
 
 class Roach2Heterodyne(RoachHeterodyne):
     def __init__(self,roach=None, wafer=0, roachip='r2kid', adc_valon=None, host_ip='10.0.0.1', initialize=True,
-                 nfs_root='/srv/roach_boot/etch', lo_valon=None, iq_delay=0):
+                 nfs_root='/srv/roach_boot/etch', lo_valon=None, iq_delay=0, attenuator=None):
         super(Roach2Heterodyne,self).__init__(roach=roach,wafer=wafer,roachip=roachip, adc_valon=adc_valon,
-                                            host_ip=host_ip, nfs_root=nfs_root, lo_valon=lo_valon)
+                                            host_ip=host_ip, nfs_root=nfs_root, lo_valon=lo_valon, attenuator=attenuator)
 
         self.lo_frequency = 0.0
         self.heterodyne = True
