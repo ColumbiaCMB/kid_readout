@@ -26,7 +26,7 @@ except ImportError:
 
 class Roach2Heterodyne(RoachHeterodyne):
     def __init__(self,roach=None, wafer=0, roachip='r2kid', adc_valon=None, host_ip='10.0.0.1', initialize=True,
-                 nfs_root='/srv/roach_boot/etch', lo_valon=None):
+                 nfs_root='/srv/roach_boot/etch', lo_valon=None, iq_delay=0):
         super(Roach2Heterodyne,self).__init__(roach=roach,wafer=wafer,roachip=roachip, adc_valon=adc_valon,
                                             host_ip=host_ip, nfs_root=nfs_root, lo_valon=lo_valon)
 
@@ -38,6 +38,7 @@ class Roach2Heterodyne(RoachHeterodyne):
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
         self.nfft = 2 ** 14
         self._fpga_output_buffer = 'ppout%d' % wafer
+        self.iq_delay = iq_delay
 
         self._general_setup()
 
