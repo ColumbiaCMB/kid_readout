@@ -2,6 +2,7 @@
 This module contains classes that represent single-channel measurements.
 """
 from __future__ import division
+from collections import OrderedDict
 import numpy as np
 from matplotlib.pyplot import mlab  # TODO: replace with a scipy PSD estimator
 import pandas as pd
@@ -15,16 +16,20 @@ class Stream(Measurement):
     This class represents time-ordered data from a single channel.
     """
 
-    def __init__(self, frequency=0, s21=np.array([1]), start_epoch=0, end_epoch=1, state=None, analyze=False):
-        self.frequency = float(frequency)
-        self.s21 = np.array(s21)
-        self.start_epoch = float(start_epoch)
-        self.end_epoch = float(end_epoch)
+    dimensions = OrderedDict([('epoch', ('epoch',)),
+                              ('s21', ('epoch',))])
+
+    def __init__(self, frequency, epoch, s21, state=None, analyze=False):
+        self.frequency = frequency
+        self.epoch = epoch
+        self.s21 = s21
         self._s21_mean = None
         self._s21_mean_error = None
-        self._epoch = None
-        self._sample_frequency = None
         super(Stream, self).__init__(state, analyze)
+
+    def analyze(self):
+        self.s21_mean
+        self.s21_mean_error
 
     @property
     def s21_mean(self):
@@ -38,26 +43,43 @@ class Stream(Measurement):
             self._s21_mean_error = (self.s21.real.std() + 1j * self.s21.imag.std()) / self.s21.size ** (1 / 2)
         return self._s21_mean_error
 
-    @property
-    def epoch(self):
+    def __getitem__(self, key):
         """
-        Return an array with the same size as the data containing the epochs, assuming that the data sample rate is
-        constant.
+        Return a Stream containing only the data corresponding to the times given in the slice. If no start (stop) time
+        is given, the value is taken to be -inf (+inf). The returned Stream has the same state.
+
+        The indexing follows the Python convention that the first value is inclusive and the second is exclusive:
+        start <= epoch < stop
+        Thus, the two slices stream[t0:t1] and stream[t1:t2] will contain all the data occurring at or after t0 and
+        before t2, with no duplication.  This means that
+        streamarray[streamarray.epoch.min():streamarray.epoch.max()]
+        will include all but the last sample.
+
+        Passing a slice with a step size is not implemented and will raise a ValueError.
         """
-        if self._epoch is None:
-            self._epoch = np.linspace(self.start_epoch, self.end_epoch, self.s21.size)
-        return self._epoch
+        if isinstance(key, slice):
+            if key.start is None:
+                start = -np.inf
+            else:
+                start = key.start
+            if key.stop is None:
+                stop = np.inf
+            else:
+                stop = key.stop
+            if key.step is not None:
+                raise ValueError("Step size is not supported: {}".format(key))
+            start_index = np.searchsorted(self.epoch, (start,))
+            stop_index = np.searchsorted(self.epoch, (stop,), side='right')
+            mask = (start <= self.epoch) & (self.epoch < stop)
+            return Stream(self.frequency, self.epoch[start_index:stop_index], self.s21[:, start_index:stop_index],
+                          self.state)
+        else:
+            raise ValueError("Invalid slice: {}".format(key))
 
-    @property
-    def sample_frequency(self):
-        if self._sample_frequency is None:
-            self._sample_frequency = self.s21.size / (self.end_epoch - self.start_epoch)
-        return self._sample_frequency
 
-
-class FrequencySweep(Measurement):
+class Sweep(Measurement):
     """
-    This class represents a set of streams.
+    This class represents a group of streams with different frequencies.
     """
 
     def __init__(self, streams=(), state=None, analyze=False):
@@ -68,7 +90,7 @@ class FrequencySweep(Measurement):
         self._frequency = None
         self._s21 = None
         self._s21_error = None
-        super(FrequencySweep, self).__init__(state, analyze)
+        super(Sweep, self).__init__(state, analyze)
 
     @property
     def frequency(self):
@@ -89,7 +111,7 @@ class FrequencySweep(Measurement):
         return self._s21_error
 
 
-class ResonatorSweep(FrequencySweep):
+class ResonatorSweep(Sweep):
     def __init__(self, streams=(), state=None, analyze=False):
         self._resonator = None
         super(ResonatorSweep, self).__init__(streams, state, analyze)
@@ -105,7 +127,7 @@ class ResonatorSweep(FrequencySweep):
 
 
 # Think of another name for this. This class is intended to fit the gain and delay off-resonance.
-class ThroughSweep(FrequencySweep):
+class ThroughSweep(Sweep):
     def __init__(self, streams=(), state=None, analyze=False):
         self._through = None
         super(ThroughSweep, self).__init__(streams, state, analyze)
