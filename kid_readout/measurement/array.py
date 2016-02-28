@@ -9,7 +9,7 @@ import pandas as pd
 from kid_readout.analysis.resonator import resonator
 from kid_readout.analysis.timedomain.despike import deglitch_window
 from kid_readout.measurement.core import Measurement, MeasurementTuple
-from kid_readout.measurement.measurements.single import Stream, Sweep, ResonatorSweep, SweepStream
+from kid_readout.measurement.single import Stream, Sweep, ResonatorSweep, SweepStream
 
 
 class StreamArray(Measurement):
