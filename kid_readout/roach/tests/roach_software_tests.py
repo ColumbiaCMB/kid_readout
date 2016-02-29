@@ -17,7 +17,10 @@ def test_calc_fft_bins():
                    kid_readout.roach.baseband.RoachBaseband]:
         ri = class_(roach=mr,initialize=False, adc_valon=mv)
         for nsamp in 2**np.arange(10,18):
-            tone_bins = np.random.random_integers(0,nsamp,size=128)
+            max_nsamp = nsamp
+            if not ri.heterodyne:
+                max_nsamp = nsamp/2 # only positive bins are valid for baseband
+            tone_bins = np.random.random_integers(0,max_nsamp,size=128)
             bins = ri.calc_fft_bins(tone_bins,nsamp)
             print "testing",class_,"nsamp=2**",np.log2(nsamp)
             assert(np.all(bins>=0))
