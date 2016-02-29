@@ -18,4 +18,6 @@ def test_calc_fft_bins():
         ri = class_(roach=mr,initialize=False, adc_valon=mv)
         for nsamp in 2**np.arange(10,18):
             tone_bins = np.random.random_integers(0,nsamp,size=128)
-            ri.calc_fft_bins(tone_bins,nsamp)
+            bins = ri.calc_fft_bins(tone_bins,nsamp)
+            assert(np.all(bins>=0))
+            assert(np.all(bins < ri.nfft))
