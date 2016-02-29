@@ -37,7 +37,7 @@ class RoachHeterodyne(RoachInterface):
     }
 
     def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None, host_ip=None,
-                 nfs_root='/srv/roach_boot/etch', lo_valon=None, attenuator=None):
+                 initialize=False, nfs_root='/srv/roach_boot/etch', lo_valon=None, attenuator=None):
         """
         Class to represent the heterodyne readout system (high-frequency (1.5 GHz), IQ mixers)
 
