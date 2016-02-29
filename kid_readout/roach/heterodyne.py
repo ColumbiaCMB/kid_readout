@@ -224,8 +224,8 @@ class RoachHeterodyne(RoachInterface):
 
         returns: fft_bins, array of integers.
         """
-        tone_bins_per_fft_bin = nsamp / (self.nfft)
-        fft_bins = np.round(tone_bins / float(tone_bins_per_fft_bin)).astype('int')
+        tone_bins_per_fft_bin = nsamp / float(self.nfft)
+        fft_bins = np.round(tone_bins / tone_bins_per_fft_bin).astype('int')
         return fft_bins
 
     def fft_bin_to_index(self, bins):
