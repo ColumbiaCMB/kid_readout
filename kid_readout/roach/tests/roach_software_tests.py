@@ -19,5 +19,6 @@ def test_calc_fft_bins():
         for nsamp in 2**np.arange(10,18):
             tone_bins = np.random.random_integers(0,nsamp,size=128)
             bins = ri.calc_fft_bins(tone_bins,nsamp)
+            print "testing",class_,"nsamp=2**",np.log2(nsamp)
             assert(np.all(bins>=0))
             assert(np.all(bins < ri.nfft))
