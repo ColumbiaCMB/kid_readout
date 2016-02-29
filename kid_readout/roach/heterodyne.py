@@ -37,7 +37,7 @@ class RoachHeterodyne(RoachInterface):
     }
 
     def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None, host_ip=None,
-                 nfs_root='/srv/roach_boot/etch', lo_valon=None, attenuator=None):
+                 initialize=False, nfs_root='/srv/roach_boot/etch', lo_valon=None, attenuator=None):
         """
         Class to represent the heterodyne readout system (high-frequency (1.5 GHz), IQ mixers)
 
@@ -224,8 +224,8 @@ class RoachHeterodyne(RoachInterface):
 
         returns: fft_bins, array of integers.
         """
-        tone_bins_per_fft_bin = nsamp / (self.nfft)
-        fft_bins = np.round(tone_bins / float(tone_bins_per_fft_bin)).astype('int')
+        tone_bins_per_fft_bin = nsamp / float(self.nfft)
+        fft_bins = np.round(tone_bins / tone_bins_per_fft_bin).astype('int')
         return fft_bins
 
     def fft_bin_to_index(self, bins):
