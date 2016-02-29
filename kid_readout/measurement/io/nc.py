@@ -37,7 +37,17 @@ class IO(core.IO):
             self.root = netCDF4.Dataset(root_path, mode='w', clobber=False)
 
     def close(self):
-        self.root.close()
+        try:
+            self.root.close()
+        except RuntimeError:
+            pass
+
+    @property
+    def closed(self):
+        try:
+            return ~self.root.isopen
+        except AttributeError:
+            raise NotImplementedError("Upgrade netCDF4!")
 
     def create_node(self, node_path):
         existing, new = core.split(node_path)
@@ -66,7 +76,7 @@ class IO(core.IO):
         else:
             setattr(node, key, value)
 
-    def read_array(self, node_path, name, memmap=False):
+    def read_array(self, node_path, name):
         node = self._get_node(node_path)
         nc_variable = node.variables[name]
         return nc_variable[:].view(nc_variable.datatype.name)

@@ -23,6 +23,7 @@ then the node path to the main stream would be just 'stream', while the node pat
 could be 'sweep:stream:1', etc. The node paths can be used to address the data structure in order to save new data in
 specific locations or to load subsets of the measurement tree.
 """
+import re
 import inspect
 import importlib
 from collections import OrderedDict
@@ -124,6 +125,12 @@ class MeasurementList(list, MeasurementSequence):
     pass
 
 
+class MeasurementError(Exception):
+    """
+    Raised for module-specific errors.
+    """
+    pass
+
 class IO(object):
     """
     This is an abstract class that specifies the IO interface.
@@ -131,15 +138,28 @@ class IO(object):
 
     def __init__(self, root_path):
         """
-        The class
+        Return a new IO object that will read to or write from the given root directory or file. If the root does not exist, it should be
+        created. If it does already exist, implementations should NEVER open any file in write or append mode, and in
+        general should make it impossible to overwrite data.
+
+        :param root_path: the path to the root directory or file.
+
+
         """
-        pass
+        self.root_path = root_path
 
     def close(self):
         """
         Close any open files from which all data has been read; this should not apply to mem-mapped files.
         """
         pass
+
+    @property
+    def closed(self):
+        """
+        Return True if all files on disk are closed.
+        """
+        return True
 
     def create_node(self, node_path):
         """
@@ -159,9 +179,9 @@ class IO(object):
         """
         pass
 
-    def read_array(self, node_path, key, **kwargs):
+    def read_array(self, node_path, key):
         """
-        Read array key from node_path. Extra arguments can control caching, e.g. numpy's memmap.
+        Read array key from node_path.
         """
         pass
 
@@ -275,6 +295,24 @@ def split(node_path):
 
 def explode(node_path):
     return node_path.split(NODE_PATH_SEPARATOR)
+
+
+def validate_node_path(node_path):
+    """
+    Raise a MeasurementError if the given node path is not valid; a valid node path is a string consisting of valid
+    Python variables separated by colons, like "one:two:three".
+
+    :param node_path: The node path to validate.
+    :return: None
+    """
+    exploded = explode(node_path)
+    for node in exploded:
+        if not node:
+            raise MeasurementError("Empty node in {}".format(node_path))
+    allowed = r'[^\_\:A-Za-z0-9]'
+    if re.search(allowed, node_path):
+        raise MeasurementError("Invalid character in {}".format(node_path))
+
 
 # Private functions
 

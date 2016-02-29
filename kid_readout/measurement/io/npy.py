@@ -16,34 +16,46 @@ from kid_readout.measurement import core
 
 class IO(core.IO):
 
-    def __init__(self, root_path):
+    def __init__(self, root_path, memmap=False):
         self.root_path = os.path.expanduser(root_path)
         if not os.path.isdir(self.root_path):
             os.mkdir(root_path)
         self.root = self.root_path
+        if memmap:
+            self._mmap_mode = 'r'
+        else:
+            self._mmap_mode = None
 
     def close(self):
+        """
+        Disable further reading or writing of files. Note that this doesn't actually close any memmapped files.
+        :return: None
+        """
         self.root = None
 
+    @property
+    def closed(self):
+        return self.root is None
+
     def create_node(self, node_path):
+        core.validate_node_path(node_path)
         os.mkdir(os.path.join(self.root, *core.explode(node_path)))
 
     def write_array(self, node_path, key, value, dimensions):
         node = self._get_node(node_path)
-        np.save(os.path.join(node, key + '.npy'), value)
+        filename = os.path.join(node, key + '.npy')
+        with self._safe_open(filename) as f:
+            np.save(f, value)
 
     def write_other(self, node_path, key, value):
         node = self._get_node(node_path)
-        with open(os.path.join(node, key), 'w') as f:
+        filename = os.path.join(node, key)
+        with self._safe_open(filename) as f:
             json.dump(value, f)
 
-    def read_array(self, node_path, name, memmap=False):
-        if memmap:
-            mmap_mode = 'r'
-        else:
-            mmap_mode = None
+    def read_array(self, node_path, name):
         full = os.path.join(self._get_node(node_path), name + '.npy')
-        return np.load(full, mmap_mode=mmap_mode)
+        return np.load(full, mmap_mode=self._mmap_mode)
 
     def read_other(self, node_path, name):
         with open(os.path.join(self._get_node(node_path), name)) as f:
@@ -64,8 +76,14 @@ class IO(core.IO):
                 and not f in core.RESERVED_NAMES and os.path.splitext(f)[1] != '.npy']
 
     def _get_node(self, node_path):
+        core.validate_node_path(node_path)
         full_path = os.path.join(self.root, *core.explode(node_path))
         if not os.path.isdir(full_path):
             raise ValueError("Invalid path: {}".format(full_path))
         return full_path
 
+    @staticmethod
+    def _safe_open(filename):
+        if os.path.exists(filename):
+            raise RuntimeError("File already exists: {}".format(filename))
+        return open(filename, 'w')
