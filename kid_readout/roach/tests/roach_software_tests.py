@@ -20,7 +20,8 @@ def test_calc_fft_bins():
             max_nsamp = nsamp
             if not ri.heterodyne:
                 max_nsamp = nsamp/2 # only positive bins are valid for baseband
-            tone_bins = np.random.random_integers(0,max_nsamp,size=128)
+            tone_bins = np.random.random_integers(0,max_nsamp-1,size=128) #arguments give closed interval,
+            # and need to avoid max_nsamp edge
             bins = ri.calc_fft_bins(tone_bins,nsamp)
             print "testing",class_,"nsamp=2**",np.log2(nsamp)
             assert(np.all(bins>=0))
