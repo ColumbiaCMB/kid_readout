@@ -4,19 +4,19 @@ class MockRoach(object):
     def __init__(self, host, port=7147, tb_limit=20, timeout=10.0, logger=None,
                  _fpga_clk=256.0):
         self._fpga_clk = _fpga_clk
-        self._is_prgorammed = False
+        self._is_programmed = False
         self._boffile_list = []
     def is_connected(self):
         return True
     def listdev(self):
-        if not self._is_prgorammed:
+        if not self._is_programmed:
             raise RuntimeError('Request listdev failed.\n  Request: ?listdev\n  Reply: !listdev fail program.')
         return []
     def listbof(self):
         return []
     def progdev(self,boffile):
         if boffile == '':
-            self._is_prgorammed = False
+            self._is_programmed = False
             return 'ok'
         if boffile in self._boffile_list:
             self._boffile = boffile
