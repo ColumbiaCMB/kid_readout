@@ -4,11 +4,8 @@ This module contains classes that represent simultaneous multiple-channel measur
 from __future__ import division
 from collections import OrderedDict
 import numpy as np
-from matplotlib.pyplot import mlab  # TODO: replace with a scipy PSD estimator
 import pandas as pd
-from kid_readout.analysis.resonator import resonator
-from kid_readout.analysis.timedomain.despike import deglitch_window
-from kid_readout.measurement.core import Measurement, MeasurementTuple
+from kid_readout.measurement.core import Measurement, MeasurementTuple, MeasurementError
 from kid_readout.measurement.single import Stream, Sweep, ResonatorSweep, SweepStream
 
 
@@ -93,17 +90,24 @@ class SweepArray(Measurement):
     This class represents a set of groups of streams.
     """
 
-    def __init__(self, streamarrays=(), state=None, analyze=False):
-        self.streamarrays = MeasurementTuple(streamarrays)
-        for streamarray in self.streamarrays:
-            streamarray._parent = self
+    def __init__(self, stream_arrays=(), state=None, analyze=False):
+        self.stream_arrays = MeasurementTuple(stream_arrays)
+        for sa in self.stream_arrays:
+            sa._parent = self
         super(SweepArray, self).__init__(state, analyze)
 
-    def __getitem__(self, item):
-        if isinstance(item, int):
-            return Sweep((sa.stream(item) for sa in self.streams))
+    def sweep(self, index):
+        if isinstance(index, int):
+            return Sweep((sa.stream(index) for sa in self.stream_arrays))
         else:
-            raise ValueError("Invalid item: {}".format(item))
+            raise ValueError("Invalid index: {}".format(index))
+
+    @property
+    def n_channels(self):
+        try:
+            return self.stream_arrays[0].frequency.size
+        except IndexError:
+            return 0
 
 
 class ResonatorSweepArray(SweepArray):
@@ -111,127 +115,47 @@ class ResonatorSweepArray(SweepArray):
     This class represents a set of groups of streams.
     """
 
-    def __init__(self, streamarrays=(), state=None, analyze=False):
-        super(ResonatorSweepArray, self).__init__(streamarrays, state, analyze)
+    def __init__(self, stream_arrays=(), state=None, analyze=False):
+        super(ResonatorSweepArray, self).__init__(stream_arrays, state, analyze)
 
-    def __getitem__(self, item):
-        if isinstance(item, int):
-            return ResonatorSweep((sa.stream(item) for sa in self.streams))
+    def sweep(self, index):
+        if isinstance(index, int):
+            return ResonatorSweep((sa.stream(index) for sa in self.stream_arrays))
         else:
-            raise ValueError("Invalid item: {}".format(item))
+            raise ValueError("Invalid index: {}".format(index))
 
 
 class SweepStreamArray(Measurement):
 
-    def __init__(self, sweep=None, stream=None, state=None, analyze=False):
-        self.sweep = sweep
-        if self.sweep is not None:
-            self.sweep._parent = self
-        self.stream = stream
-        if self.stream is not None:
-            self.stream._parent = self
-        self._sweep_s21_normalized = None
-        self._stream_s21_normalized = None
-        self._stream_s21_normalized_deglitched = None
-        self._i = None
-        self._x = None
-        self._psd_frequency = None
-        self._psd_ii = None
-        self._psd_xx = None
+    def __init__(self, sweep_array, stream_array, state=None, analyze=False):
+        if sweep_array.n_channels != stream_array.frequency.size:
+            raise MeasurementError("The number of SweepArray channels does not match the StreamArray number.")
+        self.sweep_array = sweep_array
+        self.sweep_array._parent = self
+        self.stream_array = stream_array
+        self.stream_array._parent = self
         super(SweepStreamArray, self).__init__(state, analyze)
 
     def analyze(self):
-        self._set_sweep_s21_normalized()
-        self._set_stream_s21_normalized_deglitched()
-        self._set_i_and_x()
-        self._set_psd_i_and_x()
+        pass
 
     @property
-    def sweep_s21_normalized(self):
-        if self._sweep_s21_normalized is None:
-            self._set_sweep_s21_normalized()
-        return self._sweep_s21_normalized
+    def n_channels(self):
+        return self.sweep_array.n_channels
 
-    def _set_sweep_s21_normalized(self):
-        self._sweep_s21_normalized = np.array([self.sweep.resonator.normalize(f, s21)
-                                               for f, s21 in zip(self.sweep.frequency, self.sweep.s21)])
-
-    @property
-    def stream_s21_normalized(self):
-        if self._stream_s21_normalized is None:
-            self._stream_s21_normalized = self.sweep.resonator.normalize(self.stream.frequency, self.stream.s21)
-        return self._stream_s21_normalized
-
-    @property
-    def stream_s21_normalized_deglitched(self):
-        if self._stream_s21_normalized_deglitched is None:
-            self._set_stream_s21_normalized_deglitched()
-        return self._stream_s21_normalized_deglitched
-
-    def _set_stream_s21_normalized_deglitched(self, window_in_seconds=1, deglitch_threshold=5):
-        window = int(2 ** np.ceil(np.log2(window_in_seconds * self.stream.sample_frequency)))
-        self._stream_s21_normalized_deglitched = deglitch_window(self.stream_s21_normalized, window,
-                                                                 thresh=deglitch_threshold)
-
-    @property
-    def i(self):
-        if self._i is None:
-            self._set_i_and_x()
-        return self._i
-
-    @property
-    def x(self):
-        if self._x is None:
-            self._set_i_and_x()
-        return self._x
-
-    def _set_i_and_x(self, deglitch=True):
-        if deglitch:
-            s21 = self.stream_s21_normalized_deglitched
+    def sweep_stream(self, index):
+        """
+        Return a SweepStream object containing the data at the frequency corresponding to the given integer index.
+        """
+        if isinstance(index, int):
+            return SweepStream(self.sweep_array.sweep(index), self.stream_array.stream(index))
         else:
-            s21 = self.stream_s21_normalized
-        iQ_e = 1 / self.sweep.resonator.Q_e
-        z = iQ_e / (1 - s21)
-        self._i = z.real - iQ_e.real
-        self._x = 1 / 2 * z.imag
+            raise ValueError("Invalid index: {}".format(index))
 
-    @property
-    def psd_frequency(self):
-        if self._psd_frequency is None:
-            self._set_psd_i_and_x()
-        return self._psd_frequency
 
-    @property
-    def psd_ii(self):
-        if self._psd_ii is None:
-            self._set_psd_i_and_x()
-        return self._psd_ii
-
-    @property
-    def psd_xx(self):
-        if self._psd_xx is None:
-            self._set_psd_i_and_x()
-        return self._psd_xx
-
-    # TODO: calculate errors in PSDs
-    def _set_psd_i_and_x(self, NFFT=None, window=mlab.window_none, **kwargs):
-        # Use the same length calculation as SweepNoiseMeasurement
-        if NFFT is None:
-            NFFT = int(2**(np.floor(np.log2(self.stream.s21.size)) - 3))
-        psd_ii, f = mlab.psd(self.i, Fs=self.stream.sample_frequency, NFFT=NFFT, window=window, **kwargs)
-        psd_xx, f = mlab.psd(self.x, Fs=self.stream.sample_frequency, NFFT=NFFT, window=window, **kwargs)
-        self._psd_frequency = f
-        self._psd_ii = psd_ii
-        self._psd_xx = psd_xx
-
-    # TODO: move this forward to a usable version.
     def to_dataframe(self):
-        data = {}
-        for param in self.sweep.resonator.result.params.values():
-            data['resonator_{}'.format(param.name)] = [param.value]
-            data['resonator_{}_error'.format(param.name)] = [param.stderr]
-        data['resonator_redchi'] = self.sweep.resonator.result.redchi
-        # temperatures
-        # roach state
-        return pd.DataFrame(data, index=[0])
+        dataframes = []
+        for n in range(self.n_channels):
+            dataframes.append(self.sweep_stream(n).to_dataframe())
+        return pd.concat(dataframes, ignore_index=True)
 

@@ -28,7 +28,10 @@ class IO(core.IO):
 
     def close(self):
         """
-        Disable further reading or writing of files. Note that this doesn't actually close any memmapped files.
+        Disable further reading or writing of files. Note that this doesn't actually close any memmapped files. The
+        numpy.memmap documentation says that to close them you have to delete the memmap object, and it's not clear
+        to me how to do that here.
+
         :return: None
         """
         self.root = None

@@ -83,7 +83,8 @@ class Sweep(Measurement):
     """
 
     def __init__(self, streams=(), state=None, analyze=False):
-        # Don't sort by frequency so that non-monotonic order can be preserved if needed.
+        # Don't sort by frequency so that non-monotonic order can be preserved if needed, but note that this will fail
+        # for a ResonatorSweep because the Resonator class requires a monotonic frequency array.
         self.streams = MeasurementTuple(streams)
         for stream in self.streams:
             stream._parent = self
@@ -242,10 +243,20 @@ class SweepStream(Measurement):
     # TODO: move this forward to a usable version.
     def to_dataframe(self):
         data = {}
+        try:
+            for thermometer, temperature in self.state['temperature'].items():
+                data['temperature_{}'.format(thermometer)] = temperature
+        except KeyError:
+            pass
+        try:
+            for key, value in self.state['roach'].items():
+                data['roach_{}'.format(key)] = value
+        except KeyError:
+            pass
         for param in self.sweep.resonator.result.params.values():
-            data['resonator_{}'.format(param.name)] = [param.value]
-            data['resonator_{}_error'.format(param.name)] = [param.stderr]
+            data['resonator_{}'.format(param.name)] = param.value
+            data['resonator_{}_error'.format(param.name)] = param.stderr
         data['resonator_redchi'] = self.sweep.resonator.result.redchi
-        # temperatures
-        # roach state
-        return pd.DataFrame(data, index=[0])
+        dataframe = pd.DataFrame(data, index=[0])
+        self.add_origin(dataframe)
+        return dataframe

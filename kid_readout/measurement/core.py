@@ -27,7 +27,6 @@ import re
 import inspect
 import importlib
 from collections import OrderedDict
-import pandas as pd
 
 CLASS_NAME = '_class'  # This is the string used by writer objects to save class names.
 # These next three names cannot be used for attributes because they are used as part of the public DataFrame interface.
@@ -83,17 +82,30 @@ class Measurement(object):
         This method should return state information and analysis products, such as fit parameters, but not large objects
         like time-ordered data.
 
-        This method adds the io module, the path to the root file or directory, and the node corresponding to this
-        measurement, which will None unless the Measurement was created from files on disk.
-
         :return: a DataFrame containing data from this Measurement.
         """
-        if data is None:
-            data = {}
-        data['io_module'] = self._io_module
-        data['root_path'] = self._root_path
-        data['node_path'] = self._node_path
-        return pd.DataFrame(data, index=[0])
+        pass
+
+    def add_origin(self, dataframe):
+        """
+        Add to the given dataframe enough information to load the data from which it was created. Using this
+        information, the from_series() function in this module will return the original data.
+
+        This method adds the IO module, the path to the root file or directory, and the node path corresponding to this
+        measurement, which will all be None unless the Measurement was created from files on disk.
+        """
+        dataframe['io_module'] = self._io_module
+        dataframe['root_path'] = self._root_path
+        dataframe['node_path'] = self._node_path
+
+    def add_legacy_origin(self, dataframe):
+        """
+        Add to the given dataframe information about the origin of the data. It's going to be difficult to implement
+        automatic loading of original data, but at least this will record the netCDF4 file.
+        """
+        dataframe['io_module'] = 'kid_readout.measurement.legacy'
+        dataframe['root_path'] = self._root_path
+        dataframe['node_path'] = None
 
     def _validate_dimensions(self):
         for name, dimensions in self.dimensions.items():
@@ -139,18 +151,18 @@ class IO(object):
     def __init__(self, root_path):
         """
         Return a new IO object that will read to or write from the given root directory or file. If the root does not exist, it should be
-        created. If it does already exist, implementations should NEVER open any file in write or append mode, and in
+        created. Implementations should NEVER open an existing file in write or append mode, and in
         general should make it impossible to overwrite data.
 
         :param root_path: the path to the root directory or file.
-
-
+        :return: a new IO object that can read from and write to the root object at the given path.
         """
         self.root_path = root_path
+        self.root = None
 
     def close(self):
         """
-        Close any open files from which all data has been read; this should not apply to mem-mapped files.
+        Close open files.
         """
         pass
 
@@ -228,7 +240,8 @@ def write(measurement, io, node_path, close=True):
     if close:
         io.close()
 
-def read(io, node_path, extras=True, translate=None, close=True, **kwargs):
+
+def read(io, node_path, extras=True, translate=None, close=True):
     """
     Read a measurement from disk and return it.
 
@@ -236,11 +249,12 @@ def read(io, node_path, extras=True, translate=None, close=True, **kwargs):
     :param node_path:the path to the node to be loaded, in the form 'node0.node1.node2'
     :param extras: add extra variables; see instantiate().
     :param translate: a dictionary with entries 'original_class': 'new_class'; all class names must be fully-qualified.
+    :param close: if True, call io.close() after writing.
     :return: the measurement corresponding to the given node.
     """
     if translate is None:
         translate = {}
-    measurement = _read_node(io, node_path, extras, translate, **kwargs)
+    measurement = _read_node(io, node_path, extras, translate)
     if close:
         io.close()
     return measurement
@@ -285,12 +299,32 @@ def from_series(series):
 
 
 def join(*nodes):
-    return NODE_PATH_SEPARATOR.join(nodes)
+    """
+    Join the given nodes using the node path separator, like os.path.join(). Extra separators will be stripped.
+
+    :param nodes: the nodes to join.
+    :return: a string representing the joined path.
+    """
+    return NODE_PATH_SEPARATOR.join([node.strip(NODE_PATH_SEPARATOR) for node in nodes])
 
 
 def split(node_path):
-    exploded = explode(node_path)
-    return join(*exploded[:-1]), exploded[-1]
+    """
+    Split the given path into a (head, tail) tuple, where tail is the last node in the path and head is the rest, like
+    os.path.split(). For example,
+    split('one:two:three')
+    returns
+    ('one:two', 'three')
+    If the path contains a single node, then head is the empty string and tail is that node.
+
+    :param node_path: the node path to split.
+    :return: a (head, tail) tuple.
+    """
+    if not node_path:
+        return node_path
+    else:
+        exploded = explode(node_path)
+        return join(*exploded[:-1]), exploded[-1]
 
 
 def explode(node_path):
@@ -348,22 +382,22 @@ def _write_node(measurement, io, node_path):
         io.write_array(node_path, array_name, getattr(measurement, array_name), dimensions)
 
 
-def _read_node(io, node_path, extras, translate, **kwargs):
+def _read_node(io, node_path, extras, translate):
     original_class_name = io.read_other(node_path, CLASS_NAME)
     class_name = translate.get(original_class_name, original_class_name)
     measurement_names = io.get_measurement_names(node_path)
     if is_sequence(class_name):
         # Use the name of each measurement, which is an int, to restore the order in the sequence.
-        contents = [_read_node(io, join(node_path, measurement_name), extras, translate, **kwargs)
+        contents = [_read_node(io, join(node_path, measurement_name), extras, translate)
                     for measurement_name in sorted(measurement_names, key=int)]
         current = instantiate_sequence(class_name, contents)
     else:
         variables = {}
         for measurement_name in measurement_names:
-            variables[measurement_name] = _read_node(io, join(node_path, measurement_name), extras, translate, **kwargs)
+            variables[measurement_name] = _read_node(io, join(node_path, measurement_name), extras, translate)
         array_names = io.get_array_names(node_path)
         for array_name in array_names:
-            variables[array_name] = io.read_array(node_path, array_name, **kwargs)
+            variables[array_name] = io.read_array(node_path, array_name)
         other_names = [vn for vn in io.get_other_names(node_path)]
         for other_name in other_names:
             variables[other_name] = io.read_other(node_path, other_name)
