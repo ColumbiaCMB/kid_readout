@@ -121,6 +121,10 @@ class MeasurementSequence(object):
     def __init_(self):
         raise NotImplementedError()
 
+    @property
+    def shape(self):
+        return (len(self),)
+
 
 class MeasurementTuple(tuple, MeasurementSequence):
     """
