@@ -54,11 +54,12 @@ class Measurement(object):
 
     dimensions = OrderedDict()
 
-    def __init__(self, state=None, analyze=False):
+    def __init__(self, state=None, analyze=False, description=''):
         if state is None:
             self.state = {}
         else:
             self.state = state
+        self.description = description
         self._parent = None
         self._io_module = None
         self._root_path = None

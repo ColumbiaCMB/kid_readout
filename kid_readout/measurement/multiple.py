@@ -18,7 +18,7 @@ class StreamArray(Measurement):
                               ('epoch', ('epoch',)),
                               ('s21', ('frequency', 'epoch'))])
 
-    def __init__(self, frequency, epoch, s21, state=None, analyze=False):
+    def __init__(self, frequency, epoch, s21, state=None, analyze=False, description='StreamArray'):
         """
         The frequency and epoch arrays are 1-D, while s21 is 2-D. The arrays must obey
         s21.shape == (frequency.size, epoch.size)
@@ -28,7 +28,7 @@ class StreamArray(Measurement):
         self.s21 = s21
         self._s21_mean = None
         self._s21_mean_error = None
-        super(StreamArray, self).__init__(state, analyze)
+        super(StreamArray, self).__init__(state, analyze, description)
 
     @property
     def s21_mean(self):
@@ -90,11 +90,11 @@ class SweepArray(Measurement):
     This class represents a set of groups of streams.
     """
 
-    def __init__(self, stream_arrays=(), state=None, analyze=False):
+    def __init__(self, stream_arrays=(), state=None, analyze=False, description='SweepArray'):
         self.stream_arrays = MeasurementTuple(stream_arrays)
         for sa in self.stream_arrays:
             sa._parent = self
-        super(SweepArray, self).__init__(state, analyze)
+        super(SweepArray, self).__init__(state, analyze, description)
 
     def sweep(self, index):
         if isinstance(index, int):
@@ -115,8 +115,8 @@ class ResonatorSweepArray(SweepArray):
     This class represents a set of groups of streams.
     """
 
-    def __init__(self, stream_arrays=(), state=None, analyze=False):
-        super(ResonatorSweepArray, self).__init__(stream_arrays, state, analyze)
+    def __init__(self, stream_arrays=(), state=None, analyze=False, description='ResonatorSweepArray'):
+        super(ResonatorSweepArray, self).__init__(stream_arrays, state, analyze, description)
 
     def sweep(self, index):
         if isinstance(index, int):
@@ -127,14 +127,14 @@ class ResonatorSweepArray(SweepArray):
 
 class SweepStreamArray(Measurement):
 
-    def __init__(self, sweep_array, stream_array, state=None, analyze=False):
+    def __init__(self, sweep_array, stream_array, state=None, analyze=False, description='SweepStreamArray'):
         if sweep_array.n_channels != stream_array.frequency.size:
             raise MeasurementError("The number of SweepArray channels does not match the StreamArray number.")
         self.sweep_array = sweep_array
         self.sweep_array._parent = self
         self.stream_array = stream_array
         self.stream_array._parent = self
-        super(SweepStreamArray, self).__init__(state, analyze)
+        super(SweepStreamArray, self).__init__(state, analyze, description)
 
     def analyze(self):
         pass

@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 from kid_readout.measurement.single import Stream, Sweep, ResonatorSweep, SweepStream
-from kid_readout.measurement.array import StreamArray, SweepArray, ResonatorSweepArray, SweepStreamArray
+from kid_readout.measurement.multiple import StreamArray, SweepArray, ResonatorSweepArray, SweepStreamArray
 
 
 # These functions are intended to use the new code to read old data.

@@ -50,6 +50,7 @@ class IO(core.IO):
             raise NotImplementedError("Upgrade netCDF4!")
 
     def create_node(self, node_path):
+        core.validate_node_path(node_path)
         existing, new = core.split(node_path)
         return self._get_node(existing).createGroup(new)
 
@@ -104,6 +105,7 @@ class IO(core.IO):
     # Private methods.
 
     def _get_node(self, node_path):
+        core.validate_node_path(node_path)
         node = self.root
         for name in core.explode(node_path):
             if name:
