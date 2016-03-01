@@ -91,6 +91,7 @@ class Sweep(Measurement):
         self._frequency = None
         self._s21 = None
         self._s21_error = None
+        self._s21_raw = None
         super(Sweep, self).__init__(state, analyze, description)
 
     @property
@@ -111,6 +112,14 @@ class Sweep(Measurement):
             self._s21_error = np.array([stream.s21_mean_error for stream in self.streams])
         return self._s21_error
 
+    @property
+    def s21_raw(self):
+        if self._s21_raw is None:
+            self._s21_raw = np.vstack([stream.s21 for stream in self.streams])
+        return self._s21_raw
+
+    # TODO: add s21 with delay removal
+    # TODO: add psd
 
 class ResonatorSweep(Sweep):
     def __init__(self, streams=(), state=None, analyze=False, description='ResonatorSweep'):
