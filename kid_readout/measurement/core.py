@@ -29,11 +29,14 @@ import importlib
 from collections import OrderedDict
 
 CLASS_NAME = '_class'  # This is the string used by writer objects to save class names.
-# These next three names cannot be used for attributes because they are used as part of the public DataFrame interface.
+
+# These names cannot be used for attributes because they are used as part of the public DataFrame interface.
 IO_CLASS_NAME = 'io_class'  # This is the fully-qualified name of the io class used to read a measurement from disk.
+IO_MODULE = 'io_module'  # This is the full-qualified name of the module used to read and write legacy data.
 ROOT_PATH = 'root_path'  # This is the root file or directory from which a measurement was read from disk.
 NODE_PATH = 'node_path'  # This is the node path from the root node to the measurement node.
-RESERVED_NAMES = [CLASS_NAME, IO_CLASS_NAME, ROOT_PATH, NODE_PATH]
+
+RESERVED_NAMES = [CLASS_NAME, IO_CLASS_NAME, IO_MODULE, ROOT_PATH, NODE_PATH]
 NODE_PATH_SEPARATOR = ':'
 
 
@@ -54,7 +57,7 @@ class Measurement(object):
 
     dimensions = OrderedDict()
 
-    def __init__(self, state=None, analyze=False, description=''):
+    def __init__(self, state=None, analyze=False, description='Measurement'):
         if state is None:
             self.state = StateDict()
         else:
