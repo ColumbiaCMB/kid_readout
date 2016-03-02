@@ -129,7 +129,7 @@ class ResonatorSweep(Sweep):
     def analyze(self):
         self.resonator
 
-    def fit_resonator(self, delay_estimate=0, nonlinear_a_threshold=0.08):
+    def fit_resonator(self, delay_estimate=None, nonlinear_a_threshold=0.08):
         self._resonator = resonator.fit_best_resonator(self.frequency, self.s21, errors=self.s21_error,
                                                        delay_estimate=delay_estimate, min_a=nonlinear_a_threshold)
 
