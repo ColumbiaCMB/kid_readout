@@ -221,7 +221,7 @@ class IO(object):
         """
         pass
 
-    def get_measurement_names(self, node_path):
+    def measurement_names(self, node_path):
         """
         Return the names of all measurements contained in the measurement at node_path.
         """
@@ -229,13 +229,13 @@ class IO(object):
 
     # These next two could probably be collapsed into one, but this shouldn't change much.
 
-    def get_array_names(self, node_path):
+    def array_names(self, node_path):
         """
         Return the names of all arrays contained in the measurement at node_path.
         """
         pass
 
-    def get_other_names(self, node_path):
+    def other_names(self, node_path):
         """
         Return the names of all other variables contained in the measurement at node_path.
         """
@@ -352,14 +352,14 @@ def explode(node_path):
 
 def validate_node_path(node_path):
     """
-    Raise a MeasurementError if the given node path is not valid; a valid node path is a string consisting of valid
-    Python variables separated by colons, like "one:two:three".
+    Raise a MeasurementError if the given non-empty node path is not valid; a valid node path is a string consisting of
+    valid Python variables separated by colons, like "one:two:three". The empty string '' corresponds to the root path,
+    which cannot contain a measurement, so it is not a valid node path.
 
     :param node_path: The node path to validate.
     :return: None
     """
-    exploded = explode(node_path)
-    for node in exploded:
+    for node in explode(node_path):
         if not node:
             raise MeasurementError("Empty node in {}".format(node_path))
     allowed = r'[^\_\:A-Za-z0-9]'
@@ -404,7 +404,7 @@ def _write_node(measurement, io, node_path):
 def _read_node(io, node_path, extras, translate):
     original_class_name = io.read_other(node_path, CLASS_NAME)
     class_name = translate.get(original_class_name, original_class_name)
-    measurement_names = io.get_measurement_names(node_path)
+    measurement_names = io.measurement_names(node_path)
     if is_sequence(class_name):
         # Use the name of each measurement, which is an int, to restore the order in the sequence.
         contents = [_read_node(io, join(node_path, measurement_name), extras, translate)
@@ -414,10 +414,10 @@ def _read_node(io, node_path, extras, translate):
         variables = {}
         for measurement_name in measurement_names:
             variables[measurement_name] = _read_node(io, join(node_path, measurement_name), extras, translate)
-        array_names = io.get_array_names(node_path)
+        array_names = io.array_names(node_path)
         for array_name in array_names:
             variables[array_name] = io.read_array(node_path, array_name)
-        other_names = [vn for vn in io.get_other_names(node_path)]
+        other_names = [vn for vn in io.other_names(node_path)]
         for other_name in other_names:
             variables[other_name] = io.read_other(node_path, other_name)
         current = instantiate(class_name, variables, extras)

@@ -50,6 +50,7 @@ class IO(core.IO):
             raise NotImplementedError("Upgrade netCDF4!")
 
     def create_node(self, node_path):
+        # This will correctly fail to validate an attempt to create the root node with node_path = ''
         core.validate_node_path(node_path)
         existing, new = core.split(node_path)
         return self._get_node(existing).createGroup(new)
@@ -70,10 +71,7 @@ class IO(core.IO):
     def write_other(self, node_path, key, value):
         node = self._get_node(node_path)
         if isinstance(value, dict):
-            dict_node_path = core.join(node_path, key + self.is_dict)
-            self.create_node(dict_node_path)
-            for k, v in value.items():
-                self.write_other(dict_node_path, k, v)
+            self._write_dict_group(node, key, value)
         else:
             setattr(node, key, value)
 
@@ -85,37 +83,46 @@ class IO(core.IO):
     def read_other(self, node_path, name):
         node = self._get_node(node_path)
         if name + self.is_dict in node.groups.keys():
-            return self._read_dict(node.groups[name + self.is_dict])
+            return self._read_dict_group(node.groups[name + self.is_dict])
         else:
             return node.__dict__[name]
 
-    def get_measurement_names(self, node_path):
+    def measurement_names(self, node_path):
         node = self._get_node(node_path)
         return [name for name in node.groups.keys() if not name.endswith(self.is_dict)]
 
-    def get_array_names(self, node_path):
+    def array_names(self, node_path):
         node = self._get_node(node_path)
         return node.variables.keys()
 
-    def get_other_names(self, node_path):
+    def other_names(self, node_path):
         node = self._get_node(node_path)
-        return node.ncattrs() + [name.rstrip(self.is_dict) for name in node.groups.keys()
+        return node.ncattrs() + [name.replace(self.is_dict, '') for name in node.groups.keys()
                                  if name.endswith(self.is_dict)]
 
     # Private methods.
 
     def _get_node(self, node_path):
-        core.validate_node_path(node_path)
         node = self.root
-        for name in core.explode(node_path):
-            if name:
+        if node_path != '':
+            core.validate_node_path(node_path)
+            for name in core.explode(node_path):
                 node = node.groups[name]
         return node
 
-    def _read_dict(self, group):
+    def _write_dict_group(self, node, name, dictionary):
+        dict_group = node.createGroup(name + self.is_dict)
+        for k, v in dictionary.items():
+            if isinstance(v, dict):
+                self._write_dict_group(dict_group, k, v)
+            else:
+                setattr(dict_group, k, v)
+
+    def _read_dict_group(self, group):
         # Note that
         # k is measurement.CLASS_NAME == False
         # because netCDF4 returns all strings as unicode.
         return dict([(k, v) for k, v in group.__dict__.items()] +
-                    [(name, self._read_dict(group)) for name, group in group.groups.items()])
+                    [(name.replace(self.is_dict, ''), self._read_dict_group(group))
+                     for name, group in group.groups.items()])
 

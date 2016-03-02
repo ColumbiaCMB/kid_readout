@@ -4,7 +4,35 @@ from kid_readout.measurement.single import Stream, Sweep, ResonatorSweep, SweepS
 from kid_readout.measurement.multiple import StreamArray, SweepArray, ResonatorSweepArray, SweepStreamArray
 
 
-# These functions are intended to use the new code to read old data.
+# These functions extract state information from legacy data classes.
+
+
+def state_from_rnc(rnc):
+    state = {'gitinfo': rnc.gitinfo,
+             'mmw_source': mmw_source_state_from_rnc(rnc),
+             'roach': roach_state_from_rnc(rnc)}
+    return state
+
+
+def mmw_source_state_from_rnc(rnc):
+    state = {'attenuator_turns': rnc.mmw_atten_turns}
+    return state
+
+
+def roach_state_from_rnc(rnc):
+    state = {'boffile': rnc.boffile,
+             'delay_estimate': rnc.get_delay_estimate(),
+             'heterodyne': rnc.heterodyne,
+             }
+
+
+def roach_arrays_from_timestream_group(tg):
+    arrays = {'tone_bins': tg.tonebin,
+              'fft_bins': tg.fft}
+    return arrays
+
+
+# These functions are intended to use the new code to read legacy data.
 
 def stream_from_rnc(rnc, stream_index, channel):
     tg = rnc.timestreams[stream_index]

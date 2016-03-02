@@ -43,6 +43,7 @@ class IO(core.IO):
     def create_node(self, node_path):
         if self.closed:
             raise ValueError("I/O operation on closed file")
+        # This will correctly fail to validate an attempt to create the root node with node_path = ''
         core.validate_node_path(node_path)
         os.mkdir(os.path.join(self.root, *core.explode(node_path)))
 
@@ -66,16 +67,17 @@ class IO(core.IO):
         with open(os.path.join(self._get_node(node_path), name)) as f:
             return json.load(f)
 
-    def get_measurement_names(self, node_path):
+    def measurement_names(self, node_path):
         node = self._get_node(node_path)
+        # TODO: this should actually check that the class contained in the group is a Measurement
         return [f for f in os.listdir(node)if os.path.isdir(os.path.join(node, f))]
 
-    def get_array_names(self, node_path):
+    def array_names(self, node_path):
         node = self._get_node(node_path)
         return [os.path.splitext(f)[0] for f in os.listdir(node) if os.path.isfile(os.path.join(node, f))
                 and os.path.splitext(f)[1] == '.npy']
 
-    def get_other_names(self, node_path):
+    def other_names(self, node_path):
         node = self._get_node(node_path)
         return [f for f in os.listdir(node) if os.path.isfile(os.path.join(node, f))
                 and not f in core.RESERVED_NAMES and os.path.splitext(f)[1] != '.npy']
@@ -83,7 +85,8 @@ class IO(core.IO):
     def _get_node(self, node_path):
         if self.closed:
             raise ValueError("I/O operation on closed file")
-        core.validate_node_path(node_path)
+        if node_path != '':
+            core.validate_node_path(node_path)
         full_path = os.path.join(self.root, *core.explode(node_path))
         if not os.path.isdir(full_path):
             raise ValueError("Invalid path: {}".format(full_path))
