@@ -56,9 +56,9 @@ class Measurement(object):
 
     def __init__(self, state=None, analyze=False, description=''):
         if state is None:
-            self.state = {}
+            self.state = StateDict()
         else:
-            self.state = state
+            self.state = StateDict(state)
         self.description = description
         self._parent = None
         self._io_module = None
@@ -76,7 +76,7 @@ class Measurement(object):
         """
         pass
 
-    def to_dataframe(self, data=None):
+    def to_dataframe(self):
         """
         Return a pandas DataFrame containing data from this Measurement.
 
@@ -147,6 +147,17 @@ class MeasurementError(Exception):
     Raised for module-specific errors.
     """
     pass
+
+
+class StateDict(dict):
+
+    __setattr__ = dict.__setitem__
+    __getattr__ = dict.get
+    __delattr__ = dict.__delitem__
+    __copy__ = lambda self: StateDict(self)
+    __getstate__ = lambda: None
+    __slots__ = ()
+
 
 class IO(object):
     """

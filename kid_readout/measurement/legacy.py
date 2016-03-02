@@ -87,3 +87,15 @@ def sweepstreamarray_from_rnc(rnc, index_of_sweep, index_of_stream):
     stream_array = streamarray_from_rnc(rnc, index_of_stream)
     state = {}
     return SweepStreamArray(sweep_array, stream_array, state=state)
+
+
+def streamarray_from_timestream_group(tg):
+    tg_channel_order = tg.measurement_freq.argsort()
+    frequency = tg.measurement_freq[tg_channel_order]
+    # All the epoch and data_len_seconds values are the same. Assume regular sampling.
+    epoch = np.linspace(tg.epoch[0],
+                        tg.epoch[0] + tg.data_len_seconds[0],
+                        tg.num_data_samples)
+    s21 = tg.data[tg_channel_order, :]
+    state = {}
+    return StreamArray(frequency, epoch, s21, state)
