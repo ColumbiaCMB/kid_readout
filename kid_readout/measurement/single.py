@@ -129,10 +129,14 @@ class ResonatorSweep(Sweep):
     def analyze(self):
         self.resonator
 
+    def fit_resonator(self,delay_estimate=0,nonlinear_a_threshold=0.08):
+        self._resonator = resonator.fit_best_resonator(self.frequency, self.s21, errors=self.s21_error,
+                                                       delay_estimate=delay_estimate, min_a=nonlinear_a_threshold)
+
     @property
     def resonator(self):
         if self._resonator is None:
-            self._resonator = resonator.fit_best_resonator(self.frequency, self.s21, errors=self.s21_error)
+            self.fit_resonator()
         return self._resonator
 
 
@@ -217,7 +221,7 @@ class SweepStream(Measurement):
             s21 = self.stream_s21_normalized
         iQ_e = 1 / self.sweep.resonator.Q_e
         z = iQ_e / (1 - s21)
-        self._i = z.real - iQ_e.real
+        self._i = 0.5 * (z.real - iQ_e.real)
         self._x = 1 / 2 * z.imag
 
     @property
