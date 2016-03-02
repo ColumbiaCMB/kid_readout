@@ -14,7 +14,7 @@ def test_measurement_add_origin():
     df = pd.DataFrame([0])  # This creates a DataFrame with shape (1, 1).
     m.add_origin(df)
     assert df.shape == (1, 1 + 3)
-    assert df.io_module.iloc[0] is None
+    assert df.io_class.iloc[0] is None
     assert df.root_path.iloc[0] is None
     assert df.node_path.iloc[0] is None
 

@@ -129,7 +129,7 @@ class ResonatorSweep(Sweep):
     def analyze(self):
         self.resonator
 
-    def fit_resonator(self,delay_estimate=0,nonlinear_a_threshold=0.08):
+    def fit_resonator(self, delay_estimate=0, nonlinear_a_threshold=0.08):
         self._resonator = resonator.fit_best_resonator(self.frequency, self.s21, errors=self.s21_error,
                                                        delay_estimate=delay_estimate, min_a=nonlinear_a_threshold)
 
@@ -162,18 +162,18 @@ class SweepStream(Measurement):
         self._sweep_s21_normalized = None
         self._stream_s21_normalized = None
         self._stream_s21_normalized_deglitched = None
-        self._i = None
+        self._q = None
         self._x = None
-        self._psd_frequency = None
-        self._psd_ii = None
-        self._psd_xx = None
+        self._S_frequency = None
+        self._S_qq = None
+        self._S_xx = None
         super(SweepStream, self).__init__(state, analyze, description)
 
     def analyze(self):
         self._set_sweep_s21_normalized()
         self._set_stream_s21_normalized_deglitched()
-        self._set_i_and_x()
-        self._set_psd_i_and_x()
+        self._set_q_and_x()
+        self._set_S_qq_and_S_xx()
 
     @property
     def sweep_s21_normalized(self):
@@ -203,55 +203,63 @@ class SweepStream(Measurement):
                                                                  thresh=deglitch_threshold)
     
     @property
-    def i(self):
-        if self._i is None:
-            self._set_i_and_x()
-        return self._i
+    def q(self):
+        if self._q is None:
+            self._set_q_and_x()
+        return self._q
+
+    @property
+    def y(self):
+        return self.q / 2
 
     @property
     def x(self):
         if self._x is None:
-            self._set_i_and_x()
+            self._set_q_and_x()
         return self._x
 
-    def _set_i_and_x(self, deglitch=True):
+    def _set_q_and_x(self, deglitch=True):
         if deglitch:
             s21 = self.stream_s21_normalized_deglitched
         else:
             s21 = self.stream_s21_normalized
-        iQ_e = 1 / self.sweep.resonator.Q_e
-        z = iQ_e / (1 - s21)
-        self._i = 0.5 * (z.real - iQ_e.real)
+        e = 1 / self.sweep.resonator.Q_e
+        z = e / (1 - s21)
+        self._q = z.real - e.real
         self._x = 1 / 2 * z.imag
 
     @property
-    def psd_frequency(self):
-        if self._psd_frequency is None:
-            self._set_psd_i_and_x()
-        return self._psd_frequency
+    def S_frequency(self):
+        if self._S_frequency is None:
+            self._set_S_qq_and_S_xx()
+        return self._S_frequency
 
     @property
-    def psd_ii(self):
-        if self._psd_ii is None:
-            self._set_psd_i_and_x()
-        return self._psd_ii
+    def S_qq(self):
+        if self._S_qq is None:
+            self._set_S_qq_and_S_xx()
+        return self._S_qq
 
     @property
-    def psd_xx(self):
-        if self._psd_xx is None:
-            self._set_psd_i_and_x()
-        return self._psd_xx
+    def S_yy(self):
+        return self.S_qq / 4
+
+    @property
+    def S_xx(self):
+        if self._S_xx is None:
+            self._set_S_qq_and_S_xx()
+        return self._S_xx
 
     # TODO: calculate errors in PSDs
-    def _set_psd_i_and_x(self, NFFT=None, window=mlab.window_none, **kwargs):
+    def _set_S_qq_and_S_xx(self, NFFT=None, window=mlab.window_none, **kwargs):
         # Use the same length calculation as SweepNoiseMeasurement
         if NFFT is None:
             NFFT = int(2**(np.floor(np.log2(self.stream.s21.size)) - 3))
-        psd_ii, f = mlab.psd(self.i, Fs=self.stream.sample_frequency, NFFT=NFFT, window=window, **kwargs)
-        psd_xx, f = mlab.psd(self.x, Fs=self.stream.sample_frequency, NFFT=NFFT, window=window, **kwargs)
-        self._psd_frequency = f
-        self._psd_ii = psd_ii
-        self._psd_xx = psd_xx
+        S_qq, f = mlab.psd(self.q, Fs=self.stream.sample_frequency, NFFT=NFFT, window=window, **kwargs)
+        S_xx, f = mlab.psd(self.x, Fs=self.stream.sample_frequency, NFFT=NFFT, window=window, **kwargs)
+        self._S_frequency = f
+        self._S_qq = S_qq
+        self._S_xx = S_xx
 
     # TODO: move this forward to a usable version.
     def to_dataframe(self):

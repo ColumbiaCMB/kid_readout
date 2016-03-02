@@ -46,7 +46,7 @@ def sweep_from_rnc(rnc, index_of_sweep, channel, resonator=True):
         # All of the epochs are the same
         epoch = np.linspace(tg.epoch[n], tg.epoch[n] + tg.data_len_seconds[n], tg.num_data_samples)
         s21 = tg.data[n::frequencies_per_index][channel, :]
-        streams.append(StreamArray(frequency, epoch, s21))
+        streams.append(Stream(frequency, epoch, s21))
     state = {}
     if resonator:
         return ResonatorSweep(streams, state=state)

@@ -61,7 +61,7 @@ class Measurement(object):
             self.state = StateDict(state)
         self.description = description
         self._parent = None
-        self._io_module = None
+        self._io_class = None
         self._root_path = None
         self._node_path = None
         self._validate_dimensions()
@@ -92,10 +92,10 @@ class Measurement(object):
         Add to the given dataframe enough information to load the data from which it was created. Using this
         information, the from_series() function in this module will return the original data.
 
-        This method adds the IO module, the path to the root file or directory, and the node path corresponding to this
+        This method adds the IO class, the path to the root file or directory, and the node path corresponding to this
         measurement, which will all be None unless the Measurement was created from files on disk.
         """
-        dataframe['io_module'] = self._io_module
+        dataframe['io_class'] = self._io_class
         dataframe['root_path'] = self._root_path
         dataframe['node_path'] = self._node_path
 
@@ -106,7 +106,6 @@ class Measurement(object):
         """
         dataframe['io_module'] = 'kid_readout.measurement.legacy'
         dataframe['root_path'] = self._root_path
-        dataframe['node_path'] = None
 
     def _validate_dimensions(self):
         for name, dimensions in self.dimensions.items():
@@ -311,7 +310,8 @@ def is_sequence(full_class_name):
 
 
 def from_series(series):
-    return read(importlib.import_module(series.io_module), series.root_path, series.node_path)
+    io = _get_class(series.io_class)(series.root_path)
+    return read(io, series.node_path)
 
 
 def join(*nodes):
@@ -372,7 +372,7 @@ def _write_node(measurement, io, node_path):
     Create a new node at the given node path using the given IO instance and write the measurement data to it.
 
     :param measurement: a Measurement instance.
-    :param io_module: an instance of a class that implements the IO interface.
+    :param io: an instance of a class that implements the IO interface.
     :param node_path: the path of the new node into which the measurement will be written.
     :return: None
     """
