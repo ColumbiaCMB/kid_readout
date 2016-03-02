@@ -264,7 +264,7 @@ def read(io, node_path, extras=True, translate=None, close=True):
     Read a measurement from disk and return it.
 
     :param io: an instance of a class that implements the IO interface.
-    :param node_path:the path to the node to be loaded, in the form 'node0.node1.node2'
+    :param node_path:the path to the node to be loaded, in the form 'node0:node1:node2'
     :param extras: add extra variables; see instantiate().
     :param translate: a dictionary with entries 'original_class': 'new_class'; all class names must be fully-qualified.
     :param close: if True, call io.close() after writing.

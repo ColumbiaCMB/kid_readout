@@ -121,6 +121,7 @@ class Sweep(Measurement):
     # TODO: add s21 with delay removal
     # TODO: add psd
 
+
 class ResonatorSweep(Sweep):
     def __init__(self, streams=(), state=None, analyze=False, description='ResonatorSweep'):
         self._resonator = None
@@ -204,16 +205,29 @@ class SweepStream(Measurement):
     
     @property
     def q(self):
+        """
+        Return the inverse internal quality factor q = 1 / Q_i calculated by inverting the resonator model.
+        :return: an array of q values from self.stream corresponding to self.stream.epoch.
+        """
         if self._q is None:
             self._set_q_and_x()
         return self._q
 
     @property
     def y(self):
+        """
+        Return half the inverse internal quality factor y = q / 2 calculated by inverting the resonator model. The
+        purpose of this is that S_yy = S_xx when amplifier-noise dominated.
+        :return: an array of y values from self.stream corresponding to self.stream.epoch.
+        """
         return self.q / 2
 
     @property
     def x(self):
+        """
+        Return the fractional frequency shift x = f / f_r - 1 calculated by inverting the resonator model.
+        :return: an array of x values from self.stream corresponding to self.stream.epoch.
+        """
         if self._x is None:
             self._set_q_and_x()
         return self._x
@@ -223,29 +237,45 @@ class SweepStream(Measurement):
             s21 = self.stream_s21_normalized_deglitched
         else:
             s21 = self.stream_s21_normalized
-        e = 1 / self.sweep.resonator.Q_e
-        z = e / (1 - s21)
-        self._q = z.real - e.real
-        self._x = 1 / 2 * z.imag
+        c = 1 / self.sweep.resonator.Q_e  # c is the inverse of the complex couping quality factor.
+        z = c / (1 - s21)
+        self._q = z.real - c.real
+        self._x = z.imag / 2  # This factor of two means S_xx = S_qq / 4 when amplifier-noise dominated.
 
     @property
     def S_frequency(self):
+        """
+        Return the frequencies used in calculating the single-sided spectral densities.
+        :return: an array of frequencies ranging from 0 through the Nyquist frequency.
+        """
         if self._S_frequency is None:
             self._set_S_qq_and_S_xx()
         return self._S_frequency
 
     @property
     def S_qq(self):
+        """
+        The single-sided spectral density of q(t), S_qq(f), where f is self.S_frequency.
+        :return: an array of complex values representing the spectral density of q(t)
+        """
         if self._S_qq is None:
             self._set_S_qq_and_S_xx()
         return self._S_qq
 
     @property
     def S_yy(self):
+        """
+        The single-sided spectral density of y(t), S_yy(f), where f is self.S_frequency.
+        :return: an array of complex values representing the spectral density of y(t)
+        """
         return self.S_qq / 4
 
     @property
     def S_xx(self):
+        """
+        The single-sided spectral density of x(t), S_xx(f), where f is self.S_frequency.
+        :return: an array of complex values representing the spectral density of x(t)
+        """
         if self._S_xx is None:
             self._set_S_qq_and_S_xx()
         return self._S_xx

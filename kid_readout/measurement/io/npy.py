@@ -41,6 +41,8 @@ class IO(core.IO):
         return self.root is None
 
     def create_node(self, node_path):
+        if self.closed:
+            raise ValueError("I/O operation on closed file")
         core.validate_node_path(node_path)
         os.mkdir(os.path.join(self.root, *core.explode(node_path)))
 
@@ -79,6 +81,8 @@ class IO(core.IO):
                 and not f in core.RESERVED_NAMES and os.path.splitext(f)[1] != '.npy']
 
     def _get_node(self, node_path):
+        if self.closed:
+            raise ValueError("I/O operation on closed file")
         core.validate_node_path(node_path)
         full_path = os.path.join(self.root, *core.explode(node_path))
         if not os.path.isdir(full_path):

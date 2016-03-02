@@ -59,11 +59,14 @@ def test_measurement_sequence():
     assert core.is_sequence(mt.__module__ + '.' + ml.__class__.__name__)
     assert ml.shape == (length,)
 
+
 # This test needs to be able to write to disk or a diskless IO class.
 #def test_write():
 
+
 # Create fake test data for this test.
-#der test_read():
+#def test_read():
+
 
 def test_instantiate():
     full_class_name = 'kid_readout.measurement.core.Measurement'
@@ -107,5 +110,3 @@ def test_validate_node_path():
             assert True
         except core.MeasurementError:
             assert False
-
-
