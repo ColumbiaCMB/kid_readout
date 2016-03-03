@@ -161,6 +161,7 @@ class StateDict(dict):
     __slots__ = ()
 
 
+# TODO: separate root creation with metadata from IO instantiation.
 class IO(object):
     """
     This is an abstract class that specifies the IO interface.

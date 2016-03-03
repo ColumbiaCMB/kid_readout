@@ -68,11 +68,10 @@ class Stream(Measurement):
                 stop = key.stop
             if key.step is not None:
                 raise ValueError("Step size is not supported: {}".format(key))
-            start_index = np.searchsorted(self.epoch, (start,))
-            stop_index = np.searchsorted(self.epoch, (stop,), side='right')
-            mask = (start <= self.epoch) & (self.epoch < stop)
+            start_index = np.searchsorted(self.epoch, (start,), side='left')
+            stop_index = np.searchsorted(self.epoch, (stop,), side='right')  # This index is not included
             return Stream(self.frequency, self.epoch[start_index:stop_index], self.s21[:, start_index:stop_index],
-                          self.state)
+                          state=self.state, description=self.description)
         else:
             raise ValueError("Invalid slice: {}".format(key))
 
