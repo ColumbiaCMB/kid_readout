@@ -198,8 +198,8 @@ class RoachBaseband(RoachInterface):
         
         returns : fft_bins, array of integers. 
         """
-
-        tone_bins_per_fft_bin = nsamp / (2 * self.nfft)  # factor of 2 because real signal
+        # TODO: since nfft is an int, this division will truncate if nsamp is an int
+        tone_bins_per_fft_bin = nsamp / (2. * self.nfft)  # factor of 2 because real signal
         fft_bins = np.round(tone_bins / float(tone_bins_per_fft_bin)).astype('int')
         return fft_bins
 
