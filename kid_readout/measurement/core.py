@@ -57,11 +57,8 @@ class Measurement(object):
 
     dimensions = OrderedDict()
 
-    def __init__(self, state=None, analyze=False, description='Measurement'):
-        if state is None:
-            self.state = StateDict()
-        else:
-            self.state = StateDict(state)
+    def __init__(self, state, analyze=False, description='Measurement'):
+        self.state = to_state_dict(state)
         self.description = description
         self._parent = None
         self._io_class = None
@@ -159,6 +156,13 @@ class StateDict(dict):
     __copy__ = lambda self: StateDict(self)
     __getstate__ = lambda: None
     __slots__ = ()
+
+
+def to_state_dict(dictionary):
+    dicts = [(k, v) for k, v in dictionary.items() if isinstance(v, dict)]
+    others = [(k, v) for k, v in dictionary.items() if not isinstance(v, dict)]
+    return StateDict([(k, v) for k, v in others] +
+                     [(k, to_state_dict(v)) for k, v in dicts])
 
 
 # TODO: separate root creation with metadata from IO instantiation.

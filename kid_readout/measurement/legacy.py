@@ -7,70 +7,88 @@ from kid_readout.measurement.multiple import StreamArray, SweepArray, ResonatorS
 # These functions extract state information from legacy data classes.
 
 
-def state_from_rnc(rnc):
+def sweep_state_from_rnc(rnc, sweep_group_index):
+    """
+    Return a dictionary containing the state information from the given ReadoutNetCDF object that is common to all
+    channels for the given SweepGroup index in the file. This function does not return any per-channel arrays.
+
+    :param rnc: a ReadoutNetCDF object.
+    :param sweep_group_index: the index of the SweepGroup in the rnc.sweeps list.
+    :return: a dictionary containing common state information.
+    """
     state = {'gitinfo': rnc.gitinfo,
              'mmw_source': mmw_source_state_from_rnc(rnc),
-             'roach': roach_state_from_rnc(rnc),
-             }
+             'roach': sweep_roach_state_from_rnc(rnc, sweep_group_index)}
+    return state
 
 
+def timestream_state_from_rnc(rnc, timestream_group_index):
+    """
+    Return a dictionary containing the state information from the given ReadoutNetCDF object that is common to all
+    channels for the given TimestreamGroup index in the file. This function does not return any per-channel arrays.
+
+    :param rnc: a ReadoutNetCDF object.
+    :param timestream_group_index: the index of the TimestreamGroup in the rnc.timestreams list.
+    :return: a dictionary containing common state information.
+    """
+    state = {'gitinfo': rnc.gitinfo,
+             'mmw_source': mmw_source_state_from_rnc(rnc),
+             'roach': timestream_roach_state_from_rnc(rnc, timestream_group_index)}
     return state
 
 
 def mmw_source_state_from_rnc(rnc):
-    state = {'attenuator_turns': rnc.mmw_atten_turns}
+    """
+    Return a dictionary containing millimeter-wave source information from the given ReadoutNetCDF object.
+
+    :param rnc: a ReadoutNetCDF object.
+    :return: a dictionary containing state information.
+    """
+    state = {'attenuator_turns': [float(t) for t in rnc.mmw_atten_turns]}
     return state
 
 
-def roach_state_from_rnc(rnc):
+def common_roach_state_from_rnc(rnc):
+    """
+    Return a dictionary containing roach state information from the given ReadoutNetCDF that is common to all
+    measurements in the file.
+
+    :param rnc:
+    :return:
+    """
     state = {'boffile': rnc.boffile,
              'delay_estimate': rnc.get_delay_estimate(),
-             'heterodyne': rnc.heterodyne,
-            }
+             'heterodyne': rnc.heterodyne}
+    return state
 
 
-def roach_state_from_timestream_group(rnc, timestream_group_index):
+def timestream_roach_state_from_rnc(rnc, timestream_group_index):
     tg = rnc.timestreams[timestream_group_index]
     if np.any(np.diff(tg.epoch)):
         raise ValueError("TimestreamGroup epoch values differ.")
-    start_epoch = tg.epoch[0]
-    hardware_state_index = rnc._get_hwstate_index_at(start_epoch)
-    hardware_state_epoch =  rnc.hardware_state_epoch[hardware_state_index]
-    if start_epoch < hardware_state_epoch:
-        raise ValueError("start_epoch < hardware_state_epoch")
-    adc_attenuation = rnc.adc_atten[hardware_state_index]
-    dac_attenuation, output_attenuation = rnc.get_effective_dac_atten_at(start_epoch)
-    number_of_tones = rnc.num_tones[hardware_state_index]
-    if np.any(np.diff(tg.tone_nsamp)):
-        raise ValueError("TimestreamGroup tone_nsamp values differ.")
-    number_of_tone_samples = tg.tone_nsamp[0]
-    modulation_rate, modulation_output = rnc.get_modulation_state_at(start_epoch)
-    state = {'hardware_state_index': hardware_state_index,
-             'hardware_state_epoch': hardware_state_epoch,
-             'adc_attenuation': adc_attenuation,
-             'dac_attenuation': dac_attenuation,
-             'output_attenuation': output_attenuation,
-             'number_of_tones': number_of_tones,
-             'number_of_tone_samples': number_of_tone_samples,
-             'modulation_rate': modulation_rate,
-             'modulation_output': modulation_output}
+    state = extract_timestream_group_state(rnc, tg)
     return state
 
 
-def roach_state_from_sweep_group(rnc, sweep_group_index):
+def sweep_roach_state_from_rnc(rnc, sweep_group_index):
     sg = rnc.sweeps[sweep_group_index]
-    start_epoch = sg.start_epoch
-    hardware_state_index = rnc._get_hwstate_index_at(start_epoch)
-    hardware_state_epoch =  rnc.hardware_state_epoch[hardware_state_index]
+    state = extract_timestream_group_state(rnc, sg.timestream_group)
+    return state
+
+
+def extract_timestream_group_state(rnc, timestream_group):
+    start_epoch = float(timestream_group.epoch[0])
+    hardware_state_index = int(rnc._get_hwstate_index_at(start_epoch))
+    hardware_state_epoch = float(rnc.hardware_state_epoch[hardware_state_index])
     if start_epoch < hardware_state_epoch:
         raise ValueError("start_epoch < hardware_state_epoch")
-    adc_attenuation = rnc.adc_atten[hardware_state_index]
-    dac_attenuation, output_attenuation = rnc.get_effective_dac_atten_at(start_epoch)
-    number_of_tones = rnc.num_tones[hardware_state_index]
-    if np.any(np.diff(sg.timestream_group.tone_nsamp)):
+    adc_attenuation = float(rnc.adc_atten[hardware_state_index])
+    dac_attenuation, output_attenuation = [float(v) for v in rnc.get_effective_dac_atten_at(start_epoch)]
+    number_of_tones = int(rnc.num_tones[hardware_state_index])
+    if np.any(np.diff(timestream_group.tone_nsamp)):
         raise ValueError("TimestreamGroup tone_nsamp values differ.")
-    number_of_tone_samples = sg.timestream_group.tone_nsamp[0]
-    modulation_rate, modulation_output = rnc.get_modulation_state_at(start_epoch)
+    number_of_tone_samples = int(timestream_group.tone_nsamp[0])
+    modulation_rate, modulation_output = [int(v) for v in rnc.get_modulation_state_at(start_epoch)]
     state = {'hardware_state_index': hardware_state_index,
              'hardware_state_epoch': hardware_state_epoch,
              'adc_attenuation': adc_attenuation,
@@ -83,7 +101,7 @@ def roach_state_from_sweep_group(rnc, sweep_group_index):
     return state
 
 
-def roach_arrays_from_timestream_group(tg):
+def timestream_arrays_from_rnc(rnc, timestream_group_index):
     """
     Return a dictionary containing relevant roach arrays:
     tone_bin is the roach output tone bin; all arrays are sorted so that this array is in ascending order.
@@ -92,9 +110,11 @@ def roach_arrays_from_timestream_group(tg):
     fft_bin should be the roach interface fft_bin; the quantity we have been saving is actually
     fpga_fft_readout_indexes + 1, and fftbin is commented out in ReadoutNetCDF, so this function returns an array of NaN values.
 
-    :param tg: a TimestreamGroup instance.
+    :param rnc: a ReadoutNetCDF instance.
+    :param timestream_group_index: the index of the desired timestream in rnc.timestreams.
     :return: a dictionary containing four relevant roach arrays.
     """
+    tg = rnc.timestreams[timestream_group_index]
     order = tg.tonebin.argsort()
     arrays = {'tone_bin': tg.tonebin[order],
               'amplitude': np.nan * np.empty(tg.tonebin.size),
@@ -103,10 +123,13 @@ def roach_arrays_from_timestream_group(tg):
     return arrays
 
 
-
 # These functions are intended to use the new code to read legacy data.
 
-def stream_from_rnc(rnc, timestream_group_index, channel):
+
+def stream_from_rnc(rnc, timestream_group_index, channel, description=None):
+    state = timestream_state_from_rnc(rnc, timestream_group_index)
+    if description is None:
+        description = "ReadoutNetCDF({}).timestreams[{}]".format(rnc.filename, timestream_group_index)
     tg = rnc.timestreams[timestream_group_index]
     tg_channel_index = tg.measurement_freq.argsort()[channel]
     frequency = tg.measurement_freq[tg_channel_index]
@@ -115,12 +138,15 @@ def stream_from_rnc(rnc, timestream_group_index, channel):
                         tg.epoch[tg_channel_index] + tg.data_len_seconds[tg_channel_index],
                         tg.num_data_samples)
     s21 = tg.data[tg_channel_index, :]
-    state = {}
-    return Stream(frequency, epoch, s21, state)
+    return Stream(frequency, epoch, s21, state, description=description)
 
 
-def streamarray_from_rnc(rnc, timestream_group_index):
+def streamarray_from_rnc(rnc, timestream_group_index, description=None):
+    state = timestream_state_from_rnc(rnc, timestream_group_index)
+    if description is None:
+        description = "ReadoutNetCDF({}).timestreams[{}]".format(rnc.filename, timestream_group_index)
     tg = rnc.timestreams[timestream_group_index]
+    # A TimestreamGroup not part of a SweepGroup has arrays in roach FPGA order.
     tg_channel_order = tg.measurement_freq.argsort()
     frequency = tg.measurement_freq[tg_channel_order]
     # All the epoch and data_len_seconds values are the same. Assume regular sampling.
@@ -128,11 +154,13 @@ def streamarray_from_rnc(rnc, timestream_group_index):
                         tg.epoch[0] + tg.data_len_seconds[0],
                         tg.num_data_samples)
     s21 = tg.data[tg_channel_order, :]
-    state = {}
-    return StreamArray(frequency, epoch, s21, state)
+    return StreamArray(frequency, epoch, s21, state=state, description=description)
 
 
-def sweep_from_rnc(rnc, sweep_group_index, channel, resonator=True):
+def sweep_from_rnc(rnc, sweep_group_index, channel, resonator=True, description=None):
+    state = sweep_state_from_rnc(rnc, sweep_group_index)
+    if description is None:
+        description = "ReadoutNetCDF({}).sweeps[{}]".format(rnc.filename, sweep_group_index)
     sg = rnc.sweeps[sweep_group_index]
     tg = sg.timestream_group
     n_channels = np.unique(tg.sweep_index).size
@@ -147,55 +175,45 @@ def sweep_from_rnc(rnc, sweep_group_index, channel, resonator=True):
         epoch = np.linspace(tg.epoch[n], tg.epoch[n] + tg.data_len_seconds[n], tg.num_data_samples)
         s21 = tg.data[n::frequencies_per_index][channel, :]
         streams.append(Stream(frequency, epoch, s21))
-    state = {}
     if resonator:
-        return ResonatorSweep(streams, state=state)
+        return ResonatorSweep(streams, state=state, description=description)
     else:
-        return Sweep(streams, state=state)
+        return Sweep(streams, state=state, description=description)
 
 
-def sweeparray_from_rnc(rnc, sweep_group_index, resonator=True):
+def sweeparray_from_rnc(rnc, sweep_group_index, resonator=True, description=None):
+    state = sweep_state_from_rnc(rnc, sweep_group_index)
+    if description is None:
+        description = "ReadoutNetCDF({}).sweeps[{}]".format(rnc.filename, sweep_group_index)
     sg = rnc.sweeps[sweep_group_index]
     tg = sg.timestream_group
     n_channels = np.unique(tg.sweep_index).size
     if tg.measurement_freq.size % n_channels:
         raise ValueError("Bad number of frequency points.")
     frequencies_per_index = int(tg.measurement_freq.size / n_channels)
-    streamarrays = []
+    stream_arrays = []
     # Extract simultaneously-sampled data
     for n in range(frequencies_per_index):
         frequency = tg.measurement_freq[n::frequencies_per_index]
         # All of the epochs are the same
         epoch = np.linspace(tg.epoch[n], tg.epoch[n] + tg.data_len_seconds[n], tg.num_data_samples)
         s21 = tg.data[n::frequencies_per_index]
-        streamarrays.append(StreamArray(frequency, epoch, s21))
-    state = {}
+        stream_arrays.append(StreamArray(frequency, epoch, s21))
     if resonator:
-        return ResonatorSweepArray(streamarrays, state=state)
+        return ResonatorSweepArray(stream_arrays, state=state, description=description)
     else:
-        return SweepArray(streamarrays, state=state)
+        return SweepArray(stream_arrays, state=state, description=description)
 
 
-def sweepstream_from_rnc(rnc, sweep_group_index, timestream_group_index, channel, analyze=False):
-    return SweepStream(sweep=sweep_from_rnc(rnc, sweep_group_index, channel),
-                       stream=stream_from_rnc(rnc, timestream_group_index, channel),
-                       analyze=analyze)
+def sweepstream_from_rnc(rnc, sweep_group_index, timestream_group_index, channel):
+    state = common_roach_state_from_rnc(rnc)
+    sweep = sweep_from_rnc(rnc, sweep_group_index, channel)
+    stream = stream_from_rnc(rnc, timestream_group_index, channel)
+    return SweepStream(sweep, stream, state=state)
 
 
 def sweepstreamarray_from_rnc(rnc, sweep_group_index, timestream_group_index):
+    state = common_roach_state_from_rnc(rnc)
     sweep_array = sweeparray_from_rnc(rnc, sweep_group_index)
     stream_array = streamarray_from_rnc(rnc, timestream_group_index)
-    state = {}
     return SweepStreamArray(sweep_array, stream_array, state=state)
-
-
-def streamarray_from_timestream_group(tg):
-    tg_channel_order = tg.measurement_freq.argsort()
-    frequency = tg.measurement_freq[tg_channel_order]
-    # All the epoch and data_len_seconds values are the same. Assume regular sampling.
-    epoch = np.linspace(tg.epoch[0],
-                        tg.epoch[0] + tg.data_len_seconds[0],
-                        tg.num_data_samples)
-    s21 = tg.data[tg_channel_order, :]
-    state = {}
-    return StreamArray(frequency, epoch, s21, state)

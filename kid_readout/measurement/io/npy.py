@@ -57,7 +57,11 @@ class IO(core.IO):
         node = self._get_node(node_path)
         filename = os.path.join(node, key)
         with self._safe_open(filename) as f:
-            json.dump(value, f)
+            try:
+                json.dump(value, f)
+            except TypeError as e:
+                print('{}:\nstr: {}\nrepr: {}'.format(key, value, repr(value)))
+                raise e
 
     def read_array(self, node_path, name):
         full = os.path.join(self._get_node(node_path), name + '.npy')

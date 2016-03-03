@@ -116,6 +116,8 @@ class IO(core.IO):
             if isinstance(v, dict):
                 self._write_dict_group(dict_group, k, v)
             else:
+                if isinstance(v, bool):
+                    v = int(v)
                 setattr(dict_group, k, v)
 
     def _read_dict_group(self, group):
