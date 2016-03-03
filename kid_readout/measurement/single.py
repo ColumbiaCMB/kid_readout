@@ -19,13 +19,13 @@ class Stream(Measurement):
     dimensions = OrderedDict([('epoch', ('epoch',)),
                               ('s21', ('epoch',))])
 
-    def __init__(self, frequency, epoch, s21, state=None, analyze=False, description='Stream'):
+    def __init__(self, frequency, epoch, s21, state, analyze=False, description='Stream'):
         self.frequency = frequency
         self.epoch = epoch
         self.s21 = s21
         self._s21_mean = None
         self._s21_mean_error = None
-        super(Stream, self).__init__(state, analyze, description)
+        super(Stream, self).__init__(state, analyze=analyze, description=description)
 
     def analyze(self):
         self.s21_mean
@@ -81,7 +81,7 @@ class Sweep(Measurement):
     This class represents a group of streams with different frequencies.
     """
 
-    def __init__(self, streams=(), state=None, analyze=False, description='Sweep'):
+    def __init__(self, streams, state, analyze=False, description='Sweep'):
         # Don't sort by frequency so that non-monotonic order can be preserved if needed, but note that this will fail
         # for a ResonatorSweep because the Resonator class requires a monotonic frequency array.
         self.streams = MeasurementTuple(streams)
@@ -91,7 +91,7 @@ class Sweep(Measurement):
         self._s21 = None
         self._s21_error = None
         self._s21_raw = None
-        super(Sweep, self).__init__(state, analyze, description)
+        super(Sweep, self).__init__(state, analyze=analyze, description=description)
 
     @property
     def frequency(self):
@@ -122,9 +122,9 @@ class Sweep(Measurement):
 
 
 class ResonatorSweep(Sweep):
-    def __init__(self, streams=(), state=None, analyze=False, description='ResonatorSweep'):
+    def __init__(self, streams, state, analyze=False, description='ResonatorSweep'):
         self._resonator = None
-        super(ResonatorSweep, self).__init__(streams, state, analyze, description)
+        super(ResonatorSweep, self).__init__(streams, state, analyze=analyze, description=description)
 
     def analyze(self):
         self.resonator
@@ -142,9 +142,9 @@ class ResonatorSweep(Sweep):
 
 # Think of another name for this. This class is intended to fit the gain and delay off-resonance.
 class ThroughSweep(Sweep):
-    def __init__(self, streams=(), state=None, analyze=False, description='ThroughSweep'):
+    def __init__(self, streams, state, analyze=False, description='ThroughSweep'):
         self._through = None
-        super(ThroughSweep, self).__init__(streams, state, analyze, description)
+        super(ThroughSweep, self).__init__(streams, state, analyze=analyze, description=description)
 
     @property
     def through(self):
@@ -152,13 +152,11 @@ class ThroughSweep(Sweep):
 
 
 class SweepStream(Measurement):
-    def __init__(self, sweep=None, stream=None, state=None, analyze=False, description='SweepStream'):
+    def __init__(self, sweep, stream, state, analyze=False, description='SweepStream'):
         self.sweep = sweep
-        if self.sweep is not None:
-            self.sweep._parent = self
+        self.sweep._parent = self
         self.stream = stream
-        if self.stream is not None:
-            self.stream._parent = self
+        self.stream._parent = self
         self._sweep_s21_normalized = None
         self._stream_s21_normalized = None
         self._stream_s21_normalized_deglitched = None
@@ -167,7 +165,7 @@ class SweepStream(Measurement):
         self._S_frequency = None
         self._S_qq = None
         self._S_xx = None
-        super(SweepStream, self).__init__(state, analyze, description)
+        super(SweepStream, self).__init__(state, analyze=analyze, description=description)
 
     def analyze(self):
         self._set_sweep_s21_normalized()
