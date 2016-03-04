@@ -66,17 +66,17 @@ def timestream_roach_state_from_rnc(rnc, timestream_group_index):
     tg = rnc.timestreams[timestream_group_index]
     if np.any(np.diff(tg.epoch)):
         raise ValueError("TimestreamGroup epoch values differ.")
-    state = extract_timestream_group_state(rnc, tg)
+    state = extract_timestream_group_roach_state(rnc, tg)
     return state
 
 
 def sweep_roach_state_from_rnc(rnc, sweep_group_index):
     sg = rnc.sweeps[sweep_group_index]
-    state = extract_timestream_group_state(rnc, sg.timestream_group)
+    state = extract_timestream_group_roach_state(rnc, sg.timestream_group)
     return state
 
 
-def extract_timestream_group_state(rnc, timestream_group):
+def extract_timestream_group_roach_state(rnc, timestream_group):
     start_epoch = float(timestream_group.epoch[0])
     hardware_state_index = int(rnc._get_hwstate_index_at(start_epoch))
     hardware_state_epoch = float(rnc.hardware_state_epoch[hardware_state_index])
@@ -84,18 +84,18 @@ def extract_timestream_group_state(rnc, timestream_group):
         raise ValueError("start_epoch < hardware_state_epoch")
     adc_attenuation = float(rnc.adc_atten[hardware_state_index])
     dac_attenuation, output_attenuation = [float(v) for v in rnc.get_effective_dac_atten_at(start_epoch)]
-    number_of_tones = int(rnc.num_tones[hardware_state_index])
+    num_tones = int(rnc.num_tones[hardware_state_index])
     if np.any(np.diff(timestream_group.tone_nsamp)):
         raise ValueError("TimestreamGroup tone_nsamp values differ.")
-    number_of_tone_samples = int(timestream_group.tone_nsamp[0])
+    num_tone_samples = int(timestream_group.tone_nsamp[0])
     modulation_rate, modulation_output = [int(v) for v in rnc.get_modulation_state_at(start_epoch)]
     state = {'hardware_state_index': hardware_state_index,
              'hardware_state_epoch': hardware_state_epoch,
              'adc_attenuation': adc_attenuation,
              'dac_attenuation': dac_attenuation,
              'output_attenuation': output_attenuation,
-             'number_of_tones': number_of_tones,
-             'number_of_tone_samples': number_of_tone_samples,
+             'num_tones': num_tones,
+             'num_tone_samples': num_tone_samples,
              'modulation_rate': modulation_rate,
              'modulation_output': modulation_output}
     return state
@@ -125,6 +125,7 @@ def timestream_arrays_from_rnc(rnc, timestream_group_index):
 
 
 # These functions are intended to use the new code to read legacy data.
+# TODO: change description functionality to add_legacy_origin
 
 
 def stream_from_rnc(rnc, timestream_group_index, channel, description=None):

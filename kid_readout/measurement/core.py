@@ -165,7 +165,6 @@ def to_state_dict(dictionary):
                      [(k, to_state_dict(v)) for k, v in dicts])
 
 
-# TODO: separate root creation with metadata from IO instantiation.
 class IO(object):
     """
     This is an abstract class that specifies the IO interface.
@@ -436,3 +435,5 @@ def _get_class(full_class_name):
     module_name, class_name = full_class_name.rsplit('.', 1)
     module = importlib.import_module(module_name)
     return getattr(module, class_name)
+
+

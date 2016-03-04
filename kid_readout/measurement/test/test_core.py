@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 from kid_readout.measurement import core
-
+from kid_readout.measurement.io import memory
+from kid_readout.measurement.test.utilties import compare_measurements, get_measurement
 
 def test_measurement_instantiation():
     m = core.Measurement({})
@@ -60,12 +61,12 @@ def test_measurement_sequence():
     assert ml.shape == (length,)
 
 
-# This test needs to be able to write to disk or a diskless IO class.
-#def test_write():
-
-
-# Create fake test data for this test.
-#def test_read():
+def test_read_write():
+    io = memory.IO(None)
+    original = get_measurement()
+    name = 'test'
+    core.write(original, io, name, close=False)
+    compare_measurements(original, core.read(io, name))
 
 
 def test_instantiate():

@@ -7,10 +7,17 @@ dicts are stored hierarchically as groups with special names;
 other instance attribute are stored as ncattrs of the group.
 
 
-Limitations:
-Any stored string is returned as unicode.
-Any sequence stored as an attribute is returned as a numpy array.
-Dimensions for arrays of more than two dimensions are not yet handled properly.
+Limitations and issues.
+
+netCDF4 returns strings as unicode.
+On read, all unicode objects are converted to Python2 str type.
+
+netCDF4 returns sequence ncattrs as numpy ndarrays.
+On read, all arrays are converted to lists.
+
+netCDF4 cannot store None or boolean types as ncattrs.
+These are stored as special strings that are attributes of the IO class, and converted back on read.
+This is a little bit gross but probably safe in practice.
 """
 import os
 import netCDF4
@@ -19,6 +26,11 @@ from kid_readout.measurement import core
 
 
 class IO(core.IO):
+
+    # These values are used to store None, True, and False as ncattrs.
+    none = '__None__'
+    true = '__True__'
+    false = '__False__'
 
     # This dictionary translates between numpy complex dtypes and netCDF4 compound types.
     npy_to_netcdf = {np.dtype('complex64'): {'datatype': np.dtype([('real', 'f4'), ('imag', 'f4')]),
@@ -53,7 +65,7 @@ class IO(core.IO):
         # This will correctly fail to validate an attempt to create the root node with node_path = ''
         core.validate_node_path(node_path)
         existing, new = core.split(node_path)
-        return self._get_node(existing).createGroup(new)
+        self._get_node(existing).createGroup(new)
 
     def write_array(self, node_path, name, array, dimensions):
         node = self._get_node(node_path)
@@ -73,7 +85,7 @@ class IO(core.IO):
         if isinstance(value, dict):
             self._write_dict_group(node, key, value)
         else:
-            setattr(node, key, value)
+            setattr(node, key, self._write_convert(value))
 
     def read_array(self, node_path, name):
         node = self._get_node(node_path)
@@ -85,7 +97,7 @@ class IO(core.IO):
         if name + self.is_dict in node.groups.keys():
             return self._read_dict_group(node.groups[name + self.is_dict])
         else:
-            return node.__dict__[name]
+            return self._read_convert(node.__dict__[name])
 
     def measurement_names(self, node_path):
         node = self._get_node(node_path)
@@ -121,10 +133,26 @@ class IO(core.IO):
                 setattr(dict_group, k, v)
 
     def _read_dict_group(self, group):
-        # Note that
-        # k is measurement.CLASS_NAME == False
-        # because netCDF4 returns all strings as unicode.
-        return dict([(k, v) for k, v in group.__dict__.items()] +
-                    [(name.replace(self.is_dict, ''), self._read_dict_group(group))
-                     for name, group in group.groups.items()])
+        items = [(k, self._read_convert(v)) for k, v in group.__dict__.items()]
+        return dict(items + [(name.replace(self.is_dict, ''), self._read_dict_group(group))
+                             for name, group in group.groups.items()])
 
+    def _write_convert(self, obj):
+        if obj is True:
+            return self.true
+        elif obj is False:
+            return self.false
+        elif obj is None:
+            return self.none
+        else:
+            return obj
+
+    def _read_convert(self, obj):
+        if obj == self.none:
+            return None
+        if isinstance(obj, unicode):
+            return str(obj)
+        elif isinstance(obj, np.ndarray):
+            return list(obj)
+        else:
+            return obj
