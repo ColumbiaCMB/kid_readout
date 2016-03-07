@@ -32,12 +32,15 @@ def timestream_state_from_rnc(rnc, timestream_group_index):
     :return: a dictionary containing common state information.
     """
     state = {'gitinfo': rnc.gitinfo,
-             'mmw_source': mmw_source_state_from_rnc(rnc),
              'roach': timestream_roach_state_from_rnc(rnc, timestream_group_index)}
+    mmw_source_state = mmw_source_state_from_rnc(rnc)
+    if mmw_source_state:
+        state['mmw_source'] = mmw_source_state
     return state
 
 
-# TODO: change the format to single variables mickey and minnie, and keep NaN.
+# TODO: implement ticks instead of turns, but keep turns available.
+# TODO: add modulation source information.
 def mmw_source_state_from_rnc(rnc):
     """
     Return a dictionary containing millimeter-wave source information from the given ReadoutNetCDF object.
@@ -45,9 +48,11 @@ def mmw_source_state_from_rnc(rnc):
     :param rnc: a ReadoutNetCDF object.
     :return: a dictionary containing state information.
     """
-    mickey_turns, minnie_turns = rnc.mmw_atten_turns
-    state = {'mickey_turns': float(mickey_turns),
-             'minnie_turns': float(minnie_turns)}
+    state = {}
+    turns = rnc.mmw_atten_turns
+    if not np.any(np.isnan(turns)):
+        state['mickey_turns'] = float(turns[0])
+        state['minnie_turns'] = float(turns[1])
     return state
 
 
@@ -125,16 +130,6 @@ def timestream_arrays_from_rnc(rnc, timestream_group_index):
               'phase': np.nan * np.empty(tg.tonebin.size),
               'fft_bin': np.nan * np.empty(tg.tonebin.size)}
     return arrays
-
-
-def nan_to_none(iterable):
-    values = []
-    for value in iterable:
-        if np.isnan(value):
-            values.append(None)
-        else:
-            values.append(float(value))
-    return values
 
 
 # These functions are intended to use the new code to read legacy data.

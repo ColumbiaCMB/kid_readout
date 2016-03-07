@@ -3,13 +3,36 @@ This module is the core of the measurement subpackage.
 
 The main ideas are (1) to provide data container classes that define a format and include basic analysis code for the
 data, and (2) to separate these data container classes from the format in which the data are stored on disk. These
-goals are implemented using a Measurement class, defined in this module, and a few functions.
+goals are implemented using a Measurement class and a few functions and auxiliary classes.
 
-Measurements can contain other measurements -- for example, a frequency sweep is a collection of streams of
-time-ordered data -- so the both the class structure in memory and the hierarchical structure on disk is a standard
-tree. Except for the root node, every node in the tree contains a measurement or a sequence of measurements. (The
-root node is reserved for metadata.) Every node can thus be reached by a unique node path. For example, if the root
-contained only one Sweepstream measurement with the name "sweepstream," the structure would be
+The format is designed to handle hierarchical measurements naturally. For example, a frequency sweep is a collection
+of streams of time-ordered data, so the both the class structure in memory and the hierarchical structure on disk are
+a standard tree. This structure allows measurements that follow the specified format to be saved to disk and
+re-created later without any additional metadata.
+
+To create a new measurement, simply write a subclass of Measurement. Public attributes of the class will
+automatically be saved to disk by the write() function and re-instantiated by the read() function. If a class
+contains attributes that are either measurements or sequences of measurements (that use the provided MeasurementList
+and MeasurementTuple containers), these will also be saved and restored correctly. Each Measurement should be
+self-contained, meaning that it should contain all data and metadata necessary to analyze and understand it.
+
+A measurement will typically contain arrays that contain most of the data and a state dictionary that holds metadata.
+Because of restrictions imposed by the libraries used to store data on disk, the dictionary cannot hold arbitrary
+values. See the Measurement docstring for details.
+
+Because the same measurement class can potentially describe many measurements that use different equipment and thus
+have different state data, the best way to handle presence or absence of equipment or settings is simply through the
+presence or absence of entries in the state dictionary. It's easy for external code to check
+if 'some_equipment_info' in state: analyze_it()
+to determine whether to analyze the information. If an entry has to be present for some reason, using None is better
+than NaN to signify "not available," even if the state value is usually a number. An example of a good reason would
+be if some equipment was used during the measurement, but its state was not available when the measurement was
+written. Besides the advantage of avoiding comparison subtleties, None will cause numeric operations to blow up
+immediately.
+
+Except for the root node, every node in the tree contains a measurement or a sequence of measurements. (The root node
+is reserved for metadata.) Every node can thus be reached by a unique node path. For example, if the root contained
+only one Sweepstream measurement with the name "sweepstream," the structure would be
 
 sweepstream
   stream
@@ -22,21 +45,6 @@ sweepstream
 so the node path to the main SweepStream would be just "sweepstream" while the node path to one of the streams in the
 sweep could be "sweepstream:sweep:stream:1" and so on. The node paths can be used to address the data structure in a
 format-independent way in order to save new data in specific locations or to load subsets of the measurement tree.
-
-This hierarchical structure allows measurements that follow the specified format to be saved to disk and re-created
-later
-
-
-A measurement generically contains arrays that contain most of the data and a state dictionary that holds metadata.
-Because of restrictions imposed by the libraries used to store data on disk, the dictionary cannot hold arbitrary
-values.
-
-
-To create a new measurement, simply write a subclass of Measurement. Public attributes of the class will be saved
-
-Each Measurement should be self-contained, meaning that it should contain all data and metadata necessary to
-analyze and understand it.
-
 """
 import re
 import inspect
@@ -67,37 +75,41 @@ class Measurement(object):
     public attributes.
 
     Instantiation.
-    When a measurement is read from disk, the read() function inspects the signature of its __init__ method. The
-    advantage of this is that every measurement read from disk can re-initialize itself. However, because only public
-    attributes are saved, this creates the restriction that a measurement must save the values with which it is
-    initialized and cannot discard them or store them internally under other names. For example, if a measurement's
-    __init__() method contained an argument foo that is stored as self.bar, the value in bar will be saved to disk as
-    bar but the read() function will not be able to tell that this value should be passed as the value of parameter
-    foo. See the instantiate() function.
+    When a measurement is read from disk, the read() function inspects the signature of its __init__() method and
+    calls it with the saved values of the corresponding variables. This allows every measurement read from disk to
+    re-initialize itself and validate its data. However, because only public attributes are saved, this creates the
+    restriction that a measurement must save the values with which it is initialized and cannot discard them or store
+    them internally under other names. For example, if a measurement's __init__() method contained an argument foo
+    that is stored as self.bar, the value in bar will be saved to disk as bar but the read() function will not be
+    able to tell that this value should be passed as the value of parameter foo. See the instantiate() function.
 
     Arrays.
     Each measurement has a dimensions class attribute that contains metadata for its array dimensions. This is
-    necessary for the netCDF4 io module to handle the array dimensions correctly, and it also allows the classes to
+    necessary for the netCDF4 IO class to handle the array dimensions correctly, and it also allows the classes to
     check the dimensions of their arrays on instantiation through the _validate_dimensions() method. Currently,
     the only array shapes supported are 1-D arrays and N-D arrays for which each dimension corresponds to an existing
     1-D array. The dimensions metadata is implemented as an OrderedDict so that the netCDF4 writer can create the
-    dimensions in the proper order. The format is 'array_name': dimension_tuple, where dimension tuple is (
-    'array_name') for 1-D arrays or ('some_1D_array', 'another_1D_array'), for example.
+    dimensions in the proper order. The format is 'array_name': dimension_tuple, where dimension tuple is
+    ('array_name') for 1-D arrays or ('some_1D_array', 'another_1D_array', ...) for a higher dimensional array.
 
     Containers.
     Measurements store state information in a dictionary. (They actually use a subclass called StateDict, which has
-    extra access features.) Implementations should be able to store the following objects:
-    -basic types, such as numbers, booleans, strings, and None;
-    -sequences, i.e. lists, tuples, and arrays, that contain exactly one of the above basic types except None and no containers;
+    extra access features and validation.) Implementations of the IO class must be able to store the following objects:
+    -basic types, such as numbers, booleans, strings, booleans, and None;
+    -sequences, i.e. lists, tuples, and arrays, that contain exactly one of the above basic types except None; sequences
+     cannot contain other sequences, and all sequences, including arrays that are not declared in the dimensions
+     OrderedDict, are returned as lists on read.
     -dictionaries whose keys are strings and whose values are dictionaries, sequences, or basic types; the contained
      dictionaries and sequences have the same requirements as above.
-    Most of these restrictions come from the limitations of netCDF4 and json. Some of them could be relaxed with more
-    work.
+    Classes that do not obey these restrictions may fail to save or may have missing or corrupted data when read from
+    disk. Most of these restrictions come from the limitations of netCDF4 and json. Some of them could be relaxed
+    with more work, if necessary.
 
-    Note that NaN == Nan evaluates to False (the same is true of np.nan), and NaN is NaN may evaluate to True or
-    False, depending on how the NaN objects are created. The testing function compare_measurements() in
-    test/utility.py compares two measurements element-wise, so using NaN in such measurements will cause tests to
-    fail even if the measurements are the same.
+    Two values that are particularly problematic are None and NaN. None requires a special case because netCDF4
+    cannot write it, so it is allowed as an attribute value or dictionary value but not in sequences. NaN is stored
+    and retrieved correctly but is not recommended as an indicator of missing state because it causes comparisons to
+    fail: float('NaN') == float('NaN') is always False. Use compare_measurements() in test/utility.py to validate
+    read/write operations.
     """
 
     dimensions = OrderedDict()
@@ -232,15 +244,14 @@ class IO(object):
     """
     This is an abstract class that specifies the IO interface.
 
-    Implementations should be able to store large numpy arrays efficiently. Classes should include the dimensions
-    metadata that describes the relationships between the large arrays in the class.
+    Implementations should be able to store large numpy arrays efficiently.
     """
 
     def __init__(self, root_path):
         """
         Return a new IO object that will read to or write from the given root directory or file. If the root does not
-        exist, it should be created. Implementations should NEVER open an existing file in write or append mode, and in
-        general should make it impossible to overwrite data.
+        exist, it should be created. Implementations should NEVER open an existing file in write mode, and in general
+        should make it impossible to overwrite data. Appending to existing files may be useful.
 
         :param root_path: the path to the root directory or file.
         :return: a new IO object that can read from and write to the root object at the given path.

@@ -6,17 +6,18 @@ from kid_readout.measurement import core, legacy
 
 
 corners = {'None': None, 'True': True, 'False': False,
-           'int_list': [0, 1, 2],
-           'float_list': [-0.1, np.pi],
-           'str_list': ['zero', 'one', 'two'],
-           'bool_list': ['False', 'True', 'False'],
+           'empty_list': [],
+           'int_list': [-1, 0, 1, 2],
+           'float_list': [-0.1, 1, np.pi],
+           'str_list': ['zero', 'one', 'two', ''],
+           'bool_list': [False, True, False],
            'none_dict': {'None': None},
-           'dict_dict': {'1': 1, 'dict': {'None': None, 'False': False, 'dict2': {}}},
+           'dict_dict': {'1': 1, 'dict': {'None': None, 'False': False, 'another_dict': {}}},
            'list_dict': {'empty_list': [],
-                         'int_list': [0, 1, 2],
-                         'float_list': [-0.1, np.pi],
-                         'str_list': ['zero', 'one', 'two'],
-                         'bool_list': ['False', 'True', 'False']}}
+                         'int_list': [-1, 0, 1, 2],
+                         'float_list': [-0.1, 1, np.pi],
+                         'str_list': ['zero', 'one', 'two', ''],
+                         'bool_list': [False, True, False]}}
 
 
 def compare_measurements(a, b, verbose=False):
@@ -43,16 +44,16 @@ def compare_measurements(a, b, verbose=False):
         elif issubclass(va.__class__, core.MeasurementSequence):
             for ma, mb in zip(va, vb):
                 compare_measurements(ma, mb, verbose=verbose)
-        elif isinstance(va, np.ndarray):
+        elif isinstance(va, np.ndarray):  # This allows declared arrays to contain NaN and still compare correctly.
             assert np.all(np.isnan(va) == np.isnan(vb))
             assert np.all(va[~np.isnan(va)] == vb[~np.isnan(vb)])
-        else:  # This will fail for containers that contain any nan values.
+        else:  # This will fail for sequences that contain any nan values.
             assert va == vb
 
 
-# TODO: replace this with a function that generates complex measurements.
+# TODO: replace this with a function that generates complex measurements without reading data from disk.
 def get_measurement():
-    """
+    #"""
     from kid_readout.measurement.io import readoutnc
     nc_filename = '/data/readout/2015-05-12_113832_mmw_noise_broadband.nc'
     rnc = readoutnc.ReadoutNetCDF(nc_filename)
@@ -61,5 +62,5 @@ def get_measurement():
     rnc.close()
     m.state['corners'] = corners
     return m
-    """
-    return core.Measurement(corners)
+    #"""
+    #return core.Measurement(corners)
