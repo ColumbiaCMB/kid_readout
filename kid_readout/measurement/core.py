@@ -2,26 +2,41 @@
 This module is the core of the measurement subpackage.
 
 The main ideas are (1) to provide data container classes that define a format and include basic analysis code for the
-data, and (2) to separate these data container classes from the format in which the data are stored on disk.
+data, and (2) to separate these data container classes from the format in which the data are stored on disk. These
+goals are implemented using a Measurement class, defined in this module, and a few functions.
 
-These goals are implemented using a Measurement class, defined in this module, and a few functions.
+Measurements can contain other measurements -- for example, a frequency sweep is a collection of streams of
+time-ordered data -- so the both the class structure in memory and the hierarchical structure on disk is a standard
+tree. Except for the root node, every node in the tree contains a measurement or a sequence of measurements. (The
+root node is reserved for metadata.) Every node can thus be reached by a unique node path. For example, if the root
+contained only one Sweepstream measurement with the name "sweepstream," the structure would be
+
+sweepstream
+  stream
+  sweep
+    streams
+      0
+      1
+      etc.
+
+so the node path to the main SweepStream would be just "sweepstream" while the node path to one of the streams in the
+sweep could be "sweepstream:sweep:stream:1" and so on. The node paths can be used to address the data structure in a
+format-independent way in order to save new data in specific locations or to load subsets of the measurement tree.
+
+This hierarchical structure allows measurements that follow the specified format to be saved to disk and re-created
+later
+
+
+A measurement generically contains arrays that contain most of the data and a state dictionary that holds metadata.
+Because of restrictions imposed by the libraries used to store data on disk, the dictionary cannot hold arbitrary
+values.
+
+
+To create a new measurement, simply write a subclass of Measurement. Public attributes of the class will be saved
+
 Each Measurement should be self-contained, meaning that it should contain all data and metadata necessary to
 analyze and understand it.
 
-Measurements can contain other measurements, so the container structure is a standard tree. Except for the root node,
-every node in the tree contains a measurement or a sequence of measurements. (The root node is reserved for
-metadata.) Every node can thus be reached by a node path. For example, if the structure was
-
-stream
-sweep
-  streams
-    0
-    1
-    etc.
-
-then the node path to the main stream would be just 'stream', while the node path to one of the streams in the sweep
-could be 'sweep:stream:1', etc. The node paths can be used to address the data structure in order to save new data in
-specific locations or to load subsets of the measurement tree.
 """
 import re
 import inspect
@@ -44,20 +59,58 @@ class Measurement(object):
     """
     This is an abstract class that represents a measurement.
 
+    To create a new measurement, simply write a subclass of Measurement that obeys the restrictions described here.
+
+    Hierarchy.
+    Measurements that are public attributes of a measurement will be automatically saved and loaded.
+    Tuples or lists of measurements must be contained in MeasurementTuple or MeasurementList objects, which must also be
+    public attributes.
+
+    Instantiation.
+    When a measurement is read from disk, the read() function inspects the signature of its __init__ method. The
+    advantage of this is that every measurement read from disk can re-initialize itself. However, because only public
+    attributes are saved, this creates the restriction that a measurement must save the values with which it is
+    initialized and cannot discard them or store them internally under other names. For example, if a measurement's
+    __init__() method contained an argument foo that is stored as self.bar, the value in bar will be saved to disk as
+    bar but the read() function will not be able to tell that this value should be passed as the value of parameter
+    foo. See the instantiate() function.
+
+    Arrays.
     Each measurement has a dimensions class attribute that contains metadata for its array dimensions. This is
     necessary for the netCDF4 io module to handle the array dimensions correctly, and it also allows the classes to
     check the dimensions of their arrays on instantiation through the _validate_dimensions() method. Currently,
     the only array shapes supported are 1-D arrays and N-D arrays for which each dimension corresponds to an existing
-    1-D array.
+    1-D array. The dimensions metadata is implemented as an OrderedDict so that the netCDF4 writer can create the
+    dimensions in the proper order. The format is 'array_name': dimension_tuple, where dimension tuple is (
+    'array_name') for 1-D arrays or ('some_1D_array', 'another_1D_array'), for example.
 
-    The dimensions metadata is implemented as an OrderedDict so that the netCDF4 writer can create the dimensions in
-    the proper order. The format is 'array_name': dimension_tuple, where dimension tuple is ('array_name') for 1-D
-    arrays or ('some_1D_array', 'another_1D_array'), for example.
+    Containers.
+    Measurements store state information in a dictionary. (They actually use a subclass called StateDict, which has
+    extra access features.) Implementations should be able to store the following objects:
+    -basic types, such as numbers, booleans, strings, and None;
+    -sequences, i.e. lists, tuples, and arrays, that contain exactly one of the above basic types except None and no containers;
+    -dictionaries whose keys are strings and whose values are dictionaries, sequences, or basic types; the contained
+     dictionaries and sequences have the same requirements as above.
+    Most of these restrictions come from the limitations of netCDF4 and json. Some of them could be relaxed with more
+    work.
+
+    Note that NaN == Nan evaluates to False (the same is true of np.nan), and NaN is NaN may evaluate to True or
+    False, depending on how the NaN objects are created. The testing function compare_measurements() in
+    test/utility.py compares two measurements element-wise, so using NaN in such measurements will cause tests to
+    fail even if the measurements are the same.
     """
 
     dimensions = OrderedDict()
 
     def __init__(self, state, analyze=False, description='Measurement'):
+        """
+        Return a new Measurement instance.
+
+        :param state: a dictionary of state information.
+        :param analyze: if True (default False), the class will call its analyze() method after instantiation.
+        :param description: a string describing the measurement.
+        :return: a new Measurement instance.
+        """
         self.state = to_state_dict(state)
         self.description = description
         self._parent = None
@@ -99,6 +152,7 @@ class Measurement(object):
         dataframe['root_path'] = self._root_path
         dataframe['node_path'] = self._node_path
 
+    # TODO: add timestream or sweep indices?
     def add_legacy_origin(self, dataframe):
         """
         Add to the given dataframe information about the origin of the data. It's going to be difficult to implement
@@ -149,6 +203,12 @@ class MeasurementError(Exception):
 
 
 class StateDict(dict):
+    """
+    This class adds attribute access and some content restrictions to the dict class.
+
+    Measurements that require dictionaries can use the function to_state_dict() to perform partial validation of a
+    dictionary to ensure that the data can be re-created properly from disk.
+    """
 
     __setattr__ = dict.__setitem__
     __getattr__ = dict.get
@@ -157,8 +217,11 @@ class StateDict(dict):
     __getstate__ = lambda: None
     __slots__ = ()
 
-
+# TODO: incorporate restrictions into __init__().
+# TODO: implement more error checking.
 def to_state_dict(dictionary):
+    if not all([isinstance(k, (str, unicode)) for k in dictionary]):
+        raise MeasurementError("Dictionary keys must be strings.")
     dicts = [(k, v) for k, v in dictionary.items() if isinstance(v, dict)]
     others = [(k, v) for k, v in dictionary.items() if not isinstance(v, dict)]
     return StateDict([(k, v) for k, v in others] +
@@ -168,12 +231,15 @@ def to_state_dict(dictionary):
 class IO(object):
     """
     This is an abstract class that specifies the IO interface.
+
+    Implementations should be able to store large numpy arrays efficiently. Classes should include the dimensions
+    metadata that describes the relationships between the large arrays in the class.
     """
 
     def __init__(self, root_path):
         """
-        Return a new IO object that will read to or write from the given root directory or file. If the root does not exist, it should be
-        created. Implementations should NEVER open an existing file in write or append mode, and in
+        Return a new IO object that will read to or write from the given root directory or file. If the root does not
+        exist, it should be created. Implementations should NEVER open an existing file in write or append mode, and in
         general should make it impossible to overwrite data.
 
         :param root_path: the path to the root directory or file.
@@ -231,8 +297,6 @@ class IO(object):
         """
         pass
 
-    # These next two could probably be collapsed into one, but this shouldn't change much.
-
     def array_names(self, node_path):
         """
         Return the names of all arrays contained in the measurement at node_path.
@@ -248,10 +312,10 @@ class IO(object):
 
 # Public functions
 
-def write(measurement, io, node_path, close=True):
+def write(measurement, io, node_path):
     """
     Write a measurement to disk using the given IO class. This function feeds data to this class and tells it when to
-    create new nodes.
+    create new nodes to match the hierarchy of measurements.
 
     :param io: an instance of a class that implements the io interface.
     :param node_path: the node_path to the node that will contain this object; all but the final node in node_path must
@@ -259,11 +323,8 @@ def write(measurement, io, node_path, close=True):
     :return: None
     """
     _write_node(measurement, io, node_path)
-    if close:
-        io.close()
 
-
-def read(io, node_path, extras=True, translate=None, close=True):
+def read(io, node_path, extras=True, translate=None):
     """
     Read a measurement from disk and return it.
 
@@ -271,14 +332,11 @@ def read(io, node_path, extras=True, translate=None, close=True):
     :param node_path:the path to the node to be loaded, in the form 'node0:node1:node2'
     :param extras: add extra variables; see instantiate().
     :param translate: a dictionary with entries 'original_class': 'new_class'; all class names must be fully-qualified.
-    :param close: if True, call io.close() after writing.
     :return: the measurement corresponding to the given node.
     """
     if translate is None:
         translate = {}
     measurement = _read_node(io, node_path, extras, translate)
-    if close:
-        io.close()
     return measurement
 
 

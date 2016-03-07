@@ -37,6 +37,7 @@ def timestream_state_from_rnc(rnc, timestream_group_index):
     return state
 
 
+# TODO: change the format to single variables mickey and minnie, and keep NaN.
 def mmw_source_state_from_rnc(rnc):
     """
     Return a dictionary containing millimeter-wave source information from the given ReadoutNetCDF object.
@@ -44,7 +45,9 @@ def mmw_source_state_from_rnc(rnc):
     :param rnc: a ReadoutNetCDF object.
     :return: a dictionary containing state information.
     """
-    state = {'attenuator_turns': [float(t) for t in rnc.mmw_atten_turns]}
+    mickey_turns, minnie_turns = rnc.mmw_atten_turns
+    state = {'mickey_turns': float(mickey_turns),
+             'minnie_turns': float(minnie_turns)}
     return state
 
 
@@ -122,6 +125,16 @@ def timestream_arrays_from_rnc(rnc, timestream_group_index):
               'phase': np.nan * np.empty(tg.tonebin.size),
               'fft_bin': np.nan * np.empty(tg.tonebin.size)}
     return arrays
+
+
+def nan_to_none(iterable):
+    values = []
+    for value in iterable:
+        if np.isnan(value):
+            values.append(None)
+        else:
+            values.append(float(value))
+    return values
 
 
 # These functions are intended to use the new code to read legacy data.

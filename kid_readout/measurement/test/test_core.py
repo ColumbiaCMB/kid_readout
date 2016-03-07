@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from kid_readout.measurement import core
 from kid_readout.measurement.io import memory
-from kid_readout.measurement.test.utilties import compare_measurements, get_measurement
+from kid_readout.measurement.test.utilities import compare_measurements, get_measurement
 
 def test_measurement_instantiation():
     m = core.Measurement({})
@@ -14,7 +14,6 @@ def test_measurement_instantiation():
     assert m._node_path is None
     try:
         m.analyze()
-        assert True
     except:
         assert False
 
@@ -65,7 +64,7 @@ def test_read_write():
     io = memory.IO(None)
     original = get_measurement()
     name = 'test'
-    core.write(original, io, name, close=False)
+    core.write(original, io, name)
     compare_measurements(original, core.read(io, name))
 
 
@@ -103,11 +102,11 @@ def test_validate_node_path():
     for bad in bad_node_paths:
         try:
             core.validate_node_path(bad)
+            assert False
         except core.MeasurementError:
-            assert True
+            pass
     for good in good_node_paths:
         try:
             core.validate_node_path(good)
-            assert True
         except core.MeasurementError:
             assert False
