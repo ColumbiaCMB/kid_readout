@@ -59,6 +59,7 @@ IO_MODULE = 'io_module'  # This is the full-qualified name of the module used to
 ROOT_PATH = 'root_path'  # This is the root file or directory from which a measurement was read from disk.
 NODE_PATH = 'node_path'  # This is the node path from the root node to the measurement node.
 
+# TODO: decide which names really need to be reserved.
 RESERVED_NAMES = [CLASS_NAME, IO_CLASS_NAME, IO_MODULE, ROOT_PATH, NODE_PATH]
 NODE_PATH_SEPARATOR = ':'
 

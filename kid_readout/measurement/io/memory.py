@@ -29,7 +29,7 @@ class IO(core.IO):
     @property
     def closed(self):
         """
-        Return True if all files on disk are closed.
+        Return True if all files are closed.
         """
         return self.root is None
 
@@ -45,7 +45,7 @@ class IO(core.IO):
 
     def write_other(self, node_path, key, value):
         """
-        Write value to node_path with name key; value should not be a numpy array.
+        Write value to node_path with name key.
         """
         node = self._get_node(node_path)
         node[key] = value
@@ -101,4 +101,3 @@ class IO(core.IO):
             for name in core.explode(node_path):
                 node = node[self._measurement][name]
         return node
-
