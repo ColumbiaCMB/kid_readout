@@ -68,6 +68,34 @@ def test_read_write():
     compare_measurements(original, core.read(io, name))
 
 
+def test_comparison_code_state():
+    m1 = get_measurement()
+    m2 = get_measurement()
+    m1.state['test'] = 1
+    m2.state['test'] = 2
+    try:
+        compare_measurements(m1, m2)
+        failed = True
+    except AssertionError:
+        failed = False
+    if failed:
+        raise AssertionError
+
+
+def test_comparison_code_attribute():
+    m1 = get_measurement()
+    m2 = get_measurement()
+    m1.attribute = 1
+    m2.attribute = 2
+    try:
+        compare_measurements(m1, m2)
+        failed = True
+    except AssertionError:
+        failed = False
+    if failed:
+        raise AssertionError
+
+
 def test_instantiate():
     full_class_name = 'kid_readout.measurement.core.Measurement'
     variables = {'state': {'key': 'value'},
