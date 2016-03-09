@@ -30,4 +30,4 @@ def output_sample_rate(roach_state):
         return roach_state['adc_sample_rate'] / roach_state['num_filterbank_channels']
     else:
         # In the baseband case, the number of real samples per FFT is 2 * num_filterbank_channels.
-        return 1e6 * roach_state['adc_sample_rate'] / (2 * roach_state['num_filterbank_channels'])
+        return roach_state['adc_sample_rate'] / (2 * roach_state['num_filterbank_channels'])
