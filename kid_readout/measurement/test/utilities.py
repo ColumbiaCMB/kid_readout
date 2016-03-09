@@ -63,4 +63,9 @@ def get_measurement():
     m.state['corners'] = corners
     return m
     """
-    return core.Measurement(corners)
+    m = core.Measurement(corners)
+    m.int_list = range(-1, 3)
+    m.float_list = list(np.linspace(-1, 2, 0.1))
+    m.str_list = ['one', 'two', 'three']
+    m.bool_list = [True, False]
+    return m

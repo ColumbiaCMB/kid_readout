@@ -224,7 +224,8 @@ class StateDict(dict):
     """
 
     __setattr__ = dict.__setitem__
-    __getattr__ = dict.get
+#    __getattr__ = dict.get
+    __getattr__ = dict.__getitem__
     __delattr__ = dict.__delitem__
     __copy__ = lambda self: StateDict(self)
     __getstate__ = lambda: None
@@ -235,10 +236,9 @@ class StateDict(dict):
 def to_state_dict(dictionary):
     if not all([isinstance(k, (str, unicode)) for k in dictionary]):
         raise MeasurementError("Dictionary keys must be strings.")
-    dicts = [(k, v) for k, v in dictionary.items() if isinstance(v, dict)]
+    dicts = [(k, to_state_dict(v)) for k, v in dictionary.items() if isinstance(v, dict)]
     others = [(k, v) for k, v in dictionary.items() if not isinstance(v, dict)]
-    return StateDict([(k, v) for k, v in others] +
-                     [(k, to_state_dict(v)) for k, v in dicts])
+    return StateDict(dicts + others)
 
 
 class IO(object):
