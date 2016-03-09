@@ -284,7 +284,7 @@ class RoachBaseband(RoachInterface):
 
         pow2: bool, If true, force the data length to the nearest power of 2
         """
-        chan_rate = self.fs * 1e6 / (2 * self.nfft)  # samples per second for one channel
+        chan_rate = self.fs * 1e6 / (2 * self.nfft)  # samples per second for one tone_index
         samples_per_channel_per_block = 4096
         seconds_per_block = samples_per_channel_per_block / chan_rate
         blocks = int(np.round(nseconds / seconds_per_block))
@@ -305,7 +305,7 @@ class RoachBaseband(RoachInterface):
         
         pow2: bool, If true, force the data length to the nearest power of 2
         """
-        chan_rate = self.fs * 1e6 / (2 * self.nfft)  # samples per second per channel
+        chan_rate = self.fs * 1e6 / (2 * self.nfft)  # samples per second per tone_index
         nch = self.fpga_fft_readout_indexes.shape[0]
         seconds_per_block = (1024 * nch) / chan_rate
         blocks = int(np.round(nseconds / seconds_per_block))

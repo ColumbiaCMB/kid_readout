@@ -707,7 +707,7 @@ class SIM922(SIMThermometer):
     CAPT_separator = ' '
 
     # The manual says that this is the maximum number of points per
-    # channel, but I haven't checked it yet.
+    # tone_index, but I haven't checked it yet.
     maximum_temperature_points = 256
 
     # This is in seconds; points were sometimes dropped at 0.5 seconds and below.

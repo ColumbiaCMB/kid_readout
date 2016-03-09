@@ -47,13 +47,13 @@ def compare_measurements(a, b, verbose=False):
         elif isinstance(va, np.ndarray):  # This allows declared arrays to contain NaN and still compare correctly.
             assert np.all(np.isnan(va) == np.isnan(vb))
             assert np.all(va[~np.isnan(va)] == vb[~np.isnan(vb)])
-        else:  # This will fail for sequences that contain any nan values.
+        else:  # This will fail for NaN or sequences that contain any NaN values.
             assert va == vb
 
 
 # TODO: replace this with a function that generates complex measurements without reading data from disk.
 def get_measurement():
-    """
+    #"""
     from kid_readout.measurement.io import readoutnc
     nc_filename = '/data/readout/2015-05-12_113832_mmw_noise_broadband.nc'
     rnc = readoutnc.ReadoutNetCDF(nc_filename)
@@ -65,7 +65,8 @@ def get_measurement():
     """
     m = core.Measurement(corners)
     m.int_list = range(-1, 3)
-    m.float_list = list(np.linspace(-1, 2, 0.1))
+    m.float_list = list(np.linspace(-1, 2, 10))
     m.str_list = ['one', 'two', 'three']
     m.bool_list = [True, False]
     return m
+    """

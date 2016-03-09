@@ -17,13 +17,34 @@ class Stream(Measurement):
     This class represents time-ordered data from a single channel.
     """
 
-    dimensions = OrderedDict([('epoch', ('epoch',)),
+    dimensions = OrderedDict([('tone_bin', ('tone_bin',)),
+                              ('amplitude', ('tone_bin',)),
+                              ('phase', ('tone_bin',)),
+                              ('epoch', ('epoch',)),
                               ('s21', ('epoch',))])
 
-    def __init__(self, tone_bin, amplitude, phase, fft_bin, epoch, s21, state, analyze=False, description='Stream'):
+    def __init__(self, tone_bin, amplitude, phase, tone_index, fft_bin, epoch, s21, state, analyze=False,
+                 description='Stream'):
+        """
+        Return a new Stream instance. The integer tone_index is the common index of tone_bin, amplitude, and phase for
+        the single tone used to produce the time-ordered s21 data.
+
+        :param tone_bin: an array of integers representing the frequencies of the tones played during the measurement.
+        :param amplitude: an array of floats representing the amplitudes of the tones played during the measurement.
+        :param phase: an array of floats representing the radian phases of the tones played during the measurement.
+        :param tone_index: an int for which tone_bin[tone_index] corresponds to the frequency used to produce s21.
+        :param fft_bin: an int that is the fft bin in which the tone lies.
+        :param epoch: an array of floats representing the unix timestamp when the data was recorded.
+        :param s21: an 1-D array of complex floats containing the demodulated data.
+        :param state: a dict containing state information for the roach and other hardware.
+        :param analyze: if True, call the analyze() method at the end of instantiation.
+        :param description: a string describing this measurement.
+        :return: a new Stream instance.
+        """
         self.tone_bin = tone_bin
         self.amplitude = amplitude
         self.phase = phase
+        self.tone_index = tone_index
         self.fft_bin = fft_bin
         self.epoch = epoch
         self.s21 = s21
@@ -44,14 +65,22 @@ class Stream(Measurement):
     @property
     def frequency(self):
         if self._frequency is None:
-            self._frequency = calculate.frequency_MHz(self.state.roach, self.tone_bin)
+            self._frequency = calculate.frequency(self.state.roach, self.tone_bin[self.tone_index])
         return self._frequency
+
+    @property
+    def frequency_MHz(self):
+        return 1e-6 * self.frequency
 
     @property
     def baseband_frequency(self):
         if self._baseband_frequency is None:
-            self._baseband_frequency = calculate.baseband_frequency_MHz(self.state.roach, self.tone_bin)
+            self._baseband_frequency = calculate.baseband_frequency(self.state.roach, self.tone_bin[self.tone_index])
         return self._baseband_frequency
+
+    @property
+    def baseband_frequency_MHz(self):
+        return 1e-6 * self.baseband_frequency
 
     @property
     def output_sample_rate(self):
@@ -98,7 +127,8 @@ class Stream(Measurement):
                 raise ValueError("Step size is not supported: {}".format(key))
             start_index = np.searchsorted(self.epoch, (start,), side='left')
             stop_index = np.searchsorted(self.epoch, (stop,), side='right')  # This index is not included
-            return Stream(tone_bin=self.tone_bin, amplitude=self.amplitude, phase=self.phase, fft_bin=self.fft_bin,
+            return Stream(tone_bin=self.tone_bin, amplitude=self.amplitude, phase=self.phase,
+                          tone_index=self.tone_index, fft_bin=self.fft_bin,
                           epoch=self.epoch[start_index:stop_index], s21=self.s21[:, start_index:stop_index],
                           state=self.state, description=self.description)
         else:
