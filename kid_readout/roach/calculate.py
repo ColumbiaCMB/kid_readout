@@ -24,11 +24,10 @@ def frequency(roach_state, tone_bin):
         return baseband_frequency(roach_state, tone_bin)
 
 
-# TODO: explain this factor of 2
 def output_sample_rate(roach_state):
     if roach_state['heterodyne']:
+        # In the heterodyne case, the number of complex samples per FFT is just num_filterbank_channels.
         return roach_state['adc_sample_rate'] / roach_state['num_filterbank_channels']
     else:
+        # In the baseband case, the number of real samples per FFT is 2 * num_filterbank_channels.
         return 1e6 * roach_state['adc_sample_rate'] / (2 * roach_state['num_filterbank_channels'])
-
-
