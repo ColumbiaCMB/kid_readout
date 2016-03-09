@@ -19,11 +19,12 @@ def frequency_MHz(roach_state, tone_bin):
         return baseband_frequency_MHz(roach_state, tone_bin)
 
 
-# TODO: explain this factor of 2
 def output_sample_rate(roach_state):
     if roach_state['heterodyne']:
+        # In the heterodyne case, the number of complex samples per FFT is just nfft
         return 1e6 * roach_state['adc_sample_rate_MHz'] / roach_state['nfft']
     else:
+        # In the baseband case, the number of real samples per FFT is 2 * nfft
         return 1e6 * roach_state['adc_sample_rate_MHz'] / (2 * roach_state['nfft'])
 
 
