@@ -2,7 +2,10 @@ numpy
 scipy
 matplotlib
 pandas
-lmfit
+nose
 requests
+pyserial
+netcdf4
+lmfit==0.8.3
 emcee
 testfixtures
