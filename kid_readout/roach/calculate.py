@@ -2,6 +2,8 @@
 Calculate frequencies and sample rates using roach state.
 
 All frequencies and rates in the roach state dictionary are assumed to be in Hz, not MHz.
+
+These functions should eventually be merged into the roach interface.
 """
 from __future__ import division
 import numpy as np
@@ -24,7 +26,7 @@ def frequency(roach_state, tone_bin):
         return baseband_frequency(roach_state, tone_bin)
 
 
-def output_sample_rate(roach_state):
+def audio_sample_rate(roach_state):
     if roach_state['heterodyne']:
         # In the heterodyne case, the number of complex samples per FFT is just num_filterbank_channels.
         return roach_state['adc_sample_rate'] / roach_state['num_filterbank_channels']

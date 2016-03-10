@@ -49,6 +49,7 @@ format-independent way in order to save new data in specific locations or to loa
 import re
 import inspect
 import importlib
+import numpy as np
 from collections import OrderedDict
 
 CLASS_NAME = '_class'  # This is the string used by writer objects to save class names.
@@ -178,6 +179,38 @@ class Measurement(object):
         for name, dimensions in self.dimensions.items():
             if not getattr(self, name).shape == tuple(getattr(self, dimension).size for dimension in dimensions):
                 raise ValueError("Shape of {} does not match size of {}.".format(name, dimensions))
+
+    def __eq__(self, other):
+        """
+        Recursively compare two measurements. At each level, the function tests that both instances have the same public
+        attributes (meaning those that do not start with an underscore), that all these attributes are equal,
+        and that the classes of the measurements are equal. The function does not test private variables at all,
+        and does not even check whether the instances have the same private attributes.
+
+        :param other: a Measurement instance.
+        :return: True if self compares equal with other.
+        """
+        try:
+            keys_s = ['__class__'] + [k for k in self.__dict__ if not k.startswith('_')]
+            keys_o = ['__class__'] + [k for k in other.__dict__ if not k.startswith('_')]
+            assert set(keys_s) == set(keys_o)
+            for key in keys_s:
+                value_s = getattr(self, key)
+                value_o = getattr(other, key)
+                if issubclass(value_s.__class__, Measurement):
+                    assert value_s.__eq__(value_o)
+                elif issubclass(value_s.__class__, MeasurementSequence):
+                    assert len(value_s) == len(value_o)
+                    for meas_s, meas_o in zip(value_s, value_o):
+                        assert meas_s.__eq__(meas_o)
+                elif isinstance(value_s, np.ndarray):  # This allows declared arrays to contain NaN and be equal.
+                    assert np.all(np.isnan(value_s) == np.isnan(value_o))
+                    assert np.all(value_s[~np.isnan(value_s)] == value_o[~np.isnan(value_o)])
+                else:  # This will fail for NaN or sequences that contain any NaN values.
+                    assert value_s == value_o
+        except AssertionError:
+            return False
+        return True
 
 
 class MeasurementSequence(object):

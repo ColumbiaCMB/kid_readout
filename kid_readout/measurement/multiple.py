@@ -1,16 +1,16 @@
 """
-This module contains classes that represent simultaneous multiple-channel measurements.
+This module has classes that contain simultaneous multiple-channel measurements.
 """
 from __future__ import division
 from collections import OrderedDict
 import numpy as np
 import pandas as pd
-from kid_readout.measurement.core import Measurement, MeasurementTuple, MeasurementError
+from kid_readout.measurement import core
 from kid_readout.measurement.single import Stream, Sweep, ResonatorSweep, SweepStream
-from kid_readout.roach import calculate
+from kid_readout.roach import calculate, temp_state
 
 
-class StreamArray(Measurement):
+class StreamArray(core.Measurement):
     """
     This class represents simultaneously-sampled data from multiple channels.
     """
@@ -26,14 +26,11 @@ class StreamArray(Measurement):
     def __init__(self, tone_bin, amplitude, phase, tone_index, fft_bin, epoch, s21, state, analyze=False,
                  description='StreamArray'):
         """
-
-
         Return a new Stream instance. The integer array tone_index contains the indices of tone_bin, amplitude, and phase
         for the tones demodulated to produce the time-ordered s21 data.
 
         The tone_bin, amplitude, phase, tone_index, fft_bin, and epoch arrays are 1-D, while s21 is 2-D. The arrays must
         obey s21.shape == (tone_index.size, epoch.size)
-
 
         :param tone_bin: an array of integers representing the frequencies of the tones played during the measurement.
         :param amplitude: an array of floats representing the amplitudes of the tones played during the measurement.
@@ -91,7 +88,7 @@ class StreamArray(Measurement):
     @property
     def output_sample_rate(self):
         if self._output_sample_rate is None:
-            self._output_sample_rate = calculate.output_sample_rate(self.state.roach)
+            self._output_sample_rate = calculate.audio_sample_rate(self.state.roach)
         return self._output_sample_rate
 
     @property
@@ -153,13 +150,13 @@ class StreamArray(Measurement):
             raise ValueError("Invalid index: {}".format(index))
 
 
-class SweepArray(Measurement):
+class SweepArray(core.Measurement):
     """
-    This class represents a set of groups of streams.
+    This class contains a group of stream arrays.
     """
 
     def __init__(self, stream_arrays, state, analyze=False, description='SweepArray'):
-        self.stream_arrays = MeasurementTuple(stream_arrays)
+        self.stream_arrays = core.MeasurementTuple(stream_arrays)
         for sa in self.stream_arrays:
             sa._parent = self
         super(SweepArray, self).__init__(state=state, analyze=analyze, description=description)
@@ -197,11 +194,11 @@ class ResonatorSweepArray(SweepArray):
             raise ValueError("Invalid index: {}".format(index))
 
 
-class SweepStreamArray(Measurement):
+class SweepStreamArray(core.Measurement):
 
     def __init__(self, sweep_array, stream_array, state, analyze=False, description='SweepStreamArray'):
         if sweep_array.num_channels != stream_array.tone_index.size:
-            raise MeasurementError("The number of SweepArray channels does not match the StreamArray number.")
+            raise core.MeasurementError("The number of SweepArray channels does not match the StreamArray number.")
         self.sweep_array = sweep_array
         self.sweep_array._parent = self
         self.stream_array = stream_array
@@ -233,3 +230,24 @@ class SweepStreamArray(Measurement):
             dataframes.append(self.sweep_stream(n).to_dataframe())
         return pd.concat(dataframes, ignore_index=True)
 
+
+# Functions for generating fake measurements.
+
+
+def make_stream_array(tone_index=np.arange(16), mean=np.zeros(16), rms=np.ones(16), length=1, t0=0, roach_state=None):
+    variables = {'state': {}}
+    if roach_state is None:
+        roach_array, roach_other = temp_state.fake_baseband()
+    else:
+        roach_array, roach_other = roach_state
+    variables['tone_bin'] = roach_array['tone_bin']
+    variables['amplitude'] = roach_array['amplitude']
+    variables['phase'] = roach_array['phase']
+    variables['tone_index'] = tone_index
+    variables['fft_bin'] = roach_array['fft_bin'][tone_index]
+    variables['state']['roach'] = roach_other
+    num_samples = length * calculate.audio_sample_rate(roach_other)
+    variables['s21'] = mean[:, np.newaxis] + rms[:, np.newaxis] * (np.random.randn(tone_index.size, num_samples) +
+                                                                   1j * np.random.randn(tone_index.size, num_samples))
+    variables['epoch'] = np.linspace(t0, t0 + length, num_samples)
+    return core.instantiate(full_class_name=__name__ + '.' + 'StreamArray', variables=variables, extras=False)

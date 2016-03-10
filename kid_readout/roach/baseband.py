@@ -194,11 +194,10 @@ class RoachBaseband(RoachInterface):
         tone_bins : array of integers
             the tone bins (0 to nsamp - 1) which contain tones
         
-        nsamp : length of the playback bufffer
+        nsamp : length of the playback buffer
         
         returns : fft_bins, array of integers. 
         """
-        # TODO: since nfft is an int, this division will truncate if nsamp is an int
         tone_bins_per_fft_bin = nsamp / (2. * self.nfft)  # factor of 2 because real signal
         fft_bins = np.round(tone_bins / float(tone_bins_per_fft_bin)).astype('int')
         return fft_bins

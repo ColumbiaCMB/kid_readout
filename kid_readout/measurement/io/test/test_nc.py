@@ -12,4 +12,4 @@ def test_read_write():
         original = get_measurement()
         name = 'test'
         core.write(original, io, name)
-        compare_measurements(original, core.read(io, name))
+        assert original == core.read(io, name)

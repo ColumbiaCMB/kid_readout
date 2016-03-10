@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 from kid_readout.measurement import core
 from kid_readout.measurement.io import memory
-from kid_readout.measurement.test.utilities import compare_measurements, get_measurement
+from kid_readout.measurement.test.utilities import get_measurement
+
 
 def test_measurement_instantiation():
     m = core.Measurement({})
@@ -65,7 +66,7 @@ def test_read_write():
     original = get_measurement()
     name = 'test'
     core.write(original, io, name)
-    compare_measurements(original, core.read(io, name))
+    assert original == core.read(io, name)
 
 
 def test_comparison_code_state():
@@ -73,13 +74,7 @@ def test_comparison_code_state():
     m2 = get_measurement()
     m1.state['test'] = 1
     m2.state['test'] = 2
-    try:
-        compare_measurements(m1, m2)
-        failed = True
-    except AssertionError:
-        failed = False
-    if failed:
-        raise AssertionError
+    assert m1 != m2
 
 
 def test_comparison_code_attribute():
@@ -87,13 +82,7 @@ def test_comparison_code_attribute():
     m2 = get_measurement()
     m1.attribute = 1
     m2.attribute = 2
-    try:
-        compare_measurements(m1, m2)
-        failed = True
-    except AssertionError:
-        failed = False
-    if failed:
-        raise AssertionError
+    assert m1 != m2
 
 
 def test_instantiate():

@@ -20,6 +20,7 @@ corners = {'None': None, 'True': True, 'False': False,
                          'bool_list': [False, True, False]}}
 
 
+# Deprecated; code moved to core.Measurement.__eq__()
 def compare_measurements(a, b, verbose=False):
     """
     Recursively compare two measurements. At each level, the function tests that both instances have the same public
@@ -42,6 +43,7 @@ def compare_measurements(a, b, verbose=False):
         if issubclass(va.__class__, core.Measurement):
             compare_measurements(va, vb, verbose=verbose)
         elif issubclass(va.__class__, core.MeasurementSequence):
+            assert len(va) == len(vb)
             for ma, mb in zip(va, vb):
                 compare_measurements(ma, mb, verbose=verbose)
         elif isinstance(va, np.ndarray):  # This allows declared arrays to contain NaN and still compare correctly.

@@ -1,20 +1,20 @@
 """
-This module contains classes that represent single-channel measurements.
+This module has classes that contain single-channel measurements.
 """
 from __future__ import division
 from collections import OrderedDict
 import numpy as np
 from matplotlib.pyplot import mlab  # TODO: replace with a scipy PSD estimator
 import pandas as pd
-from kid_readout.roach import calculate
+from kid_readout.roach import calculate, temp_state
 from kid_readout.analysis.resonator import resonator
 from kid_readout.analysis.timedomain.despike import deglitch_window
-from kid_readout.measurement.core import Measurement, MeasurementTuple
+from kid_readout.measurement import core
 
 
-class Stream(Measurement):
+class Stream(core.Measurement):
     """
-    This class represents time-ordered data from a single channel.
+    This class contains time-ordered data from a single channel.
     """
 
     dimensions = OrderedDict([('tone_bin', ('tone_bin',)),
@@ -75,7 +75,8 @@ class Stream(Measurement):
     @property
     def baseband_frequency(self):
         if self._baseband_frequency is None:
-            self._baseband_frequency = calculate.baseband_frequency(self.state.roach, self.tone_bin[self.tone_index])
+            self._baseband_frequency = calculate.baseband_frequency(self.state.roach,
+                                                                          self.tone_bin[self.tone_index])
         return self._baseband_frequency
 
     @property
@@ -135,7 +136,7 @@ class Stream(Measurement):
             raise ValueError("Invalid slice: {}".format(key))
 
 
-class Sweep(Measurement):
+class Sweep(core.Measurement):
     """
     This class represents a group of streams with different frequencies.
     """
@@ -143,7 +144,7 @@ class Sweep(Measurement):
     def __init__(self, streams, state, analyze=False, description='Sweep'):
         # Don't sort by frequency so that non-monotonic order can be preserved if needed, but note that this will fail
         # for a ResonatorSweep because the Resonator class requires a monotonic frequency array.
-        self.streams = MeasurementTuple(streams)
+        self.streams = core.MeasurementTuple(streams)
         for stream in self.streams:
             stream._parent = self
         self._frequency = None
@@ -210,7 +211,7 @@ class ThroughSweep(Sweep):
         return None
 
 
-class SweepStream(Measurement):
+class SweepStream(core.Measurement):
     def __init__(self, sweep, stream, state, analyze=False, description='SweepStream'):
         self.sweep = sweep
         self.sweep._parent = self
@@ -367,3 +368,24 @@ class SweepStream(Measurement):
         dataframe = pd.DataFrame(data, index=[0])
         self.add_origin(dataframe)
         return dataframe
+
+
+# Functions for generating fake measurements.
+
+
+def make_stream(tone_index=0, mean=0, rms=1, length=1, t0=0, roach_state=None):
+    variables = {'state': {}}
+    if roach_state is None:
+        roach_array, roach_other = temp_state.fake_baseband()
+    else:
+        roach_array, roach_other = roach_state
+    variables['tone_bin'] = roach_array['tone_bin']
+    variables['amplitude'] = roach_array['amplitude']
+    variables['phase'] = roach_array['phase']
+    variables['tone_index'] = tone_index
+    variables['fft_bin'] = roach_array['fft_bin'][tone_index]
+    variables['state']['roach'] = roach_other
+    num_samples = length * calculate.audio_sample_rate(roach_other)
+    variables['s21'] = mean + rms * (np.random.randn(num_samples) + 1j * np.random.randn(num_samples))
+    variables['epoch'] = np.linspace(t0, t0 + length, num_samples)
+    return core.instantiate(full_class_name=__name__ + '.' + 'Stream', variables=variables, extras=False)
