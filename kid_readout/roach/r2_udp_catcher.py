@@ -56,6 +56,8 @@ def decode_packets(plist,nchans):
         packet_counter.append(all_data[-1])
     data = np.hstack(raw_data)
     data = data.view('<i2').astype('float32').view('complex64')
+    #we think the real and imaginary parts are switched in the packet so we undo that here
+    data = np.conj(data)*1j
     data = data.reshape((-1,nchans))
     packet_counter = np.array(packet_counter)
     return data,packet_counter

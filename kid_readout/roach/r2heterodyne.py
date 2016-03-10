@@ -103,7 +103,7 @@ class Roach2Heterodyne(RoachHeterodyne):
 
     def get_data_udp(self, nread=2, demod=True):
         data, seqnos = kid_readout.roach.r2_udp_catcher.get_udp_data(self, npkts=nread,
-                                                                     nchans=self.fft_bins.shape[1],
+                                                                     nchans=self.readout_selection.shape[0],
                                                                      addr=(self.host_ip, 55555))  # , stream_reg, addr)
         if demod:
             data = self.demodulate_data(data)
