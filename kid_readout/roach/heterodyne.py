@@ -463,7 +463,7 @@ class Demodulator(object):
         foffs = tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft)
         wc = self.compute_pfb_response(foffs)
         t = np.arange(data.shape[0])
-        demod = wc*np.exp(1j * (2 * np.pi * foffs * t + phi0)) * data
+        demod = wc*np.exp(-1j * (2 * np.pi * foffs * t + phi0)) * data
         return demod
 
 
