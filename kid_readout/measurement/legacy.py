@@ -189,7 +189,7 @@ def common(sequence):
 # TODO: change description functionality to add_legacy_origin
 
 
-def stream_from_rnc(rnc, timestream_group_index, channel, description=None):
+def stream_from_rnc(rnc, timestream_group_index, tone_index, description=None):
     roach_state = timestream_roach_state_from_rnc(rnc, timestream_group_index)
     state = timestream_state_from_rnc(rnc, timestream_group_index)
     if description is None:
@@ -200,14 +200,13 @@ def stream_from_rnc(rnc, timestream_group_index, channel, description=None):
     tone_bin = tg.tonebin[increasing_order]
     amplitude = np.ones(tone_bin.size, dtype=np.float)
     phase = np.zeros(tone_bin.size, dtype=np.float)
-    tone_index = channel
     # TODO: decide what to do about these values: invert to RoachInterface values or ignore them?
-    fft_bin = tg.fftbin[increasing_order][channel]
+    fft_bin = tg.fftbin[increasing_order][tone_index]
     # All the epoch and data_len_seconds values are the same. Assume regular sampling.
     epoch = np.linspace(common(tg.epoch),
                         common(tg.epoch) + common(tg.data_len_seconds),
                         tg.num_data_samples)
-    s21 = tg.data[increasing_order, :]
+    s21 = tg.data[increasing_order, :][tone_index]
     return Stream(tone_bin=tone_bin, amplitude=amplitude, phase=phase, tone_index=tone_index, fft_bin=fft_bin,
                   epoch=epoch, s21=s21, roach_state=roach_state, state=state, description=description)
 
@@ -235,7 +234,7 @@ def streamarray_from_rnc(rnc, timestream_group_index, description=None):
                        epoch=epoch, s21=s21, roach_state=roach_state, state=state, description=description)
 
 
-def sweep_from_rnc(rnc, sweep_group_index, channel, resonator=True, description=None):
+def sweep_from_rnc(rnc, sweep_group_index, tone_index, resonator=True, description=None):
     roach_state = sweep_roach_state_from_rnc(rnc, sweep_group_index)
     state = sweep_state_from_rnc(rnc, sweep_group_index)
     if description is None:
@@ -252,18 +251,17 @@ def sweep_from_rnc(rnc, sweep_group_index, channel, resonator=True, description=
         simultaneous = tg.epoch == start_epoch
         unordered_tone_bin = tg.tonebin[simultaneous]
         increasing_order = unordered_tone_bin.argsort()
-        tone_bin = unordered_tone_bin[increasing_order][channel]  # Assume monotonic frequencies at each epoch:
+        tone_bin = unordered_tone_bin[increasing_order]  # Assume monotonic frequencies at each epoch:
         amplitude = np.ones(tone_bin.size, dtype=np.float)
         phase = np.zeros(tone_bin.size, dtype=np.float)
-        tone_index = np.arange(tone_bin.size)[channel]  # For these data, all the tones are read out.
-        fft_bin = tg.fftbin[simultaneous][increasing_order][channel]
+        fft_bin = tg.fftbin[simultaneous][increasing_order][tone_index]
         # All of the epochs are the same
         epoch = np.linspace(common(tg.epoch[simultaneous]),
                             common(tg.epoch[simultaneous]) + common(tg.data_len_seconds),
                             tg.num_data_samples)
-        s21 = tg.data[simultaneous, :][increasing_order][channel]
-        streams.append(StreamArray(tone_bin=tone_bin, amplitude=amplitude, phase=phase, tone_index=tone_index,
-                                   fft_bin=fft_bin, epoch=epoch, s21=s21, roach_state=roach_state))
+        s21 = tg.data[simultaneous, :][increasing_order][tone_index]
+        streams.append(Stream(tone_bin=tone_bin, amplitude=amplitude, phase=phase, tone_index=tone_index,
+                              fft_bin=fft_bin, epoch=epoch, s21=s21, roach_state=roach_state))
     if resonator:
         return ResonatorSweep(streams=streams, state=state, description=description)
     else:
@@ -305,10 +303,10 @@ def sweeparray_from_rnc(rnc, sweep_group_index, resonator=True, description=None
         return SweepArray(stream_arrays=stream_arrays, state=state, description=description)
 
 
-def sweepstream_from_rnc(rnc, sweep_group_index, timestream_group_index, channel):
+def sweepstream_from_rnc(rnc, sweep_group_index, timestream_group_index, tone_index):
     state = global_roach_state_from_rnc(rnc)
-    sweep = sweep_from_rnc(rnc, sweep_group_index, channel)
-    stream = stream_from_rnc(rnc, timestream_group_index, channel)
+    sweep = sweep_from_rnc(rnc, sweep_group_index, tone_index)
+    stream = stream_from_rnc(rnc, timestream_group_index, tone_index)
     return SweepStream(sweep, stream, state)
 
 

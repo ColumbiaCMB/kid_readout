@@ -5,9 +5,9 @@ from kid_readout.measurement.io import memory
 from kid_readout.measurement.test.utilities import get_measurement
 
 
-def test_measurement_instantiation():
-    m = core.Measurement({})
-    assert m.state == core.StateDict()
+def test_measurement_instantiation_blank():
+    m = core.Measurement()
+    assert m.state == None
     assert m.description == 'Measurement'
     assert m._parent is None
     assert m._io_class is None
@@ -20,11 +20,11 @@ def test_measurement_instantiation():
 
 
 def test_measurement_to_dataframe():
-    assert all(core.Measurement({}).to_dataframe() == pd.DataFrame())
+    assert all(core.Measurement().to_dataframe() == pd.DataFrame())
 
 
 def test_measurement_add_origin():
-    m = core.Measurement({})
+    m = core.Measurement()
     df = m.to_dataframe()
     assert df is None
     df = pd.DataFrame([0])  # This creates a DataFrame with shape (1, 1).
@@ -37,7 +37,7 @@ def test_measurement_add_origin():
 
 
 def test_measurement_add_legacy_origin():
-    m = core.Measurement({})
+    m = core.Measurement()
     df = m.to_dataframe()
     assert df is None
     df = pd.DataFrame([0])  # This creates a DataFrame with shape (1, 1).
