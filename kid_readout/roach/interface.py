@@ -164,7 +164,7 @@ class RoachInterface(object):
             num_tones = None
         else:
             num_tones = self.tone_bins.shape[1], # We may want to update this later if some tones have
-                                                 # zero amplitude
+                                                 # zero tone_amplitude
         return num_tones
 
     @property

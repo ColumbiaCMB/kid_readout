@@ -8,7 +8,7 @@ def test_read_write_measurement():
     with TempDirectory() as directory:
         io = npy.IO(directory.path)
         original = get_measurement()
-        name = 'test'
+        name = 'measurement'
         core.write(original, io, name)
         assert original == core.read(io, name)
 
@@ -17,7 +17,7 @@ def test_read_write_stream():
     with TempDirectory() as directory:
         io = npy.IO(directory.path)
         original = single.make_stream()
-        name = 'test'
+        name = 'stream'
         core.write(original, io, name)
         assert original == core.read(io, name)
 
@@ -26,6 +26,6 @@ def test_read_write_streamarray():
     with TempDirectory() as directory:
         io = npy.IO(directory.path)
         original = multiple.make_stream_array()
-        name = 'test'
+        name = 'stream_array'
         core.write(original, io, name)
         assert original == core.read(io, name)

@@ -6,7 +6,7 @@ from collections import OrderedDict
 import numpy as np
 from matplotlib.pyplot import mlab  # TODO: replace with a scipy PSD estimator
 import pandas as pd
-from kid_readout.roach import calculate, temp_state
+from kid_readout.roach import calculate, fake
 from kid_readout.analysis.resonator import resonator
 from kid_readout.analysis.timedomain.despike import deglitch_window
 from kid_readout.measurement import core
@@ -18,24 +18,26 @@ class Stream(core.Measurement):
     """
 
     dimensions = OrderedDict([('tone_bin', ('tone_bin',)),
-                              ('amplitude', ('tone_bin',)),
-                              ('phase', ('tone_bin',)),
+                              ('tone_amplitude', ('tone_bin',)),
+                              ('tone_phase', ('tone_bin',)),
                               ('epoch', ('epoch',)),
                               ('s21', ('epoch',))])
 
-    def __init__(self, tone_bin, amplitude, phase, tone_index, fft_bin, epoch, s21, roach_state, state=None,
-                 analyze=False, description='Stream'):
+    def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21, roach_state,
+                 state=None, analyze=False, description='Stream'):
         """
-        Return a new Stream instance. The integer tone_index is the common index of tone_bin, amplitude, and phase for
+        Return a new Stream instance. The integer tone_index is the common index of tone_bin, tone_amplitude,
+        and tone_phase for
         the single tone used to produce the time-ordered s21 data.
 
         :param tone_bin: an array of integers representing the frequencies of the tones played during the measurement.
-        :param amplitude: an array of floats representing the amplitudes of the tones played during the measurement.
-        :param phase: an array of floats representing the radian phases of the tones played during the measurement.
+        :param tone_amplitude: an array of floats representing the amplitudes of the tones played during the
+          measurement.
+        :param tone_phase: an array of floats representing the radian phases of the tones played during the measurement.
         :param tone_index: an int for which tone_bin[tone_index] corresponds to the frequency used to produce s21.
-        :param fft_bin: an int that is the fft bin in which the tone lies.
+        :param filterbank_bin: an int that is the filter bank bin in which the tone lies.
         :param epoch: an array of floats representing the unix timestamp when the data was recorded.
-        :param s21: an 1-D array of complex floats containing the demodulated data.
+        :param s21: an 1-D array of complex floats containing the data, demodulated or not.
         :param roach_state: a dict containing state information for the roach.
         :param state: a dict containing all non-roach state information.
         :param analyze: if True, call the analyze() method at the end of instantiation.
@@ -43,10 +45,10 @@ class Stream(core.Measurement):
         :return: a new Stream instance.
         """
         self.tone_bin = tone_bin
-        self.amplitude = amplitude
-        self.phase = phase
+        self.tone_amplitude = tone_amplitude
+        self.tone_phase = tone_phase
         self.tone_index = tone_index
-        self.fft_bin = fft_bin
+        self.filterbank_bin = filterbank_bin
         self.epoch = epoch
         self.s21 = s21
         self.roach_state = core.to_state_dict(roach_state)
@@ -129,8 +131,8 @@ class Stream(core.Measurement):
                 raise ValueError("Step size is not supported: {}".format(key))
             start_index = np.searchsorted(self.epoch, (start,), side='left')
             stop_index = np.searchsorted(self.epoch, (stop,), side='right')  # This index is not included
-            return Stream(tone_bin=self.tone_bin, amplitude=self.amplitude, phase=self.phase,
-                          tone_index=self.tone_index, fft_bin=self.fft_bin,
+            return Stream(tone_bin=self.tone_bin, tone_amplitude=self.tone_amplitude, tone_phase=self.tone_phase,
+                          tone_index=self.tone_index, filterbank_bin=self.filterbank_bin,
                           epoch=self.epoch[start_index:stop_index], s21=self.s21[:, start_index:stop_index],
                           roach_state=self.state, description=self.description)
         else:
@@ -349,7 +351,6 @@ class SweepStream(core.Measurement):
         self._S_qq = S_qq
         self._S_xx = S_xx
 
-    # TODO: move this forward to a usable version.
     def to_dataframe(self):
         data = {}
         try:
@@ -358,7 +359,8 @@ class SweepStream(core.Measurement):
         except KeyError:
             pass
         try:
-            for key, value in self.state['roach'].items():
+            # TODO: need to flatten sub-dicts, if any.
+            for key, value in self.stream.roach_state.items():
                 data['roach_{}'.format(key)] = value
         except KeyError:
             pass
@@ -374,20 +376,19 @@ class SweepStream(core.Measurement):
 # Functions for generating fake measurements.
 
 
-def make_stream(tone_index=0, mean=0, rms=1, length=1, t0=0, roach_state=None, state=None):
+def make_stream(tone_index=0, mean=0, rms=1, length=1, t0=0, active_state_arrays=None, roach_state=None, state=None):
     variables = {}
+    if active_state_arrays is None:
+        active_state_arrays = fake.baseband_active_state_arrays()
     if roach_state is None:
-        roach_array, roach_other = temp_state.fake_baseband()
-    else:
-        roach_array, roach_other = roach_state
-    variables['tone_bin'] = roach_array['tone_bin']
-    variables['amplitude'] = roach_array['amplitude']
-    variables['phase'] = roach_array['phase']
+        roach_state = fake.baseband_state()
+    variables.update(active_state_arrays)
+    # For a stream, both of these are ints, not arrays of ints:
     variables['tone_index'] = tone_index
-    variables['fft_bin'] = roach_array['fft_bin'][tone_index]
-    num_samples = length * calculate.stream_sample_rate(roach_other)
+    variables['filterbank_bin'] = variables['filterbank_bin'][tone_index]
+    num_samples = length * calculate.stream_sample_rate(roach_state)
     variables['s21'] = mean + rms * (np.random.randn(num_samples) + 1j * np.random.randn(num_samples))
     variables['epoch'] = np.linspace(t0, t0 + length, num_samples)
-    variables['roach_state'] = roach_other
+    variables['roach_state'] = roach_state
     variables['state'] = state
     return core.instantiate(full_class_name=__name__ + '.' + 'Stream', variables=variables, extras=False)

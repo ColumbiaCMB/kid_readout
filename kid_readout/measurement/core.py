@@ -259,12 +259,20 @@ class StateDict(dict):
     """
 
     __setattr__ = dict.__setitem__
-#    __getattr__ = dict.get
     __getattr__ = dict.__getitem__
     __delattr__ = dict.__delitem__
     __copy__ = lambda self: StateDict(self)
     __getstate__ = lambda: None
     __slots__ = ()
+
+    @property
+    def flat(self):
+        return self._flat(self)
+
+    @staticmethod
+    def _flat(dictionary):
+        pass
+
 
 # TODO: incorporate restrictions into __init__().
 # TODO: implement more error checking.
