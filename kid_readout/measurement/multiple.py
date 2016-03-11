@@ -2,12 +2,16 @@
 This module has classes that contain simultaneous multiple-channel measurements.
 """
 from __future__ import division
+
 from collections import OrderedDict
+
 import numpy as np
 import pandas as pd
+
 from kid_readout.measurement import core
 from kid_readout.measurement.single import Stream, Sweep, ResonatorSweep, SweepStream
-from kid_readout.roach import calculate, fake
+from kid_readout.roach import calculate
+from kid_readout.roach.tests import fake
 
 
 class StreamArray(core.Measurement):
@@ -238,18 +242,17 @@ class SweepStreamArray(core.Measurement):
 # Functions for generating fake measurements.
 
 
+# TODO: broken!
 def make_stream_array(mean=0, rms=1, length=1, t0=0, active_state_arrays=None, roach_state=None, state=None):
     variables = {}
     if active_state_arrays is None:
-        active_state_arrays = fake.baseband_active_state_arrays()
+        active_state_arrays = fake.active_state_arrays()
     if roach_state is None:
-        roach_state = fake.baseband_state()
+        roach_state = fake.state()
     variables.update(active_state_arrays)
     num_samples = length * calculate.stream_sample_rate(roach_state)
-    variables['s21'] = mean + rms * (np.random.randn(variables['tone_index'].size, num_samples) +
-                                     1j * np.random.randn(variables['tone_index'].size, num_samples))
+    variables['s21'] = mean + rms * (np.random.randn(num_samples) + 1j * np.random.randn(num_samples))
     variables['epoch'] = np.linspace(t0, t0 + length, num_samples)
     variables['roach_state'] = roach_state
     variables['state'] = state
     return StreamArray(**variables)
-    #return core.instantiate(full_class_name=__name__ + '.' + 'StreamArray', variables=variables, extras=False)

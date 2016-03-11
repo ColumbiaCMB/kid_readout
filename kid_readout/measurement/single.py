@@ -2,14 +2,18 @@
 This module has classes that contain single-channel measurements.
 """
 from __future__ import division
+
 from collections import OrderedDict
+
 import numpy as np
-from matplotlib.pyplot import mlab  # TODO: replace with a scipy PSD estimator
 import pandas as pd
-from kid_readout.roach import calculate, fake
+from matplotlib.pyplot import mlab  # TODO: replace with a scipy PSD estimator
+
 from kid_readout.analysis.resonator import resonator
 from kid_readout.analysis.timedomain.despike import deglitch_window
 from kid_readout.measurement import core
+from kid_readout.roach import calculate
+from kid_readout.roach.tests import fake
 
 
 class Stream(core.Measurement):
@@ -376,6 +380,7 @@ class SweepStream(core.Measurement):
 # Functions for generating fake measurements.
 
 
+# TODO: broken!
 def make_stream(tone_index=0, mean=0, rms=1, length=1, t0=0, active_state_arrays=None, roach_state=None, state=None):
     variables = {}
     if active_state_arrays is None:
@@ -391,4 +396,4 @@ def make_stream(tone_index=0, mean=0, rms=1, length=1, t0=0, active_state_arrays
     variables['epoch'] = np.linspace(t0, t0 + length, num_samples)
     variables['roach_state'] = roach_state
     variables['state'] = state
-    return core.instantiate(full_class_name=__name__ + '.' + 'Stream', variables=variables, extras=False)
+    return Stream(**variables)
