@@ -8,6 +8,7 @@ import borph_utils
 import udp_catcher
 from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
 from kid_readout.roach import tools
+from kid_readout.measurement.core import StateDict
 
 
 CONFIG_FILE_NAME_TEMPLATE = os.path.join(BASE_DATA_DIR,'%s_config.npz')
@@ -105,8 +106,11 @@ class RoachInterface(object):
         self.tone_nsamp = None
         self.tone_bins = None
         self.phases = None
+        self.amps = None
+        self.readout_selection = None
         self.modulation_output = 0
         self.modulation_rate = 0
+        self.wavenorm = None
 
         # Things to be configured by subclasses
         self.lo_frequency = 0.0
@@ -146,6 +150,77 @@ class RoachInterface(object):
         except Exception, e:
             self.bof_pid = None
 #            raise e
+
+    @property
+    def num_tones(self):
+        """
+        Returns
+        -------
+        num_tones : int or None
+            number of tones being played. None if unknown/not programmmed
+
+        """
+        if self.tone_bins is None:
+            num_tones = None
+        else:
+            num_tones = self.tone_bins.shape[1], # We may want to update this later if some tones have
+                                                 # zero amplitude
+        return num_tones
+
+    @property
+    def state_arrays(self):
+        return self.get_state_arrays()
+
+    def get_state_arrays(self):
+        def copy_or_none(x):
+            if x is None:
+                return x
+            else:
+                return x.copy()
+        state = StateDict(
+                  tone_bin=copy_or_none(self.tone_bins),
+                  tone_amplitude=copy_or_none(self.amps),
+                  tone_phase=copy_or_none(self.phases),
+                  tone_index=copy_or_none(self.readout_selection),
+                  filterbank_bin=copy_or_none(self.fft_bins),
+                  )
+        return state
+
+    @property
+    def active_state_arrays(self):
+        return self.get_active_state_arrays()
+
+    def get_active_state_arrays(self):
+        state = self.get_state_arrays()
+        if state.tone_bin is not None:
+            state.tone_bin = state.tone_bin[self.bank,:]
+        if state.filterbank_bin is not None:
+            state.filterbank_bin = state.filterbank_bin[self.bank,:]
+        return state
+
+    @property
+    def state(self):
+        return self.get_state()
+
+    def get_state(self,include_registers=False):
+        roach_state = StateDict(boffile=self.boffile,
+                          heterodyne=self.heterodyne,
+                          adc_sample_rate=self.fs*1e6, # roach still uses MHz, so convert to Hz
+                          lo_frequency=self.lo_frequency,
+                          num_tones=self.num_tones,
+                          modulation_rate=self.modulation_rate,
+                          modulation_output=self.modulation_output,
+                          waveform_normalization=self.wavenorm,
+                          num_tone_samples=self.tone_nsamp,
+                          num_filterbank_channels=self.nfft,
+                          dac_attenuation=self.dac_atten,
+                          bank=self.bank
+                          )
+        if include_registers:
+            for register in self.initial_values_for_writeable_registers:
+                roach_state[register] = self.r.read_int(register)
+        return roach_state
+
 
     def get_raw_adc(self):
         """
