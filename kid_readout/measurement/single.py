@@ -23,8 +23,8 @@ class Stream(core.Measurement):
                               ('epoch', ('epoch',)),
                               ('s21', ('epoch',))])
 
-    def __init__(self, tone_bin, amplitude, phase, tone_index, fft_bin, epoch, s21, state, analyze=False,
-                 description='Stream'):
+    def __init__(self, tone_bin, amplitude, phase, tone_index, fft_bin, epoch, s21, roach_state, state=None,
+                 analyze=False, description='Stream'):
         """
         Return a new Stream instance. The integer tone_index is the common index of tone_bin, amplitude, and phase for
         the single tone used to produce the time-ordered s21 data.
@@ -36,7 +36,8 @@ class Stream(core.Measurement):
         :param fft_bin: an int that is the fft bin in which the tone lies.
         :param epoch: an array of floats representing the unix timestamp when the data was recorded.
         :param s21: an 1-D array of complex floats containing the demodulated data.
-        :param state: a dict containing state information for the roach and other hardware.
+        :param roach_state: a dict containing state information for the roach.
+        :param state: a dict containing all non-roach state information.
         :param analyze: if True, call the analyze() method at the end of instantiation.
         :param description: a string describing this measurement.
         :return: a new Stream instance.
@@ -48,6 +49,7 @@ class Stream(core.Measurement):
         self.fft_bin = fft_bin
         self.epoch = epoch
         self.s21 = s21
+        self.roach_state = core.to_state_dict(roach_state)
         self._frequency = None
         self._baseband_frequency = None
         self._output_sample_rate = None
@@ -65,7 +67,7 @@ class Stream(core.Measurement):
     @property
     def frequency(self):
         if self._frequency is None:
-            self._frequency = calculate.frequency(self.state.roach, self.tone_bin[self.tone_index])
+            self._frequency = calculate.frequency(self.roach_state, self.tone_bin[self.tone_index])
         return self._frequency
 
     @property
@@ -75,8 +77,7 @@ class Stream(core.Measurement):
     @property
     def baseband_frequency(self):
         if self._baseband_frequency is None:
-            self._baseband_frequency = calculate.baseband_frequency(self.state.roach,
-                                                                          self.tone_bin[self.tone_index])
+            self._baseband_frequency = calculate.baseband_frequency(self.roach_state, self.tone_bin[self.tone_index])
         return self._baseband_frequency
 
     @property
@@ -86,7 +87,7 @@ class Stream(core.Measurement):
     @property
     def output_sample_rate(self):
         if self._output_sample_rate is None:
-            self._output_sample_rate = calculate.output_sample_rate(self.state.roach)
+            self._output_sample_rate = calculate.stream_sample_rate(self.roach_state)
         return self._output_sample_rate
 
     @property
@@ -131,7 +132,7 @@ class Stream(core.Measurement):
             return Stream(tone_bin=self.tone_bin, amplitude=self.amplitude, phase=self.phase,
                           tone_index=self.tone_index, fft_bin=self.fft_bin,
                           epoch=self.epoch[start_index:stop_index], s21=self.s21[:, start_index:stop_index],
-                          state=self.state, description=self.description)
+                          roach_state=self.state, description=self.description)
         else:
             raise ValueError("Invalid slice: {}".format(key))
 
@@ -141,7 +142,7 @@ class Sweep(core.Measurement):
     This class represents a group of streams with different frequencies.
     """
 
-    def __init__(self, streams, state, analyze=False, description='Sweep'):
+    def __init__(self, streams, state=None, analyze=False, description='Sweep'):
         # Don't sort by frequency so that non-monotonic order can be preserved if needed, but note that this will fail
         # for a ResonatorSweep because the Resonator class requires a monotonic frequency array.
         self.streams = core.MeasurementTuple(streams)
@@ -182,7 +183,7 @@ class Sweep(core.Measurement):
 
 
 class ResonatorSweep(Sweep):
-    def __init__(self, streams, state, analyze=False, description='ResonatorSweep'):
+    def __init__(self, streams, state=None, analyze=False, description='ResonatorSweep'):
         self._resonator = None
         super(ResonatorSweep, self).__init__(streams=streams, state=state, analyze=analyze, description=description)
 
@@ -202,7 +203,7 @@ class ResonatorSweep(Sweep):
 
 # Think of another name for this. This class is intended to fit the gain and delay off-resonance.
 class ThroughSweep(Sweep):
-    def __init__(self, streams, state, analyze=False, description='ThroughSweep'):
+    def __init__(self, streams, state=None, analyze=False, description='ThroughSweep'):
         self._through = None
         super(ThroughSweep, self).__init__(streams, state, analyze=analyze, description=description)
 
@@ -212,7 +213,7 @@ class ThroughSweep(Sweep):
 
 
 class SweepStream(core.Measurement):
-    def __init__(self, sweep, stream, state, analyze=False, description='SweepStream'):
+    def __init__(self, sweep, stream, state=None, analyze=False, description='SweepStream'):
         self.sweep = sweep
         self.sweep._parent = self
         self.stream = stream
@@ -373,8 +374,8 @@ class SweepStream(core.Measurement):
 # Functions for generating fake measurements.
 
 
-def make_stream(tone_index=0, mean=0, rms=1, length=1, t0=0, roach_state=None):
-    variables = {'state': {}}
+def make_stream(tone_index=0, mean=0, rms=1, length=1, t0=0, roach_state=None, state=None):
+    variables = {}
     if roach_state is None:
         roach_array, roach_other = temp_state.fake_baseband()
     else:
@@ -384,8 +385,9 @@ def make_stream(tone_index=0, mean=0, rms=1, length=1, t0=0, roach_state=None):
     variables['phase'] = roach_array['phase']
     variables['tone_index'] = tone_index
     variables['fft_bin'] = roach_array['fft_bin'][tone_index]
-    variables['state']['roach'] = roach_other
-    num_samples = length * calculate.audio_sample_rate(roach_other)
+    num_samples = length * calculate.stream_sample_rate(roach_other)
     variables['s21'] = mean + rms * (np.random.randn(num_samples) + 1j * np.random.randn(num_samples))
     variables['epoch'] = np.linspace(t0, t0 + length, num_samples)
+    variables['roach_state'] = roach_other
+    variables['state'] = state
     return core.instantiate(full_class_name=__name__ + '.' + 'Stream', variables=variables, extras=False)

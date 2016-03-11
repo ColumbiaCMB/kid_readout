@@ -116,7 +116,7 @@ class Measurement(object):
 
     dimensions = OrderedDict()
 
-    def __init__(self, state, analyze=False, description='Measurement'):
+    def __init__(self, state=None, analyze=False, description='Measurement'):
         """
         Return a new Measurement instance.
 
@@ -125,7 +125,9 @@ class Measurement(object):
         :param description: a string describing the measurement.
         :return: a new Measurement instance.
         """
-        self.state = to_state_dict(state)
+        if state is not None:
+            state = to_state_dict(state)
+        self.state = state
         self.description = description
         self._parent = None
         self._io_class = None

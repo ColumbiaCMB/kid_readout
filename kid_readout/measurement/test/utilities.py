@@ -55,7 +55,7 @@ def compare_measurements(a, b, verbose=False):
 
 # TODO: replace this with a function that generates complex measurements without reading data from disk.
 def get_measurement():
-    """
+    #"""
     from kid_readout.measurement.io import readoutnc
     nc_filename = '/data/readout/2015-05-12_113832_mmw_noise_broadband.nc'
     rnc = readoutnc.ReadoutNetCDF(nc_filename)
@@ -71,4 +71,4 @@ def get_measurement():
     m.str_list = ['one', 'two', 'three']
     m.bool_list = [True, False]
     return m
-    #"""
+    """

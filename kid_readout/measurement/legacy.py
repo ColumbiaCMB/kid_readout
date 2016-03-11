@@ -19,7 +19,6 @@ def sweep_state_from_rnc(rnc, sweep_group_index):
     mmw_source_state = mmw_source_state_from_rnc(rnc)
     if mmw_source_state:
         state['mmw_source'] = mmw_source_state
-    state['roach'] = sweep_roach_state_from_rnc(rnc, sweep_group_index)
     return state
 
 
@@ -41,7 +40,6 @@ def timestream_state_from_rnc(rnc, timestream_group_index):
     lockin_state = lockin_state_from_tg(tg)
     if lockin_state:
         state['lockin'] = lockin_state
-    state['roach'] = timestream_roach_state_from_rnc(rnc, timestream_group_index)
     return state
 
 # Roach.
@@ -192,6 +190,7 @@ def common(sequence):
 
 
 def stream_from_rnc(rnc, timestream_group_index, channel, description=None):
+    roach_state = timestream_roach_state_from_rnc(rnc, timestream_group_index)
     state = timestream_state_from_rnc(rnc, timestream_group_index)
     if description is None:
         description = 'ReadoutNetCDF(\"{}\").timestreams[{}]'.format(rnc.filename, timestream_group_index)
@@ -210,10 +209,11 @@ def stream_from_rnc(rnc, timestream_group_index, channel, description=None):
                         tg.num_data_samples)
     s21 = tg.data[increasing_order, :]
     return Stream(tone_bin=tone_bin, amplitude=amplitude, phase=phase, tone_index=tone_index, fft_bin=fft_bin,
-                  epoch=epoch, s21=s21, state=state, description=description)
+                  epoch=epoch, s21=s21, roach_state=roach_state, state=state, description=description)
 
 
 def streamarray_from_rnc(rnc, timestream_group_index, description=None):
+    roach_state = timestream_roach_state_from_rnc(rnc, timestream_group_index)
     state = timestream_state_from_rnc(rnc, timestream_group_index)
     if description is None:
         description = 'ReadoutNetCDF(\"{}\").timestreams[{}]'.format(rnc.filename, timestream_group_index)
@@ -232,10 +232,11 @@ def streamarray_from_rnc(rnc, timestream_group_index, description=None):
                         tg.num_data_samples)
     s21 = tg.data[increasing_order, :]
     return StreamArray(tone_bin=tone_bin, amplitude=amplitude, phase=phase, tone_index=tone_index, fft_bin=fft_bin,
-                       epoch=epoch, s21=s21, state=state, description=description)
+                       epoch=epoch, s21=s21, roach_state=roach_state, state=state, description=description)
 
 
 def sweep_from_rnc(rnc, sweep_group_index, channel, resonator=True, description=None):
+    roach_state = sweep_roach_state_from_rnc(rnc, sweep_group_index)
     state = sweep_state_from_rnc(rnc, sweep_group_index)
     if description is None:
         description = 'ReadoutNetCDF(\"{}\").sweeps[{}]'.format(rnc.filename, sweep_group_index)
@@ -257,13 +258,12 @@ def sweep_from_rnc(rnc, sweep_group_index, channel, resonator=True, description=
         tone_index = np.arange(tone_bin.size)[channel]  # For these data, all the tones are read out.
         fft_bin = tg.fftbin[simultaneous][increasing_order][channel]
         # All of the epochs are the same
-        # TODO: fix me!
         epoch = np.linspace(common(tg.epoch[simultaneous]),
                             common(tg.epoch[simultaneous]) + common(tg.data_len_seconds),
                             tg.num_data_samples)
         s21 = tg.data[simultaneous, :][increasing_order][channel]
         streams.append(StreamArray(tone_bin=tone_bin, amplitude=amplitude, phase=phase, tone_index=tone_index,
-                                   fft_bin=fft_bin, epoch=epoch, s21=s21, state=state))
+                                   fft_bin=fft_bin, epoch=epoch, s21=s21, roach_state=roach_state))
     if resonator:
         return ResonatorSweep(streams=streams, state=state, description=description)
     else:
@@ -271,6 +271,7 @@ def sweep_from_rnc(rnc, sweep_group_index, channel, resonator=True, description=
 
 
 def sweeparray_from_rnc(rnc, sweep_group_index, resonator=True, description=None):
+    roach_state = sweep_roach_state_from_rnc(rnc, sweep_group_index)
     state = sweep_state_from_rnc(rnc, sweep_group_index)
     if description is None:
         description = 'ReadoutNetCDF(\"{}\").sweeps[{}]'.format(rnc.filename, sweep_group_index)
@@ -297,7 +298,7 @@ def sweeparray_from_rnc(rnc, sweep_group_index, resonator=True, description=None
                             tg.num_data_samples)
         s21 = tg.data[simultaneous, :][increasing_order]
         stream_arrays.append(StreamArray(tone_bin=tone_bin, amplitude=amplitude, phase=phase, tone_index=tone_index,
-                                         fft_bin=fft_bin, epoch=epoch, s21=s21, state=state))
+                                         fft_bin=fft_bin, epoch=epoch, s21=s21, roach_state=roach_state))
     if resonator:
         return ResonatorSweepArray(stream_arrays=stream_arrays, state=state, description=description)
     else:

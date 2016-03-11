@@ -23,14 +23,14 @@ class StreamArray(core.Measurement):
                               ('epoch', ('epoch',)),
                               ('s21', ('tone_index', 'epoch'))])
 
-    def __init__(self, tone_bin, amplitude, phase, tone_index, fft_bin, epoch, s21, state, analyze=False,
-                 description='StreamArray'):
+    def __init__(self, tone_bin, amplitude, phase, tone_index, fft_bin, epoch, s21, roach_state, state=None,
+                 analyze=False, description='StreamArray'):
         """
-        Return a new Stream instance. The integer array tone_index contains the indices of tone_bin, amplitude, and phase
-        for the tones demodulated to produce the time-ordered s21 data.
+        Return a new StreamArray instance. The integer array tone_index contains the indices of tone_bin, amplitude,
+        and phase for the tones demodulated to produce the time-ordered s21 data.
 
-        The tone_bin, amplitude, phase, tone_index, fft_bin, and epoch arrays are 1-D, while s21 is 2-D. The arrays must
-        obey s21.shape == (tone_index.size, epoch.size)
+        The tone_bin, amplitude, phase, tone_index, fft_bin, and epoch arrays are 1-D, while s21 is 2-D with
+        s21.shape == (tone_index.size, epoch.size)
 
         :param tone_bin: an array of integers representing the frequencies of the tones played during the measurement.
         :param amplitude: an array of floats representing the amplitudes of the tones played during the measurement.
@@ -39,7 +39,8 @@ class StreamArray(core.Measurement):
         :param fft_bin: an integer that is the fft bin in which the tone lies.
         :param epoch: an array of floats representing the unix timestamp when the data was recorded.
         :param s21: a 2-D array of complex floats containing the demodulated data.
-        :param state: a dict containing state information for the roach and other hardware.
+        :param roach_state: a dict containing state information for the roach.
+        :param state: a dict containing all non-roach state information.
         :param analyze: if True, call the analyze() method at the end of instantiation.
         :param description: a string describing this measurement.
         :return: a new StreamArray instance.
@@ -51,6 +52,7 @@ class StreamArray(core.Measurement):
         self.fft_bin = fft_bin
         self.epoch = epoch
         self.s21 = s21
+        self.roach_state = core.to_state_dict(roach_state)
         self._frequency = None
         self._baseband_frequency = None
         self._output_sample_rate = None
@@ -68,7 +70,7 @@ class StreamArray(core.Measurement):
     @property
     def frequency(self):
         if self._frequency is None:
-            self._frequency = calculate.frequency(self.state.roach, self.tone_bin[self.tone_index])
+            self._frequency = calculate.frequency(self.roach_state, self.tone_bin[self.tone_index])
         return self._frequency
 
     @property
@@ -78,7 +80,7 @@ class StreamArray(core.Measurement):
     @property
     def baseband_frequency(self):
         if self._baseband_frequency is None:
-            self._baseband_frequency = calculate.baseband_frequency(self.state.roach, self.tone_bin[self.tone_index])
+            self._baseband_frequency = calculate.baseband_frequency(self.roach_state, self.tone_bin[self.tone_index])
         return self._baseband_frequency
 
     @property
@@ -88,7 +90,7 @@ class StreamArray(core.Measurement):
     @property
     def output_sample_rate(self):
         if self._output_sample_rate is None:
-            self._output_sample_rate = calculate.audio_sample_rate(self.state.roach)
+            self._output_sample_rate = calculate.stream_sample_rate(self.roach_state)
         return self._output_sample_rate
 
     @property
@@ -134,7 +136,7 @@ class StreamArray(core.Measurement):
             return StreamArray(tone_bin=self.tone_bin, amplitude=self.amplitude, phase=self.phase,
                                tone_index=self.tone_index, fft_bin=self.fft_bin,
                                epoch=self.epoch[start_index:stop_index], s21=self.s21[:, start_index:stop_index],
-                               state=self.state, description=self.description)
+                               roach_state=self.state, description=self.description)
         else:
             raise ValueError("Invalid slice: {}".format(key))
 
@@ -145,7 +147,7 @@ class StreamArray(core.Measurement):
         if isinstance(index, int):
             return Stream(tone_bin=self.tone_bin, amplitude=self.amplitude, phase=self.phase,
                           tone_index=self.tone_index[index], fft_bin=self.fft_bin[index], epoch=self.epoch,
-                          s21=self.s21[index, :], state=self.state)
+                          s21=self.s21[index, :], roach_state=self.roach_state, state=self.state)
         else:
             raise ValueError("Invalid index: {}".format(index))
 
@@ -155,7 +157,7 @@ class SweepArray(core.Measurement):
     This class contains a group of stream arrays.
     """
 
-    def __init__(self, stream_arrays, state, analyze=False, description='SweepArray'):
+    def __init__(self, stream_arrays, state=None, analyze=False, description='SweepArray'):
         self.stream_arrays = core.MeasurementTuple(stream_arrays)
         for sa in self.stream_arrays:
             sa._parent = self
@@ -183,7 +185,7 @@ class ResonatorSweepArray(SweepArray):
     This class represents a set of groups of streams.
     """
 
-    def __init__(self, stream_arrays, state, analyze=False, description='ResonatorSweepArray'):
+    def __init__(self, stream_arrays, state=None, analyze=False, description='ResonatorSweepArray'):
         super(ResonatorSweepArray, self).__init__(stream_arrays=stream_arrays, state=state, analyze=analyze,
                                                   description=description)
 
@@ -196,7 +198,7 @@ class ResonatorSweepArray(SweepArray):
 
 class SweepStreamArray(core.Measurement):
 
-    def __init__(self, sweep_array, stream_array, state, analyze=False, description='SweepStreamArray'):
+    def __init__(self, sweep_array, stream_array, state=None, analyze=False, description='SweepStreamArray'):
         if sweep_array.num_channels != stream_array.tone_index.size:
             raise core.MeasurementError("The number of SweepArray channels does not match the StreamArray number.")
         self.sweep_array = sweep_array
@@ -234,8 +236,9 @@ class SweepStreamArray(core.Measurement):
 # Functions for generating fake measurements.
 
 
-def make_stream_array(tone_index=np.arange(16), mean=np.zeros(16), rms=np.ones(16), length=1, t0=0, roach_state=None):
-    variables = {'state': {}}
+def make_stream_array(tone_index=np.arange(16), mean=np.zeros(16), rms=np.ones(16), length=1, t0=0, roach_state=None,
+                      state=None):
+    variables = {}
     if roach_state is None:
         roach_array, roach_other = temp_state.fake_baseband()
     else:
@@ -244,10 +247,11 @@ def make_stream_array(tone_index=np.arange(16), mean=np.zeros(16), rms=np.ones(1
     variables['amplitude'] = roach_array['amplitude']
     variables['phase'] = roach_array['phase']
     variables['tone_index'] = tone_index
-    variables['fft_bin'] = roach_array['fft_bin'][tone_index]
-    variables['state']['roach'] = roach_other
-    num_samples = length * calculate.audio_sample_rate(roach_other)
+    variables['fft_bin'] = roach_array['fft_bin']
+    num_samples = length * calculate.stream_sample_rate(roach_other)
     variables['s21'] = mean[:, np.newaxis] + rms[:, np.newaxis] * (np.random.randn(tone_index.size, num_samples) +
                                                                    1j * np.random.randn(tone_index.size, num_samples))
     variables['epoch'] = np.linspace(t0, t0 + length, num_samples)
+    variables['roach_state'] = roach_other
+    variables['state'] = state
     return core.instantiate(full_class_name=__name__ + '.' + 'StreamArray', variables=variables, extras=False)
