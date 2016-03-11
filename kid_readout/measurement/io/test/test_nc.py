@@ -4,7 +4,7 @@ from kid_readout.measurement.test.utilities import get_measurement
 from kid_readout.measurement.io import nc
 
 def test_read_write_measurement():
-    with TempDirectory(path='/home/flanigan/temp') as directory:
+    with TempDirectory() as directory:
         io = nc.IO(directory.path)
         original = get_measurement()
         name = 'measurement'
