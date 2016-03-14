@@ -5,6 +5,7 @@ import numpy as np
 import socket
 import scipy
 import borph_utils
+from kid_readout.roach.tests.mock_roach import MockRoach
 import udp_catcher
 from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
 from kid_readout.roach import tools
@@ -41,8 +42,14 @@ class RoachInterface(object):
         host_ip: Override IP address to which the ROACH should send it's data. If left as None,
                 the host_ip will be set appropriately based on the hostname.
         """
+        self._using_mock_roach = False
         if roach:
             self.r = roach
+            # Check if we're using a fake ROACH for testing. If so, disable additional externalities
+            # This logic could be made more general if desired (i.e. has attribute mock
+            #  or type name matches regex including 'mock'
+            if type(roach) is MockRoach:
+                self._using_mock_roach = True
         else:
             from corr.katcp_wrapper import FpgaClient
             self.r = FpgaClient(roachip)
@@ -140,11 +147,12 @@ class RoachInterface(object):
     def _update_bof_pid(self):
         if self.bof_pid:
             return
-        try:
-            self.bof_pid = borph_utils.get_bof_pid(self.roachip)
-        except Exception, e:
-            self.bof_pid = None
-#            raise e
+        if not self._using_mock_roach:
+            try:
+                self.bof_pid = borph_utils.get_bof_pid(self.roachip)
+            except Exception, e:
+                self.bof_pid = None
+    #            raise e
 
     @property
     def num_tones(self):
@@ -390,7 +398,7 @@ class RoachInterface(object):
             if np.abs(fs - estfs) > 2.0:
                 print "Warning! FPGA clock may not be locked to sampling clock!"
             print "Requested sampling rate %.1f MHz. Estimated sampling rate %.1f MHz" % (fs, estfs)
-            if start_udp:
+            if start_udp and not self._using_mock_roach:
                 print "starting udp server process on PPC"
                 borph_utils.start_server(self.bof_pid, self.roachip)
             self.adc_atten = 31.5
@@ -471,12 +479,15 @@ class RoachInterface(object):
         offset_blocks = offset_bytes / 512  #dd uses blocks of 512 bytes by default
         self._update_bof_pid()
         self._pause_dram()
-        data.tofile(os.path.join(self.nfs_root, datafile))
-        dram_file = '/proc/%d/hw/ioreg/dram_memory' % self.bof_pid
-        datafile = '/' + datafile
-        result = borph_utils.check_output(
-            ('ssh root@%s "dd seek=%d if=%s of=%s"' % (self.roachip, offset_blocks, datafile, dram_file)), shell=True)
-        print result
+        if self._using_mock_roach:
+            time.sleep(0.01) #TODO: Can make this take a realistic amount of time if desired
+        else:
+            data.tofile(os.path.join(self.nfs_root, datafile))
+            dram_file = '/proc/%d/hw/ioreg/dram_memory' % self.bof_pid
+            datafile = '/' + datafile
+            result = borph_utils.check_output(
+                ('ssh root@%s "dd seek=%d if=%s of=%s"' % (self.roachip, offset_blocks, datafile, dram_file)), shell=True)
+            print result
         self._unpause_dram()
 
     # TODO: call from the functions that require it so we can stop calling it externally.
