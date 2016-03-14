@@ -292,7 +292,17 @@ class RoachBaseband(RoachInterface):
             if lg2 < 0:
                 lg2 = 0
             blocks = 2 ** lg2
-        return self.get_data_udp(blocks, demod=demod)
+
+        # TODO This is a temporary hack until we get the system simulation code in place
+        if self._using_mock_roach:
+            data = (np.random.standard_normal((blocks * samples_per_channel_per_block, self.num_tones)) +
+
+                    1j * np.random.standard_normal((blocks * samples_per_channel_per_block, self.num_tones)))
+            #time.sleep(seconds_per_block * blocks)
+            seqnos = np.arange(data.shape[0])
+            return data, seqnos
+        else:
+            return self.get_data_udp(blocks, demod=demod)
 
     def get_data_seconds_katcp(self, nseconds, demod=True, pow2=True):
         """
