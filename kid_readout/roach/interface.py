@@ -28,9 +28,6 @@ class RoachInterface(object):
 
         roach: an FpgaClient instance for communicating with the ROACH.
                 If not specified, will try to instantiate one connected to *roachip*
-        wafer: 0 or 1.
-                In baseband mode, each of the two DAC and ADC connections can be used independantly to
-                readout a single wafer each. This parameter indicates which connection you want to use.
         roachip: (optional). Network address of the ROACH if you don't want to provide an FpgaClient
         adc_valon: a Valon class, a string, or None
                 Provide access to the Valon class which controls the Valon synthesizer which provides
@@ -43,8 +40,6 @@ class RoachInterface(object):
                 interface.
         host_ip: Override IP address to which the ROACH should send it's data. If left as None,
                 the host_ip will be set appropriately based on the hostname.
-        initialize: Default True, will call self.initialize() which will try to load state from saved config
-                Set to False if you don't want this to happen.
         """
         if roach:
             self.r = roach
