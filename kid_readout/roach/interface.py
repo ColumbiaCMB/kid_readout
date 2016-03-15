@@ -338,6 +338,8 @@ class RoachInterface(object):
             return rate_in_hz
 
     def save_state(self):
+        if self._using_mock_roach:
+            return #don't save anything when using mock
         np.savez(self._config_file_name,
                  boffile=self.boffile,
                  adc_atten=self.adc_atten,
