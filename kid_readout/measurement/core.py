@@ -88,11 +88,21 @@ class Measurement(object):
     Arrays.
     Each measurement has a dimensions class attribute that contains metadata for its array dimensions. This is
     necessary for the netCDF4 IO class to handle the array dimensions correctly, and it also allows the classes to
-    check the dimensions of their arrays on instantiation through the _validate_dimensions() method. Currently,
-    the only array shapes supported are 1-D arrays and N-D arrays for which each dimension corresponds to an existing
-    1-D array. The dimensions metadata is implemented as an OrderedDict so that the netCDF4 writer can create the
-    dimensions in the proper order. The format is 'array_name': dimension_tuple, where dimension tuple is
-    ('array_name') for 1-D arrays or ('some_1D_array', 'another_1D_array', ...) for a higher dimensional array.
+    check the dimensions of their arrays on instantiation through the _validate_dimensions() method. The format of the
+    an entry in the dimensions dict is 'array_name': dimension_tuple, where dimension tuple is a tuple of strings
+    that are the names of the dimensions. To pass validation, each dimension name must correspond to an attribute or
+    property of the class that is a 1-D array with size equal to the corresponding element of array.shape. Thus, arrays
+    that have a given dimension must all have the same length along that dimension. For example, if there is an entry
+    's21': ('time', 'frequency)
+    and another entry
+    'frequency': ('frequency',)
+    then
+    s21.shape[1] == frequency.size
+    must be True. If the array corresponding to some dimension is not intended to be saved, it can be implemented as a
+    property. For example, in the case above, the 'time' dimension could be implemented as a property. The instance
+    would still pass validation as long as
+    s21.shape[0] == time.size
+    were True.
 
     Containers.
     Measurements store state information in a dictionary. (They actually use a subclass called StateDict, which has

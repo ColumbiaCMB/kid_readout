@@ -3,8 +3,6 @@ This module has classes that contain single-channel measurements.
 """
 from __future__ import division
 
-from collections import OrderedDict
-
 import numpy as np
 import pandas as pd
 from matplotlib.pyplot import mlab  # TODO: replace with a scipy PSD estimator
@@ -14,15 +12,16 @@ from kid_readout.analysis.timedomain.despike import deglitch_window
 from kid_readout.measurement import core
 from kid_readout.roach import calculate
 
+
 class Stream(core.Measurement):
     """
     This class contains time-ordered data from a single channel.
     """
 
-    dimensions = OrderedDict([('tone_bin', ('tone_bin',)),
-                              ('tone_amplitude', ('tone_bin',)),
-                              ('tone_phase', ('tone_bin',)),
-                              ('s21', ('epoch',))])
+    dimensions = {'tone_bin': ('tone_bin',),
+                  'tone_amplitude': ('tone_bin',),
+                  'tone_phase': ('tone_bin',),
+                  's21': ('sample_time',)}
 
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21, roach_state,
                  state=None, analyze=False, description='Stream'):
@@ -56,7 +55,7 @@ class Stream(core.Measurement):
         self._frequency = None
         self._sample_time = None
         self._baseband_frequency = None
-        self._output_sample_rate = None
+        self._stream_sample_rate = None
         self._s21_mean = None
         self._s21_mean_error = None
         super(Stream, self).__init__(state=state, analyze=analyze, description=description)
@@ -64,14 +63,15 @@ class Stream(core.Measurement):
     def analyze(self):
         self.baseband_frequency
         self.frequency
-        self.output_sample_rate
+        self.stream_sample_rate
         self.s21_mean
         self.s21_mean_error
 
     @property
     def sample_time(self):
         if self._sample_time is None:
-            self._sample_time = np.arange(self.s21.shape[0],dtype='float')/self.stream_sample_rate
+            self._sample_time = (np.arange(self.s21.shape[0], dtype='float') /
+                                 self.stream_sample_rate)
         return self._sample_time
 
     @property
@@ -95,10 +95,10 @@ class Stream(core.Measurement):
         return 1e-6 * self.baseband_frequency
 
     @property
-    def output_sample_rate(self):
-        if self._output_sample_rate is None:
-            self._output_sample_rate = calculate.stream_sample_rate(self.roach_state)
-        return self._output_sample_rate
+    def stream_sample_rate(self):
+        if self._stream_sample_rate is None:
+            self._stream_sample_rate = calculate.stream_sample_rate(self.roach_state)
+        return self._stream_sample_rate
 
     @property
     def s21_mean(self):
@@ -379,25 +379,3 @@ class SweepStream(core.Measurement):
         dataframe = pd.DataFrame(data, index=[0])
         self.add_origin(dataframe)
         return dataframe
-
-
-# Functions for generating fake measurements.
-
-
-# TODO: broken!
-def make_stream(tone_index=0, mean=0, rms=1, length=1, t0=0, active_state_arrays=None, roach_state=None, state=None):
-    variables = {}
-    if active_state_arrays is None:
-        active_state_arrays = fake.baseband_active_state_arrays()
-    if roach_state is None:
-        roach_state = fake.baseband_state()
-    variables.update(active_state_arrays)
-    # For a stream, both of these are ints, not arrays of ints:
-    variables['tone_index'] = tone_index
-    variables['filterbank_bin'] = variables['filterbank_bin'][tone_index]
-    num_samples = length * calculate.stream_sample_rate(roach_state)
-    variables['s21'] = mean + rms * (np.random.randn(num_samples) + 1j * np.random.randn(num_samples))
-    variables['epoch'] = np.linspace(t0, t0 + length, num_samples)
-    variables['roach_state'] = roach_state
-    variables['state'] = state
-    return Stream(**variables)

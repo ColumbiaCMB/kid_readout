@@ -3,8 +3,6 @@ This module has classes that contain simultaneous multiple-channel measurements.
 """
 from __future__ import division
 
-from collections import OrderedDict
-
 import numpy as np
 import pandas as pd
 
@@ -18,12 +16,12 @@ class StreamArray(core.Measurement):
     This class represents simultaneously-sampled data from multiple channels.
     """
 
-    dimensions = OrderedDict([('tone_bin', ('tone_bin',)),
-                              ('tone_amplitude', ('tone_bin',)),
-                              ('tone_phase', ('tone_bin',)),
-                              ('tone_index', ('tone_index',)),
-                              ('filterbank_bin', ('tone_index',)),
-                              ('s21', ('tone_index', 'sample_time'))])
+    dimensions = {'tone_bin': ('tone_bin',),
+                  'tone_amplitude': ('tone_bin',),
+                  'tone_phase': ('tone_bin',),
+                  'tone_index': ('tone_index',),
+                  'filterbank_bin': ('tone_index',),
+                  's21': ('tone_index', 'sample_time')}
 
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21, roach_state,
                  state=None, analyze=False, description='StreamArray'):
@@ -34,7 +32,7 @@ class StreamArray(core.Measurement):
 
         The tone_bin, tone_amplitude, tone_phase, tone_index, and filterbank_bin arrays are 1-D, while s21 is
         2-D with
-        s21.shape == (tone_index.size, num_samples)
+        s21.shape == (tone_index.size, sample_time.size)
 
         :param tone_bin: an array of integers representing the frequencies of the tones played during the measurement.
         :param tone_amplitude: an array of floats representing the amplitudes of the tones played during the
@@ -42,8 +40,8 @@ class StreamArray(core.Measurement):
         :param tone_phase: an array of floats representing the radian phases of the tones played during the measurement.
         :param tone_index: an intarray for which tone_bin[tone_index] corresponds to the frequency used to produce s21.
         :param filterbank_bin: an integer that is the filter bank bin in which the tone lies.
-        :param epoch: float, unix timestamp of first sample of the time stream
-        :param s21: a 2-D array of complex floats containing the data, demodulated or not..
+        :param epoch: float, unix timestamp of first sample of the time stream.
+        :param s21: a 2-D array of complex floats containing the data, demodulated or not.
         :param roach_state: a dict containing state information for the roach.
         :param state: a dict containing all non-roach state information.
         :param analyze: if True, call the analyze() method at the end of instantiation.
@@ -76,7 +74,8 @@ class StreamArray(core.Measurement):
     @property
     def sample_time(self):
         if self._sample_time is None:
-            self._sample_time = np.arange(self.s21.shape[1],dtype='float')/self.stream_sample_rate
+            self._sample_time = (np.arange(self.s21.shape[1],dtype='float') /
+                                 self.stream_sample_rate)
         return self._sample_time
 
     @property
@@ -242,22 +241,3 @@ class SweepStreamArray(core.Measurement):
         for n in range(self.num_channels):
             dataframes.append(self.sweep_stream(n).to_dataframe())
         return pd.concat(dataframes, ignore_index=True)
-
-
-# Functions for generating fake measurements.
-
-
-# TODO: broken!
-def make_stream_array(mean=0, rms=1, length=1, t0=0, active_state_arrays=None, roach_state=None, state=None):
-    variables = {}
-    if active_state_arrays is None:
-        active_state_arrays = fake.active_state_arrays()
-    if roach_state is None:
-        roach_state = fake.state()
-    variables.update(active_state_arrays)
-    num_samples = length * calculate.stream_sample_rate(roach_state)
-    variables['s21'] = mean + rms * (np.random.randn(num_samples) + 1j * np.random.randn(num_samples))
-    variables['epoch'] = np.linspace(t0, t0 + length, num_samples)
-    variables['roach_state'] = roach_state
-    variables['state'] = state
-    return StreamArray(**variables)

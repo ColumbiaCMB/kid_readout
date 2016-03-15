@@ -75,9 +75,26 @@ class IO(core.IO):
         self._get_node(existing).createGroup(new)
 
     def write_array(self, node_path, name, array, dimensions):
+        """
+        Write the given array to the node at node_path with the given name and dimensions.
+
+        When writing arrays to a node, each dimension is created the first time it appears in the dimensions tuple.
+        The dimension is created with size equal to the corresponding dimension of the given array. Thus, there is no
+        restriction on the order in which arrays are written. Writing will still fail if two arrays share a dimension
+        name and have different shape along the corresponding axes. Since this would have caused
+        Measurement._validate_dimensions() to fail, this should not happen unless array sizes are modified after
+        instantiation somehow.
+
+        :param node_path: the node path as a string.
+        :param name: the name of the variable.
+        :param array: the array containing the data.
+        :param dimensions: a tuple of strings with the dimensions that correspond to the dimensions of the array.
+        :return: None.
+        """
         node = self._get_node(node_path)
-        if (name,) == dimensions and name not in node.dimensions:
-            node.createDimension(name, array.size)
+        for n, dimension in enumerate(dimensions):
+            if dimension not in node.dimensions:
+                node.createDimension(dimension, array.shape[n])
         try:
             npy_datatype = self.npy_to_netcdf[array.dtype]['datatype']
             netcdf_datatype = node.createCompoundType(self.npy_to_netcdf[array.dtype]['datatype'],
