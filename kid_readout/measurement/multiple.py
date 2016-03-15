@@ -62,7 +62,7 @@ class StreamArray(core.Measurement):
         self.roach_state = core.to_state_dict(roach_state)
         self._frequency = None
         self._baseband_frequency = None
-        self._output_sample_rate = None
+        self._stream_sample_rate = None
         self._s21_mean = None
         self._s21_mean_error = None
         super(StreamArray, self).__init__(state=state, analyze=analyze, description=description)
@@ -70,7 +70,7 @@ class StreamArray(core.Measurement):
     def analyze(self):
         self.baseband_frequency
         self.frequency
-        self.output_sample_rate
+        self.stream_sample_rate
         self.s21_mean
         self.s21_mean_error
 
@@ -95,10 +95,10 @@ class StreamArray(core.Measurement):
         return 1e-6 * self.baseband_frequency
 
     @property
-    def output_sample_rate(self):
-        if self._output_sample_rate is None:
-            self._output_sample_rate = calculate.stream_sample_rate(self.roach_state)
-        return self._output_sample_rate
+    def stream_sample_rate(self):
+        if self._stream_sample_rate is None:
+            self._stream_sample_rate = calculate.stream_sample_rate(self.roach_state)
+        return self._stream_sample_rate
 
     @property
     def s21_mean(self):

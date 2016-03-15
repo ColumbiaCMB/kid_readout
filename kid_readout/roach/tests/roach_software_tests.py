@@ -45,6 +45,6 @@ def test_state():
         print "get_state_arrays",
         ri.get_state_arrays()
         _ = ri.state_arrays
-        print "get_active_state_arrays",
+        print "get_active_state_arrays"
         ri.get_active_state_arrays()
         _ = ri.active_state_arrays
