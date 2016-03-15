@@ -338,6 +338,8 @@ class RoachInterface(object):
             return rate_in_hz
 
     def save_state(self):
+        if self._using_mock_roach:
+            return #don't save anything when using mock
         np.savez(self._config_file_name,
                  boffile=self.boffile,
                  adc_atten=self.adc_atten,
@@ -561,20 +563,29 @@ class RoachInterface(object):
         res = 1 / res
         return res
 
-    def get_measurement(self,num_blocks, demod=True,**kwargs):
+    def get_measurement(self, num_seconds, power_of_two=True, demod=True, **kwargs):
+        num_blocks = self.blocks_per_second*num_seconds
+        if power_of_two:
+            log2 = np.round(np.log2(num_blocks))
+            if log2 < 0:
+                log2 = 0
+            num_blocks = 2 ** log2
+        return self.get_measurement_blocks(num_blocks,demod=demod,**kwargs)
+
+    def get_measurement_blocks(self,num_blocks, demod=True,**kwargs):
         epoch = time.time() # This will be improved
         data, seqnos = self.get_data(num_blocks,demod=demod)
         if np.isscalar(self.amps):
             tone_amplitude = self.amps*np.ones(self.tone_bins.shape[1],dtype='float')
         else:
-            tone_amplitude = self.amps
-        measurement = StreamArray(filterbank_bin=self.fft_bins[self.bank,self.readout_selection],
-                                  tone_bin=self.tone_bins[self.bank,:],
-                                  tone_amplitude=tone_amplitude,
+            tone_amplitude = self.amps.copy()
+        measurement = StreamArray(filterbank_bin=self.fft_bins[self.bank,self.readout_selection].copy(),
+                                  tone_bin=self.tone_bins[self.bank,:].copy(),
+                                  tone_amplitude=tone_amplitude, # already copied
                                   epoch=epoch,
                                   s21=data.T,  # transpose for now, because measurements are organized channel,time
-                                  tone_phase=self.phases,
-                                  tone_index=self.readout_selection,
+                                  tone_phase=self.phases.copy(),
+                                  tone_index=self.readout_selection.copy(),
                                   roach_state=self.get_state(),
                                   **kwargs)
         return measurement

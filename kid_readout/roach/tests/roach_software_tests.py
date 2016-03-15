@@ -55,4 +55,4 @@ def test_get_measurement():
     ri = kid_readout.roach.baseband.RoachBaseband(roach=mr,adc_valon=mv,initialize=False)
     ri.set_tone_freqs(np.linspace(100,120,32),nsamp=2**16)
     ri.select_fft_bins(range(32))
-    blah = ri.get_measurement(2)
+    blah = ri.get_measurement_blocks(2)
