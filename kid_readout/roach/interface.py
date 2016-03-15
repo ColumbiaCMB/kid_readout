@@ -10,6 +10,7 @@ import udp_catcher
 from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
 from kid_readout.roach import tools
 from kid_readout.measurement.core import StateDict
+from kid_readout.measurement.multiple import StreamArray
 
 
 CONFIG_FILE_NAME_TEMPLATE = os.path.join(BASE_DATA_DIR,'%s_config.npz')
@@ -166,7 +167,7 @@ class RoachInterface(object):
         if self.tone_bins is None:
             num_tones = None
         else:
-            num_tones = self.tone_bins.shape[1], # We may want to update this later if some tones have
+            num_tones = self.tone_bins.shape[1] # We may want to update this later if some tones have
                                                  # zero tone_amplitude
         return num_tones
 
@@ -559,6 +560,24 @@ class RoachInterface(object):
         res = np.interp(np.abs(fr) * 2 ** 7, np.arange(2 ** 7), self._window_mag)
         res = 1 / res
         return res
+
+    def get_measurement(self,num_blocks, demod=True,**kwargs):
+        epoch = time.time() # This will be improved
+        data, seqnos = self.get_data(num_blocks,demod=demod)
+        if np.isscalar(self.amps):
+            tone_amplitude = self.amps*np.ones(self.tone_bins.shape[1],dtype='float')
+        else:
+            tone_amplitude = self.amps
+        measurement = StreamArray(filterbank_bin=self.fft_bins[self.bank,self.readout_selection],
+                                  tone_bin=self.tone_bins[self.bank,:],
+                                  tone_amplitude=tone_amplitude,
+                                  epoch=epoch,
+                                  s21=data,
+                                  tone_phase=self.phases,
+                                  tone_index=self.readout_selection,
+                                  roach_state=self.get_state(),
+                                  **kwargs)
+        return measurement
 
     def get_data_udp(self, nread=2, demod=True):
         chan_offset = 1

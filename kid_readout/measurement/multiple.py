@@ -11,7 +11,6 @@ import pandas as pd
 from kid_readout.measurement import core
 from kid_readout.measurement.single import Stream, Sweep, ResonatorSweep, SweepStream
 from kid_readout.roach import calculate
-from kid_readout.roach.tests import fake
 
 
 class StreamArray(core.Measurement):
@@ -24,7 +23,7 @@ class StreamArray(core.Measurement):
                               ('tone_phase', ('tone_bin',)),
                               ('tone_index', ('tone_index',)),
                               ('filterbank_bin', ('tone_index',)),
-                              ('s21', ('tone_index', 'epoch'))])
+                              ('s21', ('tone_index', 'sample_time'))])
 
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21, roach_state,
                  state=None, analyze=False, description='StreamArray'):

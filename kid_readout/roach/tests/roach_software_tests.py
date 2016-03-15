@@ -48,3 +48,11 @@ def test_state():
         print "get_active_state_arrays"
         ri.get_active_state_arrays()
         _ = ri.active_state_arrays
+
+def test_get_measurement():
+    mr = kid_readout.roach.tests.mock_roach.MockRoach('roach')
+    mv = kid_readout.roach.tests.mock_valon.MockValon()
+    ri = kid_readout.roach.baseband.RoachBaseband(roach=mr,adc_valon=mv,initialize=False)
+    ri.set_tone_freqs(np.linspace(100,120,32),nsamp=2**16)
+    ri.select_fft_bins(range(32))
+    blah = ri.get_measurement(2)

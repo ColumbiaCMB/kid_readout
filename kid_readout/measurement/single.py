@@ -13,8 +13,6 @@ from kid_readout.analysis.resonator import resonator
 from kid_readout.analysis.timedomain.despike import deglitch_window
 from kid_readout.measurement import core
 from kid_readout.roach import calculate
-from kid_readout.roach.tests import fake
-
 
 class Stream(core.Measurement):
     """
