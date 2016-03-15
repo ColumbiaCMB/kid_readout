@@ -572,7 +572,7 @@ class RoachInterface(object):
                                   tone_bin=self.tone_bins[self.bank,:],
                                   tone_amplitude=tone_amplitude,
                                   epoch=epoch,
-                                  s21=data,
+                                  s21=data.T,  # transpose for now, because measurements are organized channel,time
                                   tone_phase=self.phases,
                                   tone_index=self.readout_selection,
                                   roach_state=self.get_state(),
