@@ -24,7 +24,6 @@ class StreamArray(core.Measurement):
                               ('tone_phase', ('tone_bin',)),
                               ('tone_index', ('tone_index',)),
                               ('filterbank_bin', ('tone_index',)),
-                              ('epoch', ('epoch',)),
                               ('s21', ('tone_index', 'epoch'))])
 
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21, roach_state,
@@ -34,9 +33,9 @@ class StreamArray(core.Measurement):
         tone_amplitude,
         and tone_phase for the tones demodulated to produce the time-ordered s21 data.
 
-        The tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, and epoch arrays are 1-D, while s21 is
+        The tone_bin, tone_amplitude, tone_phase, tone_index, and filterbank_bin arrays are 1-D, while s21 is
         2-D with
-        s21.shape == (tone_index.size, epoch.size)
+        s21.shape == (tone_index.size, num_samples)
 
         :param tone_bin: an array of integers representing the frequencies of the tones played during the measurement.
         :param tone_amplitude: an array of floats representing the amplitudes of the tones played during the
@@ -44,7 +43,7 @@ class StreamArray(core.Measurement):
         :param tone_phase: an array of floats representing the radian phases of the tones played during the measurement.
         :param tone_index: an intarray for which tone_bin[tone_index] corresponds to the frequency used to produce s21.
         :param filterbank_bin: an integer that is the filter bank bin in which the tone lies.
-        :param epoch: an array of floats representing the unix timestamp when the data was recorded.
+        :param epoch: float, unix timestamp of first sample of the time stream
         :param s21: a 2-D array of complex floats containing the data, demodulated or not..
         :param roach_state: a dict containing state information for the roach.
         :param state: a dict containing all non-roach state information.
@@ -63,6 +62,7 @@ class StreamArray(core.Measurement):
         self._frequency = None
         self._baseband_frequency = None
         self._stream_sample_rate = None
+        self._sample_time = None
         self._s21_mean = None
         self._s21_mean_error = None
         super(StreamArray, self).__init__(state=state, analyze=analyze, description=description)
@@ -73,6 +73,12 @@ class StreamArray(core.Measurement):
         self.stream_sample_rate
         self.s21_mean
         self.s21_mean_error
+
+    @property
+    def sample_time(self):
+        if self._sample_time is None:
+            self._sample_time = np.arange(self.s21.shape[1],dtype='float')/self.stream_sample_rate
+        return self._sample_time
 
     @property
     def frequency(self):
@@ -138,11 +144,11 @@ class StreamArray(core.Measurement):
                 stop = key.stop
             if key.step is not None:
                 raise ValueError("Step size is not supported: {}".format(key))
-            start_index = np.searchsorted(self.epoch, (start,), side='left')
-            stop_index = np.searchsorted(self.epoch, (stop,), side='right')  # This index is not included
+            start_index = np.searchsorted(self.sample_time, (start,), side='left')
+            stop_index = np.searchsorted(self.sample_time, (stop,), side='right')  # This index is not included
             return StreamArray(tone_bin=self.tone_bin, tone_amplitude=self.tone_amplitude, tone_phase=self.tone_phase,
                                tone_index=self.tone_index, filterbank_bin=self.filterbank_bin,
-                               epoch=self.epoch[start_index:stop_index], s21=self.s21[:, start_index:stop_index],
+                               epoch=self.sample_time[start_index:stop_index], s21=self.s21[:, start_index:stop_index],
                                roach_state=self.state, description=self.description)
         else:
             raise ValueError("Invalid slice: {}".format(key))
