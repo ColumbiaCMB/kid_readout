@@ -282,6 +282,13 @@ class RoachBaseband(RoachInterface):
         else:
             return self.get_data_udp(nread=nread, demod=demod)
 
+    @property
+    def blocks_per_second(self):
+        chan_rate = self.fs * 1e6 / (2 * self.nfft)  # samples per second for one tone_index
+        samples_per_channel_per_block = 4096
+        return chan_rate / samples_per_channel_per_block
+
+
     def get_data_seconds(self, nseconds, demod=True, pow2=True):
         """
         Capture data for specified length of time (using the udp interface)
