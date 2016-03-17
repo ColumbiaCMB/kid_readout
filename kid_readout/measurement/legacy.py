@@ -204,7 +204,7 @@ def stream_from_rnc(rnc, timestream_group_index, tone_index, description=None):
                         tg.num_data_samples)
     s21 = tg.data[increasing_order, :][tone_index]
     return Stream(tone_bin=tone_bin, tone_amplitude=amplitude, tone_phase=phase, tone_index=tone_index, filterbank_bin=fft_bin,
-                  epoch=epoch, s21=s21, roach_state=roach_state, state=state, description=description)
+                  epoch=epoch, s21_raw=s21, roach_state=roach_state, state=state, description=description)
 
 
 def streamarray_from_rnc(rnc, timestream_group_index, description=None):
@@ -227,7 +227,7 @@ def streamarray_from_rnc(rnc, timestream_group_index, description=None):
                         tg.num_data_samples)
     s21 = tg.data[increasing_order, :]
     return StreamArray(tone_bin=tone_bin, tone_amplitude=amplitude, tone_phase=phase, tone_index=tone_index, filterbank_bin=fft_bin,
-                       epoch=epoch, s21=s21, roach_state=roach_state, state=state, description=description)
+                       epoch=epoch, s21_raw=s21, roach_state=roach_state, state=state, description=description)
 
 
 def sweep_from_rnc(rnc, sweep_group_index, tone_index, resonator=True, description=None):
@@ -257,7 +257,7 @@ def sweep_from_rnc(rnc, sweep_group_index, tone_index, resonator=True, descripti
                             tg.num_data_samples)
         s21 = tg.data[simultaneous, :][increasing_order][tone_index]
         streams.append(Stream(tone_bin=tone_bin, tone_amplitude=amplitude, tone_phase=phase, tone_index=tone_index,
-                              filterbank_bin=fft_bin, epoch=epoch, s21=s21, roach_state=roach_state))
+                              filterbank_bin=fft_bin, epoch=epoch, s21_raw=s21, roach_state=roach_state))
     if resonator:
         return ResonatorSweep(streams=streams, state=state, description=description)
     else:
@@ -292,7 +292,7 @@ def sweeparray_from_rnc(rnc, sweep_group_index, resonator=True, description=None
                             tg.num_data_samples)
         s21 = tg.data[simultaneous, :][increasing_order]
         stream_arrays.append(StreamArray(tone_bin=tone_bin, tone_amplitude=amplitude, tone_phase=phase, tone_index=tone_index,
-                                         filterbank_bin=fft_bin, epoch=epoch, s21=s21, roach_state=roach_state))
+                                         filterbank_bin=fft_bin, epoch=epoch, s21_raw=s21, roach_state=roach_state))
     if resonator:
         return ResonatorSweepArray(stream_arrays=stream_arrays, state=state, description=description)
     else:

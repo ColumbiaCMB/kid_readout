@@ -21,23 +21,23 @@ class Stream(core.Measurement):
     dimensions = {'tone_bin': ('tone_bin',),
                   'tone_amplitude': ('tone_bin',),
                   'tone_phase': ('tone_bin',),
-                  's21': ('sample_time',)}
+                  's21_raw': ('sample_time',)}
 
-    def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21, roach_state,
+    def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw, roach_state,
                  state=None, analyze=False, description='Stream'):
         """
         Return a new Stream instance. The integer tone_index is the common index of tone_bin, tone_amplitude,
         and tone_phase for
-        the single tone used to produce the time-ordered s21 data.
+        the single tone used to produce the time-ordered s21_raw data.
 
         :param tone_bin: an array of integers representing the frequencies of the tones played during the measurement.
         :param tone_amplitude: an array of floats representing the amplitudes of the tones played during the
           measurement.
         :param tone_phase: an array of floats representing the radian phases of the tones played during the measurement.
-        :param tone_index: an int for which tone_bin[tone_index] corresponds to the frequency used to produce s21.
+        :param tone_index: an int for which tone_bin[tone_index] corresponds to the frequency used to produce s21_raw.
         :param filterbank_bin: an int that is the filter bank bin in which the tone lies.
         :param epoch: float, unix timestamp of first sample of the time stream.
-        :param s21: an 1-D array of complex floats containing the data, demodulated or not.
+        :param s21_raw: an 1-D array of complex floats containing the data, demodulated or not.
         :param roach_state: a dict containing state information for the roach.
         :param state: a dict containing all non-roach state information.
         :param analyze: if True, call the analyze() method at the end of instantiation.
@@ -50,27 +50,27 @@ class Stream(core.Measurement):
         self.tone_index = tone_index
         self.filterbank_bin = filterbank_bin
         self.epoch = epoch
-        self.s21 = s21
+        self.s21_raw = s21_raw
         self.roach_state = core.to_state_dict(roach_state)
         self._frequency = None
         self._sample_time = None
         self._baseband_frequency = None
         self._stream_sample_rate = None
-        self._s21_mean = None
-        self._s21_mean_error = None
+        self._s21_raw_mean = None
+        self._s21_raw_mean_error = None
         super(Stream, self).__init__(state=state, analyze=analyze, description=description)
 
     def analyze(self):
         self.baseband_frequency
         self.frequency
         self.stream_sample_rate
-        self.s21_mean
-        self.s21_mean_error
+        self.s21_raw_mean
+        self.s21_raw_mean_error
 
     @property
     def sample_time(self):
         if self._sample_time is None:
-            self._sample_time = (np.arange(self.s21.shape[0], dtype='float') /
+            self._sample_time = (np.arange(self.s21_raw.shape[0], dtype='float') /
                                  self.stream_sample_rate)
         return self._sample_time
 
@@ -101,16 +101,25 @@ class Stream(core.Measurement):
         return self._stream_sample_rate
 
     @property
-    def s21_mean(self):
-        if self._s21_mean is None:
-            self._s21_mean = self.s21.mean()
-        return self._s21_mean
+    def s21_point(self):
+        return self.s21_raw_mean
 
     @property
-    def s21_mean_error(self):
-        if self._s21_mean_error is None:
-            self._s21_mean_error = (self.s21.real.std() + 1j * self.s21.imag.std()) / self.s21.size ** (1 / 2)
-        return self._s21_mean_error
+    def s21_point_error(self):
+        return self.s21_raw_mean_error
+
+    @property
+    def s21_raw_mean(self):
+        if self._s21_raw_mean is None:
+            self._s21_raw_mean = self.s21_raw.mean()
+        return self._s21_raw_mean
+
+    @property
+    def s21_raw_mean_error(self):
+        if self._s21_raw_mean_error is None:
+            self._s21_raw_mean_error = ((self.s21_raw.real.std() +1j * self.s21_raw.imag.std()) /
+                                        self.s21_raw.size ** (1 / 2))
+        return self._s21_raw_mean_error
 
     def __getitem__(self, key):
         """
@@ -141,7 +150,7 @@ class Stream(core.Measurement):
             stop_index = np.searchsorted(self.sample_time, (stop,), side='right')  # This index is not included
             return Stream(tone_bin=self.tone_bin, tone_amplitude=self.tone_amplitude, tone_phase=self.tone_phase,
                           tone_index=self.tone_index, filterbank_bin=self.filterbank_bin,
-                          epoch=self.sample_time[start_index:stop_index], s21=self.s21[:, start_index:stop_index],
+                          epoch=self.sample_time[start_index:stop_index], s21_raw=self.s21_raw[:, start_index:stop_index],
                           roach_state=self.state, description=self.description)
         else:
             raise ValueError("Invalid slice: {}".format(key))
@@ -159,9 +168,9 @@ class Sweep(core.Measurement):
         for stream in self.streams:
             stream._parent = self
         self._frequency = None
-        self._s21 = None
-        self._s21_error = None
-        self._s21_raw = None
+        self._s21_points = None
+        self._s21_points_error = None
+        self._s21_raw_stack = None
         super(Sweep, self).__init__(state=state, analyze=analyze, description=description)
 
     @property
@@ -171,44 +180,63 @@ class Sweep(core.Measurement):
         return self._frequency
 
     @property
-    def s21(self):
-        if self._s21 is None:
-            self._s21 = np.array([stream.s21_mean for stream in self.streams])
-        return self._s21
+    def s21_points(self):
+        if self._s21_points is None:
+            self._s21_points = np.array([stream.s21_point for stream in self.streams])
+        return self._s21_points
 
     @property
-    def s21_error(self):
-        if self._s21_error is None:
-            self._s21_error = np.array([stream.s21_mean_error for stream in self.streams])
-        return self._s21_error
+    def s21_points_error(self):
+        if self._s21_points_error is None:
+            self._s21_points_error = np.array([stream.s21_point_error for stream in self.streams])
+        return self._s21_points_error
 
     @property
-    def s21_raw(self):
-        if self._s21_raw is None:
-            self._s21_raw = np.vstack([stream.s21 for stream in self.streams])
-        return self._s21_raw
-
-    # TODO: add s21 with delay removal
-    # TODO: add psd
+    def s21_raw_stack(self):
+        if self._s21_raw_stack is None:
+            self._s21_raw_stack = np.vstack([stream.s21_raw for stream in self.streams])
+        return self._s21_raw_stack
 
 
 class ResonatorSweep(Sweep):
     def __init__(self, streams, state=None, analyze=False, description='ResonatorSweep'):
         self._resonator = None
+        self._s21_normalized = None
+        self._s21_normalized_error = None
         super(ResonatorSweep, self).__init__(streams=streams, state=state, analyze=analyze, description=description)
 
     def analyze(self):
         self.resonator
 
-    def fit_resonator(self, delay_estimate=None, nonlinear_a_threshold=0.08):
-        self._resonator = resonator.fit_best_resonator(self.frequency, self.s21, errors=self.s21_error,
-                                                       delay_estimate=delay_estimate, min_a=nonlinear_a_threshold)
+    @property
+    def s21_normalized(self):
+        if self._s21_normalized is None:
+            self._set_s21_normalized()
+        return self._s21_normalized
+
+    def _set_s21_normalized(self):
+        self._s21_normalized = np.array([self.resonator.normalize(f, s21)
+                                         for f, s21 in zip(self.frequency, self.s21_points)])
+
+    @property
+    def s21_normalized_error(self):
+        if self._s21_normalized_error is None:
+            self._set_s21_normalized_error()
+        return self._s21_normalized_error
+
+    def _set_s21_normalized_error(self):
+        self._s21_normalized_error = np.array([self.resonator.normalize(f, s21_error)
+                                               for f, s21_error in zip(self.frequency, self.s21_points_error)])
 
     @property
     def resonator(self):
         if self._resonator is None:
             self.fit_resonator()
         return self._resonator
+
+    def fit_resonator(self, delay_estimate=None, nonlinear_a_threshold=0.08):
+        self._resonator = resonator.fit_best_resonator(self.frequency, self.s21_points, errors=self.s21_points_error,
+                                                       delay_estimate=delay_estimate, min_a=nonlinear_a_threshold)
 
 
 # Think of another name for this. This class is intended to fit the gain and delay off-resonance.
@@ -228,7 +256,6 @@ class SweepStream(core.Measurement):
         self.sweep._parent = self
         self.stream = stream
         self.stream._parent = self
-        self._sweep_s21_normalized = None
         self._stream_s21_normalized = None
         self._stream_s21_normalized_deglitched = None
         self._q = None
@@ -239,20 +266,9 @@ class SweepStream(core.Measurement):
         super(SweepStream, self).__init__(state=state, analyze=analyze, description=description)
 
     def analyze(self):
-        self._set_sweep_s21_normalized()
         self._set_stream_s21_normalized_deglitched()
         self._set_q_and_x()
         self._set_S_qq_and_S_xx()
-
-    @property
-    def sweep_s21_normalized(self):
-        if self._sweep_s21_normalized is None:
-            self._set_sweep_s21_normalized()
-        return self._sweep_s21_normalized
-
-    def _set_sweep_s21_normalized(self):
-        self._sweep_s21_normalized = np.array([self.sweep.resonator.normalize(f, s21)
-                                               for f, s21 in zip(self.sweep.frequency, self.sweep.s21)])
 
     @property
     def stream_s21_normalized(self):
@@ -308,7 +324,7 @@ class SweepStream(core.Measurement):
         c = 1 / self.sweep.resonator.Q_e  # c is the inverse of the complex couping quality factor.
         z = c / (1 - s21)
         self._q = z.real - c.real
-        self._x = z.imag / 2  # This factor of two means S_xx = S_qq / 4 when amplifier-noise dominated.
+        self._x = z.imag / 2  # This factor of two means S_xx = S_qq / 4 when amplifier noise dominated.
 
     @property
     def S_frequency(self):

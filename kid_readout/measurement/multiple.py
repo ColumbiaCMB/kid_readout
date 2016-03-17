@@ -21,27 +21,28 @@ class StreamArray(core.Measurement):
                   'tone_phase': ('tone_bin',),
                   'tone_index': ('tone_index',),
                   'filterbank_bin': ('tone_index',),
-                  's21': ('tone_index', 'sample_time')}
+                  's21_raw': ('tone_index', 'sample_time')}
 
-    def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21, roach_state,
+    def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw, roach_state,
                  state=None, analyze=False, description='StreamArray'):
         """
         Return a new StreamArray instance. The integer array tone_index contains the indices of tone_bin,
         tone_amplitude,
-        and tone_phase for the tones demodulated to produce the time-ordered s21 data.
+        and tone_phase for the tones demodulated to produce the time-ordered s21_raw data.
 
-        The tone_bin, tone_amplitude, tone_phase, tone_index, and filterbank_bin arrays are 1-D, while s21 is
+        The tone_bin, tone_amplitude, tone_phase, tone_index, and filterbank_bin arrays are 1-D, while s21_raw is
         2-D with
-        s21.shape == (tone_index.size, sample_time.size)
+        s21_raw.shape == (tone_index.size, sample_time.size)
 
         :param tone_bin: an array of integers representing the frequencies of the tones played during the measurement.
         :param tone_amplitude: an array of floats representing the amplitudes of the tones played during the
           measurement.
         :param tone_phase: an array of floats representing the radian phases of the tones played during the measurement.
-        :param tone_index: an intarray for which tone_bin[tone_index] corresponds to the frequency used to produce s21.
+        :param tone_index: an intarray for which tone_bin[tone_index] corresponds to the frequency used to produce
+        s21_raw.
         :param filterbank_bin: an integer that is the filter bank bin in which the tone lies.
         :param epoch: float, unix timestamp of first sample of the time stream.
-        :param s21: a 2-D array of complex floats containing the data, demodulated or not.
+        :param s21_raw: a 2-D array of complex floats containing the data, demodulated or not.
         :param roach_state: a dict containing state information for the roach.
         :param state: a dict containing all non-roach state information.
         :param analyze: if True, call the analyze() method at the end of instantiation.
@@ -54,27 +55,27 @@ class StreamArray(core.Measurement):
         self.tone_index = tone_index
         self.filterbank_bin = filterbank_bin
         self.epoch = epoch
-        self.s21 = s21
+        self.s21_raw = s21_raw
         self.roach_state = core.to_state_dict(roach_state)
         self._frequency = None
         self._baseband_frequency = None
         self._stream_sample_rate = None
         self._sample_time = None
-        self._s21_mean = None
-        self._s21_mean_error = None
+        self._s21_raw_mean = None
+        self._s21_raw_mean_error = None
         super(StreamArray, self).__init__(state=state, analyze=analyze, description=description)
 
     def analyze(self):
         self.baseband_frequency
         self.frequency
         self.stream_sample_rate
-        self.s21_mean
-        self.s21_mean_error
+        self.s21_raw_mean
+        self.s21_raw_mean_error
 
     @property
     def sample_time(self):
         if self._sample_time is None:
-            self._sample_time = (np.arange(self.s21.shape[1],dtype='float') /
+            self._sample_time = (np.arange(self.s21_raw.shape[1], dtype='float') /
                                  self.stream_sample_rate)
         return self._sample_time
 
@@ -105,17 +106,17 @@ class StreamArray(core.Measurement):
         return self._stream_sample_rate
 
     @property
-    def s21_mean(self):
-        if self._s21_mean is None:
-            self._s21_mean = self.s21.mean(axis=1)
-        return self._s21_mean
+    def s21_raw_mean(self):
+        if self._s21_raw_mean is None:
+            self._s21_raw_mean = self.s21_raw.mean(axis=1)
+        return self._s21_raw_mean
 
     @property
-    def s21_mean_error(self):
-        if self._s21_mean_error is None:
-            self._s21_mean_error = ((self.s21.real.std(axis=1) + 1j * self.s21.imag.std(axis=1)) /
-                                    self.s21.shape[1] ** (1 / 2))
-        return self._s21_mean_error
+    def s21_raw_mean_error(self):
+        if self._s21_raw_mean_error is None:
+            self._s21_raw_mean_error = ((self.s21_raw.real.std(axis=1) + 1j * self.s21_raw.imag.std(axis=1)) /
+                                        self.s21_raw.shape[1] ** (1 / 2))
+        return self._s21_raw_mean_error
 
     def __getitem__(self, key):
         """
@@ -146,7 +147,8 @@ class StreamArray(core.Measurement):
             stop_index = np.searchsorted(self.sample_time, (stop,), side='right')  # This index is not included
             return StreamArray(tone_bin=self.tone_bin, tone_amplitude=self.tone_amplitude, tone_phase=self.tone_phase,
                                tone_index=self.tone_index, filterbank_bin=self.filterbank_bin,
-                               epoch=self.sample_time[start_index:stop_index], s21=self.s21[:, start_index:stop_index],
+                               epoch=self.sample_time[start_index:stop_index],
+                               s21_raw=self.s21_raw[:, start_index:stop_index],
                                roach_state=self.state, description=self.description)
         else:
             raise ValueError("Invalid slice: {}".format(key))
@@ -158,7 +160,8 @@ class StreamArray(core.Measurement):
         if isinstance(tone_index, int):
             return Stream(tone_bin=self.tone_bin, tone_amplitude=self.tone_amplitude, tone_phase=self.tone_phase,
                           tone_index=self.tone_index[tone_index], filterbank_bin=self.filterbank_bin[tone_index],
-                          epoch=self.epoch, s21=self.s21[tone_index, :], roach_state=self.roach_state, state=self.state)
+                          epoch=self.epoch, s21_raw=self.s21_raw[tone_index, :], roach_state=self.roach_state,
+                          state=self.state)
         else:
             raise ValueError("Invalid tone index: {}".format(tone_index))
 

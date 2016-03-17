@@ -581,9 +581,9 @@ class RoachInterface(object):
             tone_amplitude = self.amps.copy()
         measurement = StreamArray(filterbank_bin=self.fft_bins[self.bank,self.readout_selection].copy(),
                                   tone_bin=self.tone_bins[self.bank,:].copy(),
-                                  tone_amplitude=tone_amplitude, # already copied
+                                  tone_amplitude=tone_amplitude,  # already copied
                                   epoch=epoch,
-                                  s21=data.T,  # transpose for now, because measurements are organized channel,time
+                                  s21_raw=data.T,  # transpose for now, because measurements are organized channel,time
                                   tone_phase=self.phases.copy(),
                                   tone_index=self.readout_selection.copy(),
                                   roach_state=self.get_state(),

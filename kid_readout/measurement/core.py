@@ -93,15 +93,15 @@ class Measurement(object):
     that are the names of the dimensions. To pass validation, each dimension name must correspond to an attribute or
     property of the class that is a 1-D array with size equal to the corresponding element of array.shape. Thus, arrays
     that have a given dimension must all have the same length along that dimension. For example, if there is an entry
-    's21': ('time', 'frequency)
+    's21_raw': ('time', 'frequency)
     and another entry
     'frequency': ('frequency',)
     then
-    s21.shape[1] == frequency.size
+    s21_raw.shape[1] == frequency.size
     must be True. If the array corresponding to some dimension is not intended to be saved, it can be implemented as a
     property. For example, in the case above, the 'time' dimension could be implemented as a property. The instance
     would still pass validation as long as
-    s21.shape[0] == time.size
+    s21_raw.shape[0] == time.size
     were True.
 
     Containers.
