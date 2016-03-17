@@ -563,6 +563,10 @@ class RoachInterface(object):
         res = 1 / res
         return res
 
+    @property
+    def blocks_per_second(self):
+        raise NotImplementedError("blocks_per_second needs to be implemented for this subclass")
+
     def get_measurement(self, num_seconds, power_of_two=True, demod=True, **kwargs):
         num_blocks = self.blocks_per_second*num_seconds
         if power_of_two:

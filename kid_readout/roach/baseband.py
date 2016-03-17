@@ -113,6 +113,8 @@ class RoachBaseband(RoachInterface):
         self.save_state()
         return actual_freqs
 
+    set_tone_baseband_freqs = set_tone_freqs
+
     def add_tone_freqs(self, freqs, amps=None, overwrite_last=False):
         if freqs.shape[0] != self.tone_bins.shape[1]:
             raise ValueError("freqs array must contain same number of tones as original waveforms")
