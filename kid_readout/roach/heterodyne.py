@@ -306,8 +306,24 @@ class RoachHeterodyne(RoachInterface):
                 demod[:, n] = np.conjugate(demod[:, n])
         return demod
 
+    @property
+    def blocks_per_second(self):
+        chan_rate = self.fs * 1e6 / (self.nfft)  # samples per second for one tone_index
+        samples_per_channel_per_block = 4096
+        return chan_rate / samples_per_channel_per_block
+
+
     def get_data(self, nread=2, demod=True):
-        return self.get_data_udp(nread=nread, demod=demod)
+        # TODO This is a temporary hack until we get the system simulation code in place
+        if self._using_mock_roach:
+            data = (np.random.standard_normal((nread * 4096, self.num_tones)) +
+
+                    1j * np.random.standard_normal((nread * 4096, self.num_tones)))
+            #time.sleep(seconds_per_block * blocks)
+            seqnos = np.arange(data.shape[0])
+            return data, seqnos
+        else:
+            return self.get_data_udp(nread=nread, demod=demod)
 
     def get_data_udp(self, nread=2, demod=True):
         chan_offset = 2

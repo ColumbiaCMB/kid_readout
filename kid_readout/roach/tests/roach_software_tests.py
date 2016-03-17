@@ -52,7 +52,9 @@ def test_state():
 def test_get_measurement():
     mr = kid_readout.roach.tests.mock_roach.MockRoach('roach')
     mv = kid_readout.roach.tests.mock_valon.MockValon()
-    ri = kid_readout.roach.baseband.RoachBaseband(roach=mr,adc_valon=mv,initialize=False)
-    ri.set_tone_freqs(np.linspace(100,120,32),nsamp=2**16)
-    ri.select_fft_bins(range(32))
-    blah = ri.get_measurement_blocks(2)
+    for class_ in [kid_readout.roach.heterodyne.RoachHeterodyne,
+                   kid_readout.roach.baseband.RoachBaseband]:
+        ri = class_(roach=mr,adc_valon=mv,initialize=False)
+        ri.set_tone_baseband_freqs(np.linspace(100,120,32),nsamp=2**16)
+        ri.select_fft_bins(range(32))
+        blah = ri.get_measurement_blocks(2)
