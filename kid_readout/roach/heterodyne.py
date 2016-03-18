@@ -317,9 +317,9 @@ class RoachHeterodyne(RoachInterface):
         # TODO This is a temporary hack until we get the system simulation code in place
         if self._using_mock_roach:
             data = (np.random.standard_normal((nread * 4096, self.num_tones)) +
-
                     1j * np.random.standard_normal((nread * 4096, self.num_tones)))
-            #time.sleep(seconds_per_block * blocks)
+            if self.r.sleep_for_fake_data:
+                time.sleep(nread / self.blocks_per_second)
             seqnos = np.arange(data.shape[0])
             return data, seqnos
         else:
