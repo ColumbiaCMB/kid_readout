@@ -2,18 +2,12 @@ from lmfit.ui import Fitter
 
 class FitterWithAttributeAccess(Fitter):
     def __getattr__(self, attr):
-        """
-        This allows instances to have a consistent interface while using different underlying models.
-
-        Return a fit parameter or value derived from the fit parameters.
-        """
         if attr.endswith('_error'):
             name = attr[:-len('_error')]
             try:
                 return self.current_result.params[name].stderr
             except KeyError:
-                print "couldnt find error for ",name,"in self.current_result"
-                pass
+                raise AttributeError("couldn't find error for %s in self.current_result" % name)
         try:
             return self.current_params[attr].value
         except KeyError:
