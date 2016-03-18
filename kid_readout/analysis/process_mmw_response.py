@@ -8,7 +8,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 import kid_readout.analysis.timedomain.fit_pulses
 import kid_readout.analysis.resonator
-from kid_readout.analysis.resonator.resonator import normalized_s21_to_detuning
+from kid_readout.analysis.resonator.legacy_resonator import normalized_s21_to_detuning
 import kid_readout.measurement.io.readoutnc
 import kid_readout.analysis.resources.skip5x4
 from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
@@ -126,9 +126,9 @@ class MmwResponse(object):
             min_a = 0.08
         else:
             min_a = 1.
-        self.resonator = kid_readout.analysis.resonator.resonator.fit_best_resonator(self.sweep_freq,self.sweep_s21,
-                                                                           errors=self.sweep_s21_error,min_a=min_a,
-                                                                           delay_estimate=-31.3)
+        self.resonator = kid_readout.analysis.resonator.legacy_resonator.fit_best_resonator(self.sweep_freq, self.sweep_s21,
+                                                                                            errors=self.sweep_s21_error, min_a=min_a,
+                                                                                            delay_estimate=-31.3)
 
         try:
             self.mmw_atten_turns = rnc.ncroot.mmw_atten_turns[:]

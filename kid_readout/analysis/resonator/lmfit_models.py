@@ -44,6 +44,7 @@ class LinearResonatorModel(ComplexModel):
         params['%sf_0' % self.prefix].set(min=fmin, max=fmax)
         return lmfit.models.update_param_vals(params,self.prefix,**kwargs)
 
+
 class InverseLinearResonatorModel(ComplexModel):
     def __init__(self, *args, **kwargs):
         super(InverseLinearResonatorModel, self).__init__(equations.inverse_linear_resonator, *args, **kwargs)

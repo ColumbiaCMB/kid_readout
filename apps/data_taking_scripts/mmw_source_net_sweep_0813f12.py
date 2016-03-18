@@ -8,7 +8,7 @@ import numpy as np
 import time
 import sys
 from kid_readout.utils import data_file
-from kid_readout.analysis.resonator.resonator import fit_best_resonator
+from kid_readout.analysis.resonator.legacy_resonator import fit_best_resonator
 from kid_readout.equipment import hittite_controller
 from kid_readout.equipment import lockin_controller
 from kid_readout.equipment.agilent_33220 import FunctionGenerator

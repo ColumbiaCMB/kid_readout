@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.pyplot import mlab  # TODO: replace with a scipy PSD estimator
 
-from kid_readout.analysis.resonator import resonator
+from kid_readout.analysis.resonator import legacy_resonator
 from kid_readout.analysis.timedomain.despike import deglitch_window
 from kid_readout.measurement import core
 from kid_readout.roach import calculate
@@ -234,7 +234,8 @@ class ResonatorSweep(Sweep):
         return self._resonator
 
     def fit_resonator(self, delay_estimate=None, nonlinear_a_threshold=0.08):
-        self._resonator = resonator.fit_best_resonator(self.frequency, self.s21_points, errors=self.s21_points_error,
+        self._resonator = legacy_resonator.fit_best_resonator(self.frequency, self.s21_points,
+                                                           errors=self.s21_points_error,
                                                        delay_estimate=delay_estimate, min_a=nonlinear_a_threshold)
 
 
