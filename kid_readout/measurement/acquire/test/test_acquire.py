@@ -13,14 +13,18 @@ def test_baseband_sweep():
     center_frequencies = np.linspace(100, 200, num_tones)
     offsets = np.linspace(-20e-3, 20e-3, num_waveforms)
     tone_banks = [center_frequencies + offset for offset in offsets]
-    get_state = lambda: {'something': 'something state'}
-    # preload = False
-    sweep = acquire.sweep(ri=ri, tone_banks=tone_banks, num_tone_samples=num_tone_samples, length_seconds=0.1,
-                          get_state=get_state, description="description")
+    state = {'something': 'something state'}
+
+    # Load waveforms one at a time.
+    sweep = acquire.run_sweep(ri=ri, tone_banks=tone_banks, num_tone_samples=num_tone_samples, length_seconds=0.1,
+                              state=state, description="description")
     assert len(sweep.stream_arrays) == num_waveforms
     assert all([stream_array.s21_raw.shape[0] == num_tones for stream_array in sweep.stream_arrays])
-    # preload = True
-    sweep = acquire.sweep(ri=ri, tone_banks=tone_banks, num_tone_samples=num_tone_samples, length_seconds=1,
-                          preload=True, get_state=get_state, description="description")
+
+    # Pre-load all waveforms.
+    acquire.load_sweep_tones(ri, tone_banks, num_tone_samples)
+    sweep = acquire.run_sweep(ri=ri, tone_banks=tone_banks, num_tone_samples=num_tone_samples, length_seconds=1,
+                              tones_loaded=True, state=state, description="description")
     assert len(sweep.stream_arrays) == num_waveforms
     assert all([stream_array.s21_raw.shape[0] == num_tones for stream_array in sweep.stream_arrays])
+

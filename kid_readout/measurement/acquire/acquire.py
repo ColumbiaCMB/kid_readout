@@ -28,13 +28,14 @@ import numpy as np
 from kid_readout.measurement import multiple
 
 
-def sweep(ri, tone_banks, num_tone_samples, length_seconds=1, preload=False, get_state=lambda: None, description=''):
-    if preload:
-        ri.set_tone_freqs(np.vstack(tone_banks), nsamp=num_tone_samples)
-    state = get_state()
+def load_sweep_tones(ri, tone_banks, num_tone_samples):
+    ri.set_tone_freqs(np.vstack(tone_banks), nsamp=num_tone_samples)
+
+
+def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=1, tones_loaded=False, state=None, description=''):
     stream_arrays = []
     for n, tone_bank in enumerate(tone_banks):
-        if preload:
+        if tones_loaded:
             ri.select_bank(n)
         else:
             ri.set_tone_freqs(tone_bank, nsamp=num_tone_samples)
