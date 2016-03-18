@@ -8,4 +8,3 @@ pyserial
 netcdf4
 emcee
 testfixtures
-lmfit==0.8.3
