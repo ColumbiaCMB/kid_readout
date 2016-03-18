@@ -2,10 +2,34 @@ from __future__ import division
 import warnings
 import numpy as np
 import scipy.stats
-from lmfit.ui import fitter
+from lmfit.ui import Fitter
 
+class FitterWithAttributeAccess(Fitter):
+    def __getattr__(self, attr):
+        """
+        This allows instances to have a consistent interface while using different underlying models.
 
-class Resonator(fitter.Fitter):
+        Return a fit parameter or value derived from the fit parameters.
+        """
+        if attr.endswith('_error'):
+            name = attr[:-len('_error')]
+            try:
+                return self.current_result.params[name].stderr
+            except KeyError:
+                print "couldnt find error for ",name,"in self.current_result"
+                pass
+        try:
+            return self.current_params[attr].value
+        except KeyError:
+            raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__, attr))
+
+    def __dir__(self):
+        return (dir(super(Fitter, self)) +
+                self.__dict__.keys() +
+                self.current_params.keys() +
+                [name + '_error' for name in self.current_params.keys()])
+
+class Resonator(FitterWithAttributeAccess):
     """
     This class represents a single resonator. All of the model-dependent behavior is contained in functions that are
     supplied to the class. There is a little bit of Python magic that allows for easy access to the fit parameters
@@ -16,9 +40,7 @@ class Resonator(fitter.Fitter):
     should just work. Modify the import statements to change the default model, guess, and functions of the parameters.
     """
 
-    def __init__(self, freq, s21,
-                 model=default_model, guess=default_guess, functions=default_functions,
-                 mask=None, errors=None):
+    def __init__(self, frequency, s21, errors, model, **kwargs):
         """
         Fit a resonator using the given model.
 
@@ -40,12 +62,22 @@ class Resonator(fitter.Fitter):
             raise TypeError("Resonator s21 must be complex.")
         if errors is not None and not np.iscomplexobj(errors):
             raise TypeError("Resonator s21 errors must be complex.")
-        super(Resonator, self).__init__(freq, s21,
-                                        model=model, guess=guess, functions=functions, mask=mask, errors=errors)
-        self.freq_data = self.x_data
-        self.s21_data = self.y_data
-        self.freq_units_MHz = self.freq_data.max() < 1e6
+        if errors is None:
+            weights = None
+        else:
+            weights = 1/errors.real + 1j/errors.imag
+        # kwargs get passed from Fitter to Model.fit directly. Signature is:
+        #    def fit(self, data, params=None, weights=None, method='leastsq',
+        #            iter_cb=None, scale_covar=True, verbose=False, fit_kws=None, **kwargs):
+        super(Resonator, self).__init__(data=s21, f=frequency,
+                                        model=model, weights=weights, **kwargs)
+        self.frequency = frequency
 
+        self.fit()
+
+    @property
+    def s21(self):
+        return self._data
     # todo: this should be in the same module as the functions
     # todo: make it clear whether one should multiply or divide by the return value to normalize
     def get_normalization(self, freq, remove_amplitude=True, remove_delay=True, remove_phase=True):
@@ -177,4 +209,5 @@ class Resonator(fitter.Fitter):
         dQdf = gradient.imag
         ef = (I * dIdf + Q * dQdf) / (dIdf ** 2 + dQdf ** 2)
         return ef
+
 
