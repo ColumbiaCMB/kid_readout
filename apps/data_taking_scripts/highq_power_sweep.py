@@ -7,7 +7,7 @@ import numpy as np
 import time
 import sys
 from kid_readout.utils import data_file,sweeps
-from kid_readout.analysis.resonator.resonator import fit_best_resonator
+from kid_readout.analysis.resonator.legacy_resonator import fit_best_resonator
 
 ri = baseband.RoachBasebandWide()
 ri.initialize()

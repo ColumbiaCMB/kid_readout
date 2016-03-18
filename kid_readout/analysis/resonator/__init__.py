@@ -1,2 +1,2 @@
 __author__ = 'flanigan'
-from resonator import *
+from legacy_resonator import *

@@ -6,7 +6,7 @@ import numpy as np
 from kid_readout.roach import heterodyne
 from kid_readout.measurement.io import data_file
 from kid_readout.measurement.acquire import sweeps
-from kid_readout.analysis.resonator.resonator import fit_best_resonator
+from kid_readout.analysis.resonator.legacy_resonator import fit_best_resonator
 from kid_readout.equipment import hittite_controller, lockin_controller
 
 
@@ -17,7 +17,7 @@ hittite.on()
 lockin = lockin_controller.lockinController()
 print lockin.get_idn()
 ri = heterodyne.RoachHeterodyne(adc_valon='/dev/ttyUSB0')
-ri.initialize(use_config=False)
+#ri.initialize(use_config=False)
 ri.iq_delay = 0
 #group_1_lo = 1020.0
 #group_2_lo = 1410.0
@@ -35,20 +35,20 @@ group_1_lo = 1220.0
 group_2_lo = 1810.0
 """
 
-all_f0s = np.load('/data/readout/resonances/2016-02-20-jpl-park-2015-10-40nm-al-niobium-gp-two-groups.npy')
+all_f0s = np.load('/data/readout/resonances/2016-02-24-jpl-park-2015-10-40nm-al-niobium-gp-two-groups.npy')
 group_1_f0 = all_f0s[all_f0s<1300]
 group_2_f0 = all_f0s[all_f0s>1300]
 
 group_1_lo = 1030.0
 group_2_lo = 1420.0
 
-f0s = group_2_f0
+f0s = group_2_f0#*0.9997
 ri.set_lo(group_2_lo)
 #responsive_resonances = np.load('/data/readout/resonances/2015-11-26-jpl-nevins-responsive-resonances.npy')
 
 suffix = "mmw_frequency_sweep"
 mmw_source_modulation_freq = ri.set_modulation_output(rate=7)
-mmw_atten_turns = (6.0,6.0)
+mmw_atten_turns = (7.0,7.0)
 print "modulating at: {}".format(mmw_source_modulation_freq),
 
 nf = len(f0s)
@@ -139,7 +139,7 @@ for atten in attenlist:
 #            ri._sync()
             time.sleep(1)
             tt = time.time()
-            dmod, addr = ri.get_data(16)
+            dmod, addr = ri.get_data(8)
             print time.time() - tt
             x, y, r, theta = lockin.get_data()
 
