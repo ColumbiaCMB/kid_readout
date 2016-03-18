@@ -4,10 +4,11 @@ __author__ = 'gjones'
 class MockRoach(object):
 
     def __init__(self, host, port=7147, tb_limit=20, timeout=10.0, logger=None,
-                 _fpga_clk=256.0):
+                 _fpga_clk=256.0, sleep_for_fake_data=False):
         self._fpga_clk = _fpga_clk
         self._is_programmed = False
         self._boffile_list = []
+        self.sleep_for_fake_data = sleep_for_fake_data
 
     def is_connected(self):
         return True

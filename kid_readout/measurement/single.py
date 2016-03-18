@@ -27,8 +27,7 @@ class Stream(core.Measurement):
                  state=None, analyze=False, description='Stream'):
         """
         Return a new Stream instance. The integer tone_index is the common index of tone_bin, tone_amplitude,
-        and tone_phase for
-        the single tone used to produce the time-ordered s21_raw data.
+        and tone_phase for the single tone used to produce the time-ordered s21_raw data.
 
         :param tone_bin: an array of integers representing the frequencies of the tones played during the measurement.
         :param tone_amplitude: an array of floats representing the amplitudes of the tones played during the
