@@ -7,7 +7,7 @@ def test_resonator():
     s21_true = lrm.eval(f=f,Q=1e4,f_0=100.,Q_e_real=9e3,Q_e_imag=9e3)
     np.random.seed(123)
     s21_meas = s21_true + 0.02*(np.random.randn(*f.shape) + 1j*np.random.randn(*f.shape))
-    lr = lmfit_resonator.Resonator(frequency=f, s21=s21_meas,errors=None,model=lmfit_models.LinearResonatorModel)
+    lr = lmfit_resonator.BaseResonator(frequency=f, s21=s21_meas,errors=None,model=lmfit_models.LinearResonatorModel)
     lr.fit()
     print lr.current_result.params
     assert(np.allclose(s21_meas,lr.s21))

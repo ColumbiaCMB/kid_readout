@@ -1,8 +1,11 @@
 from __future__ import division
 import warnings
+
+import lmfit
 import numpy as np
 import scipy.stats
 from lmfit.ui import Fitter
+from kid_readout.analysis.resonator import lmfit_models
 
 class FitterWithAttributeAccess(Fitter):
     def __getattr__(self, attr):
@@ -29,34 +32,25 @@ class FitterWithAttributeAccess(Fitter):
                 self.current_params.keys() +
                 [name + '_error' for name in self.current_params.keys()])
 
-class Resonator(FitterWithAttributeAccess):
-    """
-    This class represents a single resonator. All of the model-dependent behavior is contained in functions that are
-    supplied to the class. There is a little bit of Python magic that allows for easy access to the fit parameters
-    and functions of only the fit parameters.
-
-    The idea is that, given sweep data freq and s21,
-    r = Resonator(freq, s21)
-    should just work. Modify the import statements to change the default model, guess, and functions of the parameters.
-    """
-
+class BaseResonator(FitterWithAttributeAccess):
     def __init__(self, frequency, s21, errors, model, **kwargs):
         """
-        Fit a resonator using the given model.
+        General resonator fitting class.
 
-        f: the frequencies used in a sweep.
-
-        s21: the complex S_21 data taken at the given frequencies.
-
-        model: a function S_21(params, f) that returns the modeled values of S_21.
-
-        guess: a function guess(f, s21) that returns a good-enough initial guess at all of the fit parameters.
-
-        functions: a dictionary that maps keys that are valid Python variables to functions that take a Parameters
-        object as their only argument.
-
-        mask: a boolean array of the same length as f and s21; only points f[mask] and s21[mask] are used to fit the
-        data and the default is to use all data; use this to exclude glitches or resonances other than the desired one.
+        Parameters
+        ----------
+        frequency: array of floats
+            Frequencies at which data was measured
+        s21: array of complex
+            measured S21 data
+        errors: None or array of complex
+            errors on the real and imaginary parts of the s21 data. None means use no errors
+        model: an lmfit.Model
+            the model for the resonator. Common models are provided in lmfit_models. If the model is composite,
+            it is assumed to be of the form background * target, where target is the model of the target resonator
+            itself, and background represents any other nuisance effects (cable delay, other adjacent resonators etc.)
+        kwargs:
+            passed on to model.fit
         """
         if not np.iscomplexobj(s21):
             raise TypeError("Resonator s21 must be complex.")
@@ -69,7 +63,7 @@ class Resonator(FitterWithAttributeAccess):
         # kwargs get passed from Fitter to Model.fit directly. Signature is:
         #    def fit(self, data, params=None, weights=None, method='leastsq',
         #            iter_cb=None, scale_covar=True, verbose=False, fit_kws=None, **kwargs):
-        super(Resonator, self).__init__(data=s21, f=frequency,
+        super(BaseResonator, self).__init__(data=s21, f=frequency,
                                         model=model, weights=weights, **kwargs)
         self.frequency = frequency
 
@@ -78,82 +72,71 @@ class Resonator(FitterWithAttributeAccess):
     @property
     def s21(self):
         return self._data
-    # todo: this should be in the same module as the functions
-    # todo: make it clear whether one should multiply or divide by the return value to normalize
-    def get_normalization(self, freq, remove_amplitude=True, remove_delay=True, remove_phase=True):
-        """
-        return the complex factor that removes the arbitrary amplitude, cable delay, and phase from the resonator fit
-        
-        freq : float or array of floats
-            frequency in same units as the model was built with, at which normalization should be computed
-            
-        remove_amplitude : bool, default True
-            include arbitrary amplitude correction
-            
-        remove_delay : bool, default True
-            include cable delay correction
-        
-        remove_phase : bool, default True
-            include arbitrary phase offset correction
-        """
-        normalization = 1.0
-        if remove_amplitude:
-            normalization /= self.A_mag
-        if remove_phase:
-            phi = self.phi + self.A_phase
-        else:
-            phi = 0
-        if remove_delay:
-            delay = self.delay
-        else:
-            delay = 0
-        normalization *= np.exp(1j * (2 * np.pi * (freq - self.f_phi) * delay - phi))
-        return normalization
 
-    def normalize(self, freq, s21_raw, remove_amplitude=True, remove_delay=True, remove_phase=True):
+    @property
+    def target(self):
+        if isinstance(self.model,lmfit.model.CompositeModel):
+            return self.model.right
+        else:
+            return self.model
+
+    def target_s21(self, frequency=None):
+        if frequency is None:
+            frequency = self.frequency
+        return self.target.eval(self.current_result.params, f=frequency)
+
+    @property
+    def background(self):
+        if isinstance(self.model,lmfit.model.CompositeModel):
+            return self.model.left
+        else:
+            return None
+
+    def background_s21(self, frequency=None):
+        if frequency is None:
+            frequency = self.frequency
+        background = self.background
+        if background is None:
+            if np.isscalar(frequency):
+                return 1.0
+            else:
+                return np.ones_like(frequency)
+        else:
+            return background.eval(self.current_result.params,f=frequency)
+
+    def remove_background(self, frequency, s21_raw):
         """
         Normalize s21 data, removing arbitrary ampltude, delay, and phase terms
         
-        freq : float or array of floats
+        frequency : float or array of floats
             frequency in same units as the model was built with, at which normalization should be computed
             
         s21_raw : complex or array of complex
             raw s21 data which should be normalized
         """
-        normalization = self.get_normalization(freq, remove_amplitude=remove_amplitude, remove_delay=remove_delay,
-                                               remove_phase=remove_phase)
-        return s21_raw * normalization
+        normalization = self.background_s21(frequency)
 
-    def normalized_model(self, freq, remove_amplitude=True, remove_delay=True, remove_phase=True):
-        """
-        Evaluate the model, removing arbitrary ampltude, delay, and phase terms
-        
-        freq : float or array of floats
-            frequency in same units as the model was built with, at which normalized model should be evaluated
-        """
-        return self.normalize(freq, self.model(x=freq), remove_amplitude=remove_amplitude, remove_delay=remove_delay,
-                              remove_phase=remove_phase)
+        return s21_raw / normalization
 
-    def approx_normalized_gradient(self, freq):
+
+    def approximate_target_gradient(self, frequency, delta_f=1.0):
         """
-        Calculate the approximate gradient of the normalized model dS21/df at the given frequency. 
+        Calculate the approximate gradient of the target model dS21/df at the given frequency.
         
         The units will be S21 / Hz
         
-        freq : float or array of floats
+        frequency : float or array of floats
             frequency in same units as the model was built with, at which normalized gradient should be evaluated
+        delta_f : float default 1
+            frequency offset used to calculate gradient
         """
-        if self.freq_units_MHz:
-            df = 1e-6  # 1 Hz
-        else:
-            df = 1.0
-        f1 = freq + df
-        y = self.normalized_model(freq)
-        y1 = self.normalized_model(f1)
-        gradient = y1 - y  # division by 1 Hz is implied.
+        f1 = frequency + delta_f
+        y = self.target_s21(frequency)
+        y1 = self.target_s21(f1)
+        gradient = (y1 - y)/delta_f  # division by 1 Hz is implied.
         return gradient
 
-    def project_s21_to_delta_freq(self, freq, s21, use_data_mean=True, s21_already_normalized=False):
+    def project_s21_to_frequency(self, frequency, s21, use_data_mean=True, s21_already_normalized=False):
         """
         Project s21 data onto the orthogonal vectors tangent and perpendicular to the resonance circle at the 
         measurement frequency
@@ -178,12 +161,12 @@ class Resonator(FitterWithAttributeAccess):
         if s21_already_normalized:
             normalized_s21 = s21
         else:
-            normalized_s21 = self.normalize(freq, s21)
+            normalized_s21 = self.remove_background(frequency, s21)
         if use_data_mean:
             mean_ = normalized_s21.mean()
         else:
-            mean_ = self.normalized_model(freq)
-        gradient = self.approx_normalized_gradient(freq)
+            mean_ = self.target_s21(frequency)
+        gradient = self.approximate_target_gradient(frequency)
         delta_freq = (normalized_s21 - mean_) / gradient
         return delta_freq
 
@@ -210,4 +193,15 @@ class Resonator(FitterWithAttributeAccess):
         ef = (I * dIdf + Q * dQdf) / (dIdf ** 2 + dQdf ** 2)
         return ef
 
+
+class LinearResonator(BaseResonator):
+    def __init__(self, frequency, s21, errors, **kwargs):
+        super(LinearResonator,self).__init__(frequency=frequency, s21=s21, errors=errors,
+                                             model = lmfit_models.LinearResonatorModel, **kwargs)
+
+class LinearResonatorWithCable(BaseResonator):
+    def __init__(self, frequency, s21, errors, **kwargs):
+        super(LinearResonator,self).__init__(frequency=frequency, s21=s21, errors=errors,
+                                             model = (lmfit_models.LinearResonatorModel() *
+                                                      lmfit_models.GeneralCableModel()), **kwargs)
 
