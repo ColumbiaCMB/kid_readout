@@ -115,6 +115,9 @@ class RoachInterface(object):
         self.modulation_rate = 0
         self.wavenorm = None
 
+        self.loopback = None
+        self.debug_register = None
+
         # Things to be configured by subclasses
         self.lo_frequency = 0.0
         self.heterodyne = False
@@ -218,7 +221,9 @@ class RoachInterface(object):
                           num_tone_samples=self.tone_nsamp,
                           num_filterbank_channels=self.nfft,
                           dac_attenuation=self.dac_atten,
-                          bank=self.bank
+                          bank=self.bank,
+                          loopback=self.loopback,
+                          debug_register=self.debug_register,
                           )
         if include_registers:
             for register in self.initial_values_for_writeable_registers:
@@ -337,6 +342,9 @@ class RoachInterface(object):
             rate_in_hz = (self.fs * 1e6 / (2 * self.nfft)) / (2 ** self.modulation_rate)
             return rate_in_hz
 
+    def set_loopback(self,enable):
+        raise NotImplementedError("Must be implemented by subclasses")
+
     def save_state(self):
         if self._using_mock_roach:
             return #don't save anything when using mock
@@ -404,6 +412,8 @@ class RoachInterface(object):
             if start_udp and not self._using_mock_roach:
                 print "starting udp server process on PPC"
                 borph_utils.start_server(self.bof_pid, self.roachip)
+
+            self.set_loopback(False)
             self.adc_atten = 31.5
             self.dac_atten = np.nan
             self.fft_bins = None
@@ -563,6 +573,10 @@ class RoachInterface(object):
         res = 1 / res
         return res
 
+    def set_debug(self,value):
+        self.r.write_int('debug',value)
+        self.debug_register = value
+
     @property
     def blocks_per_second(self):
         raise NotImplementedError("blocks_per_second needs to be implemented for this subclass")
@@ -590,6 +604,7 @@ class RoachInterface(object):
                                   s21_raw=data.T,  # transpose for now, because measurements are organized channel,time
                                   tone_phase=self.phases.copy(),
                                   tone_index=self.readout_selection.copy(),
+                                  data_demodulated=demod,
                                   roach_state=self.get_state(),
                                   **kwargs)
         return measurement

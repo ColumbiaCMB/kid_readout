@@ -252,6 +252,7 @@ class RoachBaseband(RoachInterface):
         returns : demodulated data in an array of the same shape and dtype as *data*
         """
         bank = self.bank
+        hardware_delay = self.hardware_delay_estimate*1e6
         demod = np.zeros_like(data)
         t = np.arange(data.shape[0])
         for n, ich in enumerate(self.readout_selection):
@@ -264,12 +265,22 @@ class RoachBaseband(RoachInterface):
                 sign = -1.0
             nfft = self.nfft
             ns = self.tone_nsamp
+            f_tone = k * self.fs / float(ns)
             foffs = (2 * k * nfft - m * ns) / float(ns)
             wc = self._window_response(foffs / 2.0) * (self.tone_nsamp / 2.0 ** 18)
-            demod[:, n] = wc * np.exp(sign * 1j * (2 * np.pi * foffs * t + phi0)) * data[:, n]
+            demod[:, n] = (wc * np.exp(sign * 1j * (2 * np.pi * foffs * t + phi0) + 2j*np.pi*f_tone*hardware_delay)
+                           * data[:, n])
             if m >= self.nfft / 2:
                 demod[:, n] = np.conjugate(demod[:, n])
         return demod
+
+    def set_loopback(self,enable):
+        if enable:
+            self.r.write_int('loopback',1)
+            self.loopback = True
+        else:
+            self.r.write_int('loopback',0)
+            self.loopback = False
 
 
     def get_data(self, nread=2, demod=True):
