@@ -23,7 +23,8 @@ class Stream(core.Measurement):
                   'tone_phase': ('tone_bin',),
                   's21_raw': ('sample_time',)}
 
-    def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw, roach_state,
+    def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
+                 data_demodulated, roach_state,
                  state=None, analyze=False, description='Stream'):
         """
         Return a new Stream instance. The integer tone_index is the common index of tone_bin, tone_amplitude,
@@ -50,6 +51,7 @@ class Stream(core.Measurement):
         self.filterbank_bin = filterbank_bin
         self.epoch = epoch
         self.s21_raw = s21_raw
+        self.data_demodulated = data_demodulated
         self.roach_state = core.to_state_dict(roach_state)
         self._frequency = None
         self._sample_time = None

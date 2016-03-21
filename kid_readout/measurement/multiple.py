@@ -23,7 +23,8 @@ class StreamArray(core.Measurement):
                   'filterbank_bin': ('tone_index',),
                   's21_raw': ('tone_index', 'sample_time')}
 
-    def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw, roach_state,
+    def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
+                 data_demodulated, roach_state,
                  state=None, analyze=False, description='StreamArray'):
         """
         Return a new StreamArray instance. The integer array tone_index contains the indices of tone_bin,
@@ -57,6 +58,7 @@ class StreamArray(core.Measurement):
         self.epoch = epoch
         self.s21_raw = s21_raw
         self.roach_state = core.to_state_dict(roach_state)
+        self.data_demodulated = data_demodulated
         self._frequency = None
         self._baseband_frequency = None
         self._stream_sample_rate = None
@@ -160,7 +162,8 @@ class StreamArray(core.Measurement):
         if isinstance(tone_index, int):
             return Stream(tone_bin=self.tone_bin, tone_amplitude=self.tone_amplitude, tone_phase=self.tone_phase,
                           tone_index=self.tone_index[tone_index], filterbank_bin=self.filterbank_bin[tone_index],
-                          epoch=self.epoch, s21_raw=self.s21_raw[tone_index, :], roach_state=self.roach_state,
+                          epoch=self.epoch, s21_raw=self.s21_raw[tone_index, :],
+                          data_demodulated=self.data_demodulated, roach_state=self.roach_state,
                           state=self.state)
         else:
             raise ValueError("Invalid tone index: {}".format(tone_index))
