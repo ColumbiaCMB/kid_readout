@@ -29,10 +29,11 @@ from kid_readout.measurement import multiple
 
 
 def load_sweep_tones(ri, tone_banks, num_tone_samples):
-    ri.set_tone_freqs(np.vstack(tone_banks), nsamp=num_tone_samples)
+    return ri.set_tone_freqs(np.vstack(tone_banks), nsamp=num_tone_samples)
 
 
-def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=1, tones_loaded=False, state=None, description=''):
+def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=1, tones_loaded=False, state=None, description='',
+              **kwargs):
     stream_arrays = []
     for n, tone_bank in enumerate(tone_banks):
         if tones_loaded:
@@ -40,5 +41,6 @@ def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=1, tones_loaded=F
         else:
             ri.set_tone_freqs(tone_bank, nsamp=num_tone_samples)
         ri.select_fft_bins(np.arange(tone_bank.size))
-        stream_arrays.append(ri.get_measurement(num_seconds=length_seconds))
+        ri._sync()
+        stream_arrays.append(ri.get_measurement(num_seconds=length_seconds,**kwargs))
     return multiple.SweepArray(stream_arrays, state=state, description=description)
