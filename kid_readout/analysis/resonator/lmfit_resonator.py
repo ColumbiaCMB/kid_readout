@@ -145,7 +145,6 @@ class BaseResonator(FitterWithAttributeAccess):
         delta_freq = (normalized_s21 - mean_) / gradient
         return delta_freq
 
-    # todo: I and Q are supposed to be power spectra, not sweep data. Remove? -DF
     def convert_s21_to_freq_fluctuation(self, freq, s21):
         """
         Use formula in Phil's LTD paper to convert S21 data to frequency fluctuations.
@@ -176,7 +175,13 @@ class LinearResonator(BaseResonator):
 
 class LinearResonatorWithCable(BaseResonator):
     def __init__(self, frequency, s21, errors, **kwargs):
-        super(LinearResonator,self).__init__(frequency=frequency, s21=s21, errors=errors,
-                                             model = (lmfit_models.LinearResonatorModel() *
-                                                      lmfit_models.GeneralCableModel()), **kwargs)
+        super(LinearResonatorWithCable,self).__init__(frequency=frequency, s21=s21, errors=errors,
+                                             model = (lmfit_models.GeneralCableModel()
+                                                      * lmfit_models.LinearResonatorModel()), **kwargs)
 
+class CollidingLinearResonatorsWithCable(BaseResonator):
+    def __init__(self, frequency, s21, errors, **kwargs):
+        super(CollidingLinearResonatorsWithCable,self).__init__(frequency=frequency, s21=s21, errors=errors,
+                                             model = ((lmfit_models.GeneralCableModel()
+                                                       * lmfit_models.LinearResonatorModel(prefix='bg_'))
+                                                      * lmfit_models.LinearResonatorModel()), **kwargs)
