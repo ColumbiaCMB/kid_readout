@@ -84,3 +84,19 @@ def make_stream_array(frequency=None, num_tone_samples=2**16, blocks=2, state=No
     ri.set_tone_freqs(frequency, nsamp=num_tone_samples)
     ri.select_fft_bins(np.arange(frequency.size))
     return ri.get_measurement(blocks, state=state, description=description)
+
+
+def make_sweep():
+    pass
+
+
+def make_sweep_array():
+    pass
+
+
+def make_sweep_stream():
+    pass
+
+
+def make_sweep_stream_array():
+    pass

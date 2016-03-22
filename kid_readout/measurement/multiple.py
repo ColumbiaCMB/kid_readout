@@ -74,6 +74,7 @@ class StreamArray(core.Measurement):
         self.s21_raw_mean
         self.s21_raw_mean_error
 
+
     @property
     def sample_time(self):
         if self._sample_time is None:
@@ -178,6 +179,12 @@ class SweepArray(core.Measurement):
         self.stream_arrays = core.MeasurementTuple(stream_arrays)
         for sa in self.stream_arrays:
             sa._parent = self
+        self._tone_bin_stack = None
+        self._tone_amplitude_stack = None
+        self._tone_phase_stack = None
+        self._filterbank_bin_stack = None
+        self._s21_raw_stack = None
+        self._frequency_stack = None
         super(SweepArray, self).__init__(state=state, analyze=analyze, description=description)
 
     def sweep(self, index):
@@ -195,6 +202,52 @@ class SweepArray(core.Measurement):
                 return self.stream_arrays[0].tone_index.size
         except IndexError:
             return 0
+
+    @property
+    def tone_bin_stack(self):
+        if self._tone_bin_stack is None:
+            self._tone_bin_stack = np.concatenate([stream_array.tone_bin[stream_array.tone_index]
+                                                   for stream_array in self.stream_arrays])
+        return self._tone_bin_stack
+
+    @property
+    def tone_amplitude_stack(self):
+        if self._tone_amplitude_stack is None:
+            self._tone_amplitude_stack = np.concatenate([stream_array.tone_amplitude[stream_array.tone_index]
+                                                         for stream_array in self.stream_arrays])
+        return self._tone_amplitude_stack
+
+    @property
+    def tone_phase_stack(self):
+        if self._tone_phase_stack is None:
+            self._tone_phase_stack = np.concatenate([stream_array.tone_phase[stream_array.tone_index]
+                                                     for stream_array in self.stream_arrays])
+        return self._tone_phase_stack
+
+    @property
+    def filterbank_bin_stack(self):
+        if self._filterbank_bin_stack is None:
+            self._filterbank_bin_stack = np.concatenate([stream_array.filterbank_bin
+                                                         for stream_array in self.stream_arrays])
+        return self._filterbank_bin_stack
+
+    @property
+    def s21_raw_stack(self):
+        if self._s21_raw_stack is None:
+            self._s21_raw_stack = np.vstack([stream_array.s21_raw for stream_array in self.stream_arrays])
+        return self._s21_raw_stack
+
+    @property
+    def frequency_stack(self):
+        if self._frequency_stack is None:
+            self._frequency_stack = np.concatenate([calculate.frequency(stream_array.roach_state,
+                                                                        stream_array.tone_bin[stream_array.tone_index])
+                                                    for stream_array in self.stream_arrays])
+        return self._frequency_stack
+
+    @property
+    def frequency_MHz_stack(self):
+        return 1e-6 * self.frequency_stack
 
 
 class ResonatorSweepArray(SweepArray):

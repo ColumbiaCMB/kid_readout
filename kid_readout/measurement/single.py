@@ -171,7 +171,12 @@ class Sweep(core.Measurement):
         self._frequency = None
         self._s21_points = None
         self._s21_points_error = None
+        self._tone_bin_stack = None
+        self._tone_amplitude_stack = None
+        self._tone_phase_stack = None
+        self._filterbank_bin_stack = None
         self._s21_raw_stack = None
+        self._frequency_stack = None
         super(Sweep, self).__init__(state=state, analyze=analyze, description=description)
 
     @property
@@ -193,10 +198,49 @@ class Sweep(core.Measurement):
         return self._s21_points_error
 
     @property
+    def tone_bin_stack(self):
+        if self._tone_bin_stack is None:
+            self._tone_bin_stack = np.array([stream.tone_bin[stream.tone_index]
+                                             for stream in self.streams])
+        return self._tone_bin_stack
+
+    @property
+    def tone_amplitude_stack(self):
+        if self._tone_amplitude_stack is None:
+            self._tone_amplitude_stack = np.array([stream.tone_amplitude[stream.tone_index]
+                                                   for stream in self.streams])
+        return self._tone_amplitude_stack
+
+    @property
+    def tone_phase_stack(self):
+        if self._tone_phase_stack is None:
+            self._tone_phase_stack = np.array([stream.tone_phase[stream.tone_index]
+                                              for stream in self.streams])
+        return self._tone_phase_stack
+
+    @property
+    def filterbank_bin_stack(self):
+        if self._filterbank_bin_stack is None:
+            self._filterbank_bin_stack = np.array([stream.filterbank_bin for stream in self.streams])
+        return self._filterbank_bin_stack
+
+    @property
     def s21_raw_stack(self):
         if self._s21_raw_stack is None:
             self._s21_raw_stack = np.vstack([stream.s21_raw for stream in self.streams])
         return self._s21_raw_stack
+
+    @property
+    def frequency_stack(self):
+        if self._frequency_stack is None:
+            self._frequency_stack = np.array([calculate.frequency(stream.roach_state,
+                                                                  stream.tone_bin[stream.tone_index])
+                                              for stream in self.streams])
+        return self._frequency_stack
+
+    @property
+    def frequency_MHz_stack(self):
+        return 1e-6 * self.frequency_stack
 
 
 class ResonatorSweep(Sweep):
