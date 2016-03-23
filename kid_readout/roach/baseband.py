@@ -113,6 +113,8 @@ class RoachBaseband(RoachInterface):
         self.save_state()
         return actual_freqs
 
+    set_tone_baseband_freqs = set_tone_freqs
+
     def add_tone_freqs(self, freqs, amps=None, overwrite_last=False):
         if freqs.shape[0] != self.tone_bins.shape[1]:
             raise ValueError("freqs array must contain same number of tones as original waveforms")
@@ -250,6 +252,7 @@ class RoachBaseband(RoachInterface):
         returns : demodulated data in an array of the same shape and dtype as *data*
         """
         bank = self.bank
+        hardware_delay = self.hardware_delay_estimate*1e6
         demod = np.zeros_like(data)
         t = np.arange(data.shape[0])
         for n, ich in enumerate(self.readout_selection):
@@ -262,16 +265,42 @@ class RoachBaseband(RoachInterface):
                 sign = -1.0
             nfft = self.nfft
             ns = self.tone_nsamp
+            f_tone = k * self.fs / float(ns)
             foffs = (2 * k * nfft - m * ns) / float(ns)
             wc = self._window_response(foffs / 2.0) * (self.tone_nsamp / 2.0 ** 18)
-            demod[:, n] = wc * np.exp(sign * 1j * (2 * np.pi * foffs * t + phi0)) * data[:, n]
+            demod[:, n] = (wc * np.exp(sign * 1j * (2 * np.pi * foffs * t + phi0) + 2j*np.pi*f_tone*hardware_delay)
+                           * data[:, n])
             if m >= self.nfft / 2:
                 demod[:, n] = np.conjugate(demod[:, n])
         return demod
 
+    def set_loopback(self,enable):
+        if enable:
+            self.r.write_int('loopback',1)
+            self.loopback = True
+        else:
+            self.r.write_int('loopback',0)
+            self.loopback = False
+
 
     def get_data(self, nread=2, demod=True):
-        return self.get_data_udp(nread=nread, demod=demod)
+        # TODO This is a temporary hack until we get the system simulation code in place
+        if self._using_mock_roach:
+            data = (np.random.standard_normal((nread * 4096, self.num_tones)) +
+                    1j * np.random.standard_normal((nread * 4096, self.num_tones)))
+            if self.r.sleep_for_fake_data:
+                time.sleep(nread / self.blocks_per_second)
+            seqnos = np.arange(data.shape[0])
+            return data, seqnos
+        else:
+            return self.get_data_udp(nread=nread, demod=demod)
+
+    @property
+    def blocks_per_second(self):
+        chan_rate = self.fs * 1e6 / (2 * self.nfft)  # samples per second for one tone_index
+        samples_per_channel_per_block = 4096
+        return chan_rate / samples_per_channel_per_block
+
 
     def get_data_seconds(self, nseconds, demod=True, pow2=True):
         """
@@ -292,6 +321,7 @@ class RoachBaseband(RoachInterface):
             if lg2 < 0:
                 lg2 = 0
             blocks = 2 ** lg2
+
         return self.get_data_udp(blocks, demod=demod)
 
     def get_data_seconds_katcp(self, nseconds, demod=True, pow2=True):

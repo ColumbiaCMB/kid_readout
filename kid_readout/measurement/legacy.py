@@ -19,7 +19,6 @@ def sweep_state_from_rnc(rnc, sweep_group_index):
     mmw_source_state = mmw_source_state_from_rnc(rnc)
     if mmw_source_state:
         state['mmw_source'] = mmw_source_state
-    state['roach'] = sweep_roach_state_from_rnc(rnc, sweep_group_index)
     return state
 
 
@@ -41,7 +40,6 @@ def timestream_state_from_rnc(rnc, timestream_group_index):
     lockin_state = lockin_state_from_tg(tg)
     if lockin_state:
         state['lockin'] = lockin_state
-    state['roach'] = timestream_roach_state_from_rnc(rnc, timestream_group_index)
     return state
 
 # Roach.
@@ -55,7 +53,6 @@ def global_roach_state_from_rnc(rnc):
     :return: a dict containing state information.
     """
     state = {'boffile': rnc.boffile,
-             'delay_estimate': rnc.get_delay_estimate(),
              'heterodyne': rnc.heterodyne}
     return state
 
@@ -66,9 +63,7 @@ def timestream_roach_state_from_rnc(rnc, timestream_group_index):
         raise ValueError("TimestreamGroup epoch values differ.")
     roach_state = global_roach_state_from_rnc(rnc)
     roach_state.update(roach_state_from_rnc_at_epoch(rnc, tg.epoch.min()))
-    tg_roach_state = roach_state_from_tg(tg)
-    roach_state['modulation'].update(tg_roach_state.pop('modulation'))
-    roach_state.update(tg_roach_state)
+    roach_state.update(roach_state_from_tg(tg))
     return roach_state
 
 
@@ -76,9 +71,7 @@ def sweep_roach_state_from_rnc(rnc, sweep_group_index):
     sg = rnc.sweeps[sweep_group_index]
     roach_state = global_roach_state_from_rnc(rnc)
     roach_state.update(roach_state_from_rnc_at_epoch(rnc, sg.start_epoch))
-    tg_roach_state = roach_state_from_tg(sg.timestream_group)
-    roach_state['modulation'].update(tg_roach_state.pop('modulation'))
-    roach_state.update(tg_roach_state)
+    roach_state.update(roach_state_from_tg(sg.timestream_group))
     return roach_state
 
 
@@ -88,17 +81,16 @@ def roach_state_from_rnc_at_epoch(rnc, epoch):
     if epoch < hardware_state_epoch:
         raise ValueError("epoch < hardware_state_epoch")
     adc_attenuation = float(rnc.adc_atten[hardware_state_index])
-    dac_attenuation, output_attenuation = [float(v) for v in rnc.get_effective_dac_atten_at(epoch)]
+    dac_attenuation = float(rnc.dac_atten[hardware_state_index])
     num_tones = int(rnc.num_tones[hardware_state_index])
     modulation_rate, modulation_output = [int(v) for v in rnc.get_modulation_state_at(epoch)]
     state = {'hardware_state_index': hardware_state_index,
              'hardware_state_epoch': hardware_state_epoch,
              'adc_attenuation': adc_attenuation,
              'dac_attenuation': dac_attenuation,
-             'output_attenuation': output_attenuation,
              'num_tones': num_tones,
-             'modulation': {'rate': modulation_rate,
-                            'output': modulation_output}}
+             'modulation_rate': modulation_rate,
+             'modulation_output': modulation_output}
     return state
 
 
@@ -115,14 +107,16 @@ def roach_state_from_tg(tg):
     state = {'adc_sample_rate': 1e6 * float(common(tg.adc_sampling_freq)),
              'dac_sample_rate': 1e6 * float(common(tg.adc_sampling_freq)),
              'num_filterbank_channels': int(common(tg.nfft)),
-             'num_data_samples': int(tg.num_data_samples),
              'num_tone_samples': int(common(tg.tone_nsamp)),
-             'audio_sample_rate': float(common(tg.sample_rate)),
-             'wavenorm': float(common(tg.wavenorm)),
-             'modulation': {'duty_cycle': float(common(tg.modulation_duty_cycle)),
-                            'frequency': float(common(tg.modulation_freq)),  # tg.mmw_source_modulation_freq deprecated
-                            'num_samples': int(common(tg.modulation_period_samples)),
-                            'phase': float(common(tg.modulation_phase))}}
+             'stream_sample_rate': float(common(tg.sample_rate)),
+             'waveform_normalization': float(common(tg.wavenorm)),
+             'bank': None,  # I don't think this is available in the data.
+             # These were removed because they are derived:
+             #'modulation': {'duty_cycle': float(common(tg.modulation_duty_cycle)),
+             #               'frequency': float(common(tg.modulation_freq)),  # tg.mmw_source_modulation_freq deprecated
+             #               'num_samples': int(common(tg.modulation_period_samples)),
+             #               'tone_phase': float(common(tg.modulation_phase))}}
+             }
     try:
         state['lo_frequency'] = 1e6 * float(common(tg.lo))
     except AttributeError:
@@ -191,7 +185,8 @@ def common(sequence):
 # TODO: change description functionality to add_legacy_origin
 
 
-def stream_from_rnc(rnc, timestream_group_index, channel, description=None):
+def stream_from_rnc(rnc, timestream_group_index, tone_index, description=None):
+    roach_state = timestream_roach_state_from_rnc(rnc, timestream_group_index)
     state = timestream_state_from_rnc(rnc, timestream_group_index)
     if description is None:
         description = 'ReadoutNetCDF(\"{}\").timestreams[{}]'.format(rnc.filename, timestream_group_index)
@@ -201,19 +196,19 @@ def stream_from_rnc(rnc, timestream_group_index, channel, description=None):
     tone_bin = tg.tonebin[increasing_order]
     amplitude = np.ones(tone_bin.size, dtype=np.float)
     phase = np.zeros(tone_bin.size, dtype=np.float)
-    tone_index = channel
     # TODO: decide what to do about these values: invert to RoachInterface values or ignore them?
-    fft_bin = tg.fftbin[increasing_order][channel]
+    fft_bin = tg.fftbin[increasing_order][tone_index]
     # All the epoch and data_len_seconds values are the same. Assume regular sampling.
     epoch = np.linspace(common(tg.epoch),
                         common(tg.epoch) + common(tg.data_len_seconds),
                         tg.num_data_samples)
-    s21 = tg.data[increasing_order, :]
-    return Stream(tone_bin=tone_bin, amplitude=amplitude, phase=phase, tone_index=tone_index, fft_bin=fft_bin,
-                  epoch=epoch, s21=s21, state=state, description=description)
+    s21 = tg.data[increasing_order, :][tone_index]
+    return Stream(tone_bin=tone_bin, tone_amplitude=amplitude, tone_phase=phase, tone_index=tone_index, filterbank_bin=fft_bin,
+                  epoch=epoch, s21_raw=s21, roach_state=roach_state, state=state, description=description)
 
 
 def streamarray_from_rnc(rnc, timestream_group_index, description=None):
+    roach_state = timestream_roach_state_from_rnc(rnc, timestream_group_index)
     state = timestream_state_from_rnc(rnc, timestream_group_index)
     if description is None:
         description = 'ReadoutNetCDF(\"{}\").timestreams[{}]'.format(rnc.filename, timestream_group_index)
@@ -231,11 +226,12 @@ def streamarray_from_rnc(rnc, timestream_group_index, description=None):
                         common(tg.epoch) + common(tg.data_len_seconds),
                         tg.num_data_samples)
     s21 = tg.data[increasing_order, :]
-    return StreamArray(tone_bin=tone_bin, amplitude=amplitude, phase=phase, tone_index=tone_index, fft_bin=fft_bin,
-                       epoch=epoch, s21=s21, state=state, description=description)
+    return StreamArray(tone_bin=tone_bin, tone_amplitude=amplitude, tone_phase=phase, tone_index=tone_index, filterbank_bin=fft_bin,
+                       epoch=epoch, s21_raw=s21, roach_state=roach_state, state=state, description=description)
 
 
-def sweep_from_rnc(rnc, sweep_group_index, channel, resonator=True, description=None):
+def sweep_from_rnc(rnc, sweep_group_index, tone_index, resonator=True, description=None):
+    roach_state = sweep_roach_state_from_rnc(rnc, sweep_group_index)
     state = sweep_state_from_rnc(rnc, sweep_group_index)
     if description is None:
         description = 'ReadoutNetCDF(\"{}\").sweeps[{}]'.format(rnc.filename, sweep_group_index)
@@ -251,19 +247,17 @@ def sweep_from_rnc(rnc, sweep_group_index, channel, resonator=True, description=
         simultaneous = tg.epoch == start_epoch
         unordered_tone_bin = tg.tonebin[simultaneous]
         increasing_order = unordered_tone_bin.argsort()
-        tone_bin = unordered_tone_bin[increasing_order][channel]  # Assume monotonic frequencies at each epoch:
+        tone_bin = unordered_tone_bin[increasing_order]  # Assume monotonic frequencies at each epoch:
         amplitude = np.ones(tone_bin.size, dtype=np.float)
         phase = np.zeros(tone_bin.size, dtype=np.float)
-        tone_index = np.arange(tone_bin.size)[channel]  # For these data, all the tones are read out.
-        fft_bin = tg.fftbin[simultaneous][increasing_order][channel]
+        fft_bin = tg.fftbin[simultaneous][increasing_order][tone_index]
         # All of the epochs are the same
-        # TODO: fix me!
         epoch = np.linspace(common(tg.epoch[simultaneous]),
                             common(tg.epoch[simultaneous]) + common(tg.data_len_seconds),
                             tg.num_data_samples)
-        s21 = tg.data[simultaneous, :][increasing_order][channel]
-        streams.append(StreamArray(tone_bin=tone_bin, amplitude=amplitude, phase=phase, tone_index=tone_index,
-                                   fft_bin=fft_bin, epoch=epoch, s21=s21, state=state))
+        s21 = tg.data[simultaneous, :][increasing_order][tone_index]
+        streams.append(Stream(tone_bin=tone_bin, tone_amplitude=amplitude, tone_phase=phase, tone_index=tone_index,
+                              filterbank_bin=fft_bin, epoch=epoch, s21_raw=s21, roach_state=roach_state))
     if resonator:
         return ResonatorSweep(streams=streams, state=state, description=description)
     else:
@@ -271,6 +265,7 @@ def sweep_from_rnc(rnc, sweep_group_index, channel, resonator=True, description=
 
 
 def sweeparray_from_rnc(rnc, sweep_group_index, resonator=True, description=None):
+    roach_state = sweep_roach_state_from_rnc(rnc, sweep_group_index)
     state = sweep_state_from_rnc(rnc, sweep_group_index)
     if description is None:
         description = 'ReadoutNetCDF(\"{}\").sweeps[{}]'.format(rnc.filename, sweep_group_index)
@@ -296,18 +291,18 @@ def sweeparray_from_rnc(rnc, sweep_group_index, resonator=True, description=None
                             common(tg.epoch[simultaneous]) + common(tg.data_len_seconds),
                             tg.num_data_samples)
         s21 = tg.data[simultaneous, :][increasing_order]
-        stream_arrays.append(StreamArray(tone_bin=tone_bin, amplitude=amplitude, phase=phase, tone_index=tone_index,
-                                         fft_bin=fft_bin, epoch=epoch, s21=s21, state=state))
+        stream_arrays.append(StreamArray(tone_bin=tone_bin, tone_amplitude=amplitude, tone_phase=phase, tone_index=tone_index,
+                                         filterbank_bin=fft_bin, epoch=epoch, s21_raw=s21, roach_state=roach_state))
     if resonator:
         return ResonatorSweepArray(stream_arrays=stream_arrays, state=state, description=description)
     else:
         return SweepArray(stream_arrays=stream_arrays, state=state, description=description)
 
 
-def sweepstream_from_rnc(rnc, sweep_group_index, timestream_group_index, channel):
+def sweepstream_from_rnc(rnc, sweep_group_index, timestream_group_index, tone_index):
     state = global_roach_state_from_rnc(rnc)
-    sweep = sweep_from_rnc(rnc, sweep_group_index, channel)
-    stream = stream_from_rnc(rnc, timestream_group_index, channel)
+    sweep = sweep_from_rnc(rnc, sweep_group_index, tone_index)
+    stream = stream_from_rnc(rnc, timestream_group_index, tone_index)
     return SweepStream(sweep, stream, state)
 
 

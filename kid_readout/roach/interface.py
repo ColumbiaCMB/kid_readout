@@ -5,9 +5,12 @@ import numpy as np
 import socket
 import scipy
 import borph_utils
+from kid_readout.roach.tests.mock_roach import MockRoach
 import udp_catcher
 from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
 from kid_readout.roach import tools
+from kid_readout.measurement.core import StateDict
+from kid_readout.measurement.multiple import StreamArray
 
 
 CONFIG_FILE_NAME_TEMPLATE = os.path.join(BASE_DATA_DIR,'%s_config.npz')
@@ -27,9 +30,6 @@ class RoachInterface(object):
 
         roach: an FpgaClient instance for communicating with the ROACH.
                 If not specified, will try to instantiate one connected to *roachip*
-        wafer: 0 or 1.
-                In baseband mode, each of the two DAC and ADC connections can be used independantly to
-                readout a single wafer each. This parameter indicates which connection you want to use.
         roachip: (optional). Network address of the ROACH if you don't want to provide an FpgaClient
         adc_valon: a Valon class, a string, or None
                 Provide access to the Valon class which controls the Valon synthesizer which provides
@@ -42,11 +42,15 @@ class RoachInterface(object):
                 interface.
         host_ip: Override IP address to which the ROACH should send it's data. If left as None,
                 the host_ip will be set appropriately based on the hostname.
-        initialize: Default True, will call self.initialize() which will try to load state from saved config
-                Set to False if you don't want this to happen.
         """
+        self._using_mock_roach = False
         if roach:
             self.r = roach
+            # Check if we're using a fake ROACH for testing. If so, disable additional externalities
+            # This logic could be made more general if desired (i.e. has attribute mock
+            #  or type name matches regex including 'mock'
+            if type(roach) is MockRoach:
+                self._using_mock_roach = True
         else:
             from corr.katcp_wrapper import FpgaClient
             self.r = FpgaClient(roachip)
@@ -105,8 +109,14 @@ class RoachInterface(object):
         self.tone_nsamp = None
         self.tone_bins = None
         self.phases = None
+        self.amps = None
+        self.readout_selection = None
         self.modulation_output = 0
         self.modulation_rate = 0
+        self.wavenorm = None
+
+        self.loopback = None
+        self.debug_register = None
 
         # Things to be configured by subclasses
         self.lo_frequency = 0.0
@@ -141,11 +151,85 @@ class RoachInterface(object):
     def _update_bof_pid(self):
         if self.bof_pid:
             return
-        try:
-            self.bof_pid = borph_utils.get_bof_pid(self.roachip)
-        except Exception, e:
-            self.bof_pid = None
-#            raise e
+        if not self._using_mock_roach:
+            try:
+                self.bof_pid = borph_utils.get_bof_pid(self.roachip)
+            except Exception, e:
+                self.bof_pid = None
+    #            raise e
+
+    @property
+    def num_tones(self):
+        """
+        Returns
+        -------
+        num_tones : int or None
+            number of tones being played. None if unknown/not programmmed
+
+        """
+        if self.tone_bins is None:
+            num_tones = None
+        else:
+            num_tones = self.tone_bins.shape[1] # We may want to update this later if some tones have
+                                                 # zero tone_amplitude
+        return num_tones
+
+    @property
+    def state_arrays(self):
+        return self.get_state_arrays()
+
+    def get_state_arrays(self):
+        def copy_or_none(x):
+            if x is None:
+                return x
+            else:
+                return x.copy()
+        state = StateDict(
+                  tone_bin=copy_or_none(self.tone_bins),
+                  tone_amplitude=copy_or_none(self.amps),
+                  tone_phase=copy_or_none(self.phases),
+                  tone_index=copy_or_none(self.readout_selection),
+                  filterbank_bin=copy_or_none(self.fft_bins),
+                  )
+        return state
+
+    @property
+    def active_state_arrays(self):
+        return self.get_active_state_arrays()
+
+    def get_active_state_arrays(self):
+        state = self.get_state_arrays()
+        if state.tone_bin is not None:
+            state.tone_bin = state.tone_bin[self.bank,:]
+        if state.filterbank_bin is not None:
+            state.filterbank_bin = state.filterbank_bin[self.bank,:]
+        return state
+
+    @property
+    def state(self):
+        return self.get_state()
+
+    def get_state(self,include_registers=False):
+        roach_state = StateDict(boffile=self.boffile,
+                          heterodyne=self.heterodyne,
+                          adc_sample_rate=self.fs*1e6, # roach still uses MHz, so convert to Hz
+                          lo_frequency=self.lo_frequency,
+                          num_tones=self.num_tones,
+                          modulation_rate=self.modulation_rate,
+                          modulation_output=self.modulation_output,
+                          waveform_normalization=self.wavenorm,
+                          num_tone_samples=self.tone_nsamp,
+                          num_filterbank_channels=self.nfft,
+                          dac_attenuation=self.dac_atten,
+                          bank=self.bank,
+                          loopback=self.loopback,
+                          debug_register=self.debug_register,
+                          )
+        if include_registers:
+            for register in self.initial_values_for_writeable_registers:
+                roach_state[register] = self.r.read_int(register)
+        return roach_state
+
 
     def get_raw_adc(self):
         """
@@ -258,7 +342,12 @@ class RoachInterface(object):
             rate_in_hz = (self.fs * 1e6 / (2 * self.nfft)) / (2 ** self.modulation_rate)
             return rate_in_hz
 
+    def set_loopback(self,enable):
+        raise NotImplementedError("Must be implemented by subclasses")
+
     def save_state(self):
+        if self._using_mock_roach:
+            return #don't save anything when using mock
         np.savez(self._config_file_name,
                  boffile=self.boffile,
                  adc_atten=self.adc_atten,
@@ -320,9 +409,11 @@ class RoachInterface(object):
             if np.abs(fs - estfs) > 2.0:
                 print "Warning! FPGA clock may not be locked to sampling clock!"
             print "Requested sampling rate %.1f MHz. Estimated sampling rate %.1f MHz" % (fs, estfs)
-            if start_udp:
+            if start_udp and not self._using_mock_roach:
                 print "starting udp server process on PPC"
                 borph_utils.start_server(self.bof_pid, self.roachip)
+
+            self.set_loopback(False)
             self.adc_atten = 31.5
             self.dac_atten = np.nan
             self.fft_bins = None
@@ -401,12 +492,15 @@ class RoachInterface(object):
         offset_blocks = offset_bytes / 512  #dd uses blocks of 512 bytes by default
         self._update_bof_pid()
         self._pause_dram()
-        data.tofile(os.path.join(self.nfs_root, datafile))
-        dram_file = '/proc/%d/hw/ioreg/dram_memory' % self.bof_pid
-        datafile = '/' + datafile
-        result = borph_utils.check_output(
-            ('ssh root@%s "dd seek=%d if=%s of=%s"' % (self.roachip, offset_blocks, datafile, dram_file)), shell=True)
-        print result
+        if self._using_mock_roach:
+            time.sleep(0.01) #TODO: Can make this take a realistic amount of time if desired
+        else:
+            data.tofile(os.path.join(self.nfs_root, datafile))
+            dram_file = '/proc/%d/hw/ioreg/dram_memory' % self.bof_pid
+            datafile = '/' + datafile
+            result = borph_utils.check_output(
+                ('ssh root@%s "dd seek=%d if=%s of=%s"' % (self.roachip, offset_blocks, datafile, dram_file)), shell=True)
+            print result
         self._unpause_dram()
 
     # TODO: call from the functions that require it so we can stop calling it externally.
@@ -478,6 +572,42 @@ class RoachInterface(object):
         res = np.interp(np.abs(fr) * 2 ** 7, np.arange(2 ** 7), self._window_mag)
         res = 1 / res
         return res
+
+    def set_debug(self,value):
+        self.r.write_int('debug',value)
+        self.debug_register = value
+
+    @property
+    def blocks_per_second(self):
+        raise NotImplementedError("blocks_per_second needs to be implemented for this subclass")
+
+    def get_measurement(self, num_seconds, power_of_two=True, demod=True, **kwargs):
+        num_blocks = self.blocks_per_second*num_seconds
+        if power_of_two:
+            log2 = np.round(np.log2(num_blocks))
+            if log2 < 0:
+                log2 = 0
+            num_blocks = 2 ** log2
+        return self.get_measurement_blocks(num_blocks,demod=demod,**kwargs)
+
+    def get_measurement_blocks(self,num_blocks, demod=True,**kwargs):
+        epoch = time.time() # This will be improved
+        data, seqnos = self.get_data(num_blocks,demod=demod)
+        if np.isscalar(self.amps):
+            tone_amplitude = self.amps*np.ones(self.tone_bins.shape[1],dtype='float')
+        else:
+            tone_amplitude = self.amps.copy()
+        measurement = StreamArray(filterbank_bin=self.fft_bins[self.bank,self.readout_selection].copy(),
+                                  tone_bin=self.tone_bins[self.bank,:].copy(),
+                                  tone_amplitude=tone_amplitude,  # already copied
+                                  epoch=epoch,
+                                  s21_raw=data.T,  # transpose for now, because measurements are organized channel,time
+                                  tone_phase=self.phases.copy(),
+                                  tone_index=self.readout_selection.copy(),
+                                  data_demodulated=demod,
+                                  roach_state=self.get_state(),
+                                  **kwargs)
+        return measurement
 
     def get_data_udp(self, nread=2, demod=True):
         chan_offset = 1

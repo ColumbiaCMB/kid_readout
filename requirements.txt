@@ -2,7 +2,9 @@ numpy
 scipy
 matplotlib
 pandas
-lmfit
+nose
 requests
+pyserial
+netcdf4
 emcee
 testfixtures

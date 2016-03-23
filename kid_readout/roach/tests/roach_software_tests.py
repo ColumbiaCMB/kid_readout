@@ -7,6 +7,8 @@ import kid_readout.roach.tests.mock_roach
 import kid_readout.roach.tests.mock_valon
 import kid_readout.roach.heterodyne
 import kid_readout.roach.baseband
+import kid_readout.roach.r2baseband
+import kid_readout.roach.r2heterodyne
 import numpy as np
 
 def test_calc_fft_bins():
@@ -26,3 +28,33 @@ def test_calc_fft_bins():
             print "testing",class_,"nsamp=2**",np.log2(nsamp)
             assert(np.all(bins>=0))
             assert(np.all(bins < ri.nfft))
+
+def test_state():
+    mr = kid_readout.roach.tests.mock_roach.MockRoach('roach')
+    mv = kid_readout.roach.tests.mock_valon.MockValon()
+    np.random.seed(123)
+    for class_ in [kid_readout.roach.heterodyne.RoachHeterodyne,
+                   kid_readout.roach.baseband.RoachBaseband,
+                   kid_readout.roach.r2baseband.Roach2Baseband,
+                   kid_readout.roach.r2heterodyne.Roach2Heterodyne]:
+        ri = class_(roach=mr,initialize=False, adc_valon=mv)
+        print "Testing:",class_,
+        print "get_state",
+        ri.get_state()
+        _ = ri.state
+        print "get_state_arrays",
+        ri.get_state_arrays()
+        _ = ri.state_arrays
+        print "get_active_state_arrays"
+        ri.get_active_state_arrays()
+        _ = ri.active_state_arrays
+
+def test_get_measurement():
+    mr = kid_readout.roach.tests.mock_roach.MockRoach('roach')
+    mv = kid_readout.roach.tests.mock_valon.MockValon()
+    for class_ in [kid_readout.roach.heterodyne.RoachHeterodyne,
+                   kid_readout.roach.baseband.RoachBaseband]:
+        ri = class_(roach=mr,adc_valon=mv,initialize=False)
+        ri.set_tone_baseband_freqs(np.linspace(100,120,32),nsamp=2**16)
+        ri.select_fft_bins(range(32))
+        blah = ri.get_measurement_blocks(2)

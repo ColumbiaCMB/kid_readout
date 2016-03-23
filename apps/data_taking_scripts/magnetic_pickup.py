@@ -1,7 +1,7 @@
 from __future__ import division
 import time
 import numpy as np
-from kid_readout.measurement.acquire import acquire
+from kid_readout.measurement.acquire import legacy_acquire
 from kid_readout.utils import roach_interface, data_file
 from kid_readout.equipment import agilent_33220
 
@@ -15,8 +15,8 @@ def main(f_initial, attenuations, suffix="magnetic_pickup", stream_time=30, coar
     n_fine_samples = 2 ** fine_exponent
     coarse_frequency_resolution = roach.fs / n_coarse_samples
     fine_frequency_resolution = roach.fs / n_fine_samples
-    coarse_offset_integers = acquire.offset_integers[coarse_exponent]
-    fine_offset_integers = acquire.offset_integers[fine_exponent]
+    coarse_offset_integers = legacy_acquire.offset_integers[coarse_exponent]
+    fine_offset_integers = legacy_acquire.offset_integers[fine_exponent]
     f_coarse_offset = coarse_frequency_resolution * coarse_offset_integers
     f_fine_offset = fine_frequency_resolution * fine_offset_integers
 
@@ -28,15 +28,15 @@ def main(f_initial, attenuations, suffix="magnetic_pickup", stream_time=30, coar
         roach.set_dac_attenuator(attenuation)
         print("Set DAC attenuator to {:.1f} dB".format(attenuation))
         df.log_hw_state(roach)
-        coarse_sweep = acquire.sweep(roach, f_initial, f_coarse_offset, n_coarse_samples)
+        coarse_sweep = legacy_acquire.sweep(roach, f_initial, f_coarse_offset, n_coarse_samples)
         df.add_sweep(coarse_sweep)
-        f_coarse_fit = np.array([r.f_0 for r in acquire.fit_sweep_data(coarse_sweep)])
+        f_coarse_fit = np.array([r.f_0 for r in legacy_acquire.fit_sweep_data(coarse_sweep)])
         print("coarse [MHz]: " + ', '.join(['{:.3f}'.format(f) for f in f_coarse_fit]))
 
         df.log_hw_state(roach)
-        fine_sweep = acquire.sweep(roach, f_coarse_fit, f_fine_offset, n_fine_samples)
+        fine_sweep = legacy_acquire.sweep(roach, f_coarse_fit, f_fine_offset, n_fine_samples)
         df.add_sweep(fine_sweep)
-        f_fine_fit = np.array([r.f_0 for r in acquire.fit_sweep_data(fine_sweep)])
+        f_fine_fit = np.array([r.f_0 for r in legacy_acquire.fit_sweep_data(fine_sweep)])
         print("coarse - fine [Hz]: " + ', '.join(['{:.3f}'.format(1e6 * diff)
                                                   for diff in f_fine_fit - f_coarse_fit]))
 

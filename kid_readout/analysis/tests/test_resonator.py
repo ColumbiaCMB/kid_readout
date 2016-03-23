@@ -1,4 +1,4 @@
-import kid_readout.analysis.resonator.resonator
+import kid_readout.analysis.resonator.legacy_resonator
 
 import numpy as np
 #import nose.tools
@@ -15,12 +15,12 @@ def test_dtype_agreement():
             x_data = np.linspace(100,110,10)
             if np.iscomplexobj(y_data):
                 # if the data is complex, the errors will automatically be coerced to match, so this shouldn't fail
-                kid_readout.analysis.resonator.resonator.fit_best_resonator(freq=x_data,s21=y_data,errors=errors)
+                kid_readout.analysis.resonator.legacy_resonator.fit_best_resonator(freq=x_data, s21=y_data, errors=errors)
                 print "didn't fail"
             else:
                 # data is real, so it should fail in any case
                 try:
-                    kid_readout.analysis.resonator.resonator.fit_best_resonator(freq=x_data,s21=y_data,errors=errors)
+                    kid_readout.analysis.resonator.legacy_resonator.fit_best_resonator(freq=x_data, s21=y_data, errors=errors)
                 except TypeError:
                     print "failed as expected"
                     pass

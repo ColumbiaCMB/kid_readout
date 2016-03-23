@@ -2,8 +2,9 @@
 This module contains helper functions and data structures for running tests.
 """
 import numpy as np
-from kid_readout.measurement import core, legacy
-
+from kid_readout.measurement import core
+from kid_readout.roach import baseband
+from kid_readout.roach.tests import mock_roach, mock_valon
 
 corners = {'None': None, 'True': True, 'False': False,
            'empty_list': [],
@@ -53,22 +54,49 @@ def compare_measurements(a, b, verbose=False):
             assert va == vb
 
 
-# TODO: replace this with a function that generates complex measurements without reading data from disk.
 def get_measurement():
-    """
-    from kid_readout.measurement.io import readoutnc
-    nc_filename = '/data/readout/2015-05-12_113832_mmw_noise_broadband.nc'
-    rnc = readoutnc.ReadoutNetCDF(nc_filename)
-    index = 1
-    m = legacy.sweepstreamarray_from_rnc(rnc, index, index)
-    rnc.close()
-    m.state['corners'] = corners
-    return m
-    """
     m = core.Measurement(corners)
     m.int_list = range(-1, 3)
     m.float_list = list(np.linspace(-1, 2, 10))
     m.str_list = ['one', 'two', 'three']
     m.bool_list = [True, False]
     return m
-    #"""
+
+
+def make_stream(tone_index=0, frequency=None, num_tone_samples=2**16, blocks=2, state=None, description=''):
+    if frequency is None:
+        frequency = np.linspace(100, 200, 16)
+    mr = mock_roach.MockRoach('roach')
+    mv = mock_valon.MockValon()
+    ri = baseband.RoachBaseband(roach=mr, adc_valon=mv, initialize=False)
+    ri.set_tone_freqs(frequency, nsamp=num_tone_samples)
+    ri.select_fft_bins(np.arange(frequency.size))
+    stream_array = ri.get_measurement(blocks, state=state, description=description)
+    return stream_array.stream(tone_index)
+
+
+def make_stream_array(frequency=None, num_tone_samples=2**16, blocks=2, state=None, description=''):
+    if frequency is None:
+        frequency = np.linspace(100, 200, 16)
+    mr = mock_roach.MockRoach('roach')
+    mv = mock_valon.MockValon()
+    ri = baseband.RoachBaseband(roach=mr, adc_valon=mv, initialize=False)
+    ri.set_tone_freqs(frequency, nsamp=num_tone_samples)
+    ri.select_fft_bins(np.arange(frequency.size))
+    return ri.get_measurement(blocks, state=state, description=description)
+
+
+def make_sweep():
+    pass
+
+
+def make_sweep_array():
+    pass
+
+
+def make_sweep_stream():
+    pass
+
+
+def make_sweep_stream_array():
+    pass

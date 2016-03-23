@@ -15,7 +15,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 mlab = plt.mlab
 
-from kid_readout.analysis.resonator.resonator import fit_best_resonator
+from kid_readout.analysis.resonator.legacy_resonator import fit_best_resonator
 from kid_readout.analysis.resonator.khalil import qi_error
 from kid_readout.analysis.timedomain import iqnoise
 from kid_readout.analysis.resources.local_settings import hostname,BASE_DATA_DIR
