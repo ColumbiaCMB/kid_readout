@@ -482,7 +482,7 @@ class Demodulator(object):
         wc = self.compute_pfb_response(foffs)
         t = np.arange(data.shape[0])
         demod = wc*np.exp(-1j * (2 * np.pi * foffs * t + phi0)) * data
-        if seq_nos != None:
+        if type(seq_nos) is np.ndarray:
             pphase = packet_phase(seq_nos,foffs,nchan,nfft,ns) 
             demod *= pphase 
         return demod
