@@ -264,7 +264,7 @@ class RoachHeterodyne(RoachInterface):
         binsel[-1] = -1
         self.r.write('chans', binsel.tostring())
 
-    def demodulate_data(self,data):
+    def demodulate_data(self,data,seq_nos=None):
         bank = self.bank
         demod = np.zeros_like(data)
         for n, ich in enumerate(self.readout_selection):
@@ -272,7 +272,9 @@ class RoachHeterodyne(RoachInterface):
                                             tone_bin=self.tone_bins[bank,ich],
                                             tone_num_samples=self.tone_nsamp,
                                             tone_phase=self.phases[ich],
-                                            fft_bin=self.fft_bins[bank,ich])
+                                            fft_bin=self.fft_bins[bank,ich], 
+                                            nchan=self.readout_selection.shape[0],
+                                            seq_nos=seq_nos)
         return demod
 
     def demodulate_data_original(self, data):
@@ -470,7 +472,7 @@ class Demodulator(object):
     def compute_pfb_response(self,normalized_frequency):
         return 1/np.interp(normalized_frequency,self._window_frequency,self._window_response)
 
-    def demodulate(self,data,tone_bin,tone_num_samples,tone_phase,fft_bin):
+    def demodulate(self,data,tone_bin,tone_num_samples,tone_phase,fft_bin,nchan,seq_nos=None):
         phi0 = tone_phase
         k = tone_bin
         m = fft_bin
@@ -480,8 +482,23 @@ class Demodulator(object):
         wc = self.compute_pfb_response(foffs)
         t = np.arange(data.shape[0])
         demod = wc*np.exp(-1j * (2 * np.pi * foffs * t + phi0)) * data
+        if seq_nos != None:
+            pphase = packet_phase(seq_nos,foffs,nchan,nfft,ns) 
+            demod *= pphase 
         return demod
 
+def packet_phase(seq_nos,foffs,nchan,nfft,ns):
+    packet_bins = 256    #this is hardcoded for now.. number of fft bins that fit in 1 udp packet
+    packet_counts = nfft * packet_bins    
+    chan_counts = packet_counts / nchan
+    shift = int(np.log2(chan_counts)) - 1
+    modn = ns / chan_counts
+    multy = ns / nfft
+    seq_nos = seq_nos >> shift
+    seq_nos %= modn
+    #need to generalize for non consecutive packets (eg use all seqnos in case of dropped pkts)
+    return np.exp(-1j * 2. * np.pi * seq_nos[0] * foffs * multy / modn)
+        
 
 def tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft):
     k = tone_bin

@@ -39,6 +39,7 @@ class Roach2Heterodyne(RoachHeterodyne):
         self.nfft = 2 ** 14
         self._fpga_output_buffer = 'ppout%d' % wafer
         self.iq_delay = iq_delay
+        self.phase0 = None      #initial sequence number, if none then no data has been read in yet
 
         self._general_setup()
 
@@ -105,6 +106,13 @@ class Roach2Heterodyne(RoachHeterodyne):
         data, seqnos = kid_readout.roach.r2_udp_catcher.get_udp_data(self, npkts=nread,
                                                                      nchans=self.readout_selection.shape[0],
                                                                      addr=(self.host_ip, 55555))  # , stream_reg, addr)
+        if self.phase0 == None:
+            self.phase0 = seqnos[0]
         if demod:
-            data = self.demodulate_data(data)
+            seqnos -= self.phase0
+            data = self.demodulate_data(data, seqnos)
         return data, seqnos
+
+    def set_loopback(self, enable):
+        pass 
+
