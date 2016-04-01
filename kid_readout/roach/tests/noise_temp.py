@@ -15,26 +15,31 @@ class NoiseMeasurements(object):
         self.noise_lo_sweep(los)
         return
     
-    def setup_roach(self, N=16, nsamp=2**20, NFFT=2**8, lendata=2**6, Fs=512.e6, atten=30, lof=1000):
+    def setup_roach(self, N=16, nsamp=2**20, NFFT=2**8, lendata=2**6, Fs=512.e6, atten=20, lof=1000, use_r2=True):
         self.N = N
         self.nsamp = nsamp
         self.NFFT = NFFT
         self.lendata = lendata
         self.Fs = Fs
+        self.use_r2 = use_r2
 
-        self.r2 = hardware_tools.r2_with_board2()
-        self.r2.attenuator.set_att(atten)
-        self.r2.set_lo(lof, modulator_lo_power=5, demodulator_lo_power=5)
+        if use_r2:
+            self.r = hardware_tools.r2_with_board2()
+        else:
+            self.r = hardware_tools.r1_with_board2()
+            self.lendata = 1
+        self.r.set_dac_attenuator(atten)
+        self.r.set_lo(lof, modulator_lo_power=5, demodulator_lo_power=5)
         self.lo = lof
-        self.r2.iq_delay = 0
-        freqs = self.r2.set_tone_baseband_freqs(np.linspace(10, 150, N), nsamp=nsamp)
-        self.r2.select_fft_bins(range(N))
-        self.r2._sync()
+        self.r.iq_delay = 0
+        freqs = self.r.set_tone_baseband_freqs(np.linspace(10, 150, N), nsamp=nsamp)
+        self.r.select_fft_bins(range(N))
+        self.r._sync()
         return
 
     def noise_lo_sweep(self, los):
         for lof in los:
-            self.r2.set_lo(lof, modulator_lo_power=5, demodulator_lo_power=5)
+            self.r.set_lo(lof, modulator_lo_power=5, demodulator_lo_power=5)
             self.lo = lof
             self.all_chan_noise(m=1)
         return 
@@ -45,14 +50,12 @@ class NoiseMeasurements(object):
         for k in range(N):
             f, psc = self.noise_data(chan=k, m=m, plot=False)
             bigps.append(psc)
-        
         pl.figure()
         for k in range(N):
             ind = f > 0
             pl.semilogx(f[ind], bigps[k][ind], label='ch'+str(k))
         pl.xlabel('Hz')
         pl.ylabel('dB/Hz')
-        pl.legend()
         name = 'all chans psd' +str(self.lo)
         pl.title(name)
         pl.grid()
@@ -67,11 +70,11 @@ class NoiseMeasurements(object):
         pst = np.zeros(NFFT)
         cnt = 0
         while cnt < m:
-            data, addr = self.r2.get_data_udp(N*lendata, demod=True)
-            if (not np.all(np.diff(addr)==2**21/N)) or data.shape[0]!=256*lendata:
+            data, addr = self.r.get_data_udp(N*lendata, demod=True)
+            if self.use_r2 and ((not np.all(np.diff(addr)==2**21/N)) or data.shape[0]!=256*lendata):
                 print "bad"
             else:
-                ps, f = mlab.psd(data[:,chan], NFFT=NFFT, Fs=Fs/self.r2.nfft)
+                ps, f = mlab.psd(data[:,chan], NFFT=NFFT, Fs=Fs/self.r.nfft)
                 pst += ps
                 cnt += 1
         pst /= cnt
@@ -90,7 +93,7 @@ class NoiseMeasurements(object):
         NFFT = self.NFFT
         pst = np.zeros(NFFT)
         for k in range(nt):
-            x, y = self.r2.get_raw_adc()
+            x, y = self.r.get_raw_adc()
             f, ps = self.take_psd(x, y, db=False)
             pst += ps
         pst /= nt
@@ -99,7 +102,7 @@ class NoiseMeasurements(object):
         return 
 
     def check_settings(self):
-        x, y = self.r2.get_raw_adc()
+        x, y = self.r.get_raw_adc()
         print "ptp ", x.ptp()
         print "std ", x.std()
         if x.ptp() > 4000:
