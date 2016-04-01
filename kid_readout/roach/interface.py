@@ -213,7 +213,7 @@ class RoachInterface(object):
         roach_state = StateDict(boffile=self.boffile,
                           heterodyne=self.heterodyne,
                           adc_sample_rate=self.fs*1e6, # roach still uses MHz, so convert to Hz
-                          lo_frequency=self.lo_frequency,
+                          lo_frequency=self.lo_frequency*1e6, # roach still uses MHz, so convert to Hz
                           num_tones=self.num_tones,
                           modulation_rate=self.modulation_rate,
                           modulation_output=self.modulation_output,

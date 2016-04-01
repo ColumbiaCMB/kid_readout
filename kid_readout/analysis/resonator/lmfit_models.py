@@ -2,6 +2,22 @@ import numpy as np
 import lmfit
 import equations
 
+def update_param_values_and_limits(pars, prefix, **kwargs):
+    for key, val in kwargs.items():
+        if key.endswith('_max'):
+            key_name = key[:-len('_max')]
+            attr = 'max'
+        elif key.endswith('_min'):
+            key_name = key[:-len('_min')]
+            attr = 'min'
+        else:
+            key_name = key
+            attr = 'value'
+        pname = "%s%s" % (prefix, key_name)
+        if pname in pars:
+            setattr(pars[pname],attr,val)
+    return pars
+
 class ComplexModel(lmfit.model.Model):
     def _residual(self,params,data,weights,**kwargs):
         diff = self.eval(params, **kwargs) - data
@@ -42,7 +58,7 @@ class LinearResonatorModel(ComplexModel):
         params = self.make_params(Q=Q_guess, Q_e_real=Q_e_real_guess, Q_e_imag=0, f_0=f_0_guess)
         params['%sQ' % self.prefix].set(min=Q_min, max=Q_max)
         params['%sf_0' % self.prefix].set(min=fmin, max=fmax)
-        return lmfit.models.update_param_vals(params,self.prefix,**kwargs)
+        return update_param_values_and_limits(params,self.prefix,**kwargs)
 
 
 class InverseLinearResonatorModel(ComplexModel):

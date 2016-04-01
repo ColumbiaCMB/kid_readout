@@ -268,7 +268,8 @@ class RoachBaseband(RoachInterface):
             f_tone = k * self.fs / float(ns)
             foffs = (2 * k * nfft - m * ns) / float(ns)
             wc = self._window_response(foffs / 2.0) * (self.tone_nsamp / 2.0 ** 18)
-            demod[:, n] = (wc * np.exp(sign * 1j * (2 * np.pi * foffs * t + phi0) + 2j*np.pi*f_tone*hardware_delay)
+            demod[:, n] = (wc * np.exp(sign * 1j * (2 * np.pi * foffs * t + phi0) - sign *
+                                       2j*np.pi*f_tone*hardware_delay)
                            * data[:, n])
             if m >= self.nfft / 2:
                 demod[:, n] = np.conjugate(demod[:, n])
