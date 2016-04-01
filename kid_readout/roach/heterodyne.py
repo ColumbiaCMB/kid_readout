@@ -493,6 +493,8 @@ def packet_phase(seq_nos,foffs,nchan,nfft,ns):
     chan_counts = packet_counts / nchan
     shift = int(np.log2(chan_counts)) - 1
     modn = ns / chan_counts
+    if modn == 0:
+        modn = 1
     multy = ns / nfft
     seq_nos = seq_nos >> shift
     seq_nos %= modn
