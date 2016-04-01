@@ -74,6 +74,13 @@ class RoachHeterodyne(RoachInterface):
         self.demodulator = Demodulator()
         self.attenuator = attenuator
 
+    def set_loopback(self,enable):
+        self._loopback = enable
+        if enable:
+            self.r.write_int('sync',2)
+        else:
+            self.r.write_int('sync',0)
+
     def load_waveforms(self, i_wave, q_wave, fast=True, start_offset=0):
         """
         Load waveforms for the two DACs
