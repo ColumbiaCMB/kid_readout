@@ -115,7 +115,8 @@ def determine_timestream_index_by_frequency(timestream_group,freq,num_resonators
 
 
 class MmwResponse(object):
-    def __init__(self,ncfilename,resonator_index,data_is_aligned=True,use_bifurcation_model=False):
+    def __init__(self,ncfilename,resonator_index,data_is_aligned=True,use_bifurcation_model=False,
+                 timestream_group_index=0):
         rnc = kid_readout.measurement.io.readoutnc.ReadoutNetCDF(ncfilename)
         self.resonator_index=resonator_index
         self.filename = ncfilename
@@ -136,7 +137,7 @@ class MmwResponse(object):
             self.mmw_atten_turns = np.zeros((2,))
             self.mmw_atten_turns[:] = np.nan
         self.dac_atten = rnc.dac_atten[0]
-        timestream = rnc.timestreams[0]
+        timestream = rnc.timestreams[timestream_group_index]
         modulation_freq = timestream.mmw_source_modulation_freq[0]
         self.timestream_index = determine_timestream_index_by_frequency(timestream,self.sweep_freq.mean(),
                                                                     num_resonators=num_resonators)

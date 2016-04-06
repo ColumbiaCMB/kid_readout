@@ -96,6 +96,7 @@ def deglitch_mask_block_mad(ts,thresh=5,mask_extend=50,debug=False):
 
 def deglitch_mask_mad(ts,thresh=5,mask_extend=50,window_length=2**8):
     full_mask = np.zeros(ts.shape,dtype='bool')
+    clean = ts.copy()
     step = window_length//2
     nstep = ts.shape[0]//step
     for k in xrange(nstep):
@@ -103,8 +104,21 @@ def deglitch_mask_mad(ts,thresh=5,mask_extend=50,window_length=2**8):
         if start < 0:
             start = 0
         chunk = ts[start*step:(k+1)*step]
-        mask = deglitch_mask_block_mad(chunk,thresh=thresh,mask_extend=mask_extend)
+        mask = deglitch_mask_block_mad(np.abs(chunk),thresh=thresh,mask_extend=mask_extend)
         full_mask[start*step:((start+1)*step)] |= mask[:step]
     full_mask[start*step:start*step+len(mask)] |= mask
-    return full_mask
 
+    for k in xrange(nstep):
+        start = k-1
+        if start < 0:
+            start = 0
+        chunk = clean[start*step:(k+1)*step]
+        mask = full_mask[start*step:(k+1)*step]
+        chunk[mask] = np.random.choice(chunk[~mask],mask.sum())
+    return clean,full_mask
+
+def deglitch_new(ts,thresh=6,mask_extend=50,window_length=2**16):
+    mask = deglitch_mask_mad(np.abs(ts),thresh=thresh,mask_extend=mask_extend,window_length=window_length)
+    clean = ts.copy()
+    clean[mask] = np.array(random.sample(ts[~mask],mask.sum()))
+    return clean
