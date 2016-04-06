@@ -1,6 +1,7 @@
 import numpy as np
 import lmfit
 import equations
+from distutils.version import StrictVersion
 
 def update_param_values_and_limits(pars, prefix, **kwargs):
     for key, val in kwargs.items():
@@ -18,15 +19,20 @@ def update_param_values_and_limits(pars, prefix, **kwargs):
             setattr(pars[pname],attr,val)
     return pars
 
-class ComplexModel(lmfit.model.Model):
-    def _residual(self,params,data,weights,**kwargs):
-        diff = self.eval(params, **kwargs) - data
-        diff_as_ri = diff.astype('complex').view('float')
-        if weights is not None:
-            weights_as_ri = weights.astype('complex').view('float')
-            diff_as_ri *= weights_as_ri
-        retval = np.asarray(diff_as_ri).ravel()
-        return retval
+# Version 0.9.3 of lmfit incorporates changes that allow models that return complex values.
+# For earlier versions, we need the following work around
+if StrictVersion(lmfit.__version__) < StrictVersion('0.9.3'):
+    class ComplexModel(lmfit.model.Model):
+        def _residual(self,params,data,weights,**kwargs):
+            diff = self.eval(params, **kwargs) - data
+            diff_as_ri = diff.astype('complex').view('float')
+            if weights is not None:
+                weights_as_ri = weights.astype('complex').view('float')
+                diff_as_ri *= weights_as_ri
+            retval = np.asarray(diff_as_ri).ravel()
+            return retval
+else:
+    ComplexModel = lmfit.model.Model
 
 class GeneralCableModel(ComplexModel):
     def __init__(self, *args, **kwargs):
