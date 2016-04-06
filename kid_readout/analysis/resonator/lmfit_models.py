@@ -37,17 +37,41 @@ else:
 class GeneralCableModel(ComplexModel):
     def __init__(self, *args, **kwargs):
         super(GeneralCableModel, self).__init__(equations.general_cable, *args, **kwargs)
-    def guess(self,data=None, **kwargs):
-        pass
+        self.set_param_hint('f_min',vary=False)
+        self.set_param_hint('phi',min=-np.pi,max=np.pi)
+        self.set_param_hint('A_mag',min=0)
+
+    def guess(self,data, f=None, **kwargs):
+        verbose = kwargs.pop('verbose',None)
+        if f is None:
+            return self.make_params(verbose=verbose,**kwargs)
+        f_min = f.min()
+        f_max = f.max()
+        abs_data = np.abs(data)
+        A_min = abs_data.min()
+        A_max = abs_data.max()
+        A_slope,A_offset = np.polyfit(f-f_min,np.abs(data),1)
+        A_mag = A_offset
+        A_mag_slope = A_slope / A_mag
+        phi_slope, phi_offset = np.polyfit(f-f_min, np.unwrap(np.angle(data)), 1)
+        delay = -phi_slope / (2 * np.pi)
+        params = self.make_params(delay=delay, phi = phi_offset, f_min=f_min, A_mag=A_mag, A_slope=A_mag_slope)
+        params = update_param_values_and_limits(params,self.prefix,
+                                                phi_offset_min=phi_offset-np.pi,
+                                                phi_offset_max=phi_offset+np.pi,
+                                                )
+        return update_param_values_and_limits(params,self.prefix,**kwargs)
+
 
 class LinearResonatorModel(ComplexModel):
     def __init__(self, *args, **kwargs):
         super(LinearResonatorModel, self).__init__(equations.linear_resonator, *args, **kwargs)
         self.set_param_hint('Q', min = 0)  # Enforce Q is positive
+
     def guess(self, data, f=None, **kwargs):
         verbose = kwargs.pop('verbose',None)
         if f is None:
-            return
+            return self.make_params(verbose=verbose,**kwargs)
         argmin_s21 = np.abs(data).argmin()
         fmin = f.min()
         fmax = f.max()
