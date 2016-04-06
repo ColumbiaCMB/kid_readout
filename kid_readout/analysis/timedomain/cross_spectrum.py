@@ -3,7 +3,7 @@ __author__ = 'gjones'
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import mlab
-from kid_readout.utils import filters
+from kid_readout.analysis.timedomain import filters
 
 class CrossSpectralAnalysis(object):
     def __init__(self,snm1=None,snm2=None):
