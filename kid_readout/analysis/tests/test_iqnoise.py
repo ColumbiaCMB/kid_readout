@@ -1,7 +1,7 @@
 __author__ = 'gjones'
 import numpy as np
 from matplotlib import mlab
-from kid_readout.analysis.iqnoise import full_spectral_helper
+from kid_readout.analysis.timedomain.iqnoise import full_spectral_helper
 
 def test_full_spectral_helper():
     x = np.random.randn(2 ** 20)
