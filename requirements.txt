@@ -7,4 +7,5 @@ requests
 pyserial
 netcdf4
 emcee
+corner
 testfixtures
