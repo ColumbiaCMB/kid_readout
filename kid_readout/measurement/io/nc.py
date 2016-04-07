@@ -123,7 +123,7 @@ class IO(core.IO):
             value = node.__dict__[name]
             return self.on_read.get(value, value)
 
-    def measurement_names(self, node_path):
+    def measurement_names(self, node_path=''):
         node = self._get_node(node_path)
         return [name for name in node.groups if not name.endswith(self.is_dict)]
 
