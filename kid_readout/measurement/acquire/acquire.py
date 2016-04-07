@@ -25,7 +25,7 @@ writing the sub-measurements as they are acquired.
 """
 from __future__ import division
 import numpy as np
-from kid_readout.measurement import multiple
+from kid_readout.measurement import basic
 
 
 def load_baseband_sweep_tones(ri, tone_banks, num_tone_samples):
@@ -55,7 +55,7 @@ def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=1, state=None, de
         ri.select_fft_bins(np.arange(tone_bank.size))
         ri._sync()
         stream_arrays.append(ri.get_measurement(num_seconds=length_seconds, **kwargs))
-    return multiple.SweepArray(stream_arrays, state=state, description=description)
+    return basic.SweepArray(stream_arrays, state=state, description=description)
 
 
 def run_loaded_sweep(ri, length_seconds=1, state=None, description='', tone_bank_indices=None, **kwargs):
@@ -78,4 +78,4 @@ def run_loaded_sweep(ri, length_seconds=1, state=None, description='', tone_bank
         ri.select_fft_bins(np.arange(ri.tone_bins[tone_bank_index].size))
         ri._sync()
         stream_arrays.append(ri.get_measurement(num_seconds=length_seconds, **kwargs))
-    return multiple.SweepArray(stream_arrays, state=state, description=description)
+    return basic.SweepArray(stream_arrays, state=state, description=description)

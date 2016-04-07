@@ -71,7 +71,7 @@ class IO(core.IO):
         node = self._get_node(node_path)
         return node[key]
 
-    def measurement_names(self, node_path):
+    def measurement_names(self, node_path=''):
         """
         Return the names of all measurements contained in the measurement at node_path.
         """

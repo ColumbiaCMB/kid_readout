@@ -10,7 +10,7 @@ import udp_catcher
 from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
 from kid_readout.roach import tools
 from kid_readout.measurement.core import StateDict
-from kid_readout.measurement.multiple import StreamArray
+from kid_readout.measurement.basic import StreamArray
 
 
 CONFIG_FILE_NAME_TEMPLATE = os.path.join(BASE_DATA_DIR,'%s_config.npz')

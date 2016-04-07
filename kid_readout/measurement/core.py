@@ -48,6 +48,7 @@ format-independent way in order to save new data in specific locations or to loa
 """
 import re
 import inspect
+import warnings
 import importlib
 import numpy as np
 from collections import OrderedDict
@@ -326,6 +327,32 @@ class IO(object):
         """
         return True
 
+    def write(self, measurement, node_path=''):
+        """
+        Write the measurement to disk at the given node path.
+
+        :param measurement: the measurement instance to write to disk.
+        :param node_path: the node_path to the node that will contain this object; all but the final node in node_path must
+        already exist.
+        :return: None
+        """
+        _write_node(measurement, self, node_path)
+
+    def read(self, node_path, extras=True, translate=None):
+        """
+        Read a measurement from disk and return it.
+
+        :param node_path:the path to the node to be loaded, in the form 'node0:node1:node2'
+        :param extras: add extra variables; see instantiate().
+        :param translate: a dictionary with entries 'original_class': 'new_class'; class names must be fully-qualified.
+        :return: the measurement corresponding to the given node.
+        """
+        if translate is None:
+            translate = {}
+        return _read_node(self, node_path, extras, translate)
+
+    # These functions are used by
+
     def create_node(self, node_path):
         """
         Create a node at the end of the given path; all but the final node in the path must already exist.
@@ -356,7 +383,7 @@ class IO(object):
         """
         pass
 
-    def measurement_names(self, node_path):
+    def measurement_names(self, node_path=''):
         """
         Return the names of all measurements contained in the measurement at node_path.
         """
@@ -374,6 +401,22 @@ class IO(object):
         """
         pass
 
+    def __getattr__(self, item):
+        if item in self.measurement_names():
+            return self.read(item)
+        else:
+            raise AttributeError()
+
+    def __getitem__(self, item):
+        try:
+            return self.read(self.measurement_names()[item])
+        except IndexError:
+            raise KeyError()
+
+    # TODO: add methods?
+    def __dir__(self):
+        return self.__dict__.keys() + self.measurement_names('')
+
 
 # Public functions
 
@@ -382,12 +425,15 @@ def write(measurement, io, node_path):
     Write a measurement to disk using the given IO class. This function feeds data to this class and tells it when to
     create new nodes to match the hierarchy of measurements.
 
+    :param measurement: the measurement instance to write to disk.
     :param io: an instance of a class that implements the io interface.
     :param node_path: the node_path to the node that will contain this object; all but the final node in node_path must
       already exist.
     :return: None
     """
+    warnings.warn(DeprecationWarning("Use IO.write() instead."))
     _write_node(measurement, io, node_path)
+
 
 def read(io, node_path, extras=True, translate=None):
     """
@@ -399,6 +445,7 @@ def read(io, node_path, extras=True, translate=None):
     :param translate: a dictionary with entries 'original_class': 'new_class'; all class names must be fully-qualified.
     :return: the measurement corresponding to the given node.
     """
+    warnings.warn(DeprecationWarning("Use IO.read() instead."))
     if translate is None:
         translate = {}
     measurement = _read_node(io, node_path, extras, translate)
