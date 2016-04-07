@@ -1,5 +1,6 @@
 from lmfit.ui import Fitter
 
+
 class FitterWithAttributeAccess(Fitter):
     def __getattr__(self, attr):
         if attr.endswith('_error'):
@@ -15,6 +16,6 @@ class FitterWithAttributeAccess(Fitter):
 
     def __dir__(self):
         return sorted(set(dir(Fitter) +
-                self.__dict__.keys() +
-                self.current_params.keys() +
-                [name + '_error' for name in self.current_params.keys()]))
+                          self.__dict__.keys() +
+                          self.current_params.keys() +
+                          [name + '_error' for name in self.current_params.keys()]))
