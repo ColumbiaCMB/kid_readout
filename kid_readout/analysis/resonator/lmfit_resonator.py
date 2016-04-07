@@ -173,15 +173,36 @@ class LinearResonator(BaseResonator):
         super(LinearResonator,self).__init__(frequency=frequency, s21=s21, errors=errors,
                                              model = lmfit_models.LinearResonatorModel, **kwargs)
 
+_general_cable_model = lmfit_models.GeneralCableModel()
+_linear_resonator_model = lmfit_models.LinearResonatorModel()
+_linear_resonator_with_cable = (_general_cable_model
+                                * _linear_resonator_model)
+def _linear_resonator_with_cable_guess(data, f=None,**kwargs):
+    cable_params = _general_cable_model.guess(data=data,f=f,**kwargs)
+    resonator_params = _linear_resonator_model.guess(data=data,f=f,**kwargs)
+    cable_params.update(resonator_params)
+    return cable_params
+_linear_resonator_with_cable.guess = _linear_resonator_with_cable_guess
 class LinearResonatorWithCable(BaseResonator):
     def __init__(self, frequency, s21, errors, **kwargs):
         super(LinearResonatorWithCable,self).__init__(frequency=frequency, s21=s21, errors=errors,
-                                             model = (lmfit_models.GeneralCableModel()
-                                                      * lmfit_models.LinearResonatorModel()), **kwargs)
+                                             model = _linear_resonator_with_cable, **kwargs)
+
+_background_resonator_model = lmfit_models.LinearResonatorModel(prefix='bg_')
+_foreground_resonator_model = lmfit_models.LinearResonatorModel(prefix='fg_')
+
+_colliding_linear_resonators_with_cable = ((_general_cable_model * _background_resonator_model)
+                                                      * _foreground_resonator_model)
+def _colliding_linear_resonators_with_cable_guess(data, f=None,**kwargs):
+    cable_params = _general_cable_model.guess(data=data,f=f,**kwargs)
+    resonator_params = _foreground_resonator_model.guess(data=data,f=f,**kwargs)
+    bg_resonator_params = _background_resonator_model.guess(data=data,f=f, **kwargs)
+    cable_params.update(resonator_params)
+    cable_params.update(bg_resonator_params)
+    return cable_params
+_colliding_linear_resonators_with_cable.guess = _colliding_linear_resonators_with_cable_guess
 
 class CollidingLinearResonatorsWithCable(BaseResonator):
     def __init__(self, frequency, s21, errors, **kwargs):
         super(CollidingLinearResonatorsWithCable,self).__init__(frequency=frequency, s21=s21, errors=errors,
-                                             model = ((lmfit_models.GeneralCableModel()
-                                                       * lmfit_models.LinearResonatorModel(prefix='bg_'))
-                                                      * lmfit_models.LinearResonatorModel()), **kwargs)
+                                             model = _colliding_linear_resonators_with_cable, **kwargs)
