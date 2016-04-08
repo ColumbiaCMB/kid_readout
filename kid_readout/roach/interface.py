@@ -140,7 +140,7 @@ class RoachInterface(object):
         try:
             self.hardware_delay_estimate = tools.boffile_delay_estimates[self.boffile]
         except KeyError:
-            self.hardware_delay_estimate = tools.nfft_delay_estimates[self.nfft]
+            self.hardware_delay_estimate = tools.get_delay_estimate_for_nfft(self.nfft,self.heterodyne)
 
         try:
             self.fs = self.adc_valon.get_frequency_a()
