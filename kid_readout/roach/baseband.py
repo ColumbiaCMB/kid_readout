@@ -213,7 +213,7 @@ class RoachBaseband(RoachInterface):
         idx[top_half] = self.nfft - bins[top_half] + self.nfft / 2
         return idx
 
-    def select_fft_bins(self, readout_selection):
+    def select_fft_bins(self, readout_selection, sync=True):
         """
         Select which subset of the available FFT bins to read out
         
@@ -240,6 +240,8 @@ class RoachBaseband(RoachInterface):
         binsel[:-1] = np.mod(self.fpga_fft_readout_indexes - offset, self.nfft)
         binsel[-1] = -1
         self.r.write('chans', binsel.tostring())
+        if sync:
+            self._sync()
 
     def demodulate_data(self, data):
         """

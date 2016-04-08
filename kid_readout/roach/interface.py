@@ -1,6 +1,8 @@
 import os
 import sys
 import time
+import warnings
+
 import numpy as np
 import socket
 import scipy
@@ -504,8 +506,11 @@ class RoachInterface(object):
         self._unpause_dram()
 
     # TODO: call from the functions that require it so we can stop calling it externally.
-    def _sync(self,loopback=False):
-        if loopback:
+    def _sync(self,loopback=None):
+        if loopback is not None:
+            warnings.warn("loopback parameter to _sync is deprecated, use set_loopback method")
+            self.set_loopback(loopback)
+        if self.loopback:
             base_value = 2
         else:
             base_value = 0
