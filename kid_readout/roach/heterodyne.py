@@ -428,6 +428,7 @@ class RoachHeterodyne(RoachInterface):
             self.dac_atten = int(attendb * 2) / 2.0
         else :
             self.attenuator.set_att(attendb)
+            self.dac_atten = int(attendb * 2) / 2.0
 
     def set_adc_attenuator(self, attendb):
         if attendb < 0 or attendb > 31.5:

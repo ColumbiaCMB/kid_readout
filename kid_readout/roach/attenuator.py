@@ -1,10 +1,13 @@
 import requests
 
 class Attenuator(object):
-    def __init__(self,attenuation=0, tempip='http://192.168.1.211/'):
+    def __init__(self,attenuation=None, tempip='http://192.168.1.211/'):
         self.ip = tempip
-        self.att = self.set_att(attenuation)
-
+        if attenuation == None:
+            self.att = self.get_att()
+        else:
+            self.att = self.set_att(attenuation)
+        
     def get_att(self):
         return float(self.get_query("ATT??"))
     

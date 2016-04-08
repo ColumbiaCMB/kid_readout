@@ -15,7 +15,7 @@ class NoiseMeasurements(object):
         self.noise_lo_sweep(los)
         return
     
-    def setup_roach(self, N=16, nsamp=2**20, NFFT=2**8, lendata=2**6, Fs=512.e6, atten=20, lof=1000, use_r2=True):
+    def setup_roach(self, N=16, nsamp=2**20, NFFT=2**8, lendata=2**6, Fs=512.e6, atten=None, lof=1000, use_r2=True, use_mk2=True):
         self.N = N
         self.nsamp = nsamp
         self.NFFT = NFFT
@@ -24,11 +24,17 @@ class NoiseMeasurements(object):
         self.use_r2 = use_r2
 
         if use_r2:
-            self.r = hardware_tools.r2_with_board2()
+            self.r = hardware_tools.r2_with_mk2()
         else:
-            self.r = hardware_tools.r1_with_board2()
+            if use_mk2:
+                self.r = hardware_tools.r1_with_mk2()
+            else:   
+                self.r = hardware_tools.r1_with_mk1()
             self.lendata = 1
-        self.r.set_dac_attenuator(atten)
+
+        if atten != None: 
+            self.r.set_dac_attenuator(atten)
+
         self.r.set_lo(lof, modulator_lo_power=5, demodulator_lo_power=5)
         self.lo = lof
         self.r.iq_delay = 0
@@ -38,11 +44,14 @@ class NoiseMeasurements(object):
         return
 
     def noise_lo_sweep(self, los):
+        data = {}
         for lof in los:
             self.r.set_lo(lof, modulator_lo_power=5, demodulator_lo_power=5)
             self.lo = lof
-            self.all_chan_noise(m=1)
-        return 
+            f, da = self.all_chan_noise(m=1)
+            data[lof] = da
+        data['freqs'] = f
+        return data
 
     def all_chan_noise(self, m=1):
         N = self.N
@@ -60,7 +69,7 @@ class NoiseMeasurements(object):
         pl.title(name)
         pl.grid()
         pl.show()
-        return
+        return f, bigps
 
     def noise_data(self, chan=0, m=1, plot=False):
         NFFT = self.NFFT
@@ -107,7 +116,7 @@ class NoiseMeasurements(object):
         print "std ", x.std()
         if x.ptp() > 4000:
             print "high x ptp"
-        f, ps = self.take_psd(x, y)
+        f, ps = self.take_psd(x, y, NFFT=2**10)
         self.plot_psd(f, ps, "check settings")
         return
 
@@ -121,8 +130,10 @@ class NoiseMeasurements(object):
         pl.show()
         return 
 
-    def take_psd(self, x, y, db=True):
-        ps, f = mlab.psd(x+1j*y, NFFT=self.NFFT, Fs=self.Fs)
+    def take_psd(self, x, y, db=True, NFFT=None):
+        if NFFT=None:
+            NFFT=self.NFFT
+        ps, f = mlab.psd(x+1j*y, NFFT=NFFT, Fs=self.Fs)
         if db:
             ps = 10.*np.log10(ps) 
         return f, ps
