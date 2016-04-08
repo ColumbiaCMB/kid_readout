@@ -75,7 +75,7 @@ class RoachHeterodyne(RoachInterface):
         self.attenuator = attenuator
 
     def set_loopback(self,enable):
-        self._loopback = enable
+        self.loopback = enable
         if enable:
             self.r.write_int('sync',2)
         else:
