@@ -57,8 +57,8 @@ def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=1, state=None, de
         stream_arrays.append(ri.get_measurement(num_seconds=length_seconds, **kwargs))
     return basic.SweepArray(stream_arrays, state=state, description=description)
 
-
-def run_loaded_sweep(ri, length_seconds=1, state=None, description='', tone_bank_indices=None, **kwargs):
+def run_loaded_sweep(ri, length_seconds=1, state=None, description='', tone_bank_indices=None, bin_indices=None,
+                                                                                                            **kwargs):
     """
     Return a SweepArray acquired using previously-loaded tones.
 
@@ -72,10 +72,29 @@ def run_loaded_sweep(ri, length_seconds=1, state=None, description='', tone_bank
     """
     if tone_bank_indices is None:
         tone_bank_indices = np.arange(ri.tone_bins.shape[0])
+    if bin_indices is None:
+        bin_indices = range(ri.tone_bins.shape[1])
     stream_arrays = []
     for tone_bank_index in tone_bank_indices:
         ri.select_bank(tone_bank_index)
-        ri.select_fft_bins(np.arange(ri.tone_bins[tone_bank_index].size))
+        ri.select_fft_bins(bin_indices)
         ri._sync()
         stream_arrays.append(ri.get_measurement(num_seconds=length_seconds, **kwargs))
     return basic.SweepArray(stream_arrays, state=state, description=description)
+
+def run_multipart_sweep(ri, length_seconds=1, state=None, description='', num_tones_read_at_once=32,verbose=False,
+                                                                                                            **kwargs):
+    num_tones = ri.tone_bins.shape[1]
+    num_steps = num_tones//num_tones_read_at_once
+    if num_steps == 0:
+        num_steps = 1
+    indicies_to_read = range(num_tones)
+    parts = []
+    for step in range(num_steps):
+        print "running sweep step",step,"of",num_steps
+        parts.append(run_loaded_sweep(ri,length_seconds=length_seconds,state=state,description=description,
+                                      bin_indices=indicies_to_read[step::num_steps],**kwargs))
+    stream_arrays = []
+    for part in parts:
+        stream_arrays.extend(list(part.stream_arrays))
+    return basic.SweepArray(stream_arrays,state=state,description=description)
