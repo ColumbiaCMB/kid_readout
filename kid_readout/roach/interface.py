@@ -617,7 +617,7 @@ class RoachInterface(object):
     def get_data_udp(self, nread=2, demod=True):
         chan_offset = 1
         nch = self.fpga_fft_readout_indexes.shape[0]
-        data, seqnos = udp_catcher.get_udp_data(self, npkts=nread * 16 * nch, streamid=1,
+        data, seqnos = udp_catcher.get_udp_data(self, npkts=nread * 16 * nch, streamid=np.random.randint(1,2**15),
                                                 chans=self.fpga_fft_readout_indexes + chan_offset,
                                                 nfft=self.nfft, addr=(self.host_ip, 12345))  # , stream_reg, addr)
         if demod:
