@@ -338,7 +338,7 @@ class IO(object):
         """
         if node_path is None:
             node_path = measurement.__class__.__name__ + str(len(self.measurement_names()))
-        _write_node(measurement, self, node_path)
+        self._write_node(measurement, node_path)
 
     def read(self, node_path, extras=True, translate=None):
         """
@@ -351,7 +351,7 @@ class IO(object):
         """
         if translate is None:
             translate = {}
-        return _read_node(self, node_path, extras, translate)
+        return self._read_node(node_path, extras, translate)
 
     # These functions are used by
 
