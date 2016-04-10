@@ -88,7 +88,7 @@ class LinearResonatorModel(ComplexModel):
         params = self.make_params(Q=Q_guess, Q_e_real=Q_e_real_guess, Q_e_imag=0, f_0=f_0_guess)
         params['%sQ' % self.prefix].set(min=Q_min, max=Q_max)
         params['%sf_0' % self.prefix].set(min=fmin, max=fmax)
-        params['%sQ_e_real' % self.prefix].set(min=0, max=1e7)
+        params['%sQ_e_real' % self.prefix].set(min=1, max=1e7)
         params['%sQ_e_imag' % self.prefix].set(min=-1e7, max=1e7)
         return update_param_values_and_limits(params,self.prefix,**kwargs)
 
