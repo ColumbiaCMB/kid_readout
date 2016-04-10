@@ -249,6 +249,27 @@ class IO(core.IO):
 # Classes that implement caching of s21_raw
 
 
+class NCVariable(object):
+
+    def __init__(self, variable):
+        self.variable = variable
+
+    def __getitem__(self, item):
+        return self.variable[item].view(self.dtype)
+
+    @property
+    def shape(self):
+        return self.variable.shape
+
+    @property
+    def size(self):
+        return self.variable.size
+
+    @property
+    def dtype(self):
+        return self.variable.datatype.name
+
+
 class CachedSingleStream(basic.SingleStream):
     """
     This class contains time-ordered data from a single channel.
@@ -263,8 +284,10 @@ class CachedSingleStream(basic.SingleStream):
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
                  data_demodulated, roach_state, state=None, analyze=False, description='Stream'):
         """
-        Return a new SingleStream instance. The integer tone_index is the common index of tone_bin, tone_amplitude,
-        and tone_phase for the single tone used to produce the time-ordered s21_raw data.
+        Return a new CachedSingleStream instance. This class stores the netCDF4 Variable containing the s21_raw data
+        instead of a numpy array so that the data is not read from disk unless requested. The Variable is stored using
+        a thin wrapper that takes the proper view of the complex data. Note that because it contains an attribute,
+        s21_raw_variable, that is not writeable, instances currently cannot be written back to disk.
 
         :param tone_bin: an array of integers representing the frequencies of the tones played during the measurement.
         :param tone_amplitude: an array of floats representing the amplitudes of the tones played during the
@@ -272,13 +295,14 @@ class CachedSingleStream(basic.SingleStream):
         :param tone_phase: an array of floats representing the radian phases of the tones played during the measurement.
         :param tone_index: an int for which tone_bin[tone_index] corresponds to the frequency used to produce s21_raw.
         :param filterbank_bin: an int that is the filter bank bin in which the tone lies.
-        :param epoch: float, unix timestamp of first sample of the time stream.
-        :param s21_raw: an 1-D array of complex floats containing the data, demodulated or not.
+        :param epoch: a float that is the unix timestamp of first sample of the time stream.
+        :param s21_raw: a netCDF4 Variable containing a 1-D array of complex float s21 data, demodulated or not.
+        :param data_demodulated: True if the s21_raw data are demodulated.
         :param roach_state: a dict containing state information for the roach.
         :param state: a dict containing all non-roach state information.
         :param analyze: if True, call the analyze() method at the end of instantiation.
         :param description: a string describing this measurement.
-        :return: a new SingleStream instance.
+        :return: a new CachedSingleStream instance.
         """
         self.tone_bin = tone_bin
         self.tone_amplitude = tone_amplitude
@@ -286,7 +310,7 @@ class CachedSingleStream(basic.SingleStream):
         self.tone_index = tone_index
         self.filterbank_bin = filterbank_bin
         self.epoch = epoch
-        self._s21_raw_variable = s21_raw
+        self._s21_raw_variable = NCVariable(s21_raw)
         self._s21_raw = None
         self.data_demodulated = data_demodulated
         self.roach_state = core.to_state_dict(roach_state)
@@ -300,7 +324,7 @@ class CachedSingleStream(basic.SingleStream):
     @property
     def s21_raw(self):
         if self._s21_raw is None:
-            self._s21_raw = self._s21_raw_variable[:].view(self._s21_raw_variable.datatype.name)
+            self._s21_raw = self._s21_raw_variable[:]
         return self._s21_raw
 
 
@@ -317,26 +341,29 @@ class CachedStreamArray(basic.StreamArray):
     # Skip validation of s21_raw.
     #                  's21_raw': ('tone_index', 'sample_time')}
 
-
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
                  data_demodulated, roach_state, state=None, analyze=False, description='Stream'):
         """
-        Return a new SingleStream instance. The integer tone_index is the common index of tone_bin, tone_amplitude,
-        and tone_phase for the single tone used to produce the time-ordered s21_raw data.
+        Return a new CachedStreamArray instance. This class stores the netCDF4 Variable containing the s21_raw data
+        instead of a numpy array so that the data is not read from disk unless requested. The Variable is stored using
+        a thin wrapper that takes the proper view of the complex data. Note that because it contains an attribute,
+        s21_raw_variable, that is not writeable, instances currently cannot be written back to disk.
 
         :param tone_bin: an array of integers representing the frequencies of the tones played during the measurement.
         :param tone_amplitude: an array of floats representing the amplitudes of the tones played during the
           measurement.
         :param tone_phase: an array of floats representing the radian phases of the tones played during the measurement.
-        :param tone_index: an int for which tone_bin[tone_index] corresponds to the frequency used to produce s21_raw.
-        :param filterbank_bin: an int that is the filter bank bin in which the tone lies.
-        :param epoch: float, unix timestamp of first sample of the time stream.
-        :param s21_raw: an 1-D array of complex floats containing the data, demodulated or not.
+        :param tone_index: an int array for which tone_bin[tone_index] gives the integer frequencies of the tones read
+          out in this measurement.
+        :param filterbank_bin: an int array of filter bank bins in which the read out tones lie.
+        :param epoch: a float that is the unix timestamp of first sample of the time stream.
+        :param s21_raw: a netCDF4 Variable containing a 2-D array of complex float s21 data, demodulated or not.
+        :param data_demodulated: True if the s21_raw data are demodulated.
         :param roach_state: a dict containing state information for the roach.
         :param state: a dict containing all non-roach state information.
         :param analyze: if True, call the analyze() method at the end of instantiation.
         :param description: a string describing this measurement.
-        :return: a new SingleStream instance.
+        :return: a new CachedStreamArray instance.
         """
         self.tone_bin = tone_bin
         self.tone_amplitude = tone_amplitude
@@ -344,7 +371,7 @@ class CachedStreamArray(basic.StreamArray):
         self.tone_index = tone_index
         self.filterbank_bin = filterbank_bin
         self.epoch = epoch
-        self._s21_raw_variable = s21_raw
+        self.s21_raw_variable = NCVariable(s21_raw)
         self._s21_raw = None
         self.data_demodulated = data_demodulated
         self.roach_state = core.to_state_dict(roach_state)
@@ -358,11 +385,11 @@ class CachedStreamArray(basic.StreamArray):
     @property
     def s21_raw(self):
         if self._s21_raw is None:
-            self._s21_raw = self._s21_raw_variable[:].view(self._s21_raw_variable.datatype.name)
+            self._s21_raw = self.s21_raw_variable[:]
         return self._s21_raw
 
     def _validate_dimensions(self):
         super(CachedStreamArray, self)._validate_dimensions()
         # Validate the first index of s21_raw. The other index isn't constrained, anyway.
-        if not self._s21_raw_variable.shape[0] == self.tone_index.size:
+        if not self.s21_raw_variable.shape[0] == self.tone_index.size:
             raise ValueError("s21_raw_variable.shape[0] does not match tone_index.size.")

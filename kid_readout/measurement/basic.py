@@ -160,8 +160,9 @@ class SingleStream(RoachStream):
         :param tone_phase: an array of floats representing the radian phases of the tones played during the measurement.
         :param tone_index: an int for which tone_bin[tone_index] corresponds to the frequency used to produce s21_raw.
         :param filterbank_bin: an int that is the filter bank bin in which the tone lies.
-        :param epoch: float, unix timestamp of first sample of the time stream.
+        :param epoch: a float that is the unix timestamp of first sample of the time stream.
         :param s21_raw: an 1-D array of complex floats containing the data, demodulated or not.
+        :param data_demodulated: True if the s21_raw data are demodulated.
         :param roach_state: a dict containing state information for the roach.
         :param state: a dict containing all non-roach state information.
         :param analyze: if True, call the analyze() method at the end of instantiation.
@@ -208,11 +209,12 @@ class StreamArray(RoachStream):
         :param tone_amplitude: an array of floats representing the amplitudes of the tones played during the
           measurement.
         :param tone_phase: an array of floats representing the radian phases of the tones played during the measurement.
-        :param tone_index: an intarray for which tone_bin[tone_index] corresponds to the frequency used to produce
-          s21_raw.
-        :param filterbank_bin: an integer that is the filter bank bin in which the tone lies.
-        :param epoch: float, unix timestamp of first sample of the time stream.
+        :param tone_index: an int array for which tone_bin[tone_index] gives the integer frequencies of the tones read
+          out in this measurement.
+        :param filterbank_bin: an int array of filter bank bins in which the read out tones lie.
+        :param epoch: a float that is the unix timestamp of first sample of the time stream.
         :param s21_raw: a 2-D array of complex floats containing the data, demodulated or not.
+        :param data_demodulated: True if the s21_raw data are demodulated.
         :param roach_state: a dict containing state information for the roach.
         :param state: a dict containing all non-roach state information.
         :param analyze: if True, call the analyze() method at the end of instantiation.
