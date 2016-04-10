@@ -51,7 +51,6 @@ import inspect
 import warnings
 import importlib
 import numpy as np
-from collections import OrderedDict
 
 CLASS_NAME = '_class'  # This is the string used by writer objects to save class names.
 
@@ -110,8 +109,7 @@ class Measurement(object):
     extra access features and validation.) Implementations of the IO class must be able to store the following objects:
     -basic types, such as numbers, booleans, strings, booleans, and None;
     -sequences, i.e. lists, tuples, and arrays, that contain exactly one of the above basic types except None; sequences
-     cannot contain other sequences, and all sequences, including arrays that are not declared in the dimensions
-     OrderedDict, are returned as lists on read.
+     cannot contain other sequences, and all sequences are returned as lists on read.
     -dictionaries whose keys are strings and whose values are dictionaries, sequences, or basic types; the contained
      dictionaries and sequences have the same requirements as above.
     Classes that do not obey these restrictions may fail to save or may have missing or corrupted data when read from
@@ -121,11 +119,10 @@ class Measurement(object):
     Two values that are particularly problematic are None and NaN. None requires a special case because netCDF4
     cannot write it, so it is allowed as an attribute value or dictionary value but not in sequences. NaN is stored
     and retrieved correctly but is not recommended as an indicator of missing state because it causes comparisons to
-    fail: float('NaN') == float('NaN') is always False. Use compare_measurements() in test/utility.py to validate
-    read/write operations.
+    fail: float('NaN') == float('NaN') is always False. See Measurement.__eq__() for more.
     """
 
-    dimensions = OrderedDict()
+    dimensions = {}
 
     def __init__(self, state=None, analyze=False, description='Measurement'):
         """
@@ -189,9 +186,9 @@ class Measurement(object):
         dataframe['root_path'] = self._root_path
 
     def _validate_dimensions(self):
-        for name, dimensions in self.dimensions.items():
-            if not getattr(self, name).shape == tuple(getattr(self, dimension).size for dimension in dimensions):
-                raise ValueError("Shape of {} does not match size of {}.".format(name, dimensions))
+        for name, dimension_tuple in self.dimensions.items():
+            if not getattr(self, name).shape == tuple(getattr(self, dimension).size for dimension in dimension_tuple):
+                raise ValueError("Shape of {} does not match size of {}.".format(name, dimension_tuple))
 
     def __eq__(self, other):
         """
@@ -338,7 +335,7 @@ class IO(object):
         """
         if node_path is None:
             node_path = measurement.__class__.__name__ + str(len(self.measurement_names()))
-        _write_node(measurement, self, node_path)
+        self._write_node(measurement, node_path)
 
     def read(self, node_path, extras=True, translate=None):
         """
@@ -351,7 +348,7 @@ class IO(object):
         """
         if translate is None:
             translate = {}
-        return _read_node(self, node_path, extras, translate)
+        return self._read_node(node_path, extras, translate)
 
     # These functions are used by
 
@@ -577,6 +574,15 @@ def split(node_path):
 
 
 def explode(node_path):
+    """
+    Return a list of the node names in the given node path with the node separator removed. For example,
+    explode('one:two:three')
+    returns
+    ['one', 'two', 'three']
+
+    :param node_path: the node path to explode.
+    :return: a list of the nodes in the path.
+    """
     return node_path.split(NODE_PATH_SEPARATOR)
 
 
