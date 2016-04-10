@@ -71,11 +71,11 @@ class RoachHeterodyne(RoachInterface):
 
         self._general_setup()
 
-        self.demodulator = Demodulator()
+        self.demodulator = Demodulator(hardware_delay_samples=self.hardware_delay_estimate*self.fs*1e6)
         self.attenuator = attenuator
 
     def set_loopback(self,enable):
-        self._loopback = enable
+        self.loopback = enable
         if enable:
             self.r.write_int('sync',2)
         else:
@@ -241,7 +241,7 @@ class RoachHeterodyne(RoachInterface):
         idx = bins.copy()
         return idx
 
-    def select_fft_bins(self, readout_selection):
+    def select_fft_bins(self, readout_selection, sync=True):
         """
         Select which subset of the available FFT bins to read out
 
@@ -270,6 +270,8 @@ class RoachHeterodyne(RoachInterface):
         binsel[:-1] = np.mod(self.fpga_fft_readout_indexes - offset, self.nfft)
         binsel[-1] = -1
         self.r.write('chans', binsel.tostring())
+        if sync:
+            self._sync()
 
     def demodulate_data(self,data,seq_nos=None):
         bank = self.bank
@@ -457,11 +459,13 @@ class RoachHeterodyne(RoachInterface):
 
 
 class Demodulator(object):
-    def __init__(self,nfft=2**14,num_taps=2,window=scipy.signal.flattop,interpolation_factor=64):
+    def __init__(self,nfft=2**14,num_taps=2,window=scipy.signal.flattop,interpolation_factor=64,
+                 hardware_delay_samples=0):
         self.nfft = nfft
         self.num_taps = num_taps
         self.window_function = window
         self.interpolation_factor = interpolation_factor
+        self.hardware_delay_samples = hardware_delay_samples
         self._window_frequency,self._window_response = self.compute_window_frequency_response(self.compute_pfb_window(),
                                                                        interpolation_factor=interpolation_factor)
 
@@ -491,7 +495,9 @@ class Demodulator(object):
         demod = wc*np.exp(-1j * (2 * np.pi * foffs * t + phi0)) * data
         if type(seq_nos) is np.ndarray:
             pphase = packet_phase(seq_nos,foffs,nchan,nfft,ns) 
-            demod *= pphase 
+            demod *= pphase
+        if self.hardware_delay_samples != 0:
+            demod *= np.exp(2j*np.pi*self.hardware_delay_samples*tone_bin/tone_num_samples)
         return demod
 
 def packet_phase(seq_nos,foffs,nchan,nfft,ns):

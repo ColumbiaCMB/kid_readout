@@ -17,7 +17,7 @@ def get_udp_packets(ri,npkts,streamid,stream_reg='streamid',addr=('192.168.1.1',
                 nstale +=1
             if nstale:
                 print "flushed",nstale,"packets"
-        except:
+        except socket.error:
             pass
         s.settimeout(1)
         

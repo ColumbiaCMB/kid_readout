@@ -113,6 +113,3 @@ class Roach2Heterodyne(RoachHeterodyne):
             data = self.demodulate_data(data, seqnos)
         return data, seqnos
 
-    def set_loopback(self, enable):
-        pass 
-

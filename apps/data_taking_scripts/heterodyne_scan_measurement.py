@@ -1,7 +1,8 @@
 import numpy as np
 import time
 import kid_readout.roach.heterodyne
-import kid_readout.utils.sweeps
+from kid_readout.measurement.acquire import acquire
+from kid_readout.measurement.io.helpers import new_nc_file
 
 import kid_readout.utils.data_file
 
@@ -35,18 +36,19 @@ offsets = offset_bins * 512.0 / nsamp
 ri.set_modulation_output(7)
 
 ri.set_lo(1250.)
-frq = kid_readout.utils.sweeps.prepare_sweep(ri,np.arange(1,129)*7/4.+ri.lo_frequency,offsets,nsamp=nsamp)
+
+acquire.load_heterodyne_sweep_tones(ri,(np.arange(1,129)[None,:]*7/4.+ri.lo_frequency + offsets[:,None]),
+                                    num_tone_samples=nsamp)
+
+state = dict(mmw_atten_turns = (7.,7.))
 
 tic = time.time()
 for lo in 1010+190*np.arange(0,6):
     print "lo:",lo
-    df = kid_readout.utils.data_file.DataFile(suffix='scan_lo_%.1f_MHz_mmw_modulated_7_7_turns' % lo)
-    df.nc.mmw_atten_turns = (7.,7.)
+    df = new_nc_file(suffix='scan_lo_%.1f_MHz_mmw_modulated_7_7_turns' % lo)
     ri.set_lo(lo)
-    df.log_hw_state(ri)
-    df.log_adc_snap(ri)
-    swp = kid_readout.utils.sweeps.do_prepared_sweep(ri,nchan_per_step=32,reads_per_step=2)
-    df.add_sweep(swp)
+    swa = acquire.run_multipart_sweep(ri,length_seconds=1.0,state=state,verbose=True)
+    df.write(swa)
     df.close()
     print "elapsed:", (time.time()-tic)/60.0,'minutes'
 

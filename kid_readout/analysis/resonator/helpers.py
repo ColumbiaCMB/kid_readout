@@ -8,7 +8,8 @@ def complex_gaussian(shape):
     return np.random.randn(*shape) + 1j * np.random.randn(*shape)
 
 
-def plot_ri(data, ax=None, *args, **kwargs):
+def plot_ri(data, *args, **kwargs):
+    ax = kwargs.pop('ax',None)
     if ax is None:
         plt.plot(data.real, data.imag, *args, **kwargs)
     else:
