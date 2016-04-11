@@ -487,7 +487,7 @@ class SingleSweepStream(core.Measurement):
     @property
     def stream_s21_normalized(self):
         if self._stream_s21_normalized is None:
-            self._stream_s21_normalized = self.sweep.resonator.normalize(self.stream.frequency, self.stream.s21)
+            self._stream_s21_normalized = self.sweep.resonator.normalize(self.stream.frequency, self.stream.s21_raw)
         return self._stream_s21_normalized
 
     @property
@@ -497,7 +497,7 @@ class SingleSweepStream(core.Measurement):
         return self._stream_s21_normalized_deglitched
 
     def _set_stream_s21_normalized_deglitched(self, window_in_seconds=1, deglitch_threshold=5):
-        window = int(2 ** np.ceil(np.log2(window_in_seconds * self.stream.sample_frequency)))
+        window = int(2 ** np.ceil(np.log2(window_in_seconds * self.stream.stream_sample_rate)))
         self._stream_s21_normalized_deglitched = deglitch_window(self.stream_s21_normalized, window,
                                                                  thresh=deglitch_threshold)
 
@@ -582,9 +582,9 @@ class SingleSweepStream(core.Measurement):
     def _set_S_qq_and_S_xx(self, NFFT=None, window=mlab.window_none, **kwargs):
         # Use the same length calculation as SweepNoiseMeasurement
         if NFFT is None:
-            NFFT = int(2**(np.floor(np.log2(self.stream.s21.size)) - 3))
-        S_qq, f = mlab.psd(self.q, Fs=self.stream.sample_frequency, NFFT=NFFT, window=window, **kwargs)
-        S_xx, f = mlab.psd(self.x, Fs=self.stream.sample_frequency, NFFT=NFFT, window=window, **kwargs)
+            NFFT = int(2**(np.floor(np.log2(self.stream.s21_raw.size)) - 3))
+        S_qq, f = mlab.psd(self.q, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, **kwargs)
+        S_xx, f = mlab.psd(self.x, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, **kwargs)
         self._S_frequency = f
         self._S_qq = S_qq
         self._S_xx = S_xx
