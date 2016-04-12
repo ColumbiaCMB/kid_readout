@@ -1,6 +1,8 @@
 import os
 import sys
 import time
+import warnings
+
 import numpy as np
 import socket
 import scipy
@@ -10,7 +12,7 @@ import udp_catcher
 from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
 from kid_readout.roach import tools
 from kid_readout.measurement.core import StateDict
-from kid_readout.measurement.multiple import StreamArray
+from kid_readout.measurement.basic import StreamArray
 
 
 CONFIG_FILE_NAME_TEMPLATE = os.path.join(BASE_DATA_DIR,'%s_config.npz')
@@ -138,7 +140,7 @@ class RoachInterface(object):
         try:
             self.hardware_delay_estimate = tools.boffile_delay_estimates[self.boffile]
         except KeyError:
-            self.hardware_delay_estimate = tools.nfft_delay_estimates[self.nfft]
+            self.hardware_delay_estimate = tools.get_delay_estimate_for_nfft(self.nfft,self.heterodyne)
 
         try:
             self.fs = self.adc_valon.get_frequency_a()
@@ -504,8 +506,11 @@ class RoachInterface(object):
         self._unpause_dram()
 
     # TODO: call from the functions that require it so we can stop calling it externally.
-    def _sync(self,loopback=False):
-        if loopback:
+    def _sync(self,loopback=None):
+        if loopback is not None:
+            warnings.warn("loopback parameter to _sync is deprecated, use set_loopback method")
+            self.set_loopback(loopback)
+        if self.loopback:
             base_value = 2
         else:
             base_value = 0
@@ -612,7 +617,7 @@ class RoachInterface(object):
     def get_data_udp(self, nread=2, demod=True):
         chan_offset = 1
         nch = self.fpga_fft_readout_indexes.shape[0]
-        data, seqnos = udp_catcher.get_udp_data(self, npkts=nread * 16 * nch, streamid=1,
+        data, seqnos = udp_catcher.get_udp_data(self, npkts=nread * 16 * nch, streamid=np.random.randint(1,2**15),
                                                 chans=self.fpga_fft_readout_indexes + chan_offset,
                                                 nfft=self.nfft, addr=(self.host_ip, 12345))  # , stream_reg, addr)
         if demod:

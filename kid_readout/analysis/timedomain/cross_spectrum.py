@@ -3,15 +3,21 @@ __author__ = 'gjones'
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import mlab
+from kid_readout.analysis.timedomain import filters
 
 class CrossSpectralAnalysis(object):
     def __init__(self,snm1=None,snm2=None):
 
         if snm1 is not None:
             self.get_data_from_snms(snm1,snm2)
-    def get_data_from_snms(self,snm1,snm2):
+    def get_data_from_snms(self,snm1,snm2,deglitch_thresh=5):
         self.snm1 = snm1
         self.snm2 = snm2
+        self.snm1._fractional_fluctuation_timeseries = None
+        self.snm2._fractional_fluctuation_timeseries = None
+        self.snm1.deglitch_threshold=deglitch_thresh
+        self.snm2.deglitch_threshold=deglitch_thresh
+
         self.snm1_phase = self.snm1.pca_angles[0,:10].mean()
         self.snm2_phase = self.snm2.pca_angles[0,:10].mean()
         self.corrected_timeseries1 = self.snm1.fractional_fluctuation_timeseries*np.exp(1j*self.snm1_phase)
@@ -44,6 +50,11 @@ class CrossSpectralAnalysis(object):
 
         self.angle = np.angle(self.csd)
 
+        self.lpts1 = filters.low_pass_fir(self.corrected_timeseries1.real,cutoff=100.0,nyquist_freq=self.timeseries_sample_rate)
+        self.lpts2 = filters.low_pass_fir(self.corrected_timeseries2.real,cutoff=100.0,
+                                          nyquist_freq=self.timeseries_sample_rate)
+
+
     def plot(self):
         fig,(ax3,ax1,ax2) = plt.subplots(3,1,figsize=(18,18))
         fig.subplots_adjust(hspace=.3)
@@ -70,9 +81,15 @@ class CrossSpectralAnalysis(object):
         ax2b.set_ylabel('Phase Difference (rad)',color='red')
         ax2b.set_ylim(-np.pi,np.pi)
 
-        ax3.plot(1e3*np.arange(1000)/self.timeseries_sample_rate,self.corrected_timeseries1[:1000].real,'k')
-        ax3.plot(1e3*np.arange(1000)/self.timeseries_sample_rate,self.corrected_timeseries2[:1000].real,'r')
+
+
+#        ax3.plot(1e3*np.arange(1000)/self.timeseries_sample_rate,self.corrected_timeseries1[:1000].real,'k')
+#        ax3.plot(1e3*np.arange(1000)/self.timeseries_sample_rate,self.corrected_timeseries2[:1000].real,'r')
+        #ax3.plot(np.arange(50000)/self.timeseries_sample_rate,self.lpts1[:50000],'k')
+        #ax3.plot(np.arange(50000)/self.timeseries_sample_rate,self.lpts2[:50000],'r')
+        ax3.plot(np.arange(self.lpts1.shape[0])/self.timeseries_sample_rate,self.lpts1,'k')
+        ax3.plot(np.arange(self.lpts1.shape[0])/self.timeseries_sample_rate,self.lpts2,'r')
         ax3.set_title('Timeseries')
-        ax3.set_xlabel('ms')
+        ax3.set_xlabel('s')
 
 

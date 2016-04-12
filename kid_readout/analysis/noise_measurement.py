@@ -48,14 +48,15 @@ def find_nc_file(filename):
     """
     if os.path.exists(filename):
         return filename
-    data_filename = os.path.join('/data/readout',filename)
-    if os.path.exists(data_filename):
-        return data_filename
-    data_filename = os.path.join('/data/detectors',filename)
-    if os.path.exists(data_filename):
-        return data_filename
-    raise IOError("Could not find file %s in any of /data/detectors or /data/readout" % filename)
+    for prefix in ['/data/readout',
+                   '/data/detectors',
+                   '/artemis/readout',
+                   '/artemis/detectors']:
+        data_filename = os.path.join(prefix,os.path.split(filename)[1])
+        if os.path.exists(data_filename):
+            return data_filename
 
+    raise IOError("Could not find file %s in any of %s" % (filename,str(prefix) ))
 
 def plot_noise_nc(fglob,**kwargs):
     """
@@ -434,7 +435,7 @@ class SweepNoiseMeasurement(object):
             self._fractional_fluctuation_timeseries = self.get_deglitched_timeseries()/(self.noise_measurement_freq_MHz*1e6)
         return self._fractional_fluctuation_timeseries
         
-    def get_deglitched_timeseries(self,window_in_seconds=1.0, thresh=None):
+    def get_deglitched_timeseries(self,window_in_seconds=1.0, thresh=None, use_old_deglitcher=False):
         """
         Get the deglitched, projected timeseries
         
@@ -457,7 +458,11 @@ class SweepNoiseMeasurement(object):
         if thresh is None:
             deglitched_timeseries = projected_timeseries
         else:
-            deglitched_timeseries = deglitch_window(projected_timeseries,window,thresh=thresh)
+            if use_old_deglitcher:
+                deglitched_timeseries = deglitch_window(projected_timeseries,window,thresh=thresh)
+            else:
+                deglitched_timeseries,full_mask = deglitch_mask_mad(projected_timeseries,thresh=thresh,
+                                                                 window_length=window,mask_extend=50)
 
         return deglitched_timeseries
     
@@ -562,8 +567,12 @@ class SweepNoiseMeasurement(object):
             self._timestream_file = None
 
     def _restore_resonator_model(self):
+        if 'delay' in self.fit_params:
+            delay = self.fit_params['delay'].value
+        else:
+            delay = None
         self._resonator_model = fit_best_resonator(self.sweep_freqs_MHz,self.sweep_s21,errors=self.sweep_errors,
-                                                  delay_estimate=self.fit_params['delay'].value)
+                                                  delay_estimate=delay)
 
     def plot(self,fig=None,title=''):
         """
@@ -704,6 +713,19 @@ def load_noise_pkl(pklname):
     fh = open(pklname,'r')
     pkl = cPickle.load(fh)
     fh.close()
+    snm = None
+    if type(pkl) is list:
+        if len(pkl):
+            snm = pkl[0]
+    elif type(pkl) is dict:
+        if len(pkl):
+            v0 = pkl.values()[0]
+            if len(v0):
+                snm = v0[0]
+    if snm is not None:
+        if len(snm.fit_params) == 0:
+            raise Exception("Incompatible lmfit version detected; can't load these pickles correctly.")
+
     return pkl
 
 def save_noise_pkl(pklname,obj):

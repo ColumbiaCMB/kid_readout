@@ -22,7 +22,7 @@ def fit_resonator(freq, s21, mask=None, errors=None, min_a=0.08, fstat_thresh=0.
             return params
     else:
         my_default_guess = default_guess
-    if not np.iscomplexobj(errors):
+    if errors is not None and not np.iscomplexobj(errors):
         errors = errors*(1+1j)  # if real errors are given, convert them to complex to make sure the Resonator class
                                 # is happy.
     # Mask points that have exceptionally large errors:

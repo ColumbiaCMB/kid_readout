@@ -1,6 +1,7 @@
 import numpy as np
 import lmfit
 import equations
+from distutils.version import StrictVersion
 
 def update_param_values_and_limits(pars, prefix, **kwargs):
     for key, val in kwargs.items():
@@ -18,30 +19,59 @@ def update_param_values_and_limits(pars, prefix, **kwargs):
             setattr(pars[pname],attr,val)
     return pars
 
-class ComplexModel(lmfit.model.Model):
-    def _residual(self,params,data,weights,**kwargs):
-        diff = self.eval(params, **kwargs) - data
-        diff_as_ri = diff.astype('complex').view('float')
-        if weights is not None:
-            weights_as_ri = weights.astype('complex').view('float')
-            diff_as_ri *= weights_as_ri
-        retval = np.asarray(diff_as_ri).ravel()
-        return retval
+# Version 0.9.3 of lmfit incorporates changes that allow models that return complex values.
+# For earlier versions, we need the following work around
+if StrictVersion(lmfit.__version__) < StrictVersion('0.9.3'):
+    class ComplexModel(lmfit.model.Model):
+        def _residual(self,params,data,weights,**kwargs):
+            diff = self.eval(params, **kwargs) - data
+            diff_as_ri = diff.astype('complex').view('float')
+            if weights is not None:
+                weights_as_ri = weights.astype('complex').view('float')
+                diff_as_ri *= weights_as_ri
+            retval = np.asarray(diff_as_ri).ravel()
+            return retval
+else:
+    ComplexModel = lmfit.model.Model
 
 class GeneralCableModel(ComplexModel):
     def __init__(self, *args, **kwargs):
         super(GeneralCableModel, self).__init__(equations.general_cable, *args, **kwargs)
-    def guess(self,data=None, **kwargs):
-        pass
+        self.set_param_hint('f_min',vary=False)
+        self.set_param_hint('phi',min=-np.pi,max=np.pi)
+        self.set_param_hint('A_mag',min=0)
+
+    def guess(self,data, f=None, **kwargs):
+        verbose = kwargs.pop('verbose',None)
+        if f is None:
+            return self.make_params(verbose=verbose,**kwargs)
+        f_min = f.min()
+        f_max = f.max()
+        abs_data = np.abs(data)
+        A_min = abs_data.min()
+        A_max = abs_data.max()
+        A_slope,A_offset = np.polyfit(f-f_min,np.abs(data),1)
+        A_mag = A_offset
+        A_mag_slope = A_slope / A_mag
+        phi_slope, phi_offset = np.polyfit(f-f_min, np.unwrap(np.angle(data)), 1)
+        delay = -phi_slope / (2 * np.pi)
+        params = self.make_params(delay=delay, phi = phi_offset, f_min=f_min, A_mag=A_mag, A_slope=A_mag_slope)
+        params = update_param_values_and_limits(params,self.prefix,
+                                                phi_offset_min=phi_offset-np.pi,
+                                                phi_offset_max=phi_offset+np.pi,
+                                                )
+        return update_param_values_and_limits(params,self.prefix,**kwargs)
+
 
 class LinearResonatorModel(ComplexModel):
     def __init__(self, *args, **kwargs):
         super(LinearResonatorModel, self).__init__(equations.linear_resonator, *args, **kwargs)
         self.set_param_hint('Q', min = 0)  # Enforce Q is positive
+
     def guess(self, data, f=None, **kwargs):
         verbose = kwargs.pop('verbose',None)
         if f is None:
-            return
+            return self.make_params(verbose=verbose,**kwargs)
         argmin_s21 = np.abs(data).argmin()
         fmin = f.min()
         fmax = f.max()
@@ -58,6 +88,8 @@ class LinearResonatorModel(ComplexModel):
         params = self.make_params(Q=Q_guess, Q_e_real=Q_e_real_guess, Q_e_imag=0, f_0=f_0_guess)
         params['%sQ' % self.prefix].set(min=Q_min, max=Q_max)
         params['%sf_0' % self.prefix].set(min=fmin, max=fmax)
+        params['%sQ_e_real' % self.prefix].set(min=1, max=1e7)
+        params['%sQ_e_imag' % self.prefix].set(min=-1e7, max=1e7)
         return update_param_values_and_limits(params,self.prefix,**kwargs)
 
 

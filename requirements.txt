@@ -7,4 +7,6 @@ requests
 pyserial
 netcdf4
 emcee
+corner
+lmfit
 testfixtures

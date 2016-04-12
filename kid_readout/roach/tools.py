@@ -24,11 +24,15 @@ def get_delay_estimate_for_boffile(boffile):
     print "No delay estimate found for %s, using 0 seconds" % boffile
     return 0
 
-def get_delay_estimate_for_nfft(nfft):
-    if nfft in nfft_delay_estimates:
-        return nfft_delay_estimates[nfft]
-    print "No delay estimate found for nfft=%d, using 0 seconds" % nfft
-    return 0
+def get_delay_estimate_for_nfft(nfft, heterodyne=False):
+    try:
+        if not heterodyne:
+            return baseband_nfft_delay_estimates[nfft]
+        else:
+            return heterodyne_nfft_delay_estimates[nfft]
+    except KeyError:
+        print "No delay estimate found for nfft=%d, using 0 seconds" % nfft
+        return 0
 
 
 
@@ -63,9 +67,14 @@ boffile_delay_estimates = {  # 'bb2xpfb10mcr11_2014_Jan_20_1049.bof',
 
                               }
 
-nfft_delay_estimates = {2**11 : -7.29e-6,
+baseband_nfft_delay_estimates = {2**11 : -7.29e-6,
                         2**13 : -31.3e-6,
                         2**14 : -63.3e-6}
+
+heterodyne_nfft_delay_estimates = {
+                        2**14 : -31.3e-6,
+                        2**15 : -63.3e-6}
+
 
 
 def compute_window(npfb=2 ** 15, taps=2, wfunc=scipy.signal.flattop):

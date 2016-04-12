@@ -48,9 +48,9 @@ format-independent way in order to save new data in specific locations or to loa
 """
 import re
 import inspect
+import warnings
 import importlib
 import numpy as np
-from collections import OrderedDict
 
 CLASS_NAME = '_class'  # This is the string used by writer objects to save class names.
 
@@ -109,8 +109,7 @@ class Measurement(object):
     extra access features and validation.) Implementations of the IO class must be able to store the following objects:
     -basic types, such as numbers, booleans, strings, booleans, and None;
     -sequences, i.e. lists, tuples, and arrays, that contain exactly one of the above basic types except None; sequences
-     cannot contain other sequences, and all sequences, including arrays that are not declared in the dimensions
-     OrderedDict, are returned as lists on read.
+     cannot contain other sequences, and all sequences are returned as lists on read.
     -dictionaries whose keys are strings and whose values are dictionaries, sequences, or basic types; the contained
      dictionaries and sequences have the same requirements as above.
     Classes that do not obey these restrictions may fail to save or may have missing or corrupted data when read from
@@ -120,11 +119,10 @@ class Measurement(object):
     Two values that are particularly problematic are None and NaN. None requires a special case because netCDF4
     cannot write it, so it is allowed as an attribute value or dictionary value but not in sequences. NaN is stored
     and retrieved correctly but is not recommended as an indicator of missing state because it causes comparisons to
-    fail: float('NaN') == float('NaN') is always False. Use compare_measurements() in test/utility.py to validate
-    read/write operations.
+    fail: float('NaN') == float('NaN') is always False. See Measurement.__eq__() for more.
     """
 
-    dimensions = OrderedDict()
+    dimensions = {}
 
     def __init__(self, state=None, analyze=False, description='Measurement'):
         """
@@ -188,9 +186,9 @@ class Measurement(object):
         dataframe['root_path'] = self._root_path
 
     def _validate_dimensions(self):
-        for name, dimensions in self.dimensions.items():
-            if not getattr(self, name).shape == tuple(getattr(self, dimension).size for dimension in dimensions):
-                raise ValueError("Shape of {} does not match size of {}.".format(name, dimensions))
+        for name, dimension_tuple in self.dimensions.items():
+            if not getattr(self, name).shape == tuple(getattr(self, dimension).size for dimension in dimension_tuple):
+                raise ValueError("Shape of {} does not match size of {}.".format(name, dimension_tuple))
 
     def __eq__(self, other):
         """
@@ -326,6 +324,34 @@ class IO(object):
         """
         return True
 
+    def write(self, measurement, node_path=None):
+        """
+        Write the measurement to disk at the given node path.
+
+        :param measurement: the measurement instance to write to disk.
+        :param node_path: the node_path to the node that will contain this object; all but the final node in node_path must
+        already exist.
+        :return: None
+        """
+        if node_path is None:
+            node_path = measurement.__class__.__name__ + str(len(self.measurement_names()))
+        self._write_node(measurement, node_path)
+
+    def read(self, node_path, extras=True, translate=None):
+        """
+        Read a measurement from disk and return it.
+
+        :param node_path:the path to the node to be loaded, in the form 'node0:node1:node2'
+        :param extras: add extra variables; see instantiate().
+        :param translate: a dictionary with entries 'original_class': 'new_class'; class names must be fully-qualified.
+        :return: the measurement corresponding to the given node.
+        """
+        if translate is None:
+            translate = {}
+        return self._read_node(node_path, extras, translate)
+
+    # These functions are used by
+
     def create_node(self, node_path):
         """
         Create a node at the end of the given path; all but the final node in the path must already exist.
@@ -356,7 +382,7 @@ class IO(object):
         """
         pass
 
-    def measurement_names(self, node_path):
+    def measurement_names(self, node_path=''):
         """
         Return the names of all measurements contained in the measurement at node_path.
         """
@@ -374,6 +400,76 @@ class IO(object):
         """
         pass
 
+    def __getattr__(self, item):
+        if item in self.measurement_names():
+            return self.read(item)
+        else:
+            raise AttributeError()
+
+    def __getitem__(self, item):
+        try:
+            return self.read(self.measurement_names()[item])
+        except IndexError:
+            raise KeyError()
+
+    # TODO: add methods?
+    def __dir__(self):
+        return self.__dict__.keys() + self.measurement_names()
+
+    def _write_node(self, measurement, node_path):
+        """
+        Create a new node at the given node path using the given IO instance and write the measurement data to it.
+
+        :param measurement: a Measurement instance.
+        :param node_path: the path of the new node into which the measurement will be written.
+        :return: None
+        """
+        self.create_node(node_path)
+        this_class_name = '{}.{}'.format(measurement.__module__, measurement.__class__.__name__)
+        self.write_other(node_path, CLASS_NAME, this_class_name)
+        items = [(key, value) for key, value in measurement.__dict__.items()
+                 if not key.startswith('_') and key not in RESERVED_NAMES and key not in measurement.dimensions]
+        for key, value in items:
+            if isinstance(value, Measurement):
+                self._write_node(value, join(node_path, key))
+            elif isinstance(value, MeasurementSequence):
+                sequence_node_path = join(node_path, key)
+                self.create_node(sequence_node_path)
+                sequence_class_name = '{}.{}'.format(value.__module__, value.__class__.__name__)
+                self.write_other(sequence_node_path, CLASS_NAME, sequence_class_name)
+                for index, meas in enumerate(value):
+                    self._write_node(meas, join(sequence_node_path, str(index)))
+            else:
+                self.write_other(node_path, key, value)
+        # Saving arrays in order allows the netCDF group to create the dimensions.
+        for array_name, dimensions in measurement.dimensions.items():
+            self.write_array(node_path, array_name, getattr(measurement, array_name), dimensions)
+
+    def _read_node(self, node_path, extras, translate):
+        original_class_name = self.read_other(node_path, CLASS_NAME)
+        class_name = translate.get(original_class_name, original_class_name)
+        measurement_names = self.measurement_names(node_path)
+        if is_sequence(class_name):
+            # Use the name of each measurement, which is an int, to restore the order in the sequence.
+            contents = [self._read_node(join(node_path, measurement_name), extras, translate)
+                        for measurement_name in sorted(measurement_names, key=int)]
+            current = instantiate_sequence(class_name, contents)
+        else:
+            variables = {}
+            for measurement_name in measurement_names:
+                variables[measurement_name] = self._read_node(join(node_path, measurement_name), extras, translate)
+            array_names = self.array_names(node_path)
+            for array_name in array_names:
+                variables[array_name] = self.read_array(node_path, array_name)
+            other_names = [vn for vn in self.other_names(node_path)]
+            for other_name in other_names:
+                variables[other_name] = self.read_other(node_path, other_name)
+            current = instantiate(class_name, variables, extras)
+        current._io_class = '{}.{}'.format(self.__module__, self.__class__.__name__)
+        current._root_path = self.root_path
+        current._node_path = node_path
+        return current
+
 
 # Public functions
 
@@ -382,12 +478,15 @@ def write(measurement, io, node_path):
     Write a measurement to disk using the given IO class. This function feeds data to this class and tells it when to
     create new nodes to match the hierarchy of measurements.
 
+    :param measurement: the measurement instance to write to disk.
     :param io: an instance of a class that implements the io interface.
     :param node_path: the node_path to the node that will contain this object; all but the final node in node_path must
       already exist.
     :return: None
     """
-    _write_node(measurement, io, node_path)
+    warnings.warn(DeprecationWarning("Use IO.write() instead."))
+    io._write_node(measurement, node_path)
+
 
 def read(io, node_path, extras=True, translate=None):
     """
@@ -399,9 +498,10 @@ def read(io, node_path, extras=True, translate=None):
     :param translate: a dictionary with entries 'original_class': 'new_class'; all class names must be fully-qualified.
     :return: the measurement corresponding to the given node.
     """
+    warnings.warn(DeprecationWarning("Use IO.read() instead."))
     if translate is None:
         translate = {}
-    measurement = _read_node(io, node_path, extras, translate)
+    measurement = io._read_node(node_path, extras, translate)
     return measurement
 
 
@@ -441,7 +541,7 @@ def is_sequence(full_class_name):
 
 def from_series(series):
     io = _get_class(series.io_class)(series.root_path)
-    return read(io, series.node_path)
+    return io.read(series.node_path)
 
 
 def join(*nodes):
@@ -474,6 +574,15 @@ def split(node_path):
 
 
 def explode(node_path):
+    """
+    Return a list of the node names in the given node path with the node separator removed. For example,
+    explode('one:two:three')
+    returns
+    ['one', 'two', 'three']
+
+    :param node_path: the node path to explode.
+    :return: a list of the nodes in the path.
+    """
     return node_path.split(NODE_PATH_SEPARATOR)
 
 
@@ -495,63 +604,6 @@ def validate_node_path(node_path):
 
 
 # Private functions
-
-
-def _write_node(measurement, io, node_path):
-    """
-    Create a new node at the given node path using the given IO instance and write the measurement data to it.
-
-    :param measurement: a Measurement instance.
-    :param io: an instance of a class that implements the IO interface.
-    :param node_path: the path of the new node into which the measurement will be written.
-    :return: None
-    """
-    io.create_node(node_path)
-    this_class_name = '{}.{}'.format(measurement.__module__, measurement.__class__.__name__)
-    io.write_other(node_path, CLASS_NAME, this_class_name)
-    items = [(key, value) for key, value in measurement.__dict__.items()
-             if not key.startswith('_') and key not in RESERVED_NAMES and key not in measurement.dimensions]
-    for key, value in items:
-        if isinstance(value, Measurement):
-            _write_node(value, io, join(node_path, key))
-        elif isinstance(value, MeasurementSequence):
-            sequence_node_path = join(node_path, key)
-            io.create_node(sequence_node_path)
-            sequence_class_name = '{}.{}'.format(value.__module__, value.__class__.__name__)
-            io.write_other(sequence_node_path, CLASS_NAME, sequence_class_name)
-            for index, meas in enumerate(value):
-                _write_node(meas, io, join(sequence_node_path, str(index)))
-        else:
-            io.write_other(node_path, key, value)
-    # Saving arrays in order allows the netCDF group to create the dimensions.
-    for array_name, dimensions in measurement.dimensions.items():
-        io.write_array(node_path, array_name, getattr(measurement, array_name), dimensions)
-
-
-def _read_node(io, node_path, extras, translate):
-    original_class_name = io.read_other(node_path, CLASS_NAME)
-    class_name = translate.get(original_class_name, original_class_name)
-    measurement_names = io.measurement_names(node_path)
-    if is_sequence(class_name):
-        # Use the name of each measurement, which is an int, to restore the order in the sequence.
-        contents = [_read_node(io, join(node_path, measurement_name), extras, translate)
-                    for measurement_name in sorted(measurement_names, key=int)]
-        current = instantiate_sequence(class_name, contents)
-    else:
-        variables = {}
-        for measurement_name in measurement_names:
-            variables[measurement_name] = _read_node(io, join(node_path, measurement_name), extras, translate)
-        array_names = io.array_names(node_path)
-        for array_name in array_names:
-            variables[array_name] = io.read_array(node_path, array_name)
-        other_names = [vn for vn in io.other_names(node_path)]
-        for other_name in other_names:
-            variables[other_name] = io.read_other(node_path, other_name)
-        current = instantiate(class_name, variables, extras)
-    current._io_class = '{}.{}'.format(io.__module__, io.__class__.__name__)
-    current._root_path = io.root_path
-    current._node_path = node_path
-    return current
 
 
 def _get_class(full_class_name):

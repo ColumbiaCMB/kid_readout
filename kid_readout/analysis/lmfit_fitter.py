@@ -1,5 +1,6 @@
 from lmfit.ui import Fitter
 
+
 class FitterWithAttributeAccess(Fitter):
     def __getattr__(self, attr):
         if attr.endswith('_error'):
@@ -14,7 +15,7 @@ class FitterWithAttributeAccess(Fitter):
             raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__, attr))
 
     def __dir__(self):
-        return (dir(super(Fitter, self)) +
-                self.__dict__.keys() +
-                self.current_params.keys() +
-                [name + '_error' for name in self.current_params.keys()])
+        return sorted(set(dir(Fitter) +
+                          self.__dict__.keys() +
+                          self.current_params.keys() +
+                          [name + '_error' for name in self.current_params.keys()]))

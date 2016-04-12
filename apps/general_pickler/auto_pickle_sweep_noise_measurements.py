@@ -82,7 +82,7 @@ def extract_and_pickle(nc_filename, deglitch_threshold=5):
                         snm.normalized_timeseries.reshape((-1,snm.timestream_modulation_period_samples)),
                         -rising_edge, axis=1).mean(0)
                     print "folded time series in ",(time.time()-tic)
-                
+
                 pkld = cPickle.dumps(snm,cPickle.HIGHEST_PROTOCOL)
                 del snm
                 snm = cPickle.loads(pkld)

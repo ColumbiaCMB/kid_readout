@@ -41,8 +41,18 @@ class BaseResonator(FitterWithAttributeAccess):
         super(BaseResonator, self).__init__(data=s21, f=frequency,
                                         model=model, weights=weights, **kwargs)
         self.frequency = frequency
+        self.errors = errors
+        self.weights = weights
 
         self.fit()
+
+    @property
+    def Q_i(self):
+        return 1/(1./self.Q - np.real(1/self.Q_e))
+
+    @property
+    def Q_e(self):
+        return self.Q_e_real + 1j*self.Q_e_imag
 
     @property
     def s21(self):
@@ -173,15 +183,72 @@ class LinearResonator(BaseResonator):
         super(LinearResonator,self).__init__(frequency=frequency, s21=s21, errors=errors,
                                              model = lmfit_models.LinearResonatorModel, **kwargs)
 
+_general_cable_model = lmfit_models.GeneralCableModel()
+_linear_resonator_model = lmfit_models.LinearResonatorModel()
+_linear_resonator_with_cable = (_general_cable_model
+                                * _linear_resonator_model)
+def _linear_resonator_with_cable_guess(data, f=None,**kwargs):
+    cable_params = _general_cable_model.guess(data=data,f=f,**kwargs)
+    resonator_params = _linear_resonator_model.guess(data=data,f=f,**kwargs)
+    cable_params.update(resonator_params)
+    return cable_params
+_linear_resonator_with_cable.guess = _linear_resonator_with_cable_guess
 class LinearResonatorWithCable(BaseResonator):
     def __init__(self, frequency, s21, errors, **kwargs):
         super(LinearResonatorWithCable,self).__init__(frequency=frequency, s21=s21, errors=errors,
-                                             model = (lmfit_models.GeneralCableModel()
-                                                      * lmfit_models.LinearResonatorModel()), **kwargs)
+                                             model = _linear_resonator_with_cable, **kwargs)
+
+_background_resonator_model = lmfit_models.LinearResonatorModel(prefix='bg_')
+_foreground_resonator_model = lmfit_models.LinearResonatorModel(prefix='fg_')
+
+_colliding_linear_resonators_with_cable = ((_general_cable_model * _background_resonator_model)
+                                                      * _foreground_resonator_model)
+def _colliding_linear_resonators_with_cable_guess(data, f=None,**kwargs):
+    cable_params = _general_cable_model.guess(data=data,f=f,**kwargs)
+    resonator_params = _foreground_resonator_model.guess(data=data,f=f,**kwargs)
+    bg_resonator_params = _background_resonator_model.guess(data=data,f=f, **kwargs)
+    cable_params.update(resonator_params)
+    cable_params.update(bg_resonator_params)
+    return cable_params
+_colliding_linear_resonators_with_cable.guess = _colliding_linear_resonators_with_cable_guess
 
 class CollidingLinearResonatorsWithCable(BaseResonator):
     def __init__(self, frequency, s21, errors, **kwargs):
         super(CollidingLinearResonatorsWithCable,self).__init__(frequency=frequency, s21=s21, errors=errors,
-                                             model = ((lmfit_models.GeneralCableModel()
-                                                       * lmfit_models.LinearResonatorModel(prefix='bg_'))
-                                                      * lmfit_models.LinearResonatorModel()), **kwargs)
+                                             model = _colliding_linear_resonators_with_cable, **kwargs)
+
+
+class GeneralCable(FitterWithAttributeAccess):
+    def __init__(self, frequency, s21, errors, **kwargs):
+        """
+        General resonator fitting class.
+
+        Parameters
+        ----------
+        frequency: array of floats
+            Frequencies at which data was measured
+        s21: array of complex
+            measured S21 data
+        errors: None or array of complex
+            errors on the real and imaginary parts of the s21 data. None means use no errors
+        kwargs:
+            passed on to model.fit
+        """
+        if not np.iscomplexobj(s21):
+            raise TypeError("S21 must be complex.")
+        if errors is not None and not np.iscomplexobj(errors):
+            raise TypeError("S21 errors must be complex.")
+        if errors is None:
+            weights = None
+        else:
+            weights = 1/errors.real + 1j/errors.imag
+        # kwargs get passed from Fitter to Model.fit directly. Signature is:
+        #    def fit(self, data, params=None, weights=None, method='leastsq',
+        #            iter_cb=None, scale_covar=True, verbose=False, fit_kws=None, **kwargs):
+        super(GeneralCable, self).__init__(data=s21, f=frequency,
+                                        model=lmfit_models.GeneralCableModel, weights=weights, **kwargs)
+        self.frequency = frequency
+        self.errors = errors
+        self.weights = weights
+
+        self.fit()

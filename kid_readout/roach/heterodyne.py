@@ -60,8 +60,8 @@ class RoachHeterodyne(RoachInterface):
 
         self.lo_frequency = 0.0
         self.heterodyne = True
-        #self.boffile = 'iq2xpfb14mcr6_2015_May_11_2241.bof'
         self.boffile = 'iq2xpfb14mcr7_2015_Nov_25_0907.bof'
+        #self.boffile = 'iq2xpfb14mcr8_2016_Feb_12_1427.bof'
         self.iq_delay = 4
 
         self.wafer = wafer
@@ -71,11 +71,26 @@ class RoachHeterodyne(RoachInterface):
 
         self._general_setup()
 
-        self.demodulator = Demodulator()
+        self.demodulator = Demodulator(hardware_delay_samples=self.hardware_delay_estimate*self.fs*1e6)
         self.attenuator = attenuator
 
+    # def get_raw_adc(self):
+    #     """
+    #     Grab raw ADC samples
+    #     returns: s0,s1
+    #     s0 and s1 are the samples from adc 0 and adc 1 respectively
+    #     Each sample is a 12 bit signed integer (cast to a numpy float)
+    #     """
+    #     self.r.write_int('adc_snap_ctrl', 0)
+    #     self.r.write_int('adc_snap_ctrl', 5)
+    #     s0 = (np.fromstring(self.r.read('adc_snap_bram', self.raw_adc_ns * 2 * 2), dtype='>i2'))
+    #     sb = s0.view('>i4')
+    #     i = sb[::2].copy().view('>i2') / 16.
+    #     q = sb[1::2].copy().view('>i2') / 16.
+    #     return i, q
+
     def set_loopback(self,enable):
-        self._loopback = enable
+        self.loopback = enable
         if enable:
             self.r.write_int('sync',2)
         else:
@@ -241,7 +256,7 @@ class RoachHeterodyne(RoachInterface):
         idx = bins.copy()
         return idx
 
-    def select_fft_bins(self, readout_selection):
+    def select_fft_bins(self, readout_selection, sync=True):
         """
         Select which subset of the available FFT bins to read out
 
@@ -270,6 +285,8 @@ class RoachHeterodyne(RoachInterface):
         binsel[:-1] = np.mod(self.fpga_fft_readout_indexes - offset, self.nfft)
         binsel[-1] = -1
         self.r.write('chans', binsel.tostring())
+        if sync:
+            self._sync()
 
     def demodulate_data(self,data,seq_nos=None):
         bank = self.bank
@@ -458,11 +475,13 @@ class RoachHeterodyne(RoachInterface):
 
 
 class Demodulator(object):
-    def __init__(self,nfft=2**14,num_taps=2,window=scipy.signal.flattop,interpolation_factor=64):
+    def __init__(self,nfft=2**14,num_taps=2,window=scipy.signal.flattop,interpolation_factor=64,
+                 hardware_delay_samples=0):
         self.nfft = nfft
         self.num_taps = num_taps
         self.window_function = window
         self.interpolation_factor = interpolation_factor
+        self.hardware_delay_samples = hardware_delay_samples
         self._window_frequency,self._window_response = self.compute_window_frequency_response(self.compute_pfb_window(),
                                                                        interpolation_factor=interpolation_factor)
 
@@ -492,7 +511,9 @@ class Demodulator(object):
         demod = wc*np.exp(-1j * (2 * np.pi * foffs * t + phi0)) * data
         if type(seq_nos) is np.ndarray:
             pphase = packet_phase(seq_nos,foffs,nchan,nfft,ns) 
-            demod *= pphase 
+            demod *= pphase
+        if self.hardware_delay_samples != 0:
+            demod *= np.exp(2j*np.pi*self.hardware_delay_samples*tone_bin/tone_num_samples)
         return demod
 
 def packet_phase(seq_nos,foffs,nchan,nfft,ns):
