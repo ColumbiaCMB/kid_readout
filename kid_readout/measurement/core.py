@@ -194,11 +194,15 @@ class Measurement(object):
         """
         Recursively compare two measurements. At each level, the function tests that both instances have the same public
         attributes (meaning those that do not start with an underscore), that all these attributes are equal,
-        and that the classes of the measurements are equal. The function does not test private variables at all,
-        and does not even check whether the instances have the same private attributes.
+        and that the classes of the measurements are equal. Because the data we store mixes booleans and numbers,
+        boolean values stored as attributes are compared using identity, not equality. Note that this is not done
+        within containers.
+
+        The function does not compare private attributes, and does not even check whether the instances have the same
+        private attributes.
 
         :param other: a Measurement instance.
-        :return: True if self compares equal with other.
+        :return: True if self compares equal with other, and False if not.
         """
         try:
             keys_s = ['__class__'] + [k for k in self.__dict__ if not k.startswith('_')]
@@ -218,6 +222,8 @@ class Measurement(object):
                     assert np.all(value_s[~np.isnan(value_s)] == value_o[~np.isnan(value_o)])
                 else:  # This will fail for NaN or sequences that contain any NaN values.
                     assert value_s == value_o
+                    if isinstance(value_s, bool) or isinstance(value_o, bool):
+                        assert value_s is value_o
         except AssertionError:
             return False
         return True
@@ -272,14 +278,6 @@ class StateDict(dict):
     __copy__ = lambda self: StateDict(self)
     __getstate__ = lambda: None
     __slots__ = ()
-
-    @property
-    def flat(self):
-        return self._flat(self)
-
-    @staticmethod
-    def _flat(dictionary):
-        pass
 
 
 # TODO: incorporate restrictions into __init__().
