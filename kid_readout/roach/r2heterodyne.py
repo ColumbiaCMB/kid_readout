@@ -114,7 +114,7 @@ class Roach2Heterodyne(RoachHeterodyne):
         return data, seqnos
 
     @property
-    def blocks_per_second(self):
+    def blocks_per_second_per_channel(self):
         chan_rate = self.fs * 1e6 / (self.nfft)  # samples per second for one tone_index
         samples_per_channel_per_block = 256
         return chan_rate / samples_per_channel_per_block
