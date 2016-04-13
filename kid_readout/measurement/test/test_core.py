@@ -7,7 +7,7 @@ from kid_readout.measurement.test.utilities import get_measurement
 
 def test_measurement_instantiation_blank():
     m = core.Measurement()
-    assert m.state == None
+    assert m.state is None
     assert m.description == 'Measurement'
     assert m._parent is None
     assert m._io_class is None
@@ -48,25 +48,21 @@ def test_measurement_add_legacy_origin():
     assert s.root_path is None
 
 
-def test_measurement_sequence():
+def test_measurement_list():
     length = int(100 * np.random.random())
     contents = np.random.random(length)
-    mt = core.instantiate_sequence('kid_readout.measurement.core.MeasurementTuple', contents)
-    assert np.all(mt == contents)
-    assert core.is_sequence(mt.__module__ + '.' + mt.__class__.__name__)
-    assert mt.shape == (length,)
     ml = core.instantiate_sequence('kid_readout.measurement.core.MeasurementList', contents)
     assert np.all(ml == contents)
-    assert core.is_sequence(mt.__module__ + '.' + ml.__class__.__name__)
-    assert ml.shape == (length,)
+    assert core.is_sequence(ml.__module__ + '.' + ml.__class__.__name__)
+    assert len(ml) == length
 
 
 def test_read_write():
     io = memory.IO(None)
     original = get_measurement()
     name = 'test'
-    core.write(original, io, name)
-    assert original == core.read(io, name)
+    io.write(original, name)
+    assert original == io.read(name)
 
 
 def test_comparison_code_state():
@@ -88,12 +84,10 @@ def test_comparison_code_attribute():
 def test_instantiate():
     full_class_name = 'kid_readout.measurement.core.Measurement'
     variables = {'state': {'key': 'value'},
-                 'description': 'instantiated Measurement',
-                 'extra_variable': [0]}
-    m = core.instantiate(full_class_name, variables, extras=True)
+                 'description': 'instantiated Measurement'}
+    m = core.instantiate(full_class_name, variables)
     assert m.state == core.StateDict(variables['state'])
     assert m.description == variables['description']
-    assert m.extra_variable == variables['extra_variable']
 
 
 def test_join():

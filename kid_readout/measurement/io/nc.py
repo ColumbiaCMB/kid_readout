@@ -183,7 +183,6 @@ class IO(core.IO):
                     return
             setattr(group, key, value)
 
-
     def _write_sequence(self, group, key, value):
         """
         Write the given sequence (value) to the given netCDF4 Group using the given name (key).

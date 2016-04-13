@@ -145,6 +145,16 @@ class Measurement(object):
         if analyze:
             self.analyze()
 
+    @property
+    def class_name(self):
+        return self.__class__.__name__
+
+    def nodes(self):
+        if self._parent is None:
+            return []
+        else:
+            return self._parent.nodes() + [self._parent.locate(self)]
+
     def analyze(self):
         """
         Analyze the raw data and create all data products.
@@ -190,6 +200,11 @@ class Measurement(object):
             if not getattr(self, name).shape == tuple(getattr(self, dimension).size for dimension in dimension_tuple):
                 raise ValueError("Shape of {} does not match size of {}.".format(name, dimension_tuple))
 
+    def _locate(self, obj):
+        for key, value in self.__dict__.items():
+            if obj is value:
+                return str(key)
+
     def __eq__(self, other):
         """
         Recursively compare two measurements. At each level, the function tests that both instances have the same public
@@ -213,7 +228,7 @@ class Measurement(object):
                 value_o = getattr(other, key)
                 if issubclass(value_s.__class__, Measurement):
                     assert value_s.__eq__(value_o)
-                elif issubclass(value_s.__class__, MeasurementSequence):
+                elif issubclass(value_s.__class__, MeasurementList):
                     assert len(value_s) == len(value_o)
                     for meas_s, meas_o in zip(value_s, value_o):
                         assert meas_s.__eq__(meas_o)
@@ -229,32 +244,106 @@ class Measurement(object):
         return True
 
 
-class MeasurementSequence(object):
+class MeasurementList(list):
     """
-    This is a dummy class used as a marker so that Measurements can contain sequences of other Measurements.
+    Measurements containing lists of Measurements must use instances of this class so that loading and saving are
+    handled correctly.
     """
-    def __init_(self):
-        raise NotImplementedError()
+
+    def __init__(self, *args):
+        self._parent = None
+        super(MeasurementList, self).__init__(*args)
 
     @property
-    def shape(self):
-        return (len(self),)
+    def class_name(self):
+        return self.__class__.__name__
+
+    def _locate(self, obj):
+        for index, value in enumerate(self):
+            if obj is value:
+                return str(index)
+
+    def nodes(self):
+        if self._parent is None:
+            return []
+        else:
+            return self._parent.nodes() + [self._parent._locate(self)]
+
+    def append(self, item):
+        item._parent = self
+        super(MeasurementList, self).append(item)
+
+    def extend(self, iterable):
+        for i in iterable:
+            self.append(i)
+
+    def insert(self, index, p_object):
+        p_object._parent = self
+        super(MeasurementList, self).insert(index, p_object)
+
+    def __setitem__(self, key, value):
+        value._parent = self
+        super(MeasurementList, self).__setitem__(key, value)
 
 
-class MeasurementTuple(tuple, MeasurementSequence):
-    """
-    Measurements containing tuples of Measurements should use instances of this class so that loading and saving are
-    handled automatically.
-    """
-    pass
+class IOList(MeasurementList):
 
+    def __init__(self, io, root_name):
+        self.io = io
+        self.root_name = root_name
+        self._len = 0
+        super(MeasurementList, self).__init__()
 
-class MeasurementList(list, MeasurementSequence):
-    """
-    Measurements containing lists of Measurements should use instances of this class so that loading and saving are
-    handled automatically.
-    """
-    pass
+    @property
+    def class_name(self):
+        return self.__class__.__base__.__name__
+
+    def append(self, item):
+        node_list = [self.root_name] + self.nodes() + [str(len(self))]
+        self.io.write(item, join(*node_list))
+        self._len += 1
+
+    def extend(self, iterable):
+        for i in iterable:
+            self.append(i)
+
+    def insert(self, index, p_object):
+        raise NotImplementedError()
+
+    def remove(self, value):
+        raise NotImplementedError()
+
+    def pop(self, index=None):
+        raise NotImplementedError()
+
+    def index(self, value, start=None, stop=None):
+        raise NotImplementedError()
+
+    def count(self, value):
+        raise NotImplementedError()
+
+    def sort(self, cmp=None, key=None, reverse=False):
+        raise NotImplementedError()
+
+    def reverse(self):
+        raise NotImplementedError()
+
+    def __iter__(self):
+        """
+        Instances of this class appear like empty lists, so iteration stops immediately.
+
+        :return: an empty iterator.
+        """
+        return iter(())
+
+    def __len__(self):
+        return self._len
+
+    def __getitem__(self, item):
+        raise NotImplementedError()
+
+    def __setitem__(self, key, value):
+        raise NotImplementedError()
 
 
 class MeasurementError(Exception):
@@ -322,6 +411,16 @@ class IO(object):
         """
         return True
 
+    def default_name(self, measurement):
+        """
+        Return a name for the given measurement class or instance that is guaranteed to be unique at the root level.
+
+        :param measurement: a Measurement subclass or instance.
+        :return: a string consisting of the class name and a number that is one plus the number of measurements
+          already stored at root level.
+        """
+        return measurement.class_name + str(len(self.measurement_names()))
+
     def write(self, measurement, node_path=None):
         """
         Write the measurement to disk at the given node path.
@@ -332,21 +431,20 @@ class IO(object):
         :return: None
         """
         if node_path is None:
-            node_path = measurement.__class__.__name__ + str(len(self.measurement_names()))
+            node_path = self.default_name(measurement)
         self._write_node(measurement, node_path)
 
-    def read(self, node_path, extras=True, translate=None):
+    def read(self, node_path, translate=None):
         """
         Read a measurement from disk and return it.
 
         :param node_path:the path to the node to be loaded, in the form 'node0:node1:node2'
-        :param extras: add extra variables; see instantiate().
         :param translate: a dictionary with entries 'original_class': 'new_class'; class names must be fully-qualified.
         :return: the measurement corresponding to the given node.
         """
         if translate is None:
             translate = {}
-        return self._read_node(node_path, extras, translate)
+        return self._read_node(node_path, translate)
 
     # These functions are used by
 
@@ -404,11 +502,13 @@ class IO(object):
         else:
             raise AttributeError()
 
+    """
     def __getitem__(self, item):
         try:
             return self.read(self.measurement_names()[item])
         except IndexError:
             raise KeyError()
+    """
 
     # TODO: add methods?
     def __dir__(self):
@@ -423,17 +523,17 @@ class IO(object):
         :return: None
         """
         self.create_node(node_path)
-        this_class_name = '{}.{}'.format(measurement.__module__, measurement.__class__.__name__)
+        this_class_name = '{}.{}'.format(measurement.__module__, measurement.class_name)
         self.write_other(node_path, CLASS_NAME, this_class_name)
         items = [(key, value) for key, value in measurement.__dict__.items()
                  if not key.startswith('_') and key not in RESERVED_NAMES and key not in measurement.dimensions]
         for key, value in items:
             if isinstance(value, Measurement):
                 self._write_node(value, join(node_path, key))
-            elif isinstance(value, MeasurementSequence):
+            elif isinstance(value, MeasurementList):
                 sequence_node_path = join(node_path, key)
                 self.create_node(sequence_node_path)
-                sequence_class_name = '{}.{}'.format(value.__module__, value.__class__.__name__)
+                sequence_class_name = '{}.{}'.format(value.__module__, value.class_name)
                 self.write_other(sequence_node_path, CLASS_NAME, sequence_class_name)
                 for index, meas in enumerate(value):
                     self._write_node(meas, join(sequence_node_path, str(index)))
@@ -443,26 +543,26 @@ class IO(object):
         for array_name, dimensions in measurement.dimensions.items():
             self.write_array(node_path, array_name, getattr(measurement, array_name), dimensions)
 
-    def _read_node(self, node_path, extras, translate):
+    def _read_node(self, node_path, translate):
         original_class_name = self.read_other(node_path, CLASS_NAME)
         class_name = translate.get(original_class_name, original_class_name)
         measurement_names = self.measurement_names(node_path)
         if is_sequence(class_name):
             # Use the name of each measurement, which is an int, to restore the order in the sequence.
-            contents = [self._read_node(join(node_path, measurement_name), extras, translate)
+            contents = [self._read_node(join(node_path, measurement_name), translate)
                         for measurement_name in sorted(measurement_names, key=int)]
             current = instantiate_sequence(class_name, contents)
         else:
             variables = {}
             for measurement_name in measurement_names:
-                variables[measurement_name] = self._read_node(join(node_path, measurement_name), extras, translate)
+                variables[measurement_name] = self._read_node(join(node_path, measurement_name), translate)
             array_names = self.array_names(node_path)
             for array_name in array_names:
                 variables[array_name] = self.read_array(node_path, array_name)
             other_names = [vn for vn in self.other_names(node_path)]
             for other_name in other_names:
                 variables[other_name] = self.read_other(node_path, other_name)
-            current = instantiate(class_name, variables, extras)
+            current = instantiate(class_name, variables)
         current._io_class = '{}.{}'.format(self.__module__, self.__class__.__name__)
         current._root_path = self.root_path
         current._node_path = node_path
@@ -486,35 +586,41 @@ def write(measurement, io, node_path):
     io._write_node(measurement, node_path)
 
 
-def read(io, node_path, extras=True, translate=None):
+def read(io, node_path, translate=None):
     """
     Read a measurement from disk and return it.
 
     :param io: an instance of a class that implements the IO interface.
     :param node_path:the path to the node to be loaded, in the form 'node0:node1:node2'
-    :param extras: add extra variables; see instantiate().
     :param translate: a dictionary with entries 'original_class': 'new_class'; all class names must be fully-qualified.
     :return: the measurement corresponding to the given node.
     """
     warnings.warn(DeprecationWarning("Use IO.read() instead."))
     if translate is None:
         translate = {}
-    measurement = io._read_node(node_path, extras, translate)
+    measurement = io._read_node(node_path, translate)
     return measurement
 
 
-def instantiate(full_class_name, variables, extras):
+# Class-related functions
+
+
+def get_class(full_class_name):
+    module_name, class_name = full_class_name.rsplit('.', 1)
+    module = importlib.import_module(module_name)
+    return getattr(module, class_name)
+
+
+def instantiate(full_class_name, variables):
     """
     Import and instantiate a class using the data in the given dictionary.
 
     :param full_class_name: the fully-qualified class name as a string, e.g. 'kid_readout.measurement.core.Measurement'.
     :param variables: a dictionary whose keys are the names of the variables available for instantiation and whose
       values are the corresponding values; it must include entries for all non-keyword arguments to __init__().
-    :param extras: if True, everything in variables that is not an argument to __init__() will be added as an attribute
-      after instantiation; be careful with this.
     :return: an instance of full_class_name instantiated using the given variables.
     """
-    class_ = _get_class(full_class_name)
+    class_ = get_class(full_class_name)
     args, varargs, keywords, defaults = inspect.getargspec(class_.__init__)
     arg_values = []
     for arg, default in zip(reversed(args), reversed(defaults)):
@@ -522,24 +628,23 @@ def instantiate(full_class_name, variables, extras):
     for arg in reversed(args[1:-len(defaults)]):  # The first arg is 'self'
         arg_values.append(variables[arg])
     instance = class_(*reversed(arg_values))
-    if extras:
-        for key, value in variables.items():
-            if key not in args:
-                setattr(instance, key, value)
     return instance
 
 
 def instantiate_sequence(full_class_name, contents):
-    return _get_class(full_class_name)(contents)
+    return get_class(full_class_name)(contents)
 
 
 def is_sequence(full_class_name):
-    return issubclass(_get_class(full_class_name), MeasurementSequence)
+    return issubclass(get_class(full_class_name), MeasurementList)
 
 
 def from_series(series):
-    io = _get_class(series.io_class)(series.root_path)
+    io = get_class(series.io_class)(series.root_path)
     return io.read(series.node_path)
+
+
+# Node-related functions
 
 
 def join(*nodes):
@@ -599,14 +704,3 @@ def validate_node_path(node_path):
     allowed = r'[^\_\:A-Za-z0-9]'
     if re.search(allowed, node_path):
         raise MeasurementError("Invalid character in {}".format(node_path))
-
-
-# Private functions
-
-
-def _get_class(full_class_name):
-    module_name, class_name = full_class_name.rsplit('.', 1)
-    module = importlib.import_module(module_name)
-    return getattr(module, class_name)
-
-
