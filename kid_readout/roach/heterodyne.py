@@ -60,8 +60,8 @@ class RoachHeterodyne(RoachInterface):
 
         self.lo_frequency = 0.0
         self.heterodyne = True
-        #self.boffile = 'iq2xpfb14mcr6_2015_May_11_2241.bof'
         self.boffile = 'iq2xpfb14mcr7_2015_Nov_25_0907.bof'
+        #self.boffile = 'iq2xpfb14mcr8_2016_Feb_12_1427.bof'
         self.iq_delay = 4
 
         self.wafer = wafer
@@ -73,6 +73,21 @@ class RoachHeterodyne(RoachInterface):
 
         self.demodulator = Demodulator(hardware_delay_samples=self.hardware_delay_estimate*self.fs*1e6)
         self.attenuator = attenuator
+
+    # def get_raw_adc(self):
+    #     """
+    #     Grab raw ADC samples
+    #     returns: s0,s1
+    #     s0 and s1 are the samples from adc 0 and adc 1 respectively
+    #     Each sample is a 12 bit signed integer (cast to a numpy float)
+    #     """
+    #     self.r.write_int('adc_snap_ctrl', 0)
+    #     self.r.write_int('adc_snap_ctrl', 5)
+    #     s0 = (np.fromstring(self.r.read('adc_snap_bram', self.raw_adc_ns * 2 * 2), dtype='>i2'))
+    #     sb = s0.view('>i4')
+    #     i = sb[::2].copy().view('>i2') / 16.
+    #     q = sb[1::2].copy().view('>i2') / 16.
+    #     return i, q
 
     def set_loopback(self,enable):
         self.loopback = enable
@@ -318,11 +333,15 @@ class RoachHeterodyne(RoachInterface):
         return demod
 
     @property
-    def blocks_per_second(self):
+    def blocks_per_second_per_channel(self):
         chan_rate = self.fs * 1e6 / (self.nfft)  # samples per second for one tone_index
         samples_per_channel_per_block = 4096
         return chan_rate / samples_per_channel_per_block
 
+
+    @property
+    def blocks_per_second(self):
+        return self.blocks_per_second_per_channel*len(self.readout_selection)
 
     def get_data(self, nread=2, demod=True):
         # TODO This is a temporary hack until we get the system simulation code in place
