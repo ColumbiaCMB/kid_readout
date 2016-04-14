@@ -336,7 +336,6 @@ class RoachHeterodyne(RoachInterface):
     def blocks_per_second_per_channel(self):
         chan_rate = self.fs * 1e6 / (self.nfft)  # samples per second for one tone_index
         samples_per_channel_per_block = 4096
-        print "chan_rate",chan_rate,"blocks_persecperchan",(chan_rate/samples_per_channel_per_block)
         return chan_rate / samples_per_channel_per_block
 
 
