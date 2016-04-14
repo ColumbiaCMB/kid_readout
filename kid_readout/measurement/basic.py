@@ -651,3 +651,13 @@ class SweepStreamArray(core.Measurement):
         for n in range(self.num_channels):
             dataframes.append(self.sweep_stream(n).to_dataframe())
         return pd.concat(dataframes, ignore_index=True)
+
+
+class SweepStreamList(core.Measurement):
+
+    def __init__(self, sweep, stream_list, state=None, analyze=False, description=''):
+        super(SweepStreamList, self).__init__(state, analyze, description)
+        self.sweep = sweep
+        self.sweep._parent = self
+        self.stream_list = stream_list
+        self.stream_list._parent = self
