@@ -622,7 +622,7 @@ class SingleSweepStream(core.Measurement):
 class SweepStreamArray(core.Measurement):
 
     def __init__(self, sweep_array, stream_array, state=None, analyze=False, description=''):
-        if sweep_array.num_channels != stream_array.tone_index.size:
+        if not isinstance(stream_array,core.IOList) and sweep_array.num_channels != stream_array.tone_index.size:
             raise core.MeasurementError("The number of SweepArray channels does not match the StreamArray number.")
         self.sweep_array = sweep_array
         self.sweep_array._parent = self

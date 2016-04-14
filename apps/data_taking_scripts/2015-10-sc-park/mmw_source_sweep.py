@@ -52,7 +52,7 @@ offsets = offset_bins * 512.0 / nsamp
 
 mmw_freqs = np.linspace(140e9, 165e9, 500)
 
-ri.set_dac_atten(30)
+ri.set_dac_atten(10)
 
 state = dict(mmw_atten_turns=(7,7), hittite_power_dBm=0.0,)
 
@@ -69,15 +69,18 @@ for (lo,f0s) in [(low_group_lo,low_group),
     ncf.write(swpa)
     print "sweep written", (time.time()-tic)/60.
     current_f0s = []
+    fits = []
     for sidx in range(32):
         swp = swpa.sweep(sidx)
         res = lmfit_resonator.LinearResonatorWithCable(swp.frequency,swp.s21_points,swp.s21_points_error)
         res.fit()
+        fits.append(res)
         print res.f_0, res.Q, res.current_result.redchi, (f0s[sidx]*1e6-res.f_0)
         current_f0s.append(res.f_0)
     print "fits complete", (time.time()-tic)/60.
     current_f0s = np.array(current_f0s)/1e6
     current_f0s.sort()
+
     ri.add_tone_freqs(current_f0s)
     ri.select_bank(ri.tone_bins.shape[0]-1)
     ri.select_fft_bins(range(32))

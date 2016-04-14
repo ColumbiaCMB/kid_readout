@@ -5,6 +5,6 @@ class MMWSweepStreams(core.Measurement):
 
     def __init__(self, sweep, streams, state, analyze=False, description='MMWSweepStreams'):
         self.sweep = sweep
-        self.streams = core.MeasurementTuple(streams)
+        self.streams = streams
         super(MMWSweepStreams, self).__init__(state, analyze, description)
 

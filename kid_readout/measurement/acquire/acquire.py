@@ -54,6 +54,7 @@ def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=1, state=None, de
         ri.set_tone_freqs(tone_bank, nsamp=num_tone_samples)
         ri.select_fft_bins(np.arange(tone_bank.size))
         ri._sync()
+        
         stream_arrays.append(ri.get_measurement(num_seconds=length_seconds, **kwargs))
     return basic.SweepArray(stream_arrays, state=state, description=description)
 
@@ -103,7 +104,8 @@ def run_multipart_sweep(ri, length_seconds=1, state=None, description='', num_to
 
 def extendable_sweepstreamarray(io, sweep, state, description='', name=None):
     if name is None:
-        name = io.default_name(basic.SweepStreamArray)
+        #name = io.default_name(basic.SweepStreamArray)
+        name = 'SweepStreamArray' + str(len(io.measurement_names()))
     iolist = core.IOList(io, name)
     ss = basic.SweepStreamArray(sweep, iolist, state=state, description=description)
     io.write(ss, name)
