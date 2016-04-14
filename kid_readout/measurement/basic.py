@@ -643,6 +643,9 @@ class SweepStreamArray(core.Measurement):
         Return a SweepStream object containing the data at the frequency corresponding to the given integer index.
         """
         if isinstance(index, int):
+            if isinstance(self.sweep_array,SingleSweep) or isinstance(self.sweep_array,SingleResonatorSweep):
+                return SingleSweepStream(sweep=self.sweep_array, stream=self.stream_array.stream(index),
+                                     state=self.state)
             return SingleSweepStream(sweep=self.sweep_array.sweep(index), stream=self.stream_array.stream(index),
                                      state=self.state)
         else:
