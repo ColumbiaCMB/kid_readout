@@ -377,7 +377,7 @@ class SingleResonatorSweep(SingleSweep):
 
 class SweepArray(core.Measurement):
     """
-    This class contains a group of stream arrays.
+    This class contains a list of stream arrays.
     """
 
     def __init__(self, stream_arrays, state=None, analyze=False, description=''):
@@ -393,7 +393,8 @@ class SweepArray(core.Measurement):
 
     def sweep(self, index):
         if isinstance(index, int):
-            return SingleSweep(streams=(sa.stream(index) for sa in self.stream_arrays), state=self.state)
+            return SingleSweep(streams=core.MeasurementList(sa.stream(index) for sa in self.stream_arrays),
+                               state=self.state)
         else:
             raise ValueError("Invalid index: {}".format(index))
 
@@ -465,7 +466,8 @@ class ResonatorSweepArray(SweepArray):
 
     def sweep(self, index):
         if isinstance(index, int):
-            return SingleResonatorSweep((sa.stream(index) for sa in self.stream_arrays), state=self.state)
+            return SingleResonatorSweep(core.MeasurementList(sa.stream(index) for sa in self.stream_arrays),
+                                        state=self.state)
         else:
             raise ValueError("Invalid index: {}".format(index))
 
@@ -641,6 +643,9 @@ class SweepStreamArray(core.Measurement):
         Return a SweepStream object containing the data at the frequency corresponding to the given integer index.
         """
         if isinstance(index, int):
+            if isinstance(self.sweep_array,SingleSweep) or isinstance(self.sweep_array,SingleResonatorSweep):
+                return SingleSweepStream(sweep=self.sweep_array, stream=self.stream_array.stream(index),
+                                     state=self.state)
             return SingleSweepStream(sweep=self.sweep_array.sweep(index), stream=self.stream_array.stream(index),
                                      state=self.state)
         else:

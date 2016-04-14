@@ -53,7 +53,7 @@ class IO(core.IO):
         self.root_path = os.path.expanduser(root_path)
         self.cache_s21_raw = cache_s21_raw
         try:
-            self.root = netCDF4.Dataset(self.root_path, mode='r')
+            self.root = netCDF4.Dataset(self.root_path, mode='r',keepweakref=True)
         except RuntimeError:
             self.root = netCDF4.Dataset(root_path, mode='w', clobber=False)
 
@@ -70,7 +70,7 @@ class IO(core.IO):
         except AttributeError:
             raise NotImplementedError("Upgrade netCDF4!")
 
-    def read(self, node_path, extras=True, translate=None):
+    def read(self, node_path, translate=None):
         if translate is None:
             translate = {}
         if self.cache_s21_raw:
@@ -78,7 +78,7 @@ class IO(core.IO):
                                   'kid_readout.measurement.io.nc.CachedSingleStream',
                               'kid_readout.measurement.basic.StreamArray':
                                   'kid_readout.measurement.io.nc.CachedStreamArray'})
-        return self._read_node(node_path, extras, translate)
+        return self._read_node(node_path, translate)
 
     def create_node(self, node_path):
         # This will correctly fail to validate an attempt to create the root node with node_path = ''
