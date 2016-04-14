@@ -86,8 +86,10 @@ for (lo,f0s) in [(low_group_lo,low_group),
         time.sleep(0.5)
         x, y, r, theta = lockin.get_data()
         state['lockin_voltage'] = r
+        tic2= time.time()
         meas = ri.get_measurement(num_seconds=2.0, state=state)
-        print freq
-        ncf.write(meas, '{}:streams:{}'.format(ncf.measurement_names()[-1], n))  # "MMWSweepStreams:streams:0" etc.
+        print freq,(time.time()-tic2)
+        sweepstream.stream_array.append(meas)
+
     print "mm-wave sweep complete", (time.time()-tic)/60.
     ncf.close()

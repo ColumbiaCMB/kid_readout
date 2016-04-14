@@ -109,5 +109,5 @@ def extendable_sweepstreamarray(io, sweep, state, description='', name=None):
     iolist = core.IOList(io, name)
     ss = basic.SweepStreamArray(sweep, iolist, state=state, description=description)
     io.write(ss, name)
-    return iolist
+    return ss
 
