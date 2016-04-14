@@ -377,7 +377,7 @@ class SingleResonatorSweep(SingleSweep):
 
 class SweepArray(core.Measurement):
     """
-    This class contains a group of stream arrays.
+    This class contains a list of stream arrays.
     """
 
     def __init__(self, stream_arrays, state=None, analyze=False, description=''):
@@ -622,7 +622,7 @@ class SingleSweepStream(core.Measurement):
 class SweepStreamArray(core.Measurement):
 
     def __init__(self, sweep_array, stream_array, state=None, analyze=False, description=''):
-        if not isinstance(stream_array,core.IOList) and sweep_array.num_channels != stream_array.tone_index.size:
+        if sweep_array.num_channels != stream_array.tone_index.size:
             raise core.MeasurementError("The number of SweepArray channels does not match the StreamArray number.")
         self.sweep_array = sweep_array
         self.sweep_array._parent = self
