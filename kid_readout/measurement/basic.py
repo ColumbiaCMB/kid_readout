@@ -393,7 +393,8 @@ class SweepArray(core.Measurement):
 
     def sweep(self, index):
         if isinstance(index, int):
-            return SingleSweep(streams=(sa.stream(index) for sa in self.stream_arrays), state=self.state)
+            return SingleSweep(streams=core.MeasurementList(sa.stream(index) for sa in self.stream_arrays),
+                               state=self.state)
         else:
             raise ValueError("Invalid index: {}".format(index))
 
@@ -465,7 +466,8 @@ class ResonatorSweepArray(SweepArray):
 
     def sweep(self, index):
         if isinstance(index, int):
-            return SingleResonatorSweep((sa.stream(index) for sa in self.stream_arrays), state=self.state)
+            return SingleResonatorSweep(core.MeasurementList(sa.stream(index) for sa in self.stream_arrays),
+                                        state=self.state)
         else:
             raise ValueError("Invalid index: {}".format(index))
 
