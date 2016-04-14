@@ -81,7 +81,9 @@ class LinearResonatorModel(ComplexModel):
         min_delta_f = delta_f[delta_f>0].min()
         Q_max = f_0_guess/min_delta_f # assume data actually samples the resonance reasonably
         Q_guess = np.sqrt(Q_min*Q_max) # geometric mean, why not?
-        Q_e_real_guess = Q_guess/(1-np.abs(data[argmin_s21]))
+        s21_min =  np.abs(data[argmin_s21])
+        s21_max = np.abs(data).max()
+        Q_e_real_guess = Q_guess/(1-s21_min/s21_max)
         if verbose:
             print "fmin=",fmin,"fmax=",fmax,"f_0_guess=",f_0_guess
             print "Qmin=",Q_min,"Q_max=",Q_max,"Q_guess=",Q_guess,"Q_e_real_guess=",Q_e_real_guess
