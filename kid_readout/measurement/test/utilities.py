@@ -57,7 +57,8 @@ class CornerMeasurement(core.Measurement):
                             'float_list': [-0.1, 1, np.pi],
                             'str_list': ['zero', 'one', 'two', ''],
                             'bool_list': [False, True, False]},
-                 state=corners, analyze=False, description='CornerMeasurement'):
+                 state=corners, description='CornerMeasurement'):
+        super(CornerMeasurement, self).__init__(state=state, description=description)
         self.zero_int = zero_int
         self.zero_float = zero_float
         self.one_int = one_int
@@ -77,11 +78,6 @@ class CornerMeasurement(core.Measurement):
         self.none_dict = none_dict
         self.dict_dict = dict_dict
         self.list_dict = list_dict
-        super(CornerMeasurement, self).__init__(state, analyze, description)
-
-
-def get_measurement():
-    return CornerMeasurement()
 
 
 def make_stream(tone_index=0, frequency=None, num_tone_samples=2**16, blocks=2, state=None, description=''):

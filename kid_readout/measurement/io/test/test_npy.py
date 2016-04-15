@@ -6,7 +6,7 @@ from kid_readout.measurement.io import npy
 def test_read_write_measurement():
     with TempDirectory() as directory:
         io = npy.NumpyDirectory(directory.path)
-        original = utilities.get_measurement()
+        original = utilities.CornerMeasurement()
         name = 'measurement'
         io.write(original, name)
         assert original == io.read(name)

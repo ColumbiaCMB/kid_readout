@@ -13,10 +13,6 @@ def test_measurement_instantiation_blank():
     assert m._io_class is None
     assert m._root_path is None
     assert m._node_path is None
-    try:
-        m.analyze()
-    except:
-        assert False
 
 
 def test_measurement_to_dataframe():

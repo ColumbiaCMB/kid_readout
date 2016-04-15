@@ -8,7 +8,7 @@ def test_read_write_measurement():
     with TempDirectory() as directory:
         filename = 'test.nc'
         io = nc.NCFile(os.path.join(directory.path, filename))
-        original = utilities.get_measurement()
+        original = utilities.CornerMeasurement()
         name = 'measurement'
         io.write(original, name)
         assert original == io.read(name)

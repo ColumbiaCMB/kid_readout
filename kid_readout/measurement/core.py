@@ -180,12 +180,11 @@ class Measurement(Node):
 
     dimensions = {}
 
-    def __init__(self, state=None, analyze=False, description=''):
+    def __init__(self, state=None, description=''):
         """
         Return a new Measurement instance.
 
         :param state: a dictionary of state information.
-        :param analyze: if True (default False), the class will call its analyze() method after instantiation.
         :param description: a string describing the measurement.
         :return: a new Measurement instance.
         """
@@ -198,19 +197,9 @@ class Measurement(Node):
         self._root_path = None
         self._node_path = None
         self._validate_dimensions()
-        if analyze:
-            self.analyze()
 
     def as_class(self, class_):
         return class_(**self.__dict__)
-
-    def analyze(self):
-        """
-        Analyze the raw data and create all data products.
-
-        :return: None
-        """
-        pass
 
     def to_dataframe(self):
         """

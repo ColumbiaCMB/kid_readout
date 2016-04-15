@@ -101,12 +101,3 @@ def run_multipart_sweep(ri, length_seconds=1, state=None, description='', num_to
         stream_arrays.extend(list(part.stream_arrays))
     return basic.SweepArray(stream_arrays,state=state,description=description)
 
-
-def extendable_sweepstreamlist(io, sweep, state, description='', name=None):
-    if name is None:
-        name = io.default_name(basic.SweepStreamList)
-    iolist = core.IOList(io, name)
-    ss = basic.SweepStreamList(sweep, iolist, state=state, description=description)
-    io.write(ss, name)
-    return ss
-
