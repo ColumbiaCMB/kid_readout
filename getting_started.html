@@ -1,0 +1,151 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Getting Started &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KID Readout  documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<p>Using the CUKIDS readout consists of two basic parts: loading a waveform to synthesize with the DAC and reading data
+from around the synthesized tones.</p>
+<p>The basic interface to the ROACH takes place using the classes in the <code class="xref py py-mod docutils literal"><span class="pre">kid_readout.utils.roach_interface</span></code> module.
+Specifically, the <code class="xref py py-class docutils literal"><span class="pre">kid_readout.utils.roach_interface.RoachBaseband</span></code> class is the most well maintained at present.</p>
+<p>The class takes care of programming the ROACH (in the initialization method). It also assumes that it has access to
+Valon synthesizers that provide the ADC and DAC clock signals. If this is not the case for your system,
+you may need to alter the code to avoid these calls.</p>
+<div class="section" id="waveform-synthesis">
+<h2>Waveform Synthesis<a class="headerlink" href="#waveform-synthesis" title="Permalink to this headline">¶</a></h2>
+<p>The waveforms are synthesized with a continuous playback ring buffer. The length of the buffer can be set to a power
+of two samples. The length directly impacts the frequency resolution of the resulting tones. The waveform synthesis
+code enforces that the sinusoids in the buffer have an integer number of periods, to avoid glitches.</p>
+<p>For example, if the buffer length is $2^16$ samples, the lowest frequency that can be generated is a tone with a
+period equal to $2^16$ samples. The next highest frequency is twice that (two cycles per $2^16$ samples), and so on.</p>
+<p>The basic function for defining and loading a waveform is
+<code class="xref py py-func docutils literal"><span class="pre">kid_readout.utils.roach_interface.RoachBaseband.set_tone_freqs()</span></code> which takes an array of frequencies in MHz and</p>
+<blockquote>
+<div>the length of the buffer (nsamp) and computes the required waveform and loads it into the ROACH.</div></blockquote>
+<div class="section" id="note-about-loading-the-waveforms">
+<h3>Note about loading the waveforms<a class="headerlink" href="#note-about-loading-the-waveforms" title="Permalink to this headline">¶</a></h3>
+<p>The waveforms are typically rather large (several MB), so while they can be transferred to the DRAM on the ROACH over
+katcp, the overhead involved usually makes this unattractive. Right now, this option is in fact hard coded out,
+in that the underlying <code class="xref py py-func docutils literal"><span class="pre">kid_readout.utils.roach_interface.RoachBaseband.load_waveform()</span></code> method has the default
+value of fast=True, meaning do not use katcp for loading the DRAM. You can change this if you want to use katcp for
+simplicity in spite of the overhead.</p>
+<p>By default, the system assumes that the ROACH mounts its filesystem from the local machine at /srv/roach_boot/etch
+and it will try to write a copy of the waveform to /srv/roach_boot/etch/boffiles/dram.bin. It will then use ssh to
+execute a &#8220;dd&#8221; unix command to write the dram.bin file to the DRAM using BORPH. This is siginificantly faster. NFS
+takes care of transferring dram.bin over the network seamlessly.</p>
+</div>
+</div>
+<div class="section" id="getting-data-off-the-roach">
+<h2>Getting data off the ROACH<a class="headerlink" href="#getting-data-off-the-roach" title="Permalink to this headline">¶</a></h2>
+<p>The simplest method to read data from the ROACH is to use katcp, but this also will limit the number of channels you
+can simultaneously stream data from. The function to use is get_data_katcp.</p>
+<p>For faster data transfer, there is an executable that runs on the ROACH PowerPC (PPC) that reads data from the FPGA
+and streams it over UDP. To use this, you need to copy the ppc source folder to the ROACH,
+probably to a subdirectory of the /boffiles directory since that&#8217;s often the only part of the file system that&#8217;s
+writable. To build, just do &#8220;gcc -o kid_ppc kid_ppc.c&#8221;.</p>
+<dl class="docutils">
+<dt>When programming the ROACH, the RoachBasband class initialization will try to start kid_ppc by default (controlled by</dt>
+<dd>the start_udp option of the initialize method).</dd>
+</dl>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Getting Started</a><ul>
+<li><a class="reference internal" href="#waveform-synthesis">Waveform Synthesis</a><ul>
+<li><a class="reference internal" href="#note-about-loading-the-waveforms">Note about loading the waveforms</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#getting-data-off-the-roach">Getting data off the ROACH</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/getting_started.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KID Readout  documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.roach.valon &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for kid_readout.roach.valon</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">valon_synth</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">ver</span> <span class="o">=</span> <span class="n">valon_synth</span><span class="o">.</span><span class="n">valon_synth</span><span class="o">.</span><span class="n">__version__</span>
+    <span class="k">if</span> <span class="nb">float</span><span class="p">(</span><span class="n">ver</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;insufficient valon_synth version&#39;</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;insufficient valon_synth version&#39;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">valon_synth</span> <span class="kn">import</span> <span class="n">Synthesizer</span><span class="p">,</span> <span class="n">SYNTH_A</span><span class="p">,</span> <span class="n">SYNTH_B</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="n">VALON_SERIAL_NUMBERS</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">roach</span><span class="o">=</span><span class="s1">&#39;AM01H05A&#39;</span><span class="p">,</span>
+                            <span class="n">roach2</span><span class="o">=</span><span class="s1">&#39;A101FK1K&#39;</span><span class="p">,</span>
+                            <span class="n">mark2</span><span class="o">=</span><span class="s1">&#39;A101FK1H&#39;</span><span class="p">)</span>
+
+<span class="n">usbre</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s2">r&quot;usb (?P&lt;port&gt;\d*-\d*)&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="find_valons"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.valon.find_valons">[docs]</a><span class="k">def</span> <span class="nf">find_valons</span><span class="p">():</span>
+    <span class="n">by_id</span> <span class="o">=</span> <span class="n">find_valons_by_id</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">by_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">by_id</span><span class="p">]</span>
+    <span class="k">print</span> <span class="s2">&quot;couldn&#39;t find valons by id, trying dmesg&quot;</span>
+    <span class="k">return</span> <span class="n">find_valons_with_dmesg</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="find_valons_by_id"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.valon.find_valons_by_id">[docs]</a><span class="k">def</span> <span class="nf">find_valons_by_id</span><span class="p">():</span>
+    <span class="n">basepath</span> <span class="o">=</span> <span class="s1">&#39;/dev/serial/by-id/&#39;</span>
+    <span class="n">serial_ports</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">basepath</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">port</span> <span class="ow">in</span> <span class="n">serial_ports</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">port</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;usb-FTDI_FT232R_USB_UART&#39;</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">basepath</span><span class="p">,</span><span class="n">port</span><span class="p">))</span>
+    <span class="k">return</span> <span class="bp">None</span></div>
+
+<div class="viewcode-block" id="find_valons_with_dmesg"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.valon.find_valons_with_dmesg">[docs]</a><span class="k">def</span> <span class="nf">find_valons_with_dmesg</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Find /dev/ttyUSB* ports with FTDI chips which are probably Valons</span>
+<span class="sd">    </span>
+<span class="sd">    Works by parsing the dmesg output and looking for lines containing FTDI (the brand of</span>
+<span class="sd">    usb-rs232 chip used) and &#39;attached to&#39; which will contain the ttyUSB* string</span>
+<span class="sd">    </span>
+<span class="sd">    returns a list of all unique ports that have FTDI chips.</span>
+<span class="sd">    The list is sorted starting with the most recent entry in dmesg.</span>
+<span class="sd">    Duplicate ports are ignored (only the most recent entry (line in dmesg) for that port is returned)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">dmesg</span> <span class="o">=</span> <span class="n">check_output</span><span class="p">(</span><span class="s1">&#39;dmesg | grep &quot;FT232RL&quot;&#39;</span><span class="p">,</span><span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">:</span>
+        <span class="c1"># grep failed so no ports found</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">dmesg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">lines</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">usbre</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">usbport</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;port&#39;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">dmesg</span> <span class="o">=</span> <span class="n">check_output</span><span class="p">((</span><span class="s1">&#39;dmesg | grep &quot;usb </span><span class="si">%s</span><span class="s1">.*now attached to&quot;&#39;</span> <span class="o">%</span> <span class="n">usbport</span><span class="p">),</span><span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">:</span>
+        <span class="c1"># grep failed so no ports found</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">dmesg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">lines</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="n">ports</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">ln</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;ttyUSB&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">port</span> <span class="o">=</span> <span class="s1">&#39;/dev/&#39;</span> <span class="o">+</span> <span class="n">ln</span><span class="p">[</span><span class="n">idx</span><span class="p">:]</span>
+            <span class="k">if</span> <span class="n">port</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ports</span><span class="p">:</span>
+                <span class="n">ports</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">port</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ports</span></div>
+    
+<div class="viewcode-block" id="check_output"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.valon.check_output">[docs]</a><span class="k">def</span> <span class="nf">check_output</span><span class="p">(</span><span class="o">*</span><span class="n">popenargs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">r&quot;&quot;&quot;Run command with arguments and return its output as a byte string.</span>
+
+<span class="sd">    If the exit code was non-zero it raises a CalledProcessError.  The</span>
+<span class="sd">    CalledProcessError object will have the return code in the returncode</span>
+<span class="sd">    attribute and output in the output attribute.</span>
+
+<span class="sd">    The arguments are the same as for the Popen constructor.  Example:</span>
+
+<span class="sd">    &gt;&gt;&gt; check_output([&quot;ls&quot;, &quot;-l&quot;, &quot;/dev/null&quot;])</span>
+<span class="sd">    &#39;crw-rw-rw- 1 root root 1, 3 Oct 18  2007 /dev/null\n&#39;</span>
+
+<span class="sd">    The stdout argument is not allowed as it is used internally.</span>
+<span class="sd">    To capture standard error in the result, use stderr=STDOUT.</span>
+
+<span class="sd">    &gt;&gt;&gt; check_output([&quot;/bin/sh&quot;, &quot;-c&quot;,</span>
+<span class="sd">    ...               &quot;ls -l non_existent_file ; exit 0&quot;],</span>
+<span class="sd">    ...              stderr=STDOUT)</span>
+<span class="sd">    &#39;ls: non_existent_file: No such file or directory\n&#39;</span>
+<span class="sd">    </span>
+<span class="sd">    copied from python2.7</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s1">&#39;stdout&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;stdout argument not allowed, it will be overridden.&#39;</span><span class="p">)</span>
+    <span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="o">*</span><span class="n">popenargs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">output</span><span class="p">,</span> <span class="n">unused_err</span> <span class="o">=</span> <span class="n">process</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span>
+    <span class="n">retcode</span> <span class="o">=</span> <span class="n">process</span><span class="o">.</span><span class="n">poll</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">retcode</span><span class="p">:</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;args&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cmd</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">cmd</span> <span class="o">=</span> <span class="n">popenargs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">raise</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">(</span><span class="n">retcode</span><span class="p">,</span> <span class="n">cmd</span><span class="p">)</span><span class="c1">#, output=output)</span>
+    <span class="k">return</span> <span class="n">output</span></div>
+    
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,499 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.analysis.physics package &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="index.html" />
+    <link rel="up" title="kid_readout.analysis package" href="kid_readout.analysis.html" />
+    <link rel="next" title="kid_readout.analysis.resonator package" href="kid_readout.analysis.resonator.html" />
+    <link rel="prev" title="kid_readout.analysis package" href="kid_readout.analysis.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="kid_readout.analysis.resonator.html" title="kid_readout.analysis.resonator package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="kid_readout.analysis.html" title="kid_readout.analysis package"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="kid_readout.html" >kid_readout package</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="kid_readout.analysis.html" accesskey="U">kid_readout.analysis package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="kid-readout-analysis-physics-package">
+<h1>kid_readout.analysis.physics package<a class="headerlink" href="#kid-readout-analysis-physics-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-kid_readout.analysis.physics.kid_eqns">
+<span id="kid-readout-analysis-physics-kid-eqns-module"></span><h2>kid_readout.analysis.physics.kid_eqns module<a class="headerlink" href="#module-kid_readout.analysis.physics.kid_eqns" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="kid_readout.analysis.physics.kid_eqns.DarkKIDModel">
+<em class="property">class </em><code class="descclassname">kid_readout.analysis.physics.kid_eqns.</code><code class="descname">DarkKIDModel</code><span class="sig-paren">(</span><em>Tc=1.46</em>, <em>nqp0=5000</em>, <em>Tbase=0.25</em>, <em>f0_nom=150000000.0</em>, <em>sigman=500000.0</em>, <em>ind_l_um=46750.0</em>, <em>ind_w_um=2.0</em>, <em>ind_h_nm=20</em>, <em>Lg=7e-08</em>, <em>Qc=100000.0</em>, <em>P_read=-76</em>, <em>T_noise=4.0</em>, <em>delta_0=0.001</em>, <em>F_TLS=1.0</em>, <em>N0=17200000000.0</em>, <em>cap=1.17e-11</em>, <em>T_star=0.35</em>, <em>tau_star=4e-05</em>, <em>delta_loss=1e-05</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#DarkKIDModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.DarkKIDModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#kid_readout.analysis.physics.kid_eqns.KIDModel" title="kid_readout.analysis.physics.kid_eqns.KIDModel"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.analysis.physics.kid_eqns.KIDModel</span></code></a></p>
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.DarkKIDModel.sigma1">
+<code class="descname">sigma1</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#DarkKIDModel.sigma1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.DarkKIDModel.sigma1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.DarkKIDModel.sigma2">
+<code class="descname">sigma2</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#DarkKIDModel.sigma2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.DarkKIDModel.sigma2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="kid_readout.analysis.physics.kid_eqns.DarkKIDModel2">
+<em class="property">class </em><code class="descclassname">kid_readout.analysis.physics.kid_eqns.</code><code class="descname">DarkKIDModel2</code><span class="sig-paren">(</span><em>Tc=1.46</em>, <em>nqp0=5000</em>, <em>Tbase=0.25</em>, <em>f0_nom=150000000.0</em>, <em>sigman=500000.0</em>, <em>ind_l_um=46750.0</em>, <em>ind_w_um=2.0</em>, <em>ind_h_nm=20</em>, <em>Lg=7e-08</em>, <em>Qc=100000.0</em>, <em>P_read=-76</em>, <em>T_noise=4.0</em>, <em>delta_0=0.001</em>, <em>F_TLS=1.0</em>, <em>N0=17200000000.0</em>, <em>cap=1.17e-11</em>, <em>T_star=0.35</em>, <em>tau_star=4e-05</em>, <em>delta_loss=1e-05</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#DarkKIDModel2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.DarkKIDModel2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#kid_readout.analysis.physics.kid_eqns.KIDModel" title="kid_readout.analysis.physics.kid_eqns.KIDModel"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.analysis.physics.kid_eqns.KIDModel</span></code></a></p>
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.DarkKIDModel2.sigma1">
+<code class="descname">sigma1</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#DarkKIDModel2.sigma1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.DarkKIDModel2.sigma1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.DarkKIDModel2.sigma2">
+<code class="descname">sigma2</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#DarkKIDModel2.sigma2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.DarkKIDModel2.sigma2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="kid_readout.analysis.physics.kid_eqns.DarkKIDModelFractional">
+<em class="property">class </em><code class="descclassname">kid_readout.analysis.physics.kid_eqns.</code><code class="descname">DarkKIDModelFractional</code><span class="sig-paren">(</span><em>Tc=1.46</em>, <em>nqp0=0</em>, <em>f0_nom=100000000.0</em>, <em>sigman=500000.0</em>, <em>alpha=0.66</em>, <em>Qc=100000.0</em>, <em>P_read=-106</em>, <em>T_noise=4.0</em>, <em>delta_0=0</em>, <em>F_TLS=1.0</em>, <em>N0=17200000000.0</em>, <em>delta_loss=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#DarkKIDModelFractional"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.DarkKIDModelFractional" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#kid_readout.analysis.physics.kid_eqns.DarkKIDModel" title="kid_readout.analysis.physics.kid_eqns.DarkKIDModel"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.analysis.physics.kid_eqns.DarkKIDModel</span></code></a></p>
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.DarkKIDModelFractional.Qi">
+<code class="descname">Qi</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#DarkKIDModelFractional.Qi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.DarkKIDModelFractional.Qi" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.analysis.physics.kid_eqns.DarkKIDModelFractional.alpha">
+<code class="descname">alpha</code><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.DarkKIDModelFractional.alpha" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.DarkKIDModelFractional.f_res">
+<code class="descname">f_res</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#DarkKIDModelFractional.f_res"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.DarkKIDModelFractional.f_res" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.DarkKIDModelFractional.invQi">
+<code class="descname">invQi</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#DarkKIDModelFractional.invQi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.DarkKIDModelFractional.invQi" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.analysis.physics.kid_eqns.DarkKIDModelFractional.nqp0">
+<code class="descname">nqp0</code><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.DarkKIDModelFractional.nqp0" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.DarkKIDModelFractional.total_delta_invQi">
+<code class="descname">total_delta_invQi</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#DarkKIDModelFractional.total_delta_invQi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.DarkKIDModelFractional.total_delta_invQi" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel">
+<em class="property">class </em><code class="descclassname">kid_readout.analysis.physics.kid_eqns.</code><code class="descname">KIDModel</code><span class="sig-paren">(</span><em>Tc=1.46</em>, <em>nqp0=5000</em>, <em>Tbase=0.25</em>, <em>f0_nom=150000000.0</em>, <em>sigman=500000.0</em>, <em>ind_l_um=46750.0</em>, <em>ind_w_um=2.0</em>, <em>ind_h_nm=20</em>, <em>Lg=7e-08</em>, <em>Qc=100000.0</em>, <em>P_read=-76</em>, <em>T_noise=4.0</em>, <em>delta_0=0.001</em>, <em>F_TLS=1.0</em>, <em>N0=17200000000.0</em>, <em>cap=1.17e-11</em>, <em>T_star=0.35</em>, <em>tau_star=4e-05</em>, <em>delta_loss=1e-05</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="attribute">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.Delta">
+<code class="descname">Delta</code><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.Delta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.Lg">
+<code class="descname">Lg</code><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.Lg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.Lk">
+<code class="descname">Lk</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.Lk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.Lk" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.Qi">
+<code class="descname">Qi</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.Qi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.Qi" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.Qr">
+<code class="descname">Qr</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.Qr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.Qr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.Tc">
+<code class="descname">Tc</code><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.Tc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.alpha">
+<code class="descname">alpha</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.alpha"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.alpha" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.amp_noise">
+<code class="descname">amp_noise</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.amp_noise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.amp_noise" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.beta">
+<code class="descname">beta</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.beta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.beta" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.cap">
+<code class="descname">cap</code><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.cap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.dVdf">
+<code class="descname">dVdf</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.dVdf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.dVdf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.delta_0">
+<code class="descname">delta_0</code><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.delta_0" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.delta_loss">
+<code class="descname">delta_loss</code><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.delta_loss" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.delta_tls">
+<code class="descname">delta_tls</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.delta_tls"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.delta_tls" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.depth_db">
+<code class="descname">depth_db</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.depth_db"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.depth_db" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.dfdNqp">
+<code class="descname">dfdNqp</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.dfdNqp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.dfdNqp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.f_res">
+<code class="descname">f_res</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.f_res"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.f_res" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.fit_f0">
+<code class="descname">fit_f0</code><span class="sig-paren">(</span><em>T</em>, <em>f0</em>, <em>f0_err=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.fit_f0"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.fit_f0" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.fit_f0_qi">
+<code class="descname">fit_f0_qi</code><span class="sig-paren">(</span><em>T</em>, <em>f0</em>, <em>Qi</em>, <em>f0_err=None</em>, <em>Qi_err=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.fit_f0_qi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.fit_f0_qi" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.fit_f0_qi_resid">
+<code class="descname">fit_f0_qi_resid</code><span class="sig-paren">(</span><em>params</em>, <em>T</em>, <em>f0</em>, <em>Qi</em>, <em>f0_err=None</em>, <em>Qi_err=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.fit_f0_qi_resid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.fit_f0_qi_resid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.fit_f0_resid">
+<code class="descname">fit_f0_resid</code><span class="sig-paren">(</span><em>params</em>, <em>T</em>, <em>f0</em>, <em>f0_err=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.fit_f0_resid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.fit_f0_resid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.fit_qi">
+<code class="descname">fit_qi</code><span class="sig-paren">(</span><em>T</em>, <em>Qi</em>, <em>Qi_err=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.fit_qi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.fit_qi" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.fit_qi_resid">
+<code class="descname">fit_qi_resid</code><span class="sig-paren">(</span><em>params</em>, <em>T</em>, <em>Qi</em>, <em>Qi_err=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.fit_qi_resid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.fit_qi_resid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.foffset">
+<code class="descname">foffset</code><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.foffset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.gr_noise">
+<code class="descname">gr_noise</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.gr_noise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.gr_noise" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.ind_nsq">
+<code class="descname">ind_nsq</code><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.ind_nsq" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.ind_vol">
+<code class="descname">ind_vol</code><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.ind_vol" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.mu_star">
+<code class="descname">mu_star</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.mu_star"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.mu_star" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.noise_spectrum">
+<code class="descname">noise_spectrum</code><span class="sig-paren">(</span><em>freq</em>, <em>Tphys</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.noise_spectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.noise_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.nqp">
+<code class="descname">nqp</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.nqp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.nqp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.res_width">
+<code class="descname">res_width</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.res_width"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.res_width" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.residual">
+<code class="descname">residual</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.residual"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.residual" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.sigma1">
+<code class="descname">sigma1</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.sigma1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.sigma1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.sigma2">
+<code class="descname">sigma2</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.sigma2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.sigma2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.tau_qp">
+<code class="descname">tau_qp</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.tau_qp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.tau_qp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.tls_shift">
+<code class="descname">tls_shift</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.tls_shift"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.tls_shift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.total_Qi">
+<code class="descname">total_Qi</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.total_Qi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.total_Qi" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.total_fres">
+<code class="descname">total_fres</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.total_fres"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.total_fres" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.total_qp">
+<code class="descname">total_qp</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.total_qp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.total_qp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.v_read">
+<code class="descname">v_read</code><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.v_read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.physics.kid_eqns.KIDModel.xi">
+<code class="descname">xi</code><span class="sig-paren">(</span><em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#KIDModel.xi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.KIDModel.xi" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.physics.kid_eqns.T_nqp_equals_nqp0">
+<code class="descclassname">kid_readout.analysis.physics.kid_eqns.</code><code class="descname">T_nqp_equals_nqp0</code><span class="sig-paren">(</span><em>Delta</em>, <em>N0</em>, <em>nqp0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#T_nqp_equals_nqp0"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.T_nqp_equals_nqp0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the temperature at which the thermally generated QP density equals the given nqp0</p>
+<p>Delta : eV
+Formula found by asking Wolfram Alpha to solve nqp(T) == nqp0 for T</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.physics.kid_eqns.s1s2">
+<code class="descclassname">kid_readout.analysis.physics.kid_eqns.</code><code class="descname">s1s2</code><span class="sig-paren">(</span><em>Tphys</em>, <em>Tc</em>, <em>fread</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#s1s2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.s1s2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.physics.kid_eqns.sigmas">
+<code class="descclassname">kid_readout.analysis.physics.kid_eqns.</code><code class="descname">sigmas</code><span class="sig-paren">(</span><em>fres</em>, <em>Tphys</em>, <em>Tc</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/kid_eqns.html#sigmas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.kid_eqns.sigmas" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.analysis.physics.mbint">
+<span id="kid-readout-analysis-physics-mbint-module"></span><h2>kid_readout.analysis.physics.mbint module<a class="headerlink" href="#module-kid_readout.analysis.physics.mbint" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="kid_readout.analysis.physics.mbint.mb_integrand_1a">
+<code class="descclassname">kid_readout.analysis.physics.mbint.</code><code class="descname">mb_integrand_1a</code><span class="sig-paren">(</span><em>eps</em>, <em>delta</em>, <em>kbt</em>, <em>hf</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/mbint.html#mb_integrand_1a"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.mbint.mb_integrand_1a" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.physics.mbint.mb_integrand_1b">
+<code class="descclassname">kid_readout.analysis.physics.mbint.</code><code class="descname">mb_integrand_1b</code><span class="sig-paren">(</span><em>eps</em>, <em>delta</em>, <em>kbt</em>, <em>hf</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/mbint.html#mb_integrand_1b"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.mbint.mb_integrand_1b" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.physics.mbint.mb_integrand_2">
+<code class="descclassname">kid_readout.analysis.physics.mbint.</code><code class="descname">mb_integrand_2</code><span class="sig-paren">(</span><em>eps</em>, <em>delta</em>, <em>kbt</em>, <em>hf</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/mbint.html#mb_integrand_2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.mbint.mb_integrand_2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.physics.mbint.trapz2">
+<code class="descclassname">kid_readout.analysis.physics.mbint.</code><code class="descname">trapz2</code><span class="sig-paren">(</span><em>func</em>, <em>a</em>, <em>b</em>, <em>eps</em>, <em>npoints</em>, <em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/mbint.html#trapz2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.mbint.trapz2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.analysis.physics.mkid">
+<span id="kid-readout-analysis-physics-mkid-module"></span><h2>kid_readout.analysis.physics.mkid module<a class="headerlink" href="#module-kid_readout.analysis.physics.mkid" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="kid_readout.analysis.physics.mkid.dual_residual">
+<code class="descclassname">kid_readout.analysis.physics.mkid.</code><code class="descname">dual_residual</code><span class="sig-paren">(</span><em>params</em>, <em>T</em>, <em>x</em>, <em>x_error</em>, <em>inverse_Q</em>, <em>inverse_Q_error</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/mkid.html#dual_residual"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.mkid.dual_residual" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.physics.mkid.inverse_Q">
+<code class="descclassname">kid_readout.analysis.physics.mkid.</code><code class="descname">inverse_Q</code><span class="sig-paren">(</span><em>params</em>, <em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/mkid.html#inverse_Q"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.mkid.inverse_Q" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.physics.mkid.inverse_Q_TLS">
+<code class="descclassname">kid_readout.analysis.physics.mkid.</code><code class="descname">inverse_Q_TLS</code><span class="sig-paren">(</span><em>params</em>, <em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/mkid.html#inverse_Q_TLS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.mkid.inverse_Q_TLS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.physics.mkid.inverse_Q_qp">
+<code class="descclassname">kid_readout.analysis.physics.mkid.</code><code class="descname">inverse_Q_qp</code><span class="sig-paren">(</span><em>params</em>, <em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/mkid.html#inverse_Q_qp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.mkid.inverse_Q_qp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.physics.mkid.x">
+<code class="descclassname">kid_readout.analysis.physics.mkid.</code><code class="descname">x</code><span class="sig-paren">(</span><em>params</em>, <em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/mkid.html#x"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.mkid.x" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.physics.mkid.x_TLS">
+<code class="descclassname">kid_readout.analysis.physics.mkid.</code><code class="descname">x_TLS</code><span class="sig-paren">(</span><em>params</em>, <em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/mkid.html#x_TLS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.mkid.x_TLS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.physics.mkid.x_qp">
+<code class="descclassname">kid_readout.analysis.physics.mkid.</code><code class="descname">x_qp</code><span class="sig-paren">(</span><em>params</em>, <em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/physics/mkid.html#x_qp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.physics.mkid.x_qp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.analysis.physics">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-kid_readout.analysis.physics" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">kid_readout.analysis.physics package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.physics.kid_eqns">kid_readout.analysis.physics.kid_eqns module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.physics.mbint">kid_readout.analysis.physics.mbint module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.physics.mkid">kid_readout.analysis.physics.mkid module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.physics">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="kid_readout.analysis.html"
+                        title="previous chapter">kid_readout.analysis package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="kid_readout.analysis.resonator.html"
+                        title="next chapter">kid_readout.analysis.resonator package</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/kid_readout.analysis.physics.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="kid_readout.analysis.resonator.html" title="kid_readout.analysis.resonator package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="kid_readout.analysis.html" title="kid_readout.analysis package"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="kid_readout.html" >kid_readout package</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="kid_readout.analysis.html" >kid_readout.analysis package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

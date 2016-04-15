@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.analysis.resonator.inverse &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../../index.html" />
+    <link rel="up" title="Module code" href="../../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for kid_readout.analysis.resonator.inverse</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module uses the Khalil and Swenson models but fits directly to the inverse quality factors, since these are actually more</span>
+<span class="sd">useful.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">cbrt</span>
+<span class="kn">import</span> <span class="nn">lmfit</span>
+
+
+<div class="viewcode-block" id="parameters"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.inverse.parameters">[docs]</a><span class="k">def</span> <span class="nf">parameters</span><span class="p">(</span><span class="n">f_r</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">i</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span> <span class="n">c_imag</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">f_phi</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">lmfit</span><span class="o">.</span><span class="n">Parameters</span><span class="p">()</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;f_r&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">f_r</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;c_imag&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">c_imag</span><span class="p">,</span> <span class="nb">min</span><span class="o">=-</span><span class="mf">1e-6</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">4</span><span class="o">*</span><span class="mi">3</span><span class="o">**</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mi">9</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;delay&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">delay</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;phi&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">phi</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;f_phi&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">f_phi</span><span class="p">,</span> <span class="n">vary</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">p</span></div>
+
+
+<div class="viewcode-block" id="normalization"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.inverse.normalization">[docs]</a><span class="k">def</span> <span class="nf">normalization</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">delay</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;delay&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">phi</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;phi&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">f_phi</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;f_phi&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+    <span class="k">return</span> <span class="n">A</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1j</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="n">f</span> <span class="o">-</span> <span class="n">f_phi</span><span class="p">)</span> <span class="o">*</span> <span class="n">delay</span> <span class="o">+</span> <span class="n">phi</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="model_normalized"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.inverse.model_normalized">[docs]</a><span class="k">def</span> <span class="nf">model_normalized</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+    <span class="n">f_r</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;f_r&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;c&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">c_imag</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;c_imag&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">Q_r</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="n">c</span><span class="p">)</span><span class="o">**-</span><span class="mi">1</span>
+    <span class="n">y_0</span> <span class="o">=</span> <span class="p">(</span><span class="n">f</span> <span class="o">/</span> <span class="n">f_r</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">Q_r</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">y_0</span> <span class="o">/</span> <span class="mi">3</span> <span class="o">+</span>
+         <span class="p">(</span><span class="n">y_0</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="mi">9</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">12</span><span class="p">)</span> <span class="o">/</span> <span class="n">cbrt</span><span class="p">(</span><span class="n">a</span> <span class="o">/</span> <span class="mi">8</span> <span class="o">+</span> <span class="n">y_0</span> <span class="o">/</span> <span class="mi">12</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+             <span class="p">(</span><span class="n">y_0</span><span class="o">**</span><span class="mi">3</span> <span class="o">/</span> <span class="mi">27</span> <span class="o">+</span> <span class="n">y_0</span> <span class="o">/</span> <span class="mi">12</span> <span class="o">+</span> <span class="n">a</span> <span class="o">/</span> <span class="mi">8</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="p">(</span><span class="n">y_0</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="mi">9</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">12</span><span class="p">)</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span> <span class="o">+</span> <span class="n">y_0</span><span class="o">**</span><span class="mi">3</span> <span class="o">/</span> <span class="mi">27</span><span class="p">)</span> <span class="o">+</span>
+         <span class="n">cbrt</span><span class="p">(</span><span class="n">a</span> <span class="o">/</span> <span class="mi">8</span> <span class="o">+</span> <span class="n">y_0</span> <span class="o">/</span> <span class="mi">12</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+             <span class="p">(</span><span class="n">y_0</span><span class="o">**</span><span class="mi">3</span> <span class="o">/</span> <span class="mi">27</span> <span class="o">+</span> <span class="n">y_0</span> <span class="o">/</span> <span class="mi">12</span> <span class="o">+</span> <span class="n">a</span> <span class="o">/</span> <span class="mi">8</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="p">(</span><span class="n">y_0</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="mi">9</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">12</span><span class="p">)</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span> <span class="o">+</span> <span class="n">y_0</span><span class="o">**</span><span class="mi">3</span> <span class="o">/</span> <span class="mi">27</span><span class="p">))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">y</span> <span class="o">/</span> <span class="n">Q_r</span>
+    <span class="k">return</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="p">((</span><span class="n">c</span> <span class="o">+</span> <span class="mi">1j</span> <span class="o">*</span> <span class="n">c_imag</span><span class="p">)</span> <span class="o">/</span>
+                 <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="n">c</span> <span class="o">+</span> <span class="mi">2j</span> <span class="o">*</span> <span class="n">x</span><span class="p">)))</span></div>
+
+
+<div class="viewcode-block" id="model"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.inverse.model">[docs]</a><span class="k">def</span> <span class="nf">model</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">normalization</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="o">*</span> <span class="n">model_normalized</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="guess_normalized"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.inverse.guess_normalized">[docs]</a><span class="k">def</span> <span class="nf">guess_normalized</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">s21</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Use the linewidth and the transmission ratio on and off resonance to guess the initial values.  Estimate the</span>
+<span class="sd">    linewidth by smoothing then looking for the extrema of the first derivative. This may fail if the resonance is</span>
+<span class="sd">    very close to the edge of the data.</span>
+
+<span class="sd">    This function expects the s21 data to be approximately normalized to 1 off resonance, and for the cable delay to be</span>
+<span class="sd">    removed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">lmfit</span><span class="o">.</span><span class="n">Parameters</span><span class="p">()</span>
+    <span class="c1"># Allow f_r to vary by a quarter of the data bandwidth.</span>
+    <span class="n">bandwidth</span> <span class="o">=</span> <span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">f</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">/</span> <span class="mi">4</span>
+    <span class="n">f_r</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">s21</span><span class="p">))]</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;f_r&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">f_r</span><span class="p">,</span>
+          <span class="nb">min</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">-</span> <span class="n">bandwidth</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="n">bandwidth</span><span class="p">)</span>
+    <span class="n">width</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">size</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="n">gaussian</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">gaussian</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">gaussian</span><span class="p">)</span>  <span class="c1"># not necessary</span>
+    <span class="n">smoothed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">gaussian</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">s21</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)</span>
+    <span class="n">derivative</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">smoothed</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)</span>
+    <span class="c1"># Exclude the edges, which are affected by zero padding.</span>
+    <span class="n">linewidth</span> <span class="o">=</span> <span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">derivative</span><span class="p">[</span><span class="n">width</span><span class="p">:</span><span class="o">-</span><span class="n">width</span><span class="p">])]</span> <span class="o">-</span>
+                 <span class="n">f</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">derivative</span><span class="p">[</span><span class="n">width</span><span class="p">:</span><span class="o">-</span><span class="n">width</span><span class="p">])])</span>
+    <span class="n">Q_r</span> <span class="o">=</span> <span class="n">f_r</span> <span class="o">/</span> <span class="n">linewidth</span>
+    <span class="n">Q_c</span> <span class="o">=</span> <span class="n">Q_r</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">s21</span><span class="p">)))</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">Q_c</span><span class="o">**-</span><span class="mi">1</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">Q_r</span><span class="o">**-</span><span class="mi">1</span> <span class="o">-</span> <span class="n">c</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;c_imag&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="o">=-</span><span class="mf">1e-6</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">p</span></div>
+
+
+<div class="viewcode-block" id="guess"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.inverse.guess">[docs]</a><span class="k">def</span> <span class="nf">guess</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">s21</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The phase of A is fixed at 0 and the phase at lowest frequency is incorporated into the cable delay term.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">s21</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">s21</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])))</span>
+    <span class="n">slope</span><span class="p">,</span> <span class="n">offset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">unwrap</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">s21</span><span class="p">)),</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">delay</span> <span class="o">=</span> <span class="o">-</span><span class="n">slope</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">s21</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">f_phi</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">s21_normalized</span> <span class="o">=</span> <span class="n">s21</span> <span class="o">/</span> <span class="n">normalization</span><span class="p">(</span><span class="n">parameters</span><span class="p">(</span><span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="n">delay</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">phi</span><span class="p">,</span> <span class="n">f_phi</span><span class="o">=</span><span class="n">f_phi</span><span class="p">),</span> <span class="n">f</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">guess_normalized</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">s21_normalized</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mf">1e6</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;delay&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">delay</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;phi&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">phi</span><span class="p">,</span> <span class="nb">min</span><span class="o">=-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;f_phi&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">f_phi</span><span class="p">,</span> <span class="n">vary</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mi">4</span><span class="o">*</span><span class="mi">3</span><span class="o">**</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mi">9</span><span class="p">)</span>  <span class="c1"># TODO: make exact</span>
+    <span class="k">return</span> <span class="n">p</span></div>
+
+
+<div class="viewcode-block" id="Q_i"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.inverse.Q_i">[docs]</a><span class="k">def</span> <span class="nf">Q_i</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="o">**-</span><span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="Q_c"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.inverse.Q_c">[docs]</a><span class="k">def</span> <span class="nf">Q_c</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;c&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="o">**-</span><span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="Q_r"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.inverse.Q_r">[docs]</a><span class="k">def</span> <span class="nf">Q_r</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">+</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;c&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="o">**-</span><span class="mi">1</span></div>
+
+
+<span class="c1"># Functions below are for backward compatibility:</span>
+
+<div class="viewcode-block" id="Q"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.inverse.Q">[docs]</a><span class="k">def</span> <span class="nf">Q</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Q_r</span><span class="p">(</span><span class="n">params</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Q_e"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.inverse.Q_e">[docs]</a><span class="k">def</span> <span class="nf">Q_e</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;c&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="o">+</span> <span class="mi">1j</span> <span class="o">*</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;c_imag&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="o">**-</span><span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="f_0"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.inverse.f_0">[docs]</a><span class="k">def</span> <span class="nf">f_0</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;f_r&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span></div>
+
+
+<span class="n">functions</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;f_0&#39;</span><span class="p">:</span> <span class="n">f_0</span><span class="p">,</span>
+             <span class="s1">&#39;Q_i&#39;</span><span class="p">:</span> <span class="n">Q_i</span><span class="p">,</span>
+             <span class="s1">&#39;Q_c&#39;</span><span class="p">:</span> <span class="n">Q_c</span><span class="p">,</span>
+             <span class="s1">&#39;Q_e&#39;</span><span class="p">:</span> <span class="n">Q_e</span><span class="p">,</span>
+             <span class="s1">&#39;Q_r&#39;</span><span class="p">:</span> <span class="n">Q_r</span><span class="p">,</span>
+             <span class="s1">&#39;Q&#39;</span><span class="p">:</span> <span class="n">Q</span><span class="p">}</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

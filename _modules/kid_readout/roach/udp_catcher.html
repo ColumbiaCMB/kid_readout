@@ -1,0 +1,219 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.roach.udp_catcher &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for kid_readout.roach.udp_catcher</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">struct</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">closing</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">cPickle</span>
+
+<div class="viewcode-block" id="get_udp_packets"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.udp_catcher.get_udp_packets">[docs]</a><span class="k">def</span> <span class="nf">get_udp_packets</span><span class="p">(</span><span class="n">ri</span><span class="p">,</span><span class="n">npkts</span><span class="p">,</span><span class="n">streamid</span><span class="p">,</span><span class="n">stream_reg</span><span class="o">=</span><span class="s1">&#39;streamid&#39;</span><span class="p">,</span><span class="n">addr</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;192.168.1.1&#39;</span><span class="p">,</span><span class="mi">12345</span><span class="p">)):</span>
+    <span class="n">ri</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="n">stream_reg</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+    
+    <span class="k">with</span> <span class="n">closing</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span><span class="n">socket</span><span class="o">.</span><span class="n">SOCK_DGRAM</span><span class="p">))</span> <span class="k">as</span> <span class="n">s</span><span class="p">:</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">nstale</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">while</span> <span class="n">s</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">2000</span><span class="p">):</span>
+                <span class="n">nstale</span> <span class="o">+=</span><span class="mi">1</span>
+            <span class="k">if</span> <span class="n">nstale</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s2">&quot;flushed&quot;</span><span class="p">,</span><span class="n">nstale</span><span class="p">,</span><span class="s2">&quot;packets&quot;</span>
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        
+        <span class="n">ri</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="n">stream_reg</span><span class="p">,</span><span class="n">streamid</span><span class="p">)</span>
+        <span class="n">pkts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">pkts</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">npkts</span><span class="p">:</span>
+            <span class="n">pkt</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">2000</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pkt</span><span class="p">:</span>
+                <span class="n">pkts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pkt</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s2">&quot;breaking&quot;</span>
+                <span class="k">break</span>
+        
+        <span class="n">ri</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="n">stream_reg</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">pkts</span></div>
+    
+<div class="viewcode-block" id="get_udp_data"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.udp_catcher.get_udp_data">[docs]</a><span class="k">def</span> <span class="nf">get_udp_data</span><span class="p">(</span><span class="n">ri</span><span class="p">,</span><span class="n">npkts</span><span class="p">,</span><span class="n">streamid</span><span class="p">,</span><span class="n">chans</span><span class="p">,</span><span class="n">nfft</span><span class="p">,</span><span class="n">stream_reg</span><span class="o">=</span><span class="s1">&#39;streamid&#39;</span><span class="p">,</span><span class="n">addr</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;192.168.1.1&#39;</span><span class="p">,</span><span class="mi">12345</span><span class="p">)):</span>
+    <span class="n">pkts</span> <span class="o">=</span> <span class="n">get_udp_packets</span><span class="p">(</span><span class="n">ri</span><span class="p">,</span> <span class="n">npkts</span><span class="p">,</span> <span class="n">streamid</span><span class="p">,</span> <span class="n">stream_reg</span><span class="o">=</span><span class="n">stream_reg</span><span class="p">,</span> <span class="n">addr</span><span class="o">=</span><span class="n">addr</span><span class="p">)</span>
+    <span class="n">darray</span><span class="p">,</span><span class="n">seqnos</span> <span class="o">=</span> <span class="n">decode_packets</span><span class="p">(</span><span class="n">pkts</span><span class="p">,</span><span class="n">streamid</span><span class="p">,</span><span class="n">chans</span><span class="p">,</span><span class="n">nfft</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">darray</span><span class="p">,</span><span class="n">seqnos</span></div>
+
+<span class="n">ptype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">([(</span><span class="s1">&#39;idle&#39;</span><span class="p">,</span><span class="s1">&#39;&gt;i2&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="s1">&#39;idx&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;i2&#39;</span><span class="p">),</span>
+                <span class="p">(</span><span class="s1">&#39;stream&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;i2&#39;</span><span class="p">),</span>
+                <span class="p">(</span><span class="s1">&#39;chan&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;i2&#39;</span><span class="p">),</span>
+                <span class="p">(</span><span class="s1">&#39;mcntr&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;i4&#39;</span><span class="p">)])</span>
+
+<span class="n">hdr_fmt</span> <span class="o">=</span> <span class="s2">&quot;&gt;4HI&quot;</span>
+<span class="n">hdr_size</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">calcsize</span><span class="p">(</span><span class="n">hdr_fmt</span><span class="p">)</span>
+<span class="n">pkt_size</span> <span class="o">=</span> <span class="n">hdr_size</span> <span class="o">+</span> <span class="mi">1024</span>
+<span class="n">null_pkt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\x00</span><span class="s2">&quot;</span><span class="o">*</span><span class="mi">1024</span>
+<div class="viewcode-block" id="decode_packets"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.udp_catcher.decode_packets">[docs]</a><span class="k">def</span> <span class="nf">decode_packets</span><span class="p">(</span><span class="n">plist</span><span class="p">,</span><span class="n">streamid</span><span class="p">,</span><span class="n">chans</span><span class="p">,</span><span class="n">nfft</span><span class="p">,</span><span class="n">pkts_per_chunk</span> <span class="o">=</span> <span class="mi">16</span><span class="p">,</span><span class="n">capture_failures</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="n">nchan</span> <span class="o">=</span> <span class="n">chans</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>    
+    <span class="n">mcnt_inc</span> <span class="o">=</span> <span class="n">nfft</span><span class="o">*</span><span class="mi">2</span><span class="o">**</span><span class="mi">12</span><span class="o">/</span><span class="n">nchan</span>    
+    <span class="n">next_seqno</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">mcnt_top</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">dset</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">mcntoff</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">last_mcnt_ovf</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">seqnos</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">nextseqnos</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">chan0</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">for</span> <span class="n">pnum</span><span class="p">,</span><span class="n">pkt</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">plist</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pkt</span><span class="p">)</span> <span class="o">!=</span> <span class="n">pkt_size</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s2">&quot;got packet size&quot;</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">pkt</span><span class="p">),</span> <span class="s2">&quot;expected&quot;</span><span class="p">,</span><span class="n">pkt_size</span>
+            <span class="k">continue</span>
+        <span class="n">pidle</span><span class="p">,</span><span class="n">pidx</span><span class="p">,</span><span class="n">pstream</span><span class="p">,</span><span class="n">pchan</span><span class="p">,</span><span class="n">pmcnt</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="n">hdr_fmt</span><span class="p">,</span><span class="n">pkt</span><span class="p">[:</span><span class="n">hdr_size</span><span class="p">])</span>
+        <span class="c1">#print pmcnt</span>
+        <span class="k">if</span> <span class="n">pstream</span> <span class="o">!=</span> <span class="n">streamid</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s2">&quot;got stream id&quot;</span><span class="p">,</span><span class="n">pstream</span><span class="p">,</span><span class="s2">&quot;expected&quot;</span><span class="p">,</span><span class="n">streamid</span>
+            <span class="k">continue</span>            
+        <span class="k">if</span> <span class="n">next_seqno</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">mcnt_top</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">last_mcnt_ovf</span> <span class="o">=</span> <span class="n">pmcnt</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">pmcnt</span> <span class="o">&lt;</span> <span class="n">mcnt_inc</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">last_mcnt_ovf</span> <span class="o">!=</span> <span class="n">pmcnt</span><span class="p">:</span>
+                    <span class="k">print</span> <span class="s2">&quot;detected mcnt overflow&quot;</span><span class="p">,</span><span class="n">last_mcnt_ovf</span><span class="p">,</span><span class="n">pmcnt</span><span class="p">,</span><span class="n">pidx</span><span class="p">,</span><span class="n">next_seqno</span><span class="p">,(</span><span class="n">mcnt_top</span><span class="o">/</span><span class="mi">2</span><span class="o">**</span><span class="mi">32</span><span class="p">),</span><span class="n">pnum</span><span class="p">,</span><span class="n">mcntoff</span>
+                    <span class="n">mcnt_top</span> <span class="o">+=</span> <span class="mi">2</span><span class="o">**</span><span class="mi">32</span>
+                    <span class="n">last_mcnt_ovf</span> <span class="o">=</span> <span class="n">pmcnt</span>
+                <span class="k">else</span><span class="p">:</span>
+<span class="c1">#                    print &quot;continuation of previous mcnt overflow&quot;,pidx</span>
+                    <span class="k">pass</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">last_mcnt_ovf</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">chunkno</span><span class="p">,</span><span class="n">pmcntoff</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">pmcnt</span><span class="o">+</span><span class="n">mcnt_top</span><span class="p">,</span><span class="n">mcnt_inc</span><span class="p">)</span>
+        <span class="c1">#print chunkno,pmcnt,pmcntoff,pidx</span>
+        <span class="n">seqno</span> <span class="o">=</span> <span class="p">(</span><span class="n">chunkno</span><span class="p">)</span><span class="o">*</span><span class="n">pkts_per_chunk</span> <span class="o">+</span> <span class="n">pidx</span>
+        <span class="c1">#print seqno</span>
+        <span class="n">seqnos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">seqno</span><span class="p">)</span>
+        <span class="n">nextseqnos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">next_seqno</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">next_seqno</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">chan0</span> <span class="o">=</span> <span class="n">pchan</span>
+<span class="c1">#            print &quot;found first packet&quot;,seqno,pidx</span>
+            <span class="n">next_seqno</span> <span class="o">=</span> <span class="n">seqno</span>
+            <span class="n">mcntoff</span> <span class="o">=</span> <span class="n">pmcntoff</span>
+<span class="c1">#            print pchan</span>
+        <span class="k">if</span> <span class="n">mcntoff</span> <span class="o">!=</span> <span class="n">pmcntoff</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s2">&quot;mcnt offset jumped. Was&quot;</span><span class="p">,</span><span class="n">mcntoff</span><span class="p">,</span><span class="s2">&quot;now&quot;</span><span class="p">,</span><span class="n">pmcntoff</span><span class="p">,</span><span class="s2">&quot;dropping..&quot;</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">pchan</span> <span class="o">!=</span> <span class="n">chan0</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s2">&quot;warning! channel id changed from&quot;</span><span class="p">,</span><span class="n">chan0</span><span class="p">,</span><span class="s2">&quot;to&quot;</span><span class="p">,</span><span class="n">pchan</span> 
+        <span class="k">if</span> <span class="n">seqno</span> <span class="o">-</span> <span class="n">next_seqno</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s2">&quot;seqno diff&quot;</span><span class="p">,(</span><span class="n">seqno</span><span class="o">-</span><span class="n">next_seqno</span><span class="p">),</span><span class="n">seqno</span><span class="p">,</span><span class="n">next_seqno</span>
+            <span class="k">continue</span> <span class="c1"># trying to go backwards</span>
+        <span class="k">if</span> <span class="n">seqno</span> <span class="o">==</span> <span class="n">next_seqno</span><span class="p">:</span>
+            <span class="n">dset</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pkt</span><span class="p">[</span><span class="n">hdr_size</span><span class="p">:])</span>
+            <span class="n">next_seqno</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s2">&quot;sequence number skip, expected:&quot;</span><span class="p">,</span><span class="n">next_seqno</span><span class="p">,</span><span class="s2">&quot;got&quot;</span><span class="p">,</span><span class="n">seqno</span><span class="p">,</span><span class="s2">&quot;inserting&quot;</span><span class="p">,(</span><span class="n">seqno</span><span class="o">-</span><span class="n">next_seqno</span><span class="p">),</span><span class="s2">&quot;null packets&quot;</span><span class="p">,</span><span class="n">pnum</span><span class="p">,</span><span class="n">pidx</span>
+            <span class="k">if</span> <span class="n">capture_failures</span><span class="p">:</span> <span class="c1">#seqno-next_seqno == 32768:</span>
+                <span class="k">print</span> <span class="s2">&quot;caught special case, writing to disk&quot;</span>
+                <span class="n">fname</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;udp_skip_%Y-%m-</span><span class="si">%d</span><span class="s2">_%H%M%S.pkl&quot;</span><span class="p">)</span>
+                <span class="n">fh</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+                <span class="n">cPickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">plist</span><span class="o">=</span><span class="n">plist</span><span class="p">,</span><span class="n">dset</span><span class="o">=</span><span class="n">dset</span><span class="p">,</span><span class="n">pnum</span><span class="o">=</span><span class="n">pnum</span><span class="p">,</span><span class="n">pkt</span><span class="o">=</span><span class="n">pkt</span><span class="p">,</span><span class="n">streamid</span><span class="o">=</span><span class="n">streamid</span><span class="p">,</span><span class="n">chans</span><span class="o">=</span><span class="n">chans</span><span class="p">,</span><span class="n">nfft</span><span class="o">=</span><span class="n">nfft</span><span class="p">),</span>
+                             <span class="n">fh</span><span class="p">,</span><span class="n">cPickle</span><span class="o">.</span><span class="n">HIGHEST_PROTOCOL</span><span class="p">)</span>
+                <span class="n">fh</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="k">print</span> <span class="s2">&quot;wrote data to:&quot;</span><span class="p">,</span><span class="n">fname</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">seqno</span> <span class="o">-</span> <span class="n">next_seqno</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">dset</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">null_pkt</span><span class="p">)</span>
+                <span class="n">next_seqno</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">dset</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dset</span><span class="p">)</span>
+    <span class="n">ns</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dset</span><span class="p">)</span><span class="o">//</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">nchan</span><span class="p">))</span>
+    <span class="n">dset</span> <span class="o">=</span> <span class="n">dset</span><span class="p">[:</span><span class="n">ns</span><span class="o">*</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">nchan</span><span class="p">)]</span>
+    <span class="n">darray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">dset</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;i2&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;float32&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="s1">&#39;complex64&#39;</span><span class="p">)</span>
+    <span class="n">darray</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">ns</span><span class="p">,</span><span class="n">nchan</span><span class="p">)</span>
+    <span class="n">shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">chans</span><span class="o">==</span><span class="p">(</span><span class="n">chan0</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">nchan</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">darray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">darray</span><span class="p">,</span><span class="n">shift</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">darray</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">seqnos</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

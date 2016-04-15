@@ -1,0 +1,205 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.equipment.starcryo_temps &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for kid_readout.equipment.starcryo_temps</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Routines for getting temperature data for starcryo cryostat</span>
+<span class="sd">Currently assumes SRS logs are in /data/readout/SRS</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">bisect</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">kid_readout.equipment.parse_srs</span>
+<span class="kn">import</span> <span class="nn">kid_readout.analysis.resources.experiments</span>
+
+
+<span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s1">&#39;/data/readout&#39;</span><span class="p">):</span>
+    <span class="n">temperature_log_file_dir</span> <span class="o">=</span> <span class="s1">&#39;/data/readout/SRS/&#39;</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">temperature_log_file_dir</span> <span class="o">=</span> <span class="s1">&#39;/artemis/readout/SRS/&#39;</span>
+
+<span class="n">_filecache</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">epochs</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">temperature_log_filenames</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">temperature_log_filenames_last_updated</span> <span class="o">=</span> <span class="mi">0</span>
+
+
+<div class="viewcode-block" id="get_temperature_log_file_list"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.starcryo_temps.get_temperature_log_file_list">[docs]</a><span class="k">def</span> <span class="nf">get_temperature_log_file_list</span><span class="p">():</span>
+    <span class="c1"># First the original logs</span>
+    <span class="n">log_filenames</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">temperature_log_file_dir</span><span class="p">,</span> <span class="s1">&#39;2*.txt&#39;</span><span class="p">))</span>
+    <span class="n">log_filenames</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">log_filenames</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Could not find any temperature log files in </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">temperature_log_file_dir</span><span class="p">)</span>
+    <span class="n">epochs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">log_filenames</span><span class="p">:</span>
+        <span class="n">base</span><span class="p">,</span> <span class="n">fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">epochs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">mktime</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">-%H%M%S.txt&#39;</span><span class="p">)))</span>
+
+    <span class="n">epochs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">epochs</span><span class="p">,</span> <span class="n">log_filenames</span></div>
+
+
+<div class="viewcode-block" id="refresh_temperature_log_file_list"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.starcryo_temps.refresh_temperature_log_file_list">[docs]</a><span class="k">def</span> <span class="nf">refresh_temperature_log_file_list</span><span class="p">():</span>
+    <span class="k">global</span> <span class="n">epochs</span>
+    <span class="k">global</span> <span class="n">temperature_log_filenames</span>
+    <span class="k">global</span> <span class="n">temperature_log_filenames_last_updated</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">temperature_log_filenames</span> <span class="ow">or</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">temperature_log_filenames_last_updated</span> <span class="o">&gt;</span> <span class="mi">20</span> <span class="o">*</span> <span class="mi">3600</span><span class="p">:</span>
+        <span class="n">epochs</span><span class="p">,</span> <span class="n">temperature_log_filenames</span> <span class="o">=</span> <span class="n">get_temperature_log_file_list</span><span class="p">()</span>
+        <span class="n">temperature_log_filenames_last_updated</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">print</span> <span class="s2">&quot;updated file list&quot;</span></div>
+
+
+<span class="n">refresh_temperature_log_file_list</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="get_temperatures_at"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.starcryo_temps.get_temperatures_at">[docs]</a><span class="k">def</span> <span class="nf">get_temperatures_at</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+    <span class="n">refresh_temperature_log_file_list</span><span class="p">()</span>
+    <span class="k">global</span> <span class="n">epochs</span>
+    <span class="k">global</span> <span class="n">temperature_log_filenames</span>
+    <span class="k">global</span> <span class="n">_filecache</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">temperature_log_filenames</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">results</span>
+
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">t</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">t</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">end_time</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">bisect</span><span class="o">.</span><span class="n">bisect_right</span><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">start_time</span><span class="p">)</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">temperature_log_filenames</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">_filecache</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">end_time</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">20</span> <span class="o">*</span> <span class="mi">60</span><span class="p">:</span>  <span class="c1"># if we&#39;re looking for data from more than 20 minutes ago, look in the cache</span>
+        <span class="n">datetime_timestamp</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">_filecache</span><span class="p">[</span><span class="n">filename</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">datetime_timestamp</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">kid_readout</span><span class="o">.</span><span class="n">equipment</span><span class="o">.</span><span class="n">parse_srs</span><span class="o">.</span><span class="n">get_load_log</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">_filecache</span><span class="p">[</span><span class="n">filename</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">datetime_timestamp</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="n">info</span> <span class="o">=</span> <span class="n">kid_readout</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">get_experiment_info_at</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">cryostat</span><span class="o">=</span><span class="s1">&#39;StarCryo&#39;</span><span class="p">)</span>
+    <span class="n">thermometry</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;thermometry_config&#39;</span><span class="p">]</span>
+
+    <span class="n">times</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">end_time</span> <span class="o">&gt;</span> <span class="n">times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">print</span> <span class="s2">&quot;Warning: requested times may span more than one log file, so results may not be as intended&quot;</span>
+        <span class="k">print</span> <span class="s2">&quot;log file is: </span><span class="si">%s</span><span class="s2">, last requested time is </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">ctime</span><span class="p">(</span><span class="n">end_time</span><span class="p">))</span>
+    <span class="n">primary_package_temperature</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">thermometry</span><span class="p">[</span><span class="s1">&#39;package&#39;</span><span class="p">]])</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+        <span class="n">default</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">default</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="n">secondary_package_temperature</span> <span class="o">=</span> <span class="n">default</span>
+    <span class="n">primary_load_temperature</span> <span class="o">=</span> <span class="n">default</span>
+    <span class="n">secondary_load_temperature</span> <span class="o">=</span> <span class="n">default</span>
+
+    <span class="k">for</span> <span class="n">identifier</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;stage&#39;</span><span class="p">,</span> <span class="s1">&#39;secondary_package&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">identifier</span> <span class="ow">in</span> <span class="n">thermometry</span><span class="p">:</span>
+            <span class="n">secondary_package_temperature</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">thermometry</span><span class="p">[</span><span class="n">identifier</span><span class="p">]])</span>
+            <span class="k">break</span>
+    <span class="k">if</span> <span class="s1">&#39;load&#39;</span> <span class="ow">in</span> <span class="n">thermometry</span><span class="p">:</span>
+        <span class="n">primary_load_temperature</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">thermometry</span><span class="p">[</span><span class="s1">&#39;load&#39;</span><span class="p">]])</span>
+
+    <span class="k">for</span> <span class="n">identifier</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;copper&#39;</span><span class="p">,</span> <span class="s1">&#39;secondary_load&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">identifier</span> <span class="ow">in</span> <span class="n">thermometry</span><span class="p">:</span>
+            <span class="n">secondary_load_temperature</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">thermometry</span><span class="p">[</span><span class="n">identifier</span><span class="p">]])</span>
+            <span class="k">break</span>
+
+    <span class="k">return</span> <span class="n">primary_package_temperature</span><span class="p">,</span> <span class="n">secondary_package_temperature</span><span class="p">,</span> <span class="n">primary_load_temperature</span><span class="p">,</span> <span class="n">secondary_load_temperature</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>
