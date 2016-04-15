@@ -128,11 +128,316 @@
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="kid-readout-analysis-archive-module">
-<h2>kid_readout.analysis.archive module<a class="headerlink" href="#kid-readout-analysis-archive-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-kid_readout.analysis.archive">
+<span id="kid-readout-analysis-archive-module"></span><h2>kid_readout.analysis.archive module<a class="headerlink" href="#module-kid_readout.analysis.archive" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="kid_readout.analysis.archive.add_calibration">
+<code class="descclassname">kid_readout.analysis.archive.</code><code class="descname">add_calibration</code><span class="sig-paren">(</span><em>x</em>, <em>zbd_calibration_data=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/archive.html#add_calibration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.archive.add_calibration" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.archive.add_noise_fits">
+<code class="descclassname">kid_readout.analysis.archive.</code><code class="descname">add_noise_fits</code><span class="sig-paren">(</span><em>df</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/archive.html#add_noise_fits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.archive.add_noise_fits" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.archive.add_noise_summary">
+<code class="descclassname">kid_readout.analysis.archive.</code><code class="descname">add_noise_summary</code><span class="sig-paren">(</span><em>df</em>, <em>device_band=(1</em>, <em>100)</em>, <em>amplifier_band=(2000.0</em>, <em>10000.0)</em>, <em>method=&lt;function median&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/archive.html#add_noise_summary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.archive.add_noise_summary" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.archive.add_total_mmw_attenuator_turns">
+<code class="descclassname">kid_readout.analysis.archive.</code><code class="descname">add_total_mmw_attenuator_turns</code><span class="sig-paren">(</span><em>df</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/archive.html#add_total_mmw_attenuator_turns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.archive.add_total_mmw_attenuator_turns" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.archive.build_response_fit_function">
+<code class="descclassname">kid_readout.analysis.archive.</code><code class="descname">build_response_fit_function</code><span class="sig-paren">(</span><em>make_plots=False</em>, <em>mcmc_length=500</em>, <em>mcmc_burn_in=400</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/archive.html#build_response_fit_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.archive.build_response_fit_function" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.archive.build_simple_archive">
+<code class="descclassname">kid_readout.analysis.archive.</code><code class="descname">build_simple_archive</code><span class="sig-paren">(</span><em>pklnames</em>, <em>index_to_id=None</em>, <em>archive_name=None</em>, <em>archive_path=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/archive.html#build_simple_archive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.archive.build_simple_archive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.archive.build_simple_archives">
+<code class="descclassname">kid_readout.analysis.archive.</code><code class="descname">build_simple_archives</code><span class="sig-paren">(</span><em>pklglob</em>, <em>index_to_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/archive.html#build_simple_archives"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.archive.build_simple_archives" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.archive.compute_reconstructed_power">
+<code class="descclassname">kid_readout.analysis.archive.</code><code class="descname">compute_reconstructed_power</code><span class="sig-paren">(</span><em>df</em>, <em>calibration</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/archive.html#compute_reconstructed_power"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.archive.compute_reconstructed_power" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.archive.get_constant_package_temperature_data">
+<code class="descclassname">kid_readout.analysis.archive.</code><code class="descname">get_constant_package_temperature_data</code><span class="sig-paren">(</span><em>df</em>, <em>center_temperature=0.183</em>, <em>peak_excursion=0.005</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/archive.html#get_constant_package_temperature_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.archive.get_constant_package_temperature_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.archive.load_archive">
+<code class="descclassname">kid_readout.analysis.archive.</code><code class="descname">load_archive</code><span class="sig-paren">(</span><em>fn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/archive.html#load_archive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.archive.load_archive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.archive.normalize_f0">
+<code class="descclassname">kid_readout.analysis.archive.</code><code class="descname">normalize_f0</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/archive.html#normalize_f0"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.archive.normalize_f0" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.archive.save_archive">
+<code class="descclassname">kid_readout.analysis.archive.</code><code class="descname">save_archive</code><span class="sig-paren">(</span><em>df</em>, <em>archname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/archive.html#save_archive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.archive.save_archive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
-<div class="section" id="kid-readout-analysis-dataframe-module">
-<h2>kid_readout.analysis.dataframe module<a class="headerlink" href="#kid-readout-analysis-dataframe-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-kid_readout.analysis.dataframe">
+<span id="kid-readout-analysis-dataframe-module"></span><h2>kid_readout.analysis.dataframe module<a class="headerlink" href="#module-kid_readout.analysis.dataframe" title="Permalink to this headline">¶</a></h2>
+<p>This module is for functions that operate on DataFrames.</p>
+<p>Only the functions that use groupby should return the DataFrame.</p>
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.I">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">I</code><span class="sig-paren">(</span><em>P</em>, <em>P_0</em>, <em>P_star</em>, <em>I_0</em>, <em>I_C</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#I"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.I" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.I_inverse">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">I_inverse</code><span class="sig-paren">(</span><em>I</em>, <em>P_0</em>, <em>P_star</em>, <em>I_0</em>, <em>I_C</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#I_inverse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.I_inverse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.I_model">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">I_model</code><span class="sig-paren">(</span><em>params</em>, <em>P</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#I_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.I_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.I_residual">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">I_residual</code><span class="sig-paren">(</span><em>params</em>, <em>P</em>, <em>I_data</em>, <em>I_errors</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#I_residual"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.I_residual" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.X">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">X</code><span class="sig-paren">(</span><em>P</em>, <em>P_0</em>, <em>P_star</em>, <em>X_0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#X"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.X" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.X_inverse">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">X_inverse</code><span class="sig-paren">(</span><em>X</em>, <em>P_0</em>, <em>P_star</em>, <em>X_0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#X_inverse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.X_inverse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.X_model">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">X_model</code><span class="sig-paren">(</span><em>params</em>, <em>P</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#X_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.X_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.X_residual">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">X_residual</code><span class="sig-paren">(</span><em>params</em>, <em>P</em>, <em>X_data</em>, <em>X_errors</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#X_residual"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.X_residual" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.add_Q_i_err">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">add_Q_i_err</code><span class="sig-paren">(</span><em>df</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#add_Q_i_err"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.add_Q_i_err" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.add_channel">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">add_channel</code><span class="sig-paren">(</span><em>df</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#add_channel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.add_channel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.add_finite_difference_power_response">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">add_finite_difference_power_response</code><span class="sig-paren">(</span><em>df</em>, <em>power</em>, <em>masker=&lt;function &lt;lambda&gt;&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#add_finite_difference_power_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.add_finite_difference_power_response" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.add_fit_power_response">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">add_fit_power_response</code><span class="sig-paren">(</span><em>df</em>, <em>initial</em>, <em>power</em>, <em>masker=&lt;function &lt;lambda&gt;&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#add_fit_power_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.add_fit_power_response" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.add_location">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">add_location</code><span class="sig-paren">(</span><em>df</em>, <em>channel_to_location</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#add_location"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.add_location" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.add_resonator_fit_good">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">add_resonator_fit_good</code><span class="sig-paren">(</span><em>df</em>, <em>maximum_fractional_f_r_error</em>, <em>maximum_iQi_error</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#add_resonator_fit_good"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.add_resonator_fit_good" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.add_response">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">add_response</code><span class="sig-paren">(</span><em>df</em>, <em>key</em>, <em>masker=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#add_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.add_response" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.add_source_power">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">add_source_power</code><span class="sig-paren">(</span><em>df</em>, <em>zbd_fraction</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#add_source_power"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.add_source_power" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.add_temperature_groups">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">add_temperature_groups</code><span class="sig-paren">(</span><em>df</em>, <em>temperature_deviation_K=0.005</em>, <em>temperature_field='sweep_primary_package_temperature'</em>, <em>debug=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#add_temperature_groups"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.add_temperature_groups" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.add_zbd_power">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">add_zbd_power</code><span class="sig-paren">(</span><em>df</em>, <em>optical_frequency=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#add_zbd_power"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.add_zbd_power" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>df</strong> &#8211; The dataframe.</li>
+<li><strong>optical_frequency</strong> &#8211; The frequency in hertz detected by the ZBD; the default responsivity is close to the</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>measured 150 GHz responsivity, and was previously used in most code.
+:return: None; the dataframe is modified.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.add_zbd_voltage">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">add_zbd_voltage</code><span class="sig-paren">(</span><em>df</em>, <em>linearize</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#add_zbd_voltage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.add_zbd_voltage" title="Permalink to this definition">¶</a></dt>
+<dd><p>The modulated square wave has minimum 0 and maximum V_z, equivalent to an offset square wave with peak V_z / 2.
+The lock-in measures the Fourier component at the reference frequency and reports RMS voltage, so in this case it
+will report
+V_l = (V_z / 2) (4 / pi) 2^{-1/2} = (2^{1/2} / pi) V_z.
+The peak ZBD voltage is thus
+V_z = 2^{-1/2} pi V_l</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>df</strong> &#8211; The dataframe.</li>
+<li><strong>linearize</strong> &#8211; If True, the measured ZBD voltage is corrected based on the measured linearity.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None; the dataframe is modified.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.analyze">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">analyze</code><span class="sig-paren">(</span><em>df</em>, <em>channel_to_location=None</em>, <em>maximum_fractional_f_r_error=1e-05</em>, <em>maximum_iQi_error=1e-05</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#analyze"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.analyze" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.analyze_mmw_source_data">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">analyze_mmw_source_data</code><span class="sig-paren">(</span><em>df</em>, <em>zbd_fraction</em>, <em>optical_frequency=None</em>, <em>linearize=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#analyze_mmw_source_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.analyze_mmw_source_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.center_dydx_3">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">center_dydx_3</code><span class="sig-paren">(</span><em>x0</em>, <em>x1</em>, <em>x2</em>, <em>y0</em>, <em>y1</em>, <em>y2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#center_dydx_3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.center_dydx_3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return...
+:param x0:
+:param x1:
+:param x2:
+:param y0:
+:param y1:
+:param y2:
+:return: the three-point finite-difference derivative at x1.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.center_dydx_3_err">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">center_dydx_3_err</code><span class="sig-paren">(</span><em>x0</em>, <em>x1</em>, <em>x2</em>, <em>dy0</em>, <em>dy1</em>, <em>dy2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#center_dydx_3_err"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.center_dydx_3_err" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return
+:param x0:
+:param x1:
+:param x2:
+:param dy0:
+:param dy1:
+:param dy2:
+:return:</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.dI_dP">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">dI_dP</code><span class="sig-paren">(</span><em>P</em>, <em>P_0</em>, <em>P_star</em>, <em>I_0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#dI_dP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.dI_dP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.dX_dP">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">dX_dP</code><span class="sig-paren">(</span><em>P</em>, <em>P_0</em>, <em>P_star</em>, <em>X_0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#dX_dP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.dX_dP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.dydx_2">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">dydx_2</code><span class="sig-paren">(</span><em>x0</em>, <em>x1</em>, <em>y0</em>, <em>y1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#dydx_2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.dydx_2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return
+:param x0:
+:param x1:
+:param y0:
+:param y1:
+:return:</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.dydx_2_err">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">dydx_2_err</code><span class="sig-paren">(</span><em>x0</em>, <em>x1</em>, <em>dy0</em>, <em>dy1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#dydx_2_err"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.dydx_2_err" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return
+:param x0:
+:param x1:
+:param y0:
+:param y1:
+:return:</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.fit">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">fit</code><span class="sig-paren">(</span><em>P</em>, <em>X_data</em>, <em>I_data</em>, <em>initial</em>, <em>X_errors=1</em>, <em>I_errors=1</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.fit_XI_temperature_response">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">fit_XI_temperature_response</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#fit_XI_temperature_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.fit_XI_temperature_response" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.guess">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">guess</code><span class="sig-paren">(</span><em>P</em>, <em>X_data</em>, <em>I_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#guess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.guess" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.lagrange">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">lagrange</code><span class="sig-paren">(</span><em>x</em>, <em>x_data</em>, <em>k</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#lagrange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.lagrange" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.lagrange_interpolate">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">lagrange_interpolate</code><span class="sig-paren">(</span><em>x</em>, <em>x_data</em>, <em>y_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#lagrange_interpolate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.lagrange_interpolate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.n_qp_over_n_star">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">n_qp_over_n_star</code><span class="sig-paren">(</span><em>P</em>, <em>P_0</em>, <em>P_star</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#n_qp_over_n_star"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.n_qp_over_n_star" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.parameters">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">parameters</code><span class="sig-paren">(</span><em>P_0</em>, <em>P_star</em>, <em>X_0</em>, <em>I_0</em>, <em>I_C</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#parameters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.parameters" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.rename_f">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">rename_f</code><span class="sig-paren">(</span><em>df</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#rename_f"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.rename_f" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.dataframe.residual">
+<code class="descclassname">kid_readout.analysis.dataframe.</code><code class="descname">residual</code><span class="sig-paren">(</span><em>params</em>, <em>P</em>, <em>X_data</em>, <em>I_data</em>, <em>X_errors</em>, <em>I_errors</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/dataframe.html#residual"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.dataframe.residual" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 <div class="section" id="module-kid_readout.analysis.fitter">
 <span id="kid-readout-analysis-fitter-module"></span><h2>kid_readout.analysis.fitter module<a class="headerlink" href="#module-kid_readout.analysis.fitter" title="Permalink to this headline">¶</a></h2>
@@ -191,8 +496,44 @@ params and the x-values corresponding to the data.</p>
 <dd></dd></dl>
 
 </div>
-<div class="section" id="kid-readout-analysis-kid-response-module">
-<h2>kid_readout.analysis.kid_response module<a class="headerlink" href="#kid-readout-analysis-kid-response-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-kid_readout.analysis.kid_response">
+<span id="kid-readout-analysis-kid-response-module"></span><h2>kid_readout.analysis.kid_response module<a class="headerlink" href="#module-kid_readout.analysis.kid_response" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="kid_readout.analysis.kid_response.MCMCKidResponseFitter">
+<em class="property">class </em><code class="descclassname">kid_readout.analysis.kid_response.</code><code class="descname">MCMCKidResponseFitter</code><span class="sig-paren">(</span><em>x_data</em>, <em>y_data</em>, <em>model=&lt;function fractional_freq_to_power_model&gt;</em>, <em>guess=&lt;function fractional_freq_to_power_guess&gt;</em>, <em>functions={}</em>, <em>mask=None</em>, <em>errors=None</em>, <em>method='leastsq'</em>, <em>nwalkers=32</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/kid_response.html#MCMCKidResponseFitter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.kid_response.MCMCKidResponseFitter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#kid_readout.analysis.mcfit.MCMCFitter" title="kid_readout.analysis.mcfit.MCMCFitter"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.analysis.mcfit.MCMCFitter</span></code></a></p>
+<dl class="method">
+<dt id="kid_readout.analysis.kid_response.MCMCKidResponseFitter.dpdf">
+<code class="descname">dpdf</code><span class="sig-paren">(</span><em>frac_freq</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/kid_response.html#MCMCKidResponseFitter.dpdf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.kid_response.MCMCKidResponseFitter.dpdf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.kid_response.MCMCKidResponseFitter.to_power">
+<code class="descname">to_power</code><span class="sig-paren">(</span><em>frac_freq</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/kid_response.html#MCMCKidResponseFitter.to_power"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.kid_response.MCMCKidResponseFitter.to_power" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.kid_response.d_power_d_fractional_freq">
+<code class="descclassname">kid_readout.analysis.kid_response.</code><code class="descname">d_power_d_fractional_freq</code><span class="sig-paren">(</span><em>frac_freq</em>, <em>break_point</em>, <em>scale</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/kid_response.html#d_power_d_fractional_freq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.kid_response.d_power_d_fractional_freq" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.kid_response.fractional_freq_to_power">
+<code class="descclassname">kid_readout.analysis.kid_response.</code><code class="descname">fractional_freq_to_power</code><span class="sig-paren">(</span><em>x</em>, <em>break_point</em>, <em>scale</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/kid_response.html#fractional_freq_to_power"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.kid_response.fractional_freq_to_power" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.kid_response.fractional_freq_to_power_guess">
+<code class="descclassname">kid_readout.analysis.kid_response.</code><code class="descname">fractional_freq_to_power_guess</code><span class="sig-paren">(</span><em>x</em>, <em>y</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/kid_response.html#fractional_freq_to_power_guess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.kid_response.fractional_freq_to_power_guess" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.kid_response.fractional_freq_to_power_model">
+<code class="descclassname">kid_readout.analysis.kid_response.</code><code class="descname">fractional_freq_to_power_model</code><span class="sig-paren">(</span><em>params</em>, <em>x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/kid_response.html#fractional_freq_to_power_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.kid_response.fractional_freq_to_power_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 <div class="section" id="module-kid_readout.analysis.lmfit_fitter">
 <span id="kid-readout-analysis-lmfit-fitter-module"></span><h2>kid_readout.analysis.lmfit_fitter module<a class="headerlink" href="#module-kid_readout.analysis.lmfit_fitter" title="Permalink to this headline">¶</a></h2>
@@ -203,8 +544,120 @@ params and the x-values corresponding to the data.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="kid-readout-analysis-mcfit-module">
-<h2>kid_readout.analysis.mcfit module<a class="headerlink" href="#kid-readout-analysis-mcfit-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-kid_readout.analysis.mcfit">
+<span id="kid-readout-analysis-mcfit-module"></span><h2>kid_readout.analysis.mcfit module<a class="headerlink" href="#module-kid_readout.analysis.mcfit" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="kid_readout.analysis.mcfit.GeneralMCMC">
+<em class="property">class </em><code class="descclassname">kid_readout.analysis.mcfit.</code><code class="descname">GeneralMCMC</code><span class="sig-paren">(</span><em>fitter</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#GeneralMCMC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.GeneralMCMC" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="kid_readout.analysis.mcfit.GeneralMCMC.basic_loglikelihood">
+<code class="descname">basic_loglikelihood</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#GeneralMCMC.basic_loglikelihood"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.GeneralMCMC.basic_loglikelihood" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.mcfit.GeneralMCMC.basic_logprob">
+<code class="descname">basic_logprob</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#GeneralMCMC.basic_logprob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.GeneralMCMC.basic_logprob" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.mcfit.GeneralMCMC.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>length=500</em>, <em>burn_in=100</em>, <em>nwalkers=32</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#GeneralMCMC.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.GeneralMCMC.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.mcfit.GeneralMCMC.set_parameter_values">
+<code class="descname">set_parameter_values</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#GeneralMCMC.set_parameter_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.GeneralMCMC.set_parameter_values" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.mcfit.GeneralMCMC.setup_sampler">
+<code class="descname">setup_sampler</code><span class="sig-paren">(</span><em>nwalkers=32</em>, <em>error_factor=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#GeneralMCMC.setup_sampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.GeneralMCMC.setup_sampler" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.mcfit.GeneralMCMC.triangle">
+<code class="descname">triangle</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#GeneralMCMC.triangle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.GeneralMCMC.triangle" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.mcfit.GeneralMCMC.uniform_logprior">
+<code class="descname">uniform_logprior</code><span class="sig-paren">(</span><em>args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#GeneralMCMC.uniform_logprior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.GeneralMCMC.uniform_logprior" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.mcfit.GeneralMCMC.update_parameter_list">
+<code class="descname">update_parameter_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#GeneralMCMC.update_parameter_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.GeneralMCMC.update_parameter_list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="kid_readout.analysis.mcfit.MCMCFitter">
+<em class="property">class </em><code class="descclassname">kid_readout.analysis.mcfit.</code><code class="descname">MCMCFitter</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#MCMCFitter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.MCMCFitter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#kid_readout.analysis.fitter.Fitter" title="kid_readout.analysis.fitter.Fitter"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.analysis.fitter.Fitter</span></code></a></p>
+<dl class="method">
+<dt id="kid_readout.analysis.mcfit.MCMCFitter.basic_loglikelihood">
+<code class="descname">basic_loglikelihood</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#MCMCFitter.basic_loglikelihood"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.MCMCFitter.basic_loglikelihood" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.mcfit.MCMCFitter.basic_logprob">
+<code class="descname">basic_logprob</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#MCMCFitter.basic_logprob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.MCMCFitter.basic_logprob" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.mcfit.MCMCFitter.get_param_bounds_by_index">
+<code class="descname">get_param_bounds_by_index</code><span class="sig-paren">(</span><em>index</em>, <em>error_factor=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#MCMCFitter.get_param_bounds_by_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.MCMCFitter.get_param_bounds_by_index" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.mcfit.MCMCFitter.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>length=500</em>, <em>burn_in=100</em>, <em>nwalkers=32</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#MCMCFitter.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.MCMCFitter.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.mcfit.MCMCFitter.setup_sampler">
+<code class="descname">setup_sampler</code><span class="sig-paren">(</span><em>nwalkers=32</em>, <em>error_factor=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#MCMCFitter.setup_sampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.MCMCFitter.setup_sampler" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.mcfit.MCMCFitter.triangle">
+<code class="descname">triangle</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#MCMCFitter.triangle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.MCMCFitter.triangle" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.mcfit.MCMCFitter.uniform_logprior">
+<code class="descname">uniform_logprior</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#MCMCFitter.uniform_logprior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.MCMCFitter.uniform_logprior" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="kid_readout.analysis.mcfit.MCMCResonator">
+<em class="property">class </em><code class="descclassname">kid_readout.analysis.mcfit.</code><code class="descname">MCMCResonator</code><span class="sig-paren">(</span><em>freq</em>, <em>s21</em>, <em>model=&lt;function delayed_generic_s21&gt;</em>, <em>guess=&lt;function delayed_generic_guess&gt;</em>, <em>functions={'Q_e': &lt;function Q_e at 0x7f2240600cf8&gt;</em>, <em>'chi_c_real': &lt;function chi_c_real at 0x7f2240600d70&gt;</em>, <em>'Q_i': &lt;function Q_i at 0x7f2240600c80&gt;</em>, <em>'chi_c_norm': &lt;function chi_c_norm at 0x7f2240600de8&gt;}</em>, <em>mask=None</em>, <em>errors=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#MCMCResonator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.MCMCResonator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.legacy_resonator.Resonator" title="kid_readout.analysis.resonator.legacy_resonator.Resonator"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.analysis.resonator.legacy_resonator.Resonator</span></code></a>, <a class="reference internal" href="#kid_readout.analysis.mcfit.MCMCFitter" title="kid_readout.analysis.mcfit.MCMCFitter"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.analysis.mcfit.MCMCFitter</span></code></a></p>
+<dl class="method">
+<dt id="kid_readout.analysis.mcfit.MCMCResonator.basic_loglikelihood">
+<code class="descname">basic_loglikelihood</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#MCMCResonator.basic_loglikelihood"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.MCMCResonator.basic_loglikelihood" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.mcfit.MCMCResonator.setup_sampler">
+<code class="descname">setup_sampler</code><span class="sig-paren">(</span><em>nwalkers=32</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#MCMCResonator.setup_sampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.MCMCResonator.setup_sampler" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.mcfit.MCMCResonator.uniform_logprior">
+<code class="descname">uniform_logprior</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#MCMCResonator.uniform_logprior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.MCMCResonator.uniform_logprior" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.mcfit.convert_to_lmfit_params">
+<code class="descclassname">kid_readout.analysis.mcfit.</code><code class="descname">convert_to_lmfit_params</code><span class="sig-paren">(</span><em>raw_params, base_params, raw_param_list=['f_0', 'A_mag', 'Q', 'Q_e_real', 'Q_e_imag', 'delay', 'phi', 'a']</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/mcfit.html#convert_to_lmfit_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.mcfit.convert_to_lmfit_params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 <div class="section" id="module-kid_readout.analysis.noise_measurement">
 <span id="kid-readout-analysis-noise-measurement-module"></span><h2>kid_readout.analysis.noise_measurement module<a class="headerlink" href="#module-kid_readout.analysis.noise_measurement" title="Permalink to this headline">¶</a></h2>
@@ -332,8 +785,28 @@ determined by the resonator fit</p>
 <dd></dd></dl>
 
 </div>
-<div class="section" id="kid-readout-analysis-plot-dataframe-module">
-<h2>kid_readout.analysis.plot_dataframe module<a class="headerlink" href="#kid-readout-analysis-plot-dataframe-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-kid_readout.analysis.plot_dataframe">
+<span id="kid-readout-analysis-plot-dataframe-module"></span><h2>kid_readout.analysis.plot_dataframe module<a class="headerlink" href="#module-kid_readout.analysis.plot_dataframe" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="kid_readout.analysis.plot_dataframe.plot_pca_noise">
+<code class="descclassname">kid_readout.analysis.plot_dataframe.</code><code class="descname">plot_pca_noise</code><span class="sig-paren">(</span><em>df</em>, <em>k</em>, <em>select_key='channel'</em>, <em>color_key=None</em>, <em>norm=&lt;class 'matplotlib.colors.LogNorm'&gt;</em>, <em>colormap=&lt;matplotlib.colors.LinearSegmentedColormap object&gt;</em>, <em>legend=False</em>, <em>plot_row_1=True</em>, <em>plot_row_0=True</em>, <em>plot_fit=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/plot_dataframe.html#plot_pca_noise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.plot_dataframe.plot_pca_noise" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.plot_dataframe.plot_response">
+<code class="descclassname">kid_readout.analysis.plot_dataframe.</code><code class="descname">plot_response</code><span class="sig-paren">(</span><em>df</em>, <em>value</em>, <em>nrows=4</em>, <em>ncols=4</em>, <em>figsize=(6</em>, <em>6)</em>, <em>loglog=False</em>, <em>fits=True</em>, <em>scale=1000000.0</em>, <em>limits=None</em>, <em>label=None</em>, <em>X_scale=1000000.0</em>, <em>X_limits=None</em>, <em>X_label='$10^6 X$'</em>, <em>I_scale=1000000.0</em>, <em>I_limits=None</em>, <em>I_label='$10^6 Q_i^{-1}$'</em>, <em>X_color='blue'</em>, <em>I_color='green'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/plot_dataframe.html#plot_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.plot_dataframe.plot_response" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.plot_dataframe.plot_sweeps">
+<code class="descclassname">kid_readout.analysis.plot_dataframe.</code><code class="descname">plot_sweeps</code><span class="sig-paren">(</span><em>df</em>, <em>k</em>, <em>select_key='channel'</em>, <em>color_key=None</em>, <em>norm=&lt;class 'matplotlib.colors.LogNorm'&gt;</em>, <em>colormap=&lt;matplotlib.colors.LinearSegmentedColormap object&gt;</em>, <em>legend=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/plot_dataframe.html#plot_sweeps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.plot_dataframe.plot_sweeps" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.plot_dataframe.plot_sweeps_IQ">
+<code class="descclassname">kid_readout.analysis.plot_dataframe.</code><code class="descname">plot_sweeps_IQ</code><span class="sig-paren">(</span><em>df</em>, <em>k</em>, <em>select_key='channel'</em>, <em>color_key=None</em>, <em>norm=&lt;class 'matplotlib.colors.LogNorm'&gt;</em>, <em>colormap=&lt;matplotlib.colors.LinearSegmentedColormap object&gt;</em>, <em>legend=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/plot_dataframe.html#plot_sweeps_IQ"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.plot_dataframe.plot_sweeps_IQ" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 <div class="section" id="module-kid_readout.analysis.plot_wafer">
 <span id="kid-readout-analysis-plot-wafer-module"></span><h2>kid_readout.analysis.plot_wafer module<a class="headerlink" href="#module-kid_readout.analysis.plot_wafer" title="Permalink to this headline">¶</a></h2>
@@ -394,14 +867,14 @@ determined by the resonator fit</p>
 <li><a class="reference internal" href="#">kid_readout.analysis package</a><ul>
 <li><a class="reference internal" href="#subpackages">Subpackages</a></li>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#kid-readout-analysis-archive-module">kid_readout.analysis.archive module</a></li>
-<li><a class="reference internal" href="#kid-readout-analysis-dataframe-module">kid_readout.analysis.dataframe module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.archive">kid_readout.analysis.archive module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.dataframe">kid_readout.analysis.dataframe module</a></li>
 <li><a class="reference internal" href="#module-kid_readout.analysis.fitter">kid_readout.analysis.fitter module</a></li>
-<li><a class="reference internal" href="#kid-readout-analysis-kid-response-module">kid_readout.analysis.kid_response module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.kid_response">kid_readout.analysis.kid_response module</a></li>
 <li><a class="reference internal" href="#module-kid_readout.analysis.lmfit_fitter">kid_readout.analysis.lmfit_fitter module</a></li>
-<li><a class="reference internal" href="#kid-readout-analysis-mcfit-module">kid_readout.analysis.mcfit module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.mcfit">kid_readout.analysis.mcfit module</a></li>
 <li><a class="reference internal" href="#module-kid_readout.analysis.noise_measurement">kid_readout.analysis.noise_measurement module</a></li>
-<li><a class="reference internal" href="#kid-readout-analysis-plot-dataframe-module">kid_readout.analysis.plot_dataframe module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.plot_dataframe">kid_readout.analysis.plot_dataframe module</a></li>
 <li><a class="reference internal" href="#module-kid_readout.analysis.plot_wafer">kid_readout.analysis.plot_wafer module</a></li>
 <li><a class="reference internal" href="#module-kid_readout.analysis.process_mmw_response">kid_readout.analysis.process_mmw_response module</a></li>
 <li><a class="reference internal" href="#module-kid_readout.analysis">Module contents</a></li>
