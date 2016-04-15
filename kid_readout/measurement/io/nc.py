@@ -26,7 +26,7 @@ import numpy as np
 from kid_readout.measurement import core, basic
 
 
-class IO(core.IO):
+class NCFile(core.IO):
 
     # These special strings are used to store None, True, and False as ncattrs.
     on_write = {None: '_None',
@@ -50,7 +50,7 @@ class IO(core.IO):
     is_list = '.list'
 
     def __init__(self, root_path, cache_s21_raw=False):
-        super(IO, self).__init__(root_path=os.path.expanduser(root_path))
+        super(NCFile, self).__init__(root_path=os.path.expanduser(root_path))
         self.cache_s21_raw = cache_s21_raw
         try:
             self.root = netCDF4.Dataset(self.root_path, mode='r',keepweakref=True)

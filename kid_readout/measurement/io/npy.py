@@ -14,10 +14,10 @@ import numpy as np
 from kid_readout.measurement import core
 
 
-class IO(core.IO):
+class NumpyDirectory(core.IO):
 
     def __init__(self, root_path, memmap=False):
-        super(IO, self).__init__(root_path=os.path.expanduser(root_path))
+        super(NumpyDirectory, self).__init__(root_path=os.path.expanduser(root_path))
         if not os.path.isdir(self.root_path):
             os.mkdir(root_path)
         self.root = self.root_path

@@ -60,7 +60,7 @@ def test_measurement_list():
 def test_io_list():
     num_streams = 3
     streams = core.MeasurementList([CornerMeasurement() for n in range(num_streams)])
-    io = memory.IO(None)
+    io = memory.Dictionary(None)
     sweep = basic.SingleSweep(core.IOList())
     io.write(sweep)
     sweep.streams.extend(streams)
@@ -68,7 +68,7 @@ def test_io_list():
 
 
 def test_read_write():
-    io = memory.IO(None)
+    io = memory.Dictionary(None)
     original = CornerMeasurement()
     name = 'test'
     io.write(original, name)

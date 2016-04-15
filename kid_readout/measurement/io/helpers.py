@@ -2,7 +2,7 @@ __author__ = 'gjones'
 
 import os
 import time
-from kid_readout.measurement.io.nc import IO as NCFile
+from kid_readout.measurement.io.nc import NCFile as NCFile
 
 from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
 
