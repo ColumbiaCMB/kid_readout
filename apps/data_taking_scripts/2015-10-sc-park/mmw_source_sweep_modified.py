@@ -67,6 +67,7 @@ for (lo,f0s) in [(low_group_lo,low_group),
     swpa = acquire.run_loaded_sweep(ri,length_seconds=0,state=state)
     print "resonance sweep done", (time.time()-tic)/60.
     sweepstream = mmw_source.MMWSweepList(swpa,core.IOList(),state=state)
+    ncf.write(sweepstream)
     print "sweep written", (time.time()-tic)/60.
     current_f0s = []
     for sidx in range(32):

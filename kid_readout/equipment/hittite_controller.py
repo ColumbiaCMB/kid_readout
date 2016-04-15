@@ -1,4 +1,6 @@
 import socket
+import warnings
+warnings.warn("This module is deprecated use ColumbiaCMB/equipment/hittite/signal_generator")
 
 class hittiteController():
     def __init__(self, addr=None, port=50000, terminator='\r'):
@@ -10,7 +12,7 @@ class hittiteController():
                 self.connect()
                 self.disconnect()
             except socket.error:
-                self.address=('192.168.0.070',port)
+                self.address=('192.168.0.200',port)
 
         self.terminator=terminator
         self.connect()
