@@ -662,9 +662,6 @@ class SweepStreamArray(core.Measurement):
         Return a SweepStream object containing the data at the frequency corresponding to the given integer index.
         """
         if isinstance(index, int):
-            if isinstance(self.sweep_array,SingleSweep) or isinstance(self.sweep_array,SingleResonatorSweep):
-                return SingleSweepStream(sweep=self.sweep_array, stream=self.stream_array.stream(index),
-                                     state=self.state)
             return SingleSweepStream(sweep=self.sweep_array.sweep(index), stream=self.stream_array.stream(index),
                                      state=self.state)
         else:
@@ -685,3 +682,18 @@ class SweepStreamList(core.Measurement):
         self.sweep._parent = self
         self.stream_list = stream_list
         self.stream_list._parent = self
+
+    def single_sweep_stream_list(self,index):
+        return SingleSweepStreamList(self.sweep.sweep(index),
+                                     core.MeasurementList(sa.stream(index) for sa in self.stream_list),
+                                     state=self.state, description=self.description)
+
+class SingleSweepStreamList(core.Measurement):
+
+    def __init__(self, single_sweep, stream_list, state=None, analyze=False, description=''):
+        super(SingleSweepStreamList, self).__init__(state, analyze, description)
+        self.sweep = single_sweep
+        self.sweep._parent = self
+        self.stream_list = stream_list
+        self.stream_list._parent = self
+

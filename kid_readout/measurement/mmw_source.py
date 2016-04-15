@@ -1,10 +1,52 @@
-from kid_readout.measurement import core
+from kid_readout.measurement import core,basic
+import numpy as np
 
 
-class MMWSweepStreams(core.Measurement):
+class MMWSweepList(basic.SweepStreamList):
 
-    def __init__(self, sweep, streams, state, analyze=False, description='MMWSweepStreams'):
-        self.sweep = sweep
-        self.streams = streams
-        super(MMWSweepStreams, self).__init__(state, analyze, description)
+    def __init__(self, sweep, stream_list, state, description=''):
+        super(MMWSweepList, self).__init__(sweep=sweep,stream_list=stream_list,state=state,description=description)
+    def single_sweep_stream_list(self,index):
+        return MMWResponse(self.sweep.sweep(index),
+                                     core.MeasurementList(sa.stream(index) for sa in self.stream_list),
+                                     state=self.state, description=self.description)
 
+class MMWResponse(basic.SingleSweepStreamList):
+    def __init__(self, single_sweep, stream_list, state, description=''):
+        super(MMWResponse,self).__init__(single_sweep=single_sweep,stream_list=stream_list,state=state,description=description)
+
+    def state_vector(self,key,missing=None):
+        return [stream.state.get(key,missing) for stream in self.stream_list]
+
+    @property
+    def lockin_voltage(self):
+        return np.array(self.state_vector('lockin_voltage'),dtype='float')
+    @property
+    def hittite_frequency(self):
+        return np.array(self.state_vector('hittite_frequency'),dtype='float')
+
+    @property
+    def mmw_frequency(self):
+        return 12.*self.hittite_frequency
+
+    def sweep_stream_list(self,deglitch=False):
+        result = []
+        for stream in self.stream_list:
+            sss = basic.SingleSweepStream(sweep=self.sweep,stream=stream,state=stream.state,
+                                        description=stream.description)
+            sss._set_q_and_x(deglitch=deglitch)
+            result.append(sss)
+        return result
+
+    def folded_x(self):
+        sweep_stream_list = self.sweep_stream_list()
+        result = []
+        for sss in sweep_stream_list:
+            fx = sss.fold(sss.x)
+            result.append(fx)
+        return np.array(result)
+
+    def fractional_frequency_response(self):
+        folded = self.folded_x()
+        period = folded.shape[-1]
+        return np.abs(folded[...,period//8:3*period//8].mean(-1) - folded[...,5*period//8:7*period//8].mean(-1))
