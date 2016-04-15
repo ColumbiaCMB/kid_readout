@@ -62,5 +62,5 @@ def test_get_measurement():
         blah = ri.get_measurement_blocks(2)
 
 def test_calculate_modulation_period():
-    roach_state = StateDict(modulation_rate=7)
+    roach_state = StateDict(modulation_rate=7, modulation_output=2)
     assert(kid_readout.roach.calculate.modulation_period_samples(roach_state)==256)
