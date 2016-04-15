@@ -1,5 +1,0 @@
-PPC code documentation
-======================
-
-Subpackages
------------
