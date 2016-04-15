@@ -1,6 +1,5 @@
 import os
 from testfixtures import TempDirectory
-from kid_readout.measurement import core
 from kid_readout.measurement.test import utilities
 from kid_readout.measurement.io import nc
 
@@ -11,8 +10,8 @@ def test_read_write_measurement():
         io = nc.IO(os.path.join(directory.path, filename))
         original = utilities.get_measurement()
         name = 'measurement'
-        core.write(original, io, name)
-        assert original == core.read(io, name)
+        io.write(original, name)
+        assert original == io.read(name)
 
 
 def test_read_write_stream():
@@ -21,8 +20,8 @@ def test_read_write_stream():
         io = nc.IO(os.path.join(directory.path, filename))
         original = utilities.make_stream()
         name = 'stream'
-        core.write(original, io, name)
-        assert original == core.read(io, name)
+        io.write(original, name)
+        assert original == io.read(name)
 
 
 def test_read_write_streamarray():
@@ -31,5 +30,5 @@ def test_read_write_streamarray():
         io = nc.IO(os.path.join(directory.path, filename))
         original = utilities.make_stream_array()
         name = 'stream_array'
-        core.write(original, io, name)
-        assert original == core.read(io, name)
+        io.write(original, name)
+        assert original == io.read(name)

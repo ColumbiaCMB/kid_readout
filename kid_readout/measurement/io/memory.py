@@ -16,7 +16,7 @@ class IO(core.IO):
         :param root_path: the path to the root directory or file; not used.
         :return: a new IO object that can read from and write to the root object at the given path.
         """
-        self.root_path = root_path
+        super(IO, self).__init__(root_path=root_path)
         self.root = {self._measurement: {},
                      self._array: {}}
 

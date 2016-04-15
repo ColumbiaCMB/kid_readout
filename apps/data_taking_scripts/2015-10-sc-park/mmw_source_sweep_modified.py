@@ -66,7 +66,7 @@ for (lo,f0s) in [(low_group_lo,low_group),
     hittite.off()
     swpa = acquire.run_loaded_sweep(ri,length_seconds=0,state=state)
     print "resonance sweep done", (time.time()-tic)/60.
-    sweepstream = acquire.extendable_sweepstreamarray(ncf,sweep=swpa,state=state)
+    sweepstream = acquire.extendable_sweepstreamlist(ncf, sweep=swpa, state=state)
     print "sweep written", (time.time()-tic)/60.
     current_f0s = []
     for sidx in range(32):

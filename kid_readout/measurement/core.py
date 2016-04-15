@@ -65,7 +65,63 @@ RESERVED_NAMES = [CLASS_NAME, IO_CLASS_NAME, IO_MODULE, ROOT_PATH, NODE_PATH]
 NODE_PATH_SEPARATOR = ':'
 
 
-class Measurement(object):
+class Node(object):
+    """
+    This is an abstract class
+    """
+
+    def __init__(self):
+        """
+        The idea behind the _parent attribute is to give measurement contained in another measurement a reference to
+        their parent. This enables measurements to discover their own node path relative to the top-level measurement.
+
+        :return: a new Node instance.
+        """
+        self._parent = None
+
+    @classmethod
+    def class_name(cls):
+        """
+        The purpose of this method is to allow classes to recommend some other class that should be used to load their
+        data. For example, the IOList class cannot be instantiated using the data that it writes to disk, so its
+        class_name() returns 'MeasurementList' which is a class that can load the data.
+
+        :return: the class name as a string.
+        """
+        return cls.__name__
+
+    def node_list(self):
+        """
+        Return a list of the node names in the hierarchy, ordered from the top level to self. For example, if self is
+        the Stream stored at index 3 in the list of Streams in the Sweep of a SweepStream, this method would return
+        ['sweep', 'streams', '3']
+
+        Because this method has to traverse the contents of each parent, it could be slow for large structures.
+
+        :return: a list of node names.
+        """
+        if self._parent is None:
+            return []
+        else:
+            return self._parent.node_list() + [self._parent._locate(self)]
+
+    def _locate(self, obj):
+        """
+
+        :param obj: the object to locate.
+        :return: a string that is the proper reference for obj in self, which may be an attribute name, a dictionary
+          key, or a sequence index.
+        """
+        pass
+
+    def _io(self):
+        if self._parent is None:
+            return None
+        else:
+            return self._parent._io()
+
+
+class Measurement(Node):
     """
     This is an abstract class that represents a measurement.
 
@@ -124,7 +180,7 @@ class Measurement(object):
 
     dimensions = {}
 
-    def __init__(self, state=None, analyze=False, description='Measurement'):
+    def __init__(self, state=None, analyze=False, description=''):
         """
         Return a new Measurement instance.
 
@@ -133,27 +189,17 @@ class Measurement(object):
         :param description: a string describing the measurement.
         :return: a new Measurement instance.
         """
+        super(Measurement, self).__init__()
         if state is not None:
             state = to_state_dict(state)
         self.state = state
         self.description = description
-        self._parent = None
         self._io_class = None
         self._root_path = None
         self._node_path = None
         self._validate_dimensions()
         if analyze:
             self.analyze()
-
-    @property
-    def class_name(self):
-        return self.__class__.__name__
-
-    def nodes(self):
-        if self._parent is None:
-            return []
-        else:
-            return self._parent.nodes() + [self._parent.locate(self)]
 
     def analyze(self):
         """
@@ -244,7 +290,7 @@ class Measurement(object):
         return True
 
 
-class MeasurementList(list):
+class MeasurementList(list, Node):
     """
     Measurements containing lists of Measurements must use instances of this class so that loading and saving are
     handled correctly.
@@ -253,61 +299,55 @@ class MeasurementList(list):
     def __init__(self, *args):
         self._parent = None
         super(MeasurementList, self).__init__(*args)
-
-    @property
-    def class_name(self):
-        return self.__class__.__name__
+        for item in self:
+            item._parent = self
 
     def _locate(self, obj):
         for index, value in enumerate(self):
             if obj is value:
                 return str(index)
 
-    def nodes(self):
-        if self._parent is None:
-            return []
-        else:
-            return self._parent.nodes() + [self._parent._locate(self)]
-
     def append(self, item):
         item._parent = self
         super(MeasurementList, self).append(item)
 
     def extend(self, iterable):
-        for i in iterable:
-            self.append(i)
+        for item in iterable:
+            item._parent = self
+        super(MeasurementList, self).extend(iterable)
 
-    def insert(self, index, p_object):
-        p_object._parent = self
-        super(MeasurementList, self).insert(index, p_object)
+    def insert(self, index, item):
+        item._parent = self
+        super(MeasurementList, self).insert(index, item)
 
     def __setitem__(self, key, value):
         value._parent = self
         super(MeasurementList, self).__setitem__(key, value)
 
+    def __repr__(self):
+        return '{}({})'.format(self.__class__.__name__, super(MeasurementList, self).__repr__())
+
 
 class IOList(MeasurementList):
 
-    def __init__(self, io, root_name):
-        self.io = io
-        self.root_name = root_name
-        self._len = 0
-        super(MeasurementList, self).__init__()
+    @classmethod
+    def class_name(cls):
+        return cls.__base__.__name__
 
-    @property
-    def class_name(self):
-        return self.__class__.__base__.__name__
+    def __init__(self):
+        super(MeasurementList, self).__init__()
+        self._len = 0
 
     def append(self, item):
-        node_list = [self.root_name] + self.nodes() + [str(len(self))]
-        self.io.write(item, join(*node_list))
+        node_list = self.node_list() + [str(len(self))]
+        self._io().write(item, join(*node_list))
         self._len += 1
 
     def extend(self, iterable):
-        for i in iterable:
-            self.append(i)
+        for item in iterable:
+            self.append(item)
 
-    def insert(self, index, p_object):
+    def insert(self, index, item):
         raise NotImplementedError()
 
     def remove(self, value):
@@ -345,6 +385,9 @@ class IOList(MeasurementList):
     def __setitem__(self, key, value):
         raise NotImplementedError()
 
+    def __repr__(self):
+        return '{}({}, {})'.format(self.__class__.__name__, self._io(), self.node_list())
+
 
 class MeasurementError(Exception):
     """
@@ -379,7 +422,7 @@ def to_state_dict(dictionary):
     return StateDict(dicts + others)
 
 
-class IO(object):
+class IO(Node):
     """
     This is an abstract class that specifies the IO interface.
 
@@ -395,6 +438,7 @@ class IO(object):
         :param root_path: the path to the root directory or file.
         :return: a new IO object that can read from and write to the root object at the given path.
         """
+        super(IO, self).__init__()
         self.root_path = root_path
         self.root = None
 
@@ -419,20 +463,24 @@ class IO(object):
         :return: a string consisting of the class name and a number that is one plus the number of measurements
           already stored at root level.
         """
-        return measurement.class_name + str(len(self.measurement_names()))
+        return measurement.class_name() + str(len(self.measurement_names()))
 
     def write(self, measurement, node_path=None):
         """
-        Write the measurement to disk at the given node path.
+        Write the measurement to disk at the given node path. If the measurement is written to the root level, this
+        method changes the _parent attribute to self. This is used to enable building measurements sequentially.
 
         :param measurement: the measurement instance to write to disk.
-        :param node_path: the node_path to the node that will contain this object; all but the final node in node_path must
-        already exist.
+        :param node_path: the node_path to the node that will contain this object; all but the final node in node_path
+          must already exist.
         :return: None
         """
         if node_path is None:
             node_path = self.default_name(measurement)
         self._write_node(measurement, node_path)
+        if not split(node_path)[0]:  # the measurement has been stored at the root level
+            measurement._parent = self
+            measurement._saved_as = node_path
 
     def read(self, node_path, translate=None):
         """
@@ -502,6 +550,7 @@ class IO(object):
         else:
             raise AttributeError()
 
+    # TODO: re-implement if necessary; this was causing confusion with the memory io class.
     """
     def __getitem__(self, item):
         try:
@@ -514,34 +563,34 @@ class IO(object):
     def __dir__(self):
         return self.__dict__.keys() + self.measurement_names()
 
-    def _write_node(self, measurement, node_path):
+    def _write_node(self, node, node_path):
         """
-        Create a new node at the given node path using the given IO instance and write the measurement data to it.
+        Write the data in node to a new node at the given node path.
 
-        :param measurement: a Measurement instance.
-        :param node_path: the path of the new node into which the measurement will be written.
+        :param node: a Node instance, which will usually be a Measurement or container for Measurements.
+        :param node_path: the path of the new node into which the instance will be written.
         :return: None
         """
         self.create_node(node_path)
-        this_class_name = '{}.{}'.format(measurement.__module__, measurement.class_name)
+        this_class_name = '{}.{}'.format(node.__module__, node.class_name())
         self.write_other(node_path, CLASS_NAME, this_class_name)
-        items = [(key, value) for key, value in measurement.__dict__.items()
-                 if not key.startswith('_') and key not in RESERVED_NAMES and key not in measurement.dimensions]
+        items = [(key, value) for key, value in node.__dict__.items()
+                 if not key.startswith('_') and key not in RESERVED_NAMES and key not in node.dimensions]
         for key, value in items:
             if isinstance(value, Measurement):
                 self._write_node(value, join(node_path, key))
             elif isinstance(value, MeasurementList):
                 sequence_node_path = join(node_path, key)
                 self.create_node(sequence_node_path)
-                sequence_class_name = '{}.{}'.format(value.__module__, value.class_name)
+                sequence_class_name = '{}.{}'.format(value.__module__, value.class_name())
                 self.write_other(sequence_node_path, CLASS_NAME, sequence_class_name)
                 for index, meas in enumerate(value):
                     self._write_node(meas, join(sequence_node_path, str(index)))
             else:
                 self.write_other(node_path, key, value)
         # Saving arrays in order allows the netCDF group to create the dimensions.
-        for array_name, dimensions in measurement.dimensions.items():
-            self.write_array(node_path, array_name, getattr(measurement, array_name), dimensions)
+        for array_name, dimensions in node.dimensions.items():
+            self.write_array(node_path, array_name, getattr(node, array_name), dimensions)
 
     def _read_node(self, node_path, translate):
         original_class_name = self.read_other(node_path, CLASS_NAME)
@@ -568,42 +617,19 @@ class IO(object):
         current._node_path = node_path
         return current
 
+    def _locate(self, obj):
+        try:
+            if obj._saved_as not in self.measurement_names():
+                raise MeasurementError("{} named {} has not been saved by this IO instance.".format(obj, obj._saved_as))
+        except AttributeError:
+            raise MeasurementError("{} does not appear to have been written to disk.".format(obj))
+        return obj._saved_as
 
-# Public functions
-
-def write(measurement, io, node_path):
-    """
-    Write a measurement to disk using the given IO class. This function feeds data to this class and tells it when to
-    create new nodes to match the hierarchy of measurements.
-
-    :param measurement: the measurement instance to write to disk.
-    :param io: an instance of a class that implements the io interface.
-    :param node_path: the node_path to the node that will contain this object; all but the final node in node_path must
-      already exist.
-    :return: None
-    """
-    warnings.warn(DeprecationWarning("Use IO.write() instead."))
-    io._write_node(measurement, node_path)
-
-
-def read(io, node_path, translate=None):
-    """
-    Read a measurement from disk and return it.
-
-    :param io: an instance of a class that implements the IO interface.
-    :param node_path:the path to the node to be loaded, in the form 'node0:node1:node2'
-    :param translate: a dictionary with entries 'original_class': 'new_class'; all class names must be fully-qualified.
-    :return: the measurement corresponding to the given node.
-    """
-    warnings.warn(DeprecationWarning("Use IO.read() instead."))
-    if translate is None:
-        translate = {}
-    measurement = io._read_node(node_path, translate)
-    return measurement
+    def _io(self):
+        return self
 
 
 # Class-related functions
-
 
 def get_class(full_class_name):
     module_name, class_name = full_class_name.rsplit('.', 1)
@@ -645,7 +671,6 @@ def from_series(series):
 
 
 # Node-related functions
-
 
 def join(*nodes):
     """

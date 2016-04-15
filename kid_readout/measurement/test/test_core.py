@@ -1,14 +1,14 @@
 import numpy as np
 import pandas as pd
-from kid_readout.measurement import core
+from kid_readout.measurement import core, basic
 from kid_readout.measurement.io import memory
-from kid_readout.measurement.test.utilities import get_measurement
+from kid_readout.measurement.test.utilities import CornerMeasurement
 
 
 def test_measurement_instantiation_blank():
     m = core.Measurement()
     assert m.state is None
-    assert m.description == 'Measurement'
+    assert m.description == ''
     assert m._parent is None
     assert m._io_class is None
     assert m._root_path is None
@@ -49,33 +49,43 @@ def test_measurement_add_legacy_origin():
 
 
 def test_measurement_list():
-    length = int(100 * np.random.random())
-    contents = np.random.random(length)
+    length = 3
+    contents = [CornerMeasurement() for n in range(length)]
     ml = core.instantiate_sequence('kid_readout.measurement.core.MeasurementList', contents)
     assert np.all(ml == contents)
     assert core.is_sequence(ml.__module__ + '.' + ml.__class__.__name__)
     assert len(ml) == length
 
 
+def test_io_list():
+    num_streams = 3
+    streams = core.MeasurementList([CornerMeasurement() for n in range(num_streams)])
+    io = memory.IO(None)
+    sweep = basic.SingleSweep(core.IOList())
+    io.write(sweep)
+    sweep.streams.extend(streams)
+    assert io.read(io.measurement_names()[0]) == basic.SingleSweep(streams)
+
+
 def test_read_write():
     io = memory.IO(None)
-    original = get_measurement()
+    original = CornerMeasurement()
     name = 'test'
     io.write(original, name)
     assert original == io.read(name)
 
 
 def test_comparison_code_state():
-    m1 = get_measurement()
-    m2 = get_measurement()
+    m1 = CornerMeasurement()
+    m2 = CornerMeasurement()
     m1.state['test'] = 1
     m2.state['test'] = 2
     assert m1 != m2
 
 
 def test_comparison_code_attribute():
-    m1 = get_measurement()
-    m2 = get_measurement()
+    m1 = CornerMeasurement()
+    m2 = CornerMeasurement()
     m1.attribute = 1
     m2.attribute = 2
     assert m1 != m2
