@@ -9,6 +9,8 @@ import kid_readout.roach.heterodyne
 import kid_readout.roach.baseband
 import kid_readout.roach.r2baseband
 import kid_readout.roach.r2heterodyne
+import kid_readout.roach.calculate
+from kid_readout.measurement.core import StateDict
 import numpy as np
 
 def test_calc_fft_bins():
@@ -58,3 +60,7 @@ def test_get_measurement():
         ri.set_tone_baseband_freqs(np.linspace(100,120,32),nsamp=2**16)
         ri.select_fft_bins(range(32))
         blah = ri.get_measurement_blocks(2)
+
+def test_calculate_modulation_period():
+    roach_state = StateDict(modulation_rate=7, modulation_output=2)
+    assert(kid_readout.roach.calculate.modulation_period_samples(roach_state)==256)

@@ -1,15 +1,17 @@
 """
 This module implements reading and writing of Measurement subclasses to disk using netCDF4.
 
-Each node is a netCDF4 Group;
-numpy arrays that are instance attributes are stored as netCDF4 variables;
+Each node is a netCDF4 group;
+numpy arrays that are have entries in the dimensions dictionary are stored as netCDF4 variables;
+other sequences like lists and tuples, or arrays that do not have a dimensions entry, are stored as variables with
+  special names (for restrictions, see below);
 dicts are stored hierarchically as groups with special names;
 other instance attribute are stored as ncattrs of the group.
 
 Limitations and issues.
 
 netCDF4 returns strings as unicode.
-On read, all unicode objects are converted to Python2 str type.
+We could easily convert all strings to Python str type.
 
 netCDF4 returns sequence ncattrs as numpy ndarrays.
 On read, all arrays are converted to lists.
@@ -23,8 +25,8 @@ import netCDF4
 import numpy as np
 from kid_readout.measurement import core, basic
 
-# TODO: use full dict/list names everywhere internally
-class IO(core.IO):
+
+class NCFile(core.IO):
 
     # These special strings are used to store None, True, and False as ncattrs.
     on_write = {None: '_None',
@@ -48,10 +50,10 @@ class IO(core.IO):
     is_list = '.list'
 
     def __init__(self, root_path, cache_s21_raw=False):
-        self.root_path = os.path.expanduser(root_path)
+        super(NCFile, self).__init__(root_path=os.path.expanduser(root_path))
         self.cache_s21_raw = cache_s21_raw
         try:
-            self.root = netCDF4.Dataset(self.root_path, mode='r')
+            self.root = netCDF4.Dataset(self.root_path, mode='r',keepweakref=True)
         except RuntimeError:
             self.root = netCDF4.Dataset(root_path, mode='w', clobber=False)
 
@@ -68,7 +70,7 @@ class IO(core.IO):
         except AttributeError:
             raise NotImplementedError("Upgrade netCDF4!")
 
-    def read(self, node_path, extras=True, translate=None):
+    def read(self, node_path, translate=None):
         if translate is None:
             translate = {}
         if self.cache_s21_raw:
@@ -76,7 +78,7 @@ class IO(core.IO):
                                   'kid_readout.measurement.io.nc.CachedSingleStream',
                               'kid_readout.measurement.basic.StreamArray':
                                   'kid_readout.measurement.io.nc.CachedStreamArray'})
-        return self._read_node(node_path, extras, translate)
+        return self._read_node(node_path, translate)
 
     def create_node(self, node_path):
         # This will correctly fail to validate an attempt to create the root node with node_path = ''
@@ -175,7 +177,11 @@ class IO(core.IO):
         elif isinstance(value, (list, tuple, np.ndarray)):
             self._write_sequence(group, key + self.is_list, value)
         else:
-            setattr(group, key, self.on_write.get(value, value))
+            for k, v in self.on_write.items():
+                if value is k:  # we need to use identity because, e.g., 0 == False evaluates to True.
+                    setattr(group, key, v)
+                    return
+            setattr(group, key, value)
 
     def _write_sequence(self, group, key, value):
         """
@@ -196,7 +202,7 @@ class IO(core.IO):
             group.createDimension(key, array.size)
             variable = group.createVariable(key, str, key)  # This creates a variable-length string array.
             variable[:] = array.astype(np.object)
-        elif array.dtype.type is np.bool_:  # This seems to be True only if all elements are bool
+        elif array.dtype.type is np.bool_:  # This seems to be True only if all elements are bool.
             group.createDimension(key, array.size)
             variable = group.createVariable(key, str, key)  # See above; booleans are stored as strings.
             variable[:] = np.array([self.on_write[obj] for obj in array], dtype=np.object)

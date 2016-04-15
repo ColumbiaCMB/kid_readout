@@ -1,7 +1,7 @@
 from kid_readout.measurement import core
 
 
-class IO(core.IO):
+class Dictionary(core.IO):
     """
     This class implements the IO interface in memory using dictionaries. It is intended for testing.
     """
@@ -11,12 +11,12 @@ class IO(core.IO):
 
     def __init__(self, root_path):
         """
-        Return a new diskless IO object.
+        Return a new diskless Dictionary object.
 
         :param root_path: the path to the root directory or file; not used.
-        :return: a new IO object that can read from and write to the root object at the given path.
+        :return: a new Dictionary object that can read from and write to the root object at the given path.
         """
-        self.root_path = root_path
+        super(Dictionary, self).__init__(root_path=root_path)
         self.root = {self._measurement: {},
                      self._array: {}}
 

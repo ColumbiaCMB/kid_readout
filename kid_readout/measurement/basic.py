@@ -15,7 +15,7 @@ from kid_readout.roach import calculate
 class RoachStream(core.Measurement):
 
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
-                 data_demodulated, roach_state, state=None, analyze=False, description='RoachStream'):
+                 data_demodulated, roach_state, state=None, description=''):
         """
         Return a new RoachStream instance. The integer tone_index is the common index of tone_bin, tone_amplitude,
         and tone_phase for the single tone used to produce the time-ordered s21_raw data.
@@ -30,7 +30,6 @@ class RoachStream(core.Measurement):
         :param s21_raw: an 1-D array of complex floats containing the data, demodulated or not.
         :param roach_state: a dict containing state information for the roach.
         :param state: a dict containing all non-roach state information.
-        :param analyze: if True, call the analyze() method at the end of instantiation.
         :param description: a string describing this measurement.
         :return: a new RoachStream instance.
         """
@@ -48,14 +47,7 @@ class RoachStream(core.Measurement):
         self._baseband_frequency = None
         self._s21_raw_mean = None
         self._s21_raw_mean_error = None
-        super(RoachStream, self).__init__(state=state, analyze=analyze, description=description)
-
-    def analyze(self):
-        self.baseband_frequency
-        self.frequency
-        self.stream_sample_rate
-        self.s21_raw_mean
-        self.s21_raw_mean_error
+        super(RoachStream, self).__init__(state=state, description=description)
 
     @property
     def sample_time(self):
@@ -100,6 +92,23 @@ class RoachStream(core.Measurement):
             self._s21_raw_mean_error = ((self.s21_raw.real.std(axis=-1) + 1j * self.s21_raw.imag.std(axis=-1)) /
                                         self.s21_raw.shape[-1] ** (1 / 2))
         return self._s21_raw_mean_error
+
+    def folded_shape(self, array, period_samples=None):
+        if period_samples is None:
+            period_samples = calculate.modulation_period_samples(self.roach_state)
+        if period_samples == 0:
+            raise ValueError("Cannot fold unmodulated data or with period=0")
+        shape = list(array.shape)
+        shape[-1] = -1
+        shape.append(period_samples)
+        return tuple(shape)
+
+    def fold(self, array, period_samples=None, reduce=np.mean):
+        reshaped = array.reshape(self.folded_shape(array,period_samples=period_samples))
+        if reduce:
+            return reduce(reshaped,axis=reshaped.ndim-2)
+        else:
+            return reshaped
 
     def __getitem__(self, key):
         """
@@ -149,7 +158,7 @@ class SingleStream(RoachStream):
                   's21_raw': ('sample_time',)}
 
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
-                 data_demodulated, roach_state, state=None, analyze=False, description='Stream'):
+                 data_demodulated, roach_state, state=None, description=''):
         """
         Return a new SingleStream instance. The integer tone_index is the common index of tone_bin, tone_amplitude,
         and tone_phase for the single tone used to produce the time-ordered s21_raw data.
@@ -165,14 +174,13 @@ class SingleStream(RoachStream):
         :param data_demodulated: True if the s21_raw data are demodulated.
         :param roach_state: a dict containing state information for the roach.
         :param state: a dict containing all non-roach state information.
-        :param analyze: if True, call the analyze() method at the end of instantiation.
         :param description: a string describing this measurement.
         :return: a new SingleStream instance.
         """
         super(SingleStream, self).__init__(tone_bin=tone_bin, tone_amplitude=tone_amplitude, tone_phase=tone_phase,
                                            tone_index=tone_index, filterbank_bin=filterbank_bin, epoch=epoch,
                                            s21_raw=s21_raw, data_demodulated=data_demodulated, roach_state=roach_state,
-                                           state=state, analyze=analyze, description=description)
+                                           state=state, description=description)
 
     @property
     def s21_point(self):
@@ -196,7 +204,7 @@ class StreamArray(RoachStream):
                   's21_raw': ('tone_index', 'sample_time')}
 
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
-                 data_demodulated, roach_state, state=None, analyze=False, description='StreamArray'):
+                 data_demodulated, roach_state, state=None, description=''):
         """
         Return a new StreamArray instance. The integer array tone_index contains the indices of tone_bin,
         tone_amplitude, and tone_phase for the tones demodulated to produce the time-ordered s21_raw data.
@@ -217,14 +225,13 @@ class StreamArray(RoachStream):
         :param data_demodulated: True if the s21_raw data are demodulated.
         :param roach_state: a dict containing state information for the roach.
         :param state: a dict containing all non-roach state information.
-        :param analyze: if True, call the analyze() method at the end of instantiation.
         :param description: a string describing this measurement.
         :return: a new StreamArray instance.
         """
         super(StreamArray, self).__init__(tone_bin=tone_bin, tone_amplitude=tone_amplitude, tone_phase=tone_phase,
                                           tone_index=tone_index, filterbank_bin=filterbank_bin, epoch=epoch,
                                           s21_raw=s21_raw, data_demodulated=data_demodulated, roach_state=roach_state,
-                                          state=state, analyze=analyze, description=description)
+                                          state=state, description=description)
 
     def stream(self, tone_index):
         """
@@ -245,12 +252,17 @@ class SingleSweep(core.Measurement):
     This class represents a group of streams with different frequencies.
     """
 
-    def __init__(self, streams, state=None, analyze=False, description='Sweep'):
-        # Don't sort by frequency so that non-monotonic order can be preserved if needed, but note that this will fail
-        # for a ResonatorSweep because the Resonator class requires a monotonic frequency array.
-        self.streams = core.MeasurementTuple(streams)
-        for stream in self.streams:
-            stream._parent = self
+    def __init__(self, streams, state=None, description=''):
+        """
+        Return a SingleSweep object. The streams are not sorted internally.
+
+        :param streams: a MeasurementList of Streams.
+        :param state: a dictionary containing state information.
+        :param description: a string description of this measurement.
+        :return: a new SingleSweep object.
+        """
+        self.streams = streams
+        self.streams._parent = self
         self._frequency = None
         self._s21_points = None
         self._s21_points_error = None
@@ -260,7 +272,7 @@ class SingleSweep(core.Measurement):
         self._filterbank_bin_stack = None
         self._s21_raw_stack = None
         self._frequency_stack = None
-        super(SingleSweep, self).__init__(state=state, analyze=analyze, description=description)
+        super(SingleSweep, self).__init__(state=state, description=description)
 
     @property
     def frequency(self):
@@ -327,14 +339,12 @@ class SingleSweep(core.Measurement):
 
 
 class SingleResonatorSweep(SingleSweep):
-    def __init__(self, streams, state=None, analyze=False, description='ResonatorSweep'):
+    def __init__(self, streams, state=None, description=''):
         self._resonator = None
         self._s21_normalized = None
         self._s21_normalized_error = None
-        super(SingleResonatorSweep, self).__init__(streams=streams, state=state, analyze=analyze, description=description)
-
-    def analyze(self):
-        self.resonator
+        super(SingleResonatorSweep, self).__init__(streams=streams, state=state,
+                                                   description=description)
 
     @property
     def s21_normalized(self):
@@ -370,24 +380,24 @@ class SingleResonatorSweep(SingleSweep):
 
 class SweepArray(core.Measurement):
     """
-    This class contains a group of stream arrays.
+    This class contains a list of stream arrays.
     """
 
-    def __init__(self, stream_arrays, state=None, analyze=False, description='SweepArray'):
-        self.stream_arrays = core.MeasurementTuple(stream_arrays)
-        for sa in self.stream_arrays:
-            sa._parent = self
+    def __init__(self, stream_arrays, state=None, description=''):
+        self.stream_arrays = stream_arrays
+        self.stream_arrays._parent = self
         self._tone_bin_stack = None
         self._tone_amplitude_stack = None
         self._tone_phase_stack = None
         self._filterbank_bin_stack = None
         self._s21_raw_stack = None
         self._frequency_stack = None
-        super(SweepArray, self).__init__(state=state, analyze=analyze, description=description)
+        super(SweepArray, self).__init__(state=state, description=description)
 
     def sweep(self, index):
         if isinstance(index, int):
-            return SingleSweep(streams=(sa.stream(index) for sa in self.stream_arrays), state=self.state)
+            return SingleSweep(streams=core.MeasurementList(sa.stream(index) for sa in self.stream_arrays),
+                               state=self.state)
         else:
             raise ValueError("Invalid index: {}".format(index))
 
@@ -453,23 +463,26 @@ class ResonatorSweepArray(SweepArray):
     This class represents a set of groups of streams.
     """
 
-    def __init__(self, stream_arrays, state=None, analyze=False, description='ResonatorSweepArray'):
-        super(ResonatorSweepArray, self).__init__(stream_arrays=stream_arrays, state=state, analyze=analyze,
+    def __init__(self, stream_arrays, state=None, description=''):
+        super(ResonatorSweepArray, self).__init__(stream_arrays=stream_arrays, state=state,
                                                   description=description)
 
     def sweep(self, index):
         if isinstance(index, int):
-            return SingleResonatorSweep((sa.stream(index) for sa in self.stream_arrays), state=self.state)
+            return SingleResonatorSweep(core.MeasurementList(sa.stream(index) for sa in self.stream_arrays),
+                                        state=self.state)
         else:
             raise ValueError("Invalid index: {}".format(index))
 
 
 class SingleSweepStream(core.Measurement):
-    def __init__(self, sweep, stream, state=None, analyze=False, description='SweepStream'):
+    def __init__(self, sweep, stream, state=None, description=''):
         self.sweep = sweep
         self.sweep._parent = self
         self.stream = stream
         self.stream._parent = self
+        self.fold = stream.fold
+        self.folded_shape = stream.folded_shape
         self._stream_s21_normalized = None
         self._stream_s21_normalized_deglitched = None
         self._q = None
@@ -477,12 +490,7 @@ class SingleSweepStream(core.Measurement):
         self._S_frequency = None
         self._S_qq = None
         self._S_xx = None
-        super(SingleSweepStream, self).__init__(state=state, analyze=analyze, description=description)
-
-    def analyze(self):
-        self._set_stream_s21_normalized_deglitched()
-        self._set_q_and_x()
-        self._set_S_qq_and_S_xx()
+        super(SingleSweepStream, self).__init__(state=state, description=description)
 
     @property
     def stream_s21_normalized(self):
@@ -613,18 +621,14 @@ class SingleSweepStream(core.Measurement):
 
 class SweepStreamArray(core.Measurement):
 
-    def __init__(self, sweep_array, stream_array, state=None, analyze=False, description='SweepStreamArray'):
+    def __init__(self, sweep_array, stream_array, state=None, description=''):
         if sweep_array.num_channels != stream_array.tone_index.size:
             raise core.MeasurementError("The number of SweepArray channels does not match the StreamArray number.")
         self.sweep_array = sweep_array
         self.sweep_array._parent = self
         self.stream_array = stream_array
         self.stream_array._parent = self
-        super(SweepStreamArray, self).__init__(state=state, analyze=analyze, description=description)
-
-    def analyze(self):
-        self.sweep_array.analyze()
-        self.stream_array.analyze()
+        super(SweepStreamArray, self).__init__(state=state, description=description)
 
     @property
     def num_channels(self):
@@ -645,3 +649,28 @@ class SweepStreamArray(core.Measurement):
         for n in range(self.num_channels):
             dataframes.append(self.sweep_stream(n).to_dataframe())
         return pd.concat(dataframes, ignore_index=True)
+
+
+class SweepStreamList(core.Measurement):
+
+    def __init__(self, sweep, stream_list, state=None, description=''):
+        self.sweep = sweep
+        self.sweep._parent = self
+        self.stream_list = stream_list
+        self.stream_list._parent = self
+        super(SweepStreamList, self).__init__(state=state, description=description)
+
+    def single_sweep_stream_list(self, index):
+        return SingleSweepStreamList(self.sweep.sweep(index),
+                                     core.MeasurementList(sa.stream(index) for sa in self.stream_list),
+                                     state=self.state, description=self.description)
+
+
+class SingleSweepStreamList(core.Measurement):
+
+    def __init__(self, single_sweep, stream_list, state=None, description=''):
+        self.sweep = single_sweep
+        self.sweep._parent = self
+        self.stream_list = stream_list
+        self.stream_list._parent = self
+        super(SingleSweepStreamList, self).__init__(state=state, description=description)

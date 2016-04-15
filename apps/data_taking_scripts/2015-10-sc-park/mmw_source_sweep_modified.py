@@ -7,7 +7,7 @@ from kid_readout.roach import heterodyne
 from kid_readout import *
 from kid_readout.measurement.acquire import acquire
 from kid_readout.equipment import hittite_controller, lockin_controller
-from kid_readout.measurement import mmw_source
+from kid_readout.measurement import mmw_source, core
 
 # fg = FunctionGenerator()
 hittite = hittite_controller.hittiteController(addr='192.168.0.200')
@@ -52,7 +52,7 @@ offsets = offset_bins * 512.0 / nsamp
 
 mmw_freqs = np.linspace(140e9, 165e9, 500)
 
-ri.set_dac_atten(30)
+ri.set_dac_atten(10)
 
 state = dict(mmw_atten_turns=(7,7), hittite_power_dBm=0.0,)
 
@@ -66,14 +66,13 @@ for (lo,f0s) in [(low_group_lo,low_group),
     hittite.off()
     swpa = acquire.run_loaded_sweep(ri,length_seconds=0,state=state)
     print "resonance sweep done", (time.time()-tic)/60.
-    sweepstream = mmw_source.MMWSweepStreams(sweep=swpa, streams=(), state=state)  # probably need state here only
-    ncf.write(sweepstream)  # written as MMWSweepStreams0
+    sweepstream = mmw_source.MMWSweepList(swpa,core.IOList(),state=state)
+    ncf.write(sweepstream)
     print "sweep written", (time.time()-tic)/60.
     current_f0s = []
     for sidx in range(32):
         swp = swpa.sweep(sidx)
         res = lmfit_resonator.LinearResonatorWithCable(swp.frequency,swp.s21_points,swp.s21_points_error)
-        res.fit()
         print res.f_0, res.Q, res.current_result.redchi, (f0s[sidx]*1e6-res.f_0)
         current_f0s.append(res.f_0)
     print "fits complete", (time.time()-tic)/60.
@@ -88,8 +87,11 @@ for (lo,f0s) in [(low_group_lo,low_group),
         time.sleep(0.5)
         x, y, r, theta = lockin.get_data()
         state['lockin_voltage'] = r
-        meas = ri.get_measurement(num_seconds=2.0, state=state)
-        print freq
-        ncf.write(meas, '{}:streams:{}'.format(ncf.measurement_names()[-1], n))  # "MMWSweepStreams:streams:0" etc.
+        state['hittite_frequency'] = freq/12.0
+        tic2= time.time()
+        meas = ri.get_measurement(num_seconds=2., state=state)
+        print freq,(time.time()-tic2)
+        sweepstream.stream_list.append(meas)
+
     print "mm-wave sweep complete", (time.time()-tic)/60.
     ncf.close()

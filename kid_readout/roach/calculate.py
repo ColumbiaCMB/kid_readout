@@ -33,3 +33,9 @@ def stream_sample_rate(roach_state):
     else:
         # In the baseband case, the number of real samples per FFT is 2 * num_filterbank_channels.
         return roach_state['adc_sample_rate'] / (2 * roach_state['num_filterbank_channels'])
+
+def modulation_period_samples(roach_state):
+    if roach_state.modulation_output != 2:
+        return 0
+    else:
+        return 2**(roach_state.modulation_rate+1)

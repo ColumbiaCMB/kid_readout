@@ -6,14 +6,24 @@ from kid_readout.measurement import core
 from kid_readout.roach import baseband
 from kid_readout.roach.tests import mock_roach, mock_valon
 
-corners = {'None': None, 'True': True, 'False': False,
+corners = {'zero_int': 0,
+           'zero_float': 0.,
+           'one_int': 1,
+           'one_float': 1.,
+           'minus_one_int': -1,
+           'minus_one_float': -1.,
+           'two_int': 2,
+           'two_float': 2.,
+           'none': None,
+           'true': True,
+           'false': False,
            'empty_list': [],
            'int_list': [-1, 0, 1, 2],
            'float_list': [-0.1, 1, np.pi],
            'str_list': ['zero', 'one', 'two', ''],
            'bool_list': [False, True, False],
-           'none_dict': {'None': None},
-           'dict_dict': {'1': 1, 'dict': {'None': None, 'False': False, 'another_dict': {}}},
+           'none_dict': {'none': None},
+           'dict_dict': {'1': 1, 'dict': {'none': None, 'false': False, 'another_dict': {}}},
            'list_dict': {'empty_list': [],
                          'int_list': [-1, 0, 1, 2],
                          'float_list': [-0.1, 1, np.pi],
@@ -21,46 +31,53 @@ corners = {'None': None, 'True': True, 'False': False,
                          'bool_list': [False, True, False]}}
 
 
-# Deprecated; code moved to core.Measurement.__eq__()
-def compare_measurements(a, b, verbose=False):
-    """
-    Recursively compare two measurements. At each level, the function tests that both instances have the same public
-    attributes (meaning those that do not start with an underscore), that all these attributes are equal,
-    and that the classes of the measurements are equal. The function does not test private variables at all,
-    and does not even check whether the instances have the same private attributes.
+class CornerMeasurement(core.Measurement):
 
-    :param a: a Measurement instance.
-    :param b: a Measurement instance.
-    :return: None
-    """
-    keys_a = [k for k in a.__dict__ if not k.startswith('_')] + ['__class__']
-    keys_b = [k for k in b.__dict__ if not k.startswith('_')] + ['__class__']
-    assert set(keys_a) == set(keys_b)
-    for key in keys_a:
-        va = getattr(a, key)
-        vb = getattr(b, key)
-        if verbose:
-            print("{}: {}, {}".format(key, type(va), repr(va)))
-        if issubclass(va.__class__, core.Measurement):
-            compare_measurements(va, vb, verbose=verbose)
-        elif issubclass(va.__class__, core.MeasurementSequence):
-            assert len(va) == len(vb)
-            for ma, mb in zip(va, vb):
-                compare_measurements(ma, mb, verbose=verbose)
-        elif isinstance(va, np.ndarray):  # This allows declared arrays to contain NaN and still compare correctly.
-            assert np.all(np.isnan(va) == np.isnan(vb))
-            assert np.all(va[~np.isnan(va)] == vb[~np.isnan(vb)])
-        else:  # This will fail for NaN or sequences that contain any NaN values.
-            assert va == vb
-
-
-def get_measurement():
-    m = core.Measurement(corners)
-    m.int_list = range(-1, 3)
-    m.float_list = list(np.linspace(-1, 2, 10))
-    m.str_list = ['one', 'two', 'three']
-    m.bool_list = [True, False]
-    return m
+    def __init__(self,
+                 zero_int=0,
+                 zero_float=0.,
+                 one_int=1,
+                 one_float=1.,
+                 minus_one_int=-1,
+                 minus_one_float=-1.,
+                 two_int=2,
+                 two_float=2.,
+                 none=None,
+                 true=True,
+                 false=False,
+                 empty_list=[],
+                 int_list=[-1, 0, 1, 2],
+                 float_list=[-0.1, 1, np.pi],
+                 str_list=['zero', 'one', 'two', ''],
+                 bool_list=[False, True, False],
+                 none_dict={'none': None},
+                 dict_dict={'1': 1, 'dict': {'none': None, 'false': False, 'another_dict': {}}},
+                 list_dict={'empty_list': [],
+                            'int_list': [-1, 0, 1, 2],
+                            'float_list': [-0.1, 1, np.pi],
+                            'str_list': ['zero', 'one', 'two', ''],
+                            'bool_list': [False, True, False]},
+                 state=corners, description='CornerMeasurement'):
+        super(CornerMeasurement, self).__init__(state=state, description=description)
+        self.zero_int = zero_int
+        self.zero_float = zero_float
+        self.one_int = one_int
+        self.one_float = one_float
+        self.minus_one_int = minus_one_int
+        self.minus_one_float = minus_one_float
+        self.two_int = two_int
+        self.two_float = two_float
+        self.none = none
+        self.true = true
+        self.false = false
+        self.empty_list = empty_list
+        self.int_list = int_list
+        self.float_list = float_list
+        self.str_list = str_list
+        self.bool_list = bool_list
+        self.none_dict = none_dict
+        self.dict_dict = dict_dict
+        self.list_dict = list_dict
 
 
 def make_stream(tone_index=0, frequency=None, num_tone_samples=2**16, blocks=2, state=None, description=''):

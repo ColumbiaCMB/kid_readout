@@ -1,22 +1,18 @@
 import numpy as np
 import pandas as pd
-from kid_readout.measurement import core
+from kid_readout.measurement import core, basic
 from kid_readout.measurement.io import memory
-from kid_readout.measurement.test.utilities import get_measurement
+from kid_readout.measurement.test.utilities import CornerMeasurement
 
 
 def test_measurement_instantiation_blank():
     m = core.Measurement()
-    assert m.state == None
-    assert m.description == 'Measurement'
+    assert m.state is None
+    assert m.description == ''
     assert m._parent is None
     assert m._io_class is None
     assert m._root_path is None
     assert m._node_path is None
-    try:
-        m.analyze()
-    except:
-        assert False
 
 
 def test_measurement_to_dataframe():
@@ -48,38 +44,44 @@ def test_measurement_add_legacy_origin():
     assert s.root_path is None
 
 
-def test_measurement_sequence():
-    length = int(100 * np.random.random())
-    contents = np.random.random(length)
-    mt = core.instantiate_sequence('kid_readout.measurement.core.MeasurementTuple', contents)
-    assert np.all(mt == contents)
-    assert core.is_sequence(mt.__module__ + '.' + mt.__class__.__name__)
-    assert mt.shape == (length,)
+def test_measurement_list():
+    length = 3
+    contents = [CornerMeasurement() for n in range(length)]
     ml = core.instantiate_sequence('kid_readout.measurement.core.MeasurementList', contents)
     assert np.all(ml == contents)
-    assert core.is_sequence(mt.__module__ + '.' + ml.__class__.__name__)
-    assert ml.shape == (length,)
+    assert core.is_sequence(ml.__module__ + '.' + ml.__class__.__name__)
+    assert len(ml) == length
+
+
+def test_io_list():
+    num_streams = 3
+    streams = core.MeasurementList([CornerMeasurement() for n in range(num_streams)])
+    io = memory.Dictionary(None)
+    sweep = basic.SingleSweep(core.IOList())
+    io.write(sweep)
+    sweep.streams.extend(streams)
+    assert io.read(io.measurement_names()[0]) == basic.SingleSweep(streams)
 
 
 def test_read_write():
-    io = memory.IO(None)
-    original = get_measurement()
+    io = memory.Dictionary(None)
+    original = CornerMeasurement()
     name = 'test'
-    core.write(original, io, name)
-    assert original == core.read(io, name)
+    io.write(original, name)
+    assert original == io.read(name)
 
 
 def test_comparison_code_state():
-    m1 = get_measurement()
-    m2 = get_measurement()
+    m1 = CornerMeasurement()
+    m2 = CornerMeasurement()
     m1.state['test'] = 1
     m2.state['test'] = 2
     assert m1 != m2
 
 
 def test_comparison_code_attribute():
-    m1 = get_measurement()
-    m2 = get_measurement()
+    m1 = CornerMeasurement()
+    m2 = CornerMeasurement()
     m1.attribute = 1
     m2.attribute = 2
     assert m1 != m2
@@ -88,12 +90,10 @@ def test_comparison_code_attribute():
 def test_instantiate():
     full_class_name = 'kid_readout.measurement.core.Measurement'
     variables = {'state': {'key': 'value'},
-                 'description': 'instantiated Measurement',
-                 'extra_variable': [0]}
-    m = core.instantiate(full_class_name, variables, extras=True)
+                 'description': 'instantiated Measurement'}
+    m = core.instantiate(full_class_name, variables)
     assert m.state == core.StateDict(variables['state'])
     assert m.description == variables['description']
-    assert m.extra_variable == variables['extra_variable']
 
 
 def test_join():

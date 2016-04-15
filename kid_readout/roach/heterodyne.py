@@ -361,7 +361,7 @@ class RoachHeterodyne(RoachInterface):
         chan_offset = 2
         nch = self.fpga_fft_readout_indexes.shape[0]
         udp_channel = (self.fpga_fft_readout_indexes//2 + chan_offset) % (self.nfft//2)
-        data, seqnos = kid_readout.roach.udp_catcher.get_udp_data(self, npkts=nread * 16 * nch, streamid=1,
+        data, seqnos = kid_readout.roach.udp_catcher.get_udp_data(self, npkts=nread * 16, streamid=1,
                                                 chans=udp_channel,
                                                 nfft=self.nfft//2, addr=(self.host_ip, 12345))  # , stream_reg, addr)
         if demod:
