@@ -13,6 +13,10 @@ import sys
 import subprocess
 import re
 
+VALON_SERIAL_NUMBERS = dict(roach='AM01H05A',
+                            roach2='A101FK1K',
+                            mark2='A101FK1H')
+
 usbre = re.compile(r"usb (?P<port>\d*-\d*)")
 
 

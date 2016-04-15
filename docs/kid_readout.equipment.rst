@@ -20,10 +20,34 @@ kid_readout.equipment.hittite_controller module
     :undoc-members:
     :show-inheritance:
 
+kid_readout.equipment.hpd_temps module
+--------------------------------------
+
+.. automodule:: kid_readout.equipment.hpd_temps
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.equipment.led_controller module
+-------------------------------------------
+
+.. automodule:: kid_readout.equipment.led_controller
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 kid_readout.equipment.lockin_controller module
 ----------------------------------------------
 
 .. automodule:: kid_readout.equipment.lockin_controller
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.equipment.parse_srs module
+--------------------------------------
+
+.. automodule:: kid_readout.equipment.parse_srs
     :members:
     :undoc-members:
     :show-inheritance:
@@ -72,6 +96,14 @@ kid_readout.equipment.sim900 module
 -----------------------------------
 
 .. automodule:: kid_readout.equipment.sim900
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+kid_readout.equipment.starcryo_temps module
+-------------------------------------------
+
+.. automodule:: kid_readout.equipment.starcryo_temps
     :members:
     :undoc-members:
     :show-inheritance:
