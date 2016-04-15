@@ -136,7 +136,8 @@ class RoachHeterodyne(RoachInterface):
         bins = np.round((freqs / self.fs) * nsamp).astype('int')
         actual_freqs = self.fs * bins / float(nsamp)
         bins[bins < 0] = nsamp + bins[bins < 0]
-        self.set_tone_bins(bins, nsamp, amps=amps)
+        #use the same phases to avoid strange phase issue which we are still tracking down
+        self.set_tone_bins(bins, nsamp, amps=amps, phases=self.phases)
         self.fft_bins = self.calc_fft_bins(bins, nsamp)
         if self.fft_bins.shape[1] > 4:
             readout_selection = range(4)
@@ -190,7 +191,8 @@ class RoachHeterodyne(RoachInterface):
         spec = np.zeros((nwaves, nsamp), dtype='complex')
         self.tone_bins = bins.copy()
         self.tone_nsamp = nsamp
-        if phases is None:
+        #this is to make sure phases are correct shape since we are reusing phases
+        if phases is None or phases.shape[0] != bins.shape[1]:
             phases = np.random.random(bins.shape[1]) * 2 * np.pi
         self.phases = phases.copy()
         if amps is None:
