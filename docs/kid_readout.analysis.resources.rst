@@ -20,6 +20,14 @@ kid_readout.analysis.resources.hpd_experiments module
     :undoc-members:
     :show-inheritance:
 
+kid_readout.analysis.resources.local_settings module
+----------------------------------------------------
+
+.. automodule:: kid_readout.analysis.resources.local_settings
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 kid_readout.analysis.resources.skip5x4 module
 ---------------------------------------------
 

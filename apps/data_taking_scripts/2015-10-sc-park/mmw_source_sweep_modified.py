@@ -66,7 +66,7 @@ for (lo,f0s) in [(low_group_lo,low_group),
     hittite.off()
     swpa = acquire.run_loaded_sweep(ri,length_seconds=0,state=state)
     print "resonance sweep done", (time.time()-tic)/60.
-    sweepstream = acquire.extendable_sweepstreamlist(ncf, sweep=swpa, state=state)
+    sweepstream = mmw_source.MMWSweepList(swpa,core.IOList(),state=state)
     print "sweep written", (time.time()-tic)/60.
     current_f0s = []
     for sidx in range(32):
@@ -86,10 +86,11 @@ for (lo,f0s) in [(low_group_lo,low_group),
         time.sleep(0.5)
         x, y, r, theta = lockin.get_data()
         state['lockin_voltage'] = r
+        state['hittite_frequency'] = freq/12.0
         tic2= time.time()
-        meas = ri.get_measurement(num_seconds=2.0, state=state)
+        meas = ri.get_measurement(num_seconds=2., state=state)
         print freq,(time.time()-tic2)
-        sweepstream.stream_array.append(meas)
+        sweepstream.stream_list.append(meas)
 
     print "mm-wave sweep complete", (time.time()-tic)/60.
     ncf.close()
