@@ -8,7 +8,7 @@
     
     <title>kid_readout.equipment package &mdash; KID Readout  documentation</title>
     
-    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
@@ -23,10 +23,13 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="KID Readout  documentation" href="index.html" /> 
+    <link rel="top" title="KID Readout  documentation" href="index.html" />
+    <link rel="up" title="kid_readout package" href="kid_readout.html" />
+    <link rel="next" title="kid_readout.measurement package" href="kid_readout.measurement.html" />
+    <link rel="prev" title="kid_readout.analysis.timedomain package" href="kid_readout.analysis.timedomain.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -35,14 +38,21 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">KID Readout  documentation</a> &raquo;</li> 
+        <li class="right" >
+          <a href="kid_readout.measurement.html" title="kid_readout.measurement package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="kid_readout.analysis.timedomain.html" title="kid_readout.analysis.timedomain package"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="kid_readout.html" accesskey="U">kid_readout package</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="kid-readout-equipment-package">
 <h1>kid_readout.equipment package<a class="headerlink" href="#kid-readout-equipment-package" title="Permalink to this headline">¶</a></h1>
@@ -54,31 +64,41 @@
 <p>Agilent 33220A Function generator</p>
 <dl class="class">
 <dt id="kid_readout.equipment.agilent_33220.FunctionGenerator">
-<em class="property">class </em><tt class="descclassname">kid_readout.equipment.agilent_33220.</tt><tt class="descname">FunctionGenerator</tt><big>(</big><em>addr=('192.168.1.135'</em>, <em>5025)</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/agilent_33220.html#FunctionGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.agilent_33220.FunctionGenerator" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<em class="property">class </em><code class="descclassname">kid_readout.equipment.agilent_33220.</code><code class="descname">FunctionGenerator</code><span class="sig-paren">(</span><em>addr=('192.168.1.135'</em>, <em>5025)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/agilent_33220.html#FunctionGenerator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.agilent_33220.FunctionGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <dl class="method">
 <dt id="kid_readout.equipment.agilent_33220.FunctionGenerator.enable_output">
-<tt class="descname">enable_output</tt><big>(</big><em>on</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/agilent_33220.html#FunctionGenerator.enable_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.agilent_33220.FunctionGenerator.enable_output" title="Permalink to this definition">¶</a></dt>
+<code class="descname">enable_output</code><span class="sig-paren">(</span><em>on</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/agilent_33220.html#FunctionGenerator.enable_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.agilent_33220.FunctionGenerator.enable_output" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.agilent_33220.FunctionGenerator.send">
-<tt class="descname">send</tt><big>(</big><em>cmd</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/agilent_33220.html#FunctionGenerator.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.agilent_33220.FunctionGenerator.send" title="Permalink to this definition">¶</a></dt>
+<code class="descname">send</code><span class="sig-paren">(</span><em>cmd</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/agilent_33220.html#FunctionGenerator.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.agilent_33220.FunctionGenerator.send" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.agilent_33220.FunctionGenerator.send_get">
-<tt class="descname">send_get</tt><big>(</big><em>cmd</em>, <em>timeout=1</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/agilent_33220.html#FunctionGenerator.send_get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.agilent_33220.FunctionGenerator.send_get" title="Permalink to this definition">¶</a></dt>
+<code class="descname">send_get</code><span class="sig-paren">(</span><em>cmd</em>, <em>timeout=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/agilent_33220.html#FunctionGenerator.send_get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.agilent_33220.FunctionGenerator.send_get" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.agilent_33220.FunctionGenerator.set_dc_voltage">
-<tt class="descname">set_dc_voltage</tt><big>(</big><em>volts</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/agilent_33220.html#FunctionGenerator.set_dc_voltage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.agilent_33220.FunctionGenerator.set_dc_voltage" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_dc_voltage</code><span class="sig-paren">(</span><em>volts</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/agilent_33220.html#FunctionGenerator.set_dc_voltage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.agilent_33220.FunctionGenerator.set_dc_voltage" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.agilent_33220.FunctionGenerator.set_load_ohms">
-<tt class="descname">set_load_ohms</tt><big>(</big><em>ohms</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/agilent_33220.html#FunctionGenerator.set_load_ohms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.agilent_33220.FunctionGenerator.set_load_ohms" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_load_ohms</code><span class="sig-paren">(</span><em>ohms</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/agilent_33220.html#FunctionGenerator.set_load_ohms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.agilent_33220.FunctionGenerator.set_load_ohms" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.equipment.agilent_33220.FunctionGenerator.set_pulse">
+<code class="descname">set_pulse</code><span class="sig-paren">(</span><em>period</em>, <em>width</em>, <em>high_level</em>, <em>low_level=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/agilent_33220.html#FunctionGenerator.set_pulse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.agilent_33220.FunctionGenerator.set_pulse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.equipment.agilent_33220.FunctionGenerator.set_square_wave">
+<code class="descname">set_square_wave</code><span class="sig-paren">(</span><em>freq</em>, <em>high_level</em>, <em>low_level=0</em>, <em>duty_cycle_percent=50.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/agilent_33220.html#FunctionGenerator.set_square_wave"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.agilent_33220.FunctionGenerator.set_square_wave" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -88,45 +108,94 @@
 <span id="kid-readout-equipment-hittite-controller-module"></span><h2>kid_readout.equipment.hittite_controller module<a class="headerlink" href="#module-kid_readout.equipment.hittite_controller" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="kid_readout.equipment.hittite_controller.hittiteController">
-<em class="property">class </em><tt class="descclassname">kid_readout.equipment.hittite_controller.</tt><tt class="descname">hittiteController</tt><big>(</big><em>addr='192.168.000.070'</em>, <em>port=50000</em>, <em>terminator='r'</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/hittite_controller.html#hittiteController"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hittite_controller.hittiteController" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">kid_readout.equipment.hittite_controller.</code><code class="descname">hittiteController</code><span class="sig-paren">(</span><em>addr=None</em>, <em>port=50000</em>, <em>terminator='r'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/hittite_controller.html#hittiteController"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hittite_controller.hittiteController" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="kid_readout.equipment.hittite_controller.hittiteController.connect">
-<tt class="descname">connect</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/hittite_controller.html#hittiteController.connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hittite_controller.hittiteController.connect" title="Permalink to this definition">¶</a></dt>
+<code class="descname">connect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/hittite_controller.html#hittiteController.connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hittite_controller.hittiteController.connect" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.hittite_controller.hittiteController.disconnect">
-<tt class="descname">disconnect</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/hittite_controller.html#hittiteController.disconnect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hittite_controller.hittiteController.disconnect" title="Permalink to this definition">¶</a></dt>
+<code class="descname">disconnect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/hittite_controller.html#hittiteController.disconnect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hittite_controller.hittiteController.disconnect" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.hittite_controller.hittiteController.off">
-<tt class="descname">off</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/hittite_controller.html#hittiteController.off"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hittite_controller.hittiteController.off" title="Permalink to this definition">¶</a></dt>
+<code class="descname">off</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/hittite_controller.html#hittiteController.off"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hittite_controller.hittiteController.off" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.hittite_controller.hittiteController.on">
-<tt class="descname">on</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/hittite_controller.html#hittiteController.on"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hittite_controller.hittiteController.on" title="Permalink to this definition">¶</a></dt>
+<code class="descname">on</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/hittite_controller.html#hittiteController.on"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hittite_controller.hittiteController.on" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.hittite_controller.hittiteController.send">
-<tt class="descname">send</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/hittite_controller.html#hittiteController.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hittite_controller.hittiteController.send" title="Permalink to this definition">¶</a></dt>
+<code class="descname">send</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/hittite_controller.html#hittiteController.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hittite_controller.hittiteController.send" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.hittite_controller.hittiteController.send_and_receive">
-<tt class="descname">send_and_receive</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/hittite_controller.html#hittiteController.send_and_receive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hittite_controller.hittiteController.send_and_receive" title="Permalink to this definition">¶</a></dt>
+<code class="descname">send_and_receive</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/hittite_controller.html#hittiteController.send_and_receive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hittite_controller.hittiteController.send_and_receive" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.hittite_controller.hittiteController.set_freq">
-<tt class="descname">set_freq</tt><big>(</big><em>freq</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/hittite_controller.html#hittiteController.set_freq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hittite_controller.hittiteController.set_freq" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_freq</code><span class="sig-paren">(</span><em>freq</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/hittite_controller.html#hittiteController.set_freq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hittite_controller.hittiteController.set_freq" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.hittite_controller.hittiteController.set_power">
-<tt class="descname">set_power</tt><big>(</big><em>power</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/hittite_controller.html#hittiteController.set_power"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hittite_controller.hittiteController.set_power" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_power</code><span class="sig-paren">(</span><em>power</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/hittite_controller.html#hittiteController.set_power"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hittite_controller.hittiteController.set_power" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.equipment.hpd_temps">
+<span id="kid-readout-equipment-hpd-temps-module"></span><h2>kid_readout.equipment.hpd_temps module<a class="headerlink" href="#module-kid_readout.equipment.hpd_temps" title="Permalink to this headline">¶</a></h2>
+<p>Routines for getting temperature data for HPD cryostat from the &#8216;adc&#8217; machine</p>
+<p>Currently assumes the /home/adclocal/data/cooldown_logs directory on &#8216;adc&#8217; is mounted to /home/data/adc_mount</p>
+<dl class="function">
+<dt id="kid_readout.equipment.hpd_temps.get_nc_list">
+<code class="descclassname">kid_readout.equipment.hpd_temps.</code><code class="descname">get_nc_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/hpd_temps.html#get_nc_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hpd_temps.get_nc_list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.equipment.hpd_temps.get_temperature_at">
+<code class="descclassname">kid_readout.equipment.hpd_temps.</code><code class="descname">get_temperature_at</code><span class="sig-paren">(</span><em>t</em>, <em>get_load_temp=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/hpd_temps.html#get_temperature_at"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hpd_temps.get_temperature_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.equipment.hpd_temps.get_temperature_from_nc">
+<code class="descclassname">kid_readout.equipment.hpd_temps.</code><code class="descname">get_temperature_from_nc</code><span class="sig-paren">(</span><em>ncname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/hpd_temps.html#get_temperature_from_nc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hpd_temps.get_temperature_from_nc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.equipment.hpd_temps.get_temperatures_at">
+<code class="descclassname">kid_readout.equipment.hpd_temps.</code><code class="descname">get_temperatures_at</code><span class="sig-paren">(</span><em>t</em>, <em>get_load_temp=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/hpd_temps.html#get_temperatures_at"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hpd_temps.get_temperatures_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.equipment.hpd_temps.mjd_to_unix">
+<code class="descclassname">kid_readout.equipment.hpd_temps.</code><code class="descname">mjd_to_unix</code><span class="sig-paren">(</span><em>mjd</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/hpd_temps.html#mjd_to_unix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hpd_temps.mjd_to_unix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.equipment.hpd_temps.rx102a_curve">
+<code class="descclassname">kid_readout.equipment.hpd_temps.</code><code class="descname">rx102a_curve</code><span class="sig-paren">(</span><em>R</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/hpd_temps.html#rx102a_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.hpd_temps.rx102a_curve" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.equipment.led_controller">
+<span id="kid-readout-equipment-led-controller-module"></span><h2>kid_readout.equipment.led_controller module<a class="headerlink" href="#module-kid_readout.equipment.led_controller" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="kid_readout.equipment.led_controller.LedController">
+<em class="property">class </em><code class="descclassname">kid_readout.equipment.led_controller.</code><code class="descname">LedController</code><span class="sig-paren">(</span><em>port='/dev/ttyACM0'</em>, <em>baudrate=9600</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/led_controller.html#LedController"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.led_controller.LedController" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="kid_readout.equipment.led_controller.LedController.sendget">
+<code class="descname">sendget</code><span class="sig-paren">(</span><em>msg</em>, <em>interchar_delay=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/led_controller.html#LedController.sendget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.led_controller.LedController.sendget" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -136,42 +205,113 @@
 <span id="kid-readout-equipment-lockin-controller-module"></span><h2>kid_readout.equipment.lockin_controller module<a class="headerlink" href="#module-kid_readout.equipment.lockin_controller" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="kid_readout.equipment.lockin_controller.lockinController">
-<em class="property">class </em><tt class="descclassname">kid_readout.equipment.lockin_controller.</tt><tt class="descname">lockinController</tt><big>(</big><em>serial_port='/dev/ttyUSB2'</em>, <em>terminator='n'</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">kid_readout.equipment.lockin_controller.</code><code class="descname">lockinController</code><span class="sig-paren">(</span><em>serial_port='/dev/ttyUSB2'</em>, <em>terminator='n'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
+<dt id="kid_readout.equipment.lockin_controller.lockinController.auto_range_measure">
+<code class="descname">auto_range_measure</code><span class="sig-paren">(</span><em>debug=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController.auto_range_measure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController.auto_range_measure" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="kid_readout.equipment.lockin_controller.lockinController.get_data">
-<tt class="descname">get_data</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController.get_data" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController.get_data" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.lockin_controller.lockinController.get_idn">
-<tt class="descname">get_idn</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController.get_idn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController.get_idn" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_idn</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController.get_idn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController.get_idn" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.equipment.lockin_controller.lockinController.get_sensitivity">
+<code class="descname">get_sensitivity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController.get_sensitivity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController.get_sensitivity" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.lockin_controller.lockinController.get_snap">
-<tt class="descname">get_snap</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController.get_snap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController.get_snap" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_snap</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController.get_snap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController.get_snap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.equipment.lockin_controller.lockinController.get_time_constant">
+<code class="descname">get_time_constant</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController.get_time_constant"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController.get_time_constant" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.lockin_controller.lockinController.read_until_terminator">
-<tt class="descname">read_until_terminator</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController.read_until_terminator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController.read_until_terminator" title="Permalink to this definition">¶</a></dt>
+<code class="descname">read_until_terminator</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController.read_until_terminator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController.read_until_terminator" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.lockin_controller.lockinController.send">
-<tt class="descname">send</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController.send" title="Permalink to this definition">¶</a></dt>
+<code class="descname">send</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController.send" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.lockin_controller.lockinController.send_and_receive">
-<tt class="descname">send_and_receive</tt><big>(</big><em>msg</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController.send_and_receive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController.send_and_receive" title="Permalink to this definition">¶</a></dt>
+<code class="descname">send_and_receive</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController.send_and_receive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController.send_and_receive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.equipment.lockin_controller.lockinController.set_sensitivity">
+<code class="descname">set_sensitivity</code><span class="sig-paren">(</span><em>sensitivity_volts</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController.set_sensitivity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController.set_sensitivity" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.lockin_controller.lockinController.setup_rs232_output">
-<tt class="descname">setup_rs232_output</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController.setup_rs232_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController.setup_rs232_output" title="Permalink to this definition">¶</a></dt>
+<code class="descname">setup_rs232_output</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/lockin_controller.html#lockinController.setup_rs232_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.lockin_controller.lockinController.setup_rs232_output" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+</dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.equipment.parse_srs">
+<span id="kid-readout-equipment-parse-srs-module"></span><h2>kid_readout.equipment.parse_srs module<a class="headerlink" href="#module-kid_readout.equipment.parse_srs" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="kid_readout.equipment.parse_srs.SRSLogFile">
+<em class="property">class </em><code class="descclassname">kid_readout.equipment.parse_srs.</code><code class="descname">SRSLogFile</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/parse_srs.html#SRSLogFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.parse_srs.SRSLogFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Usage example: log_file[1].R returns an array of resistances for
+channel 1.</p>
+<dl class="class">
+<dt id="kid_readout.equipment.parse_srs.SRSLogFile.Channel">
+<em class="property">class </em><code class="descname">Channel</code><span class="sig-paren">(</span><em>time</em>, <em>R</em>, <em>T</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/parse_srs.html#SRSLogFile.Channel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.parse_srs.SRSLogFile.Channel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.equipment.parse_srs.SRSLogFile.convert_timestamp">
+<code class="descclassname">SRSLogFile.</code><code class="descname">convert_timestamp</code><span class="sig-paren">(</span><em>timestamp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/parse_srs.html#SRSLogFile.convert_timestamp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.parse_srs.SRSLogFile.convert_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.equipment.parse_srs.convtime">
+<code class="descclassname">kid_readout.equipment.parse_srs.</code><code class="descname">convtime</code><span class="sig-paren">(</span><em>tstr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/parse_srs.html#convtime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.parse_srs.convtime" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.equipment.parse_srs.get_all_temperature_data">
+<code class="descclassname">kid_readout.equipment.parse_srs.</code><code class="descname">get_all_temperature_data</code><span class="sig-paren">(</span><em>logdir='/data/readout/SRS'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/parse_srs.html#get_all_temperature_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.parse_srs.get_all_temperature_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.equipment.parse_srs.get_load_log">
+<code class="descclassname">kid_readout.equipment.parse_srs.</code><code class="descname">get_load_log</code><span class="sig-paren">(</span><em>fname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/parse_srs.html#get_load_log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.parse_srs.get_load_log" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.equipment.parse_srs.get_temperature_at">
+<code class="descclassname">kid_readout.equipment.parse_srs.</code><code class="descname">get_temperature_at</code><span class="sig-paren">(</span><em>epoch</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/parse_srs.html#get_temperature_at"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.parse_srs.get_temperature_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.equipment.parse_srs.parse_srs_log">
+<code class="descclassname">kid_readout.equipment.parse_srs.</code><code class="descname">parse_srs_log</code><span class="sig-paren">(</span><em>fname</em>, <em>sensor=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/parse_srs.html#parse_srs_log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.parse_srs.parse_srs_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse log file created by Heather&#8217;s SRS logger
+<em>fname</em> : file name of log
+<em>sensor</em> : which sensor to extract (right now 2 corresponds to the package thermometer)
+returns numpy arrays of unix times and the temperature values</p>
 </dd></dl>
 
 </div>
@@ -179,7 +319,7 @@
 <span id="kid-readout-equipment-record-all-module"></span><h2>kid_readout.equipment.record_all module<a class="headerlink" href="#module-kid_readout.equipment.record_all" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="kid_readout.equipment.record_all.main">
-<tt class="descclassname">kid_readout.equipment.record_all.</tt><tt class="descname">main</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/record_all.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.record_all.main" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">kid_readout.equipment.record_all.</code><code class="descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/record_all.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.record_all.main" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -189,29 +329,8 @@
 <div class="section" id="module-kid_readout.equipment.record_all_old">
 <span id="kid-readout-equipment-record-all-old-module"></span><h2>kid_readout.equipment.record_all_old module<a class="headerlink" href="#module-kid_readout.equipment.record_all_old" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-kid_readout.equipment.rtlkid">
-<span id="kid-readout-equipment-rtlkid-module"></span><h2>kid_readout.equipment.rtlkid module<a class="headerlink" href="#module-kid_readout.equipment.rtlkid" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="kid_readout.equipment.rtlkid.RtlKidReadout">
-<em class="property">class </em><tt class="descclassname">kid_readout.equipment.rtlkid.</tt><tt class="descname">RtlKidReadout</tt><a class="reference internal" href="_modules/kid_readout/equipment/rtlkid.html#RtlKidReadout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.rtlkid.RtlKidReadout" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-<dl class="method">
-<dt id="kid_readout.equipment.rtlkid.RtlKidReadout.do_scan">
-<tt class="descname">do_scan</tt><big>(</big><em>freqs</em>, <em>level=-50.0</em>, <em>nsamp=2048</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/rtlkid.html#RtlKidReadout.do_scan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.rtlkid.RtlKidReadout.do_scan" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.equipment.rtlkid.RtlKidReadout.read_freq">
-<tt class="descname">read_freq</tt><big>(</big><em>freq</em>, <em>nsamp=2048</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/rtlkid.html#RtlKidReadout.read_freq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.rtlkid.RtlKidReadout.read_freq" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.equipment.rtlkid.RtlKidReadout.set_level_dbm">
-<tt class="descname">set_level_dbm</tt><big>(</big><em>level</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/rtlkid.html#RtlKidReadout.set_level_dbm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.rtlkid.RtlKidReadout.set_level_dbm" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="kid-readout-equipment-rtlkid-module">
+<h2>kid_readout.equipment.rtlkid module<a class="headerlink" href="#kid-readout-equipment-rtlkid-module" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-kid_readout.equipment.sim">
 <span id="kid-readout-equipment-sim-module"></span><h2>kid_readout.equipment.sim module<a class="headerlink" href="#module-kid_readout.equipment.sim" title="Permalink to this headline">¶</a></h2>
@@ -233,59 +352,69 @@ mode.</p>
 converted to uppercase.)</p>
 <dl class="class">
 <dt id="kid_readout.equipment.sim.CalibrationCurve">
-<em class="property">class </em><tt class="descclassname">kid_readout.equipment.sim.</tt><tt class="descname">CalibrationCurve</tt><big>(</big><em>sensor</em>, <em>temperature</em>, <em>identification</em>, <em>format='0'</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#CalibrationCurve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.CalibrationCurve" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<em class="property">class </em><code class="descclassname">kid_readout.equipment.sim.</code><code class="descname">CalibrationCurve</code><span class="sig-paren">(</span><em>sensor</em>, <em>temperature</em>, <em>identification</em>, <em>format='0'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#CalibrationCurve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.CalibrationCurve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 </dd></dl>
 
 <dl class="class">
 <dt id="kid_readout.equipment.sim.SIM">
-<em class="property">class </em><tt class="descclassname">kid_readout.equipment.sim.</tt><tt class="descname">SIM</tt><big>(</big><em>serial</em>, <em>parent_and_port=(None</em>, <em>None)</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<em class="property">class </em><code class="descclassname">kid_readout.equipment.sim.</code><code class="descname">SIM</code><span class="sig-paren">(</span><em>serial</em>, <em>parent_and_port=(None</em>, <em>None)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM.boolean_to_token">
-<tt class="descname">boolean_to_token</tt><em class="property"> = {False: 'OFF', True: 'ON'}</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM.boolean_to_token" title="Permalink to this definition">¶</a></dt>
+<code class="descname">boolean_to_token</code><em class="property"> = {False: 'OFF', True: 'ON'}</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM.boolean_to_token" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM.clear_status">
-<tt class="descname">clear_status</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM.clear_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM.clear_status" title="Permalink to this definition">¶</a></dt>
+<code class="descname">clear_status</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM.clear_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM.clear_status" title="Permalink to this definition">¶</a></dt>
 <dd><p>Clear all status registers. The registers cleared vary by device.</p>
 <p>This method implements the <a href="#id1"><span class="problematic" id="id2">*</span></a>CLS command.</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="kid_readout.equipment.sim.SIM.communication_delay">
+<code class="descname">communication_delay</code><em class="property"> = 0.001</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM.communication_delay" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.equipment.sim.SIM.float_format">
+<code class="descname">float_format</code><em class="property"> = ':.6f'</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM.float_format" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM.identification">
-<tt class="descname">identification</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM.identification"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM.identification" title="Permalink to this definition">¶</a></dt>
+<code class="descname">identification</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM.identification" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM.receive">
-<tt class="descname">receive</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM.receive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM.receive" title="Permalink to this definition">¶</a></dt>
+<code class="descname">receive</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM.receive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM.receive" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM.reset">
-<tt class="descname">reset</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM.reset" title="Permalink to this definition">¶</a></dt>
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM.reset" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM.send">
-<tt class="descname">send</tt><big>(</big><em>message</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM.send" title="Permalink to this definition">¶</a></dt>
+<code class="descname">send</code><span class="sig-paren">(</span><em>message</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM.send"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM.send" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM.send_and_receive">
-<tt class="descname">send_and_receive</tt><big>(</big><em>message</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM.send_and_receive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM.send_and_receive" title="Permalink to this definition">¶</a></dt>
+<code class="descname">send_and_receive</code><span class="sig-paren">(</span><em>message</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM.send_and_receive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM.send_and_receive" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM.termination">
-<tt class="descname">termination</tt><em class="property"> = '\n'</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM.termination" title="Permalink to this definition">¶</a></dt>
+<code class="descname">termination</code><em class="property"> = '\n'</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM.termination" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM.token">
-<tt class="descname">token</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM.token"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM.token" title="Permalink to this definition">¶</a></dt>
+<code class="descname">token</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM.token" title="Permalink to this definition">¶</a></dt>
 <dd><p>The token mode.</p>
 <p>This property implements the TOKN(?) command.</p>
 <p>When True, the SIM returns tokens such as &#8216;ON&#8217; or &#8216;VOLTAGE&#8217;; when False, the SIM returns integer codes instead.</p>
@@ -293,18 +422,18 @@ converted to uppercase.)</p>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM.token_to_boolean">
-<tt class="descname">token_to_boolean</tt><em class="property"> = {'1': True, '0': False, 'OFF': False, 'ON': True}</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM.token_to_boolean" title="Permalink to this definition">¶</a></dt>
+<code class="descname">token_to_boolean</code><em class="property"> = {'1': True, '0': False, 'OFF': False, 'ON': True}</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM.token_to_boolean" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="class">
 <dt id="kid_readout.equipment.sim.SIM900">
-<em class="property">class </em><tt class="descclassname">kid_readout.equipment.sim.</tt><tt class="descname">SIM900</tt><big>(</big><em>serial_port</em>, <em>baudrate=9600</em>, <em>timeout=2</em>, <em>autodetect=True</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM900"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM900" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#kid_readout.equipment.sim.SIM" title="kid_readout.equipment.sim.SIM"><tt class="xref py py-class docutils literal"><span class="pre">kid_readout.equipment.sim.SIM</span></tt></a></p>
+<em class="property">class </em><code class="descclassname">kid_readout.equipment.sim.</code><code class="descname">SIM900</code><span class="sig-paren">(</span><em>serial_port</em>, <em>baudrate=9600</em>, <em>timeout=2</em>, <em>autodetect=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM900"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM900" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#kid_readout.equipment.sim.SIM" title="kid_readout.equipment.sim.SIM"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.equipment.sim.SIM</span></code></a></p>
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM900.SIM_reset">
-<tt class="descname">SIM_reset</tt><big>(</big><em>port=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM900.SIM_reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM900.SIM_reset" title="Permalink to this definition">¶</a></dt>
+<code class="descname">SIM_reset</code><span class="sig-paren">(</span><em>port=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM900.SIM_reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM900.SIM_reset" title="Permalink to this definition">¶</a></dt>
 <dd><p>Send the SIM reset signal to the given SIM port, meaning port
 1 through port 8, or to all SIM ports if no port is specified.</p>
 <p>This method implements the SRST command.</p>
@@ -312,44 +441,44 @@ converted to uppercase.)</p>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM900.autodetect">
-<tt class="descname">autodetect</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM900.autodetect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM900.autodetect" title="Permalink to this definition">¶</a></dt>
+<code class="descname">autodetect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM900.autodetect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM900.autodetect" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM900.broadcast">
-<tt class="descname">broadcast</tt><big>(</big><em>message</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM900.broadcast"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM900.broadcast" title="Permalink to this definition">¶</a></dt>
+<code class="descname">broadcast</code><span class="sig-paren">(</span><em>message</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM900.broadcast"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM900.broadcast" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM900.connect">
-<tt class="descname">connect</tt><big>(</big><em>port</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM900.connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM900.connect" title="Permalink to this definition">¶</a></dt>
+<code class="descname">connect</code><span class="sig-paren">(</span><em>port</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM900.connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM900.connect" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM900.disconnect">
-<tt class="descname">disconnect</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM900.disconnect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM900.disconnect" title="Permalink to this definition">¶</a></dt>
+<code class="descname">disconnect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM900.disconnect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM900.disconnect" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM900.escape">
-<tt class="descname">escape</tt><em class="property"> = '\x1b'</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM900.escape" title="Permalink to this definition">¶</a></dt>
+<code class="descname">escape</code><em class="property"> = '\x1b'</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM900.escape" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM900.flush">
-<tt class="descname">flush</tt><big>(</big><em>port=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM900.flush"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM900.flush" title="Permalink to this definition">¶</a></dt>
+<code class="descname">flush</code><span class="sig-paren">(</span><em>port=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM900.flush"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM900.flush" title="Permalink to this definition">¶</a></dt>
 <dd><p>Flush the SIM900 input and output queue for the given port, or for all ports if no port is given.</p>
 <p>This method implements the FLSH command.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM900.parse_definite_length">
-<tt class="descname">parse_definite_length</tt><big>(</big><em>message</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM900.parse_definite_length"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM900.parse_definite_length" title="Permalink to this definition">¶</a></dt>
+<code class="descname">parse_definite_length</code><span class="sig-paren">(</span><em>message</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM900.parse_definite_length"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM900.parse_definite_length" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM900.parse_message">
-<tt class="descname">parse_message</tt><big>(</big><em>message</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM900.parse_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM900.parse_message" title="Permalink to this definition">¶</a></dt>
+<code class="descname">parse_message</code><span class="sig-paren">(</span><em>message</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM900.parse_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM900.parse_message" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse a message of the form
 &#8216;MSG 1,something&#8217;
 and return the port and message:
@@ -360,51 +489,79 @@ and return the port and message:
 
 <dl class="class">
 <dt id="kid_readout.equipment.sim.SIM921">
-<em class="property">class </em><tt class="descclassname">kid_readout.equipment.sim.</tt><tt class="descname">SIM921</tt><big>(</big><em>serial</em>, <em>parent_and_port=(None</em>, <em>None)</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#kid_readout.equipment.sim.SIMThermometer" title="kid_readout.equipment.sim.SIMThermometer"><tt class="xref py py-class docutils literal"><span class="pre">kid_readout.equipment.sim.SIMThermometer</span></tt></a></p>
+<em class="property">class </em><code class="descclassname">kid_readout.equipment.sim.</code><code class="descname">SIM921</code><span class="sig-paren">(</span><em>serial</em>, <em>parent_and_port=(None</em>, <em>None)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#kid_readout.equipment.sim.SIMThermometer" title="kid_readout.equipment.sim.SIMThermometer"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.equipment.sim.SIMThermometer</span></code></a></p>
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.CAPT_separator">
-<tt class="descname">CAPT_separator</tt><em class="property"> = ','</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.CAPT_separator" title="Permalink to this definition">¶</a></dt>
+<code class="descname">CAPT_separator</code><em class="property"> = ','</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.CAPT_separator" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.active_curve">
-<tt class="descname">active_curve</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.active_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.active_curve" title="Permalink to this definition">¶</a></dt>
+<code class="descname">active_curve</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.active_curve" title="Permalink to this definition">¶</a></dt>
 <dd><p>The number of the active calibration curve: 1, 2, or 3.</p>
 <p>This property implements the CURV(?) command.</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="kid_readout.equipment.sim.SIM921.analog_output_manual_mode">
+<code class="descname">analog_output_manual_mode</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.analog_output_manual_mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the analog output manual mode. In manual mode, the output value is set using the AMAN command.</p>
+<p>This property implements the AMAN(?) command.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.equipment.sim.SIM921.analog_output_manual_value">
+<code class="descname">analog_output_manual_value</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.analog_output_manual_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the analog output manual value in volts.</p>
+<p>This property implements the AOUT(?) command.</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.analog_output_temperature">
-<tt class="descname">analog_output_temperature</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.analog_output_temperature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.analog_output_temperature" title="Permalink to this definition">¶</a></dt>
+<code class="descname">analog_output_temperature</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.analog_output_temperature" title="Permalink to this definition">¶</a></dt>
 <dd><p>The analog output mode.</p>
 <p>This property implements the ATEM(?) command.</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="kid_readout.equipment.sim.SIM921.analog_output_volts_per_kelvin">
+<code class="descname">analog_output_volts_per_kelvin</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.analog_output_volts_per_kelvin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the analog output scale in temperature mode.</p>
+<p>This property implements the TKEL(?) command.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.equipment.sim.SIM921.analog_output_volts_per_ohm">
+<code class="descname">analog_output_volts_per_ohm</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.analog_output_volts_per_ohm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the analog output scale in resistance mode.</p>
+<p>This property implements the VOHM(?) command.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM921.autocalibrate">
-<tt class="descname">autocalibrate</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.autocalibrate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.autocalibrate" title="Permalink to this definition">¶</a></dt>
+<code class="descname">autocalibrate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.autocalibrate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.autocalibrate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initiate the internal autocalibration cycle.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.autorange_display">
-<tt class="descname">autorange_display</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.autorange_display"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.autorange_display" title="Permalink to this definition">¶</a></dt>
+<code class="descname">autorange_display</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.autorange_display" title="Permalink to this definition">¶</a></dt>
 <dd><p>The display autorange mode.</p>
 <p>This property implements the ADIS(?) command.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM921.autorange_gain">
-<tt class="descname">autorange_gain</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.autorange_gain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.autorange_gain" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform a gain autorange cycle, which should take about two seconds.</p>
+<code class="descname">autorange_gain</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.autorange_gain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.autorange_gain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a gain autorange cycle. The manual says this should take about two seconds, but it usually takes longer.</p>
 <p>This method implements the AGAI(?) command.</p>
 <p>This method will return only when the autorange cycle completes.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.display">
-<tt class="descname">display</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.display"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.display" title="Permalink to this definition">¶</a></dt>
+<code class="descname">display</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.display" title="Permalink to this definition">¶</a></dt>
 <dd><p>The display state. See the manual for meanings.</p>
 <p>This property implements the DISP(?) command.</p>
 <p>Only the range codes are implemented, not the string values.</p>
@@ -412,92 +569,92 @@ and return the port and message:
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.display_temperature">
-<tt class="descname">display_temperature</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.display_temperature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.display_temperature" title="Permalink to this definition">¶</a></dt>
+<code class="descname">display_temperature</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.display_temperature" title="Permalink to this definition">¶</a></dt>
 <dd><p>The temperature display mode.</p>
 <p>This property implements the DTEM(?) command.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.excitation">
-<tt class="descname">excitation</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.excitation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.excitation" title="Permalink to this definition">¶</a></dt>
+<code class="descname">excitation</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.excitation" title="Permalink to this definition">¶</a></dt>
 <dd><p>The voltage excitation code. See the manual for code meanings.</p>
 <p>This property implements the EXCI(?) command.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.excitation_current">
-<tt class="descname">excitation_current</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.excitation_current"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.excitation_current" title="Permalink to this definition">¶</a></dt>
+<code class="descname">excitation_current</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.excitation_current" title="Permalink to this definition">¶</a></dt>
 <dd><p>The actual excitation current amplitude, in amperes.</p>
 <p>This property implements the IEXC? command.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.excitation_mode">
-<tt class="descname">excitation_mode</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.excitation_mode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.excitation_mode" title="Permalink to this definition">¶</a></dt>
+<code class="descname">excitation_mode</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.excitation_mode" title="Permalink to this definition">¶</a></dt>
 <dd><p>The excitation mode.</p>
 <p>This property implements the MODE(?) command.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.excitation_on">
-<tt class="descname">excitation_on</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.excitation_on"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.excitation_on" title="Permalink to this definition">¶</a></dt>
+<code class="descname">excitation_on</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.excitation_on" title="Permalink to this definition">¶</a></dt>
 <dd><p>The excitation state.</p>
 <p>This property implements the EXON(?) command.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.excitation_voltage">
-<tt class="descname">excitation_voltage</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.excitation_voltage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.excitation_voltage" title="Permalink to this definition">¶</a></dt>
+<code class="descname">excitation_voltage</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.excitation_voltage" title="Permalink to this definition">¶</a></dt>
 <dd><p>The actual excitation voltage amplitude, in volts.</p>
 <p>This property implements the VEXC? command.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM921.filter_reset">
-<tt class="descname">filter_reset</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.filter_reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.filter_reset" title="Permalink to this definition">¶</a></dt>
+<code class="descname">filter_reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.filter_reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.filter_reset" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reset the post-detection filter.</p>
 <p>This method implements the FRST command.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.frequency">
-<tt class="descname">frequency</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.frequency"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.frequency" title="Permalink to this definition">¶</a></dt>
+<code class="descname">frequency</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.frequency" title="Permalink to this definition">¶</a></dt>
 <dd><p>The excitation frequency in Hz.</p>
 <p>This property implements the FREQ(?) command.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.maximum_frequency">
-<tt class="descname">maximum_frequency</tt><em class="property"> = 61.1</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.maximum_frequency" title="Permalink to this definition">¶</a></dt>
+<code class="descname">maximum_frequency</code><em class="property"> = 61.1</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.maximum_frequency" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.maximum_temperature_points">
-<tt class="descname">maximum_temperature_points</tt><em class="property"> = 225</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.maximum_temperature_points" title="Permalink to this definition">¶</a></dt>
+<code class="descname">maximum_temperature_points</code><em class="property"> = 225</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.maximum_temperature_points" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.minimum_frequency">
-<tt class="descname">minimum_frequency</tt><em class="property"> = 1.95</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.minimum_frequency" title="Permalink to this definition">¶</a></dt>
+<code class="descname">minimum_frequency</code><em class="property"> = 1.95</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.minimum_frequency" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.phase_hold">
-<tt class="descname">phase_hold</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.phase_hold"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.phase_hold" title="Permalink to this definition">¶</a></dt>
+<code class="descname">phase_hold</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.phase_hold" title="Permalink to this definition">¶</a></dt>
 <dd><p>The phase hold state.</p>
 <p>This property implements the PHLD command.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.range">
-<tt class="descname">range</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.range" title="Permalink to this definition">¶</a></dt>
+<code class="descname">range</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.range" title="Permalink to this definition">¶</a></dt>
 <dd><p>The resistance range code. See the manual for code meanings.</p>
 <p>This property implements the RANG(?) command.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.resistance">
-<tt class="descname">resistance</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.resistance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.resistance" title="Permalink to this definition">¶</a></dt>
+<code class="descname">resistance</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.resistance" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the measured resistance.</p>
 <p>This property implements the RVAL? command.</p>
 <p>Multiple measurements and streaming are not yet implemented.</p>
@@ -505,15 +662,22 @@ and return the port and message:
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.resistance_deviation">
-<tt class="descname">resistance_deviation</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.resistance_deviation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.resistance_deviation" title="Permalink to this definition">¶</a></dt>
+<code class="descname">resistance_deviation</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.resistance_deviation" title="Permalink to this definition">¶</a></dt>
 <dd><p>The resistance deviation, in ohms, from the setpoint.</p>
 <p>This property implements the RDEV? command.</p>
 <p>Multiple measurements and streaming are not yet implemented.</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="kid_readout.equipment.sim.SIM921.resistance_setpoint">
+<code class="descname">resistance_setpoint</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.resistance_setpoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assign the setpoint, or offset, used for analog output when in resistance mode.</p>
+<p>This property implements the RSET(?) command.</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.temperature">
-<tt class="descname">temperature</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.temperature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.temperature" title="Permalink to this definition">¶</a></dt>
+<code class="descname">temperature</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.temperature" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the temperature calculated using the current calibration curve.</p>
 <p>This property implements the TVAL? command.</p>
 <p>Multiple measurements and streaming are not yet implemented.</p>
@@ -521,83 +685,90 @@ and return the port and message:
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.temperature_deviation">
-<tt class="descname">temperature_deviation</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.temperature_deviation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.temperature_deviation" title="Permalink to this definition">¶</a></dt>
+<code class="descname">temperature_deviation</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.temperature_deviation" title="Permalink to this definition">¶</a></dt>
 <dd><p>The temperature deviation, in ohms, from the setpoint.</p>
 <p>This property implements the TDEV? command.</p>
 <p>Multiple measurements and streaming are not yet implemented.</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="kid_readout.equipment.sim.SIM921.temperature_setpoint">
+<code class="descname">temperature_setpoint</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.temperature_setpoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assign the setpoint, or offset, used for analog output when in temperature mode.</p>
+<p>This property implements the TSET(?) command.</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.time_constant">
-<tt class="descname">time_constant</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM921.time_constant"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.time_constant" title="Permalink to this definition">¶</a></dt>
+<code class="descname">time_constant</code><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.time_constant" title="Permalink to this definition">¶</a></dt>
 <dd><p>The filter time constant code. See the manual for meanings.</p>
 <p>This property implements the TCON(?) command.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM921.write_delay">
-<tt class="descname">write_delay</tt><em class="property"> = 0.5</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.write_delay" title="Permalink to this definition">¶</a></dt>
+<code class="descname">write_delay</code><em class="property"> = 0.5</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM921.write_delay" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="class">
 <dt id="kid_readout.equipment.sim.SIM922">
-<em class="property">class </em><tt class="descclassname">kid_readout.equipment.sim.</tt><tt class="descname">SIM922</tt><big>(</big><em>serial</em>, <em>parent_and_port=(None</em>, <em>None)</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM922"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM922" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#kid_readout.equipment.sim.SIMThermometer" title="kid_readout.equipment.sim.SIMThermometer"><tt class="xref py py-class docutils literal"><span class="pre">kid_readout.equipment.sim.SIMThermometer</span></tt></a></p>
+<em class="property">class </em><code class="descclassname">kid_readout.equipment.sim.</code><code class="descname">SIM922</code><span class="sig-paren">(</span><em>serial</em>, <em>parent_and_port=(None</em>, <em>None)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM922"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM922" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#kid_readout.equipment.sim.SIMThermometer" title="kid_readout.equipment.sim.SIMThermometer"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.equipment.sim.SIMThermometer</span></code></a></p>
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM922.CAPT_separator">
-<tt class="descname">CAPT_separator</tt><em class="property"> = ' '</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM922.CAPT_separator" title="Permalink to this definition">¶</a></dt>
+<code class="descname">CAPT_separator</code><em class="property"> = ' '</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM922.CAPT_separator" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM922.get_curve_type">
-<tt class="descname">get_curve_type</tt><big>(</big><em>channel</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM922.get_curve_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM922.get_curve_type" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_curve_type</code><span class="sig-paren">(</span><em>channel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM922.get_curve_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM922.get_curve_type" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM922.maximum_temperature_points">
-<tt class="descname">maximum_temperature_points</tt><em class="property"> = 256</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM922.maximum_temperature_points" title="Permalink to this definition">¶</a></dt>
+<code class="descname">maximum_temperature_points</code><em class="property"> = 256</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM922.maximum_temperature_points" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM922.set_curve_type">
-<tt class="descname">set_curve_type</tt><big>(</big><em>channel</em>, <em>curve_type</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM922.set_curve_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM922.set_curve_type" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_curve_type</code><span class="sig-paren">(</span><em>channel</em>, <em>curve_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM922.set_curve_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM922.set_curve_type" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM922.temperature">
-<tt class="descname">temperature</tt><big>(</big><em>channel</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM922.temperature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM922.temperature" title="Permalink to this definition">¶</a></dt>
+<code class="descname">temperature</code><span class="sig-paren">(</span><em>channel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM922.temperature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM922.temperature" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIM922.voltage">
-<tt class="descname">voltage</tt><big>(</big><em>channel</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM922.voltage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM922.voltage" title="Permalink to this definition">¶</a></dt>
+<code class="descname">voltage</code><span class="sig-paren">(</span><em>channel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM922.voltage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM922.voltage" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIM922.write_delay">
-<tt class="descname">write_delay</tt><em class="property"> = 1</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM922.write_delay" title="Permalink to this definition">¶</a></dt>
+<code class="descname">write_delay</code><em class="property"> = 1</em><a class="headerlink" href="#kid_readout.equipment.sim.SIM922.write_delay" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="class">
 <dt id="kid_readout.equipment.sim.SIM925">
-<em class="property">class </em><tt class="descclassname">kid_readout.equipment.sim.</tt><tt class="descname">SIM925</tt><big>(</big><em>serial</em>, <em>parent_and_port=(None</em>, <em>None)</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM925"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM925" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#kid_readout.equipment.sim.SIM" title="kid_readout.equipment.sim.SIM"><tt class="xref py py-class docutils literal"><span class="pre">kid_readout.equipment.sim.SIM</span></tt></a></p>
+<em class="property">class </em><code class="descclassname">kid_readout.equipment.sim.</code><code class="descname">SIM925</code><span class="sig-paren">(</span><em>serial</em>, <em>parent_and_port=(None</em>, <em>None)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIM925"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIM925" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#kid_readout.equipment.sim.SIM" title="kid_readout.equipment.sim.SIM"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.equipment.sim.SIM</span></code></a></p>
 </dd></dl>
 
 <dl class="exception">
 <dt id="kid_readout.equipment.sim.SIMError">
-<em class="property">exception </em><tt class="descclassname">kid_readout.equipment.sim.</tt><tt class="descname">SIMError</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIMError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIMError" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+<em class="property">exception </em><code class="descclassname">kid_readout.equipment.sim.</code><code class="descname">SIMError</code><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIMError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIMError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></code></p>
 </dd></dl>
 
 <dl class="class">
 <dt id="kid_readout.equipment.sim.SIMThermometer">
-<em class="property">class </em><tt class="descclassname">kid_readout.equipment.sim.</tt><tt class="descname">SIMThermometer</tt><big>(</big><em>serial</em>, <em>parent_and_port=(None</em>, <em>None)</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIMThermometer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIMThermometer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#kid_readout.equipment.sim.SIM" title="kid_readout.equipment.sim.SIM"><tt class="xref py py-class docutils literal"><span class="pre">kid_readout.equipment.sim.SIM</span></tt></a></p>
+<em class="property">class </em><code class="descclassname">kid_readout.equipment.sim.</code><code class="descname">SIMThermometer</code><span class="sig-paren">(</span><em>serial</em>, <em>parent_and_port=(None</em>, <em>None)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIMThermometer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIMThermometer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#kid_readout.equipment.sim.SIM" title="kid_readout.equipment.sim.SIM"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.equipment.sim.SIM</span></code></a></p>
 <p>This is intended to be an abstract class that allows the
 temperature sensors to share code.</p>
 <p>For the SIM921 resistance bridge, the parameter number refers to
@@ -606,56 +777,56 @@ monitor, the parameter number refers to diode channel 1, 2, 3, or
 4; there can be only one user calibration curve stored per channel.</p>
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIMThermometer.curve_info">
-<tt class="descname">curve_info</tt><big>(</big><em>number</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIMThermometer.curve_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIMThermometer.curve_info" title="Permalink to this definition">¶</a></dt>
+<code class="descname">curve_info</code><span class="sig-paren">(</span><em>number</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIMThermometer.curve_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIMThermometer.curve_info" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIMThermometer.initialize_curve">
-<tt class="descname">initialize_curve</tt><big>(</big><em>number</em>, <em>format</em>, <em>identification</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIMThermometer.initialize_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIMThermometer.initialize_curve" title="Permalink to this definition">¶</a></dt>
+<code class="descname">initialize_curve</code><span class="sig-paren">(</span><em>number</em>, <em>format</em>, <em>identification</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIMThermometer.initialize_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIMThermometer.initialize_curve" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="kid_readout.equipment.sim.SIMThermometer.maximum_fractional_error">
-<tt class="descname">maximum_fractional_error</tt><em class="property"> = 0.0001</em><a class="headerlink" href="#kid_readout.equipment.sim.SIMThermometer.maximum_fractional_error" title="Permalink to this definition">¶</a></dt>
+<code class="descname">maximum_fractional_error</code><em class="property"> = 0.0001</em><a class="headerlink" href="#kid_readout.equipment.sim.SIMThermometer.maximum_fractional_error" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIMThermometer.read_curve">
-<tt class="descname">read_curve</tt><big>(</big><em>number</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIMThermometer.read_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIMThermometer.read_curve" title="Permalink to this definition">¶</a></dt>
+<code class="descname">read_curve</code><span class="sig-paren">(</span><em>number</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIMThermometer.read_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIMThermometer.read_curve" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIMThermometer.validate_curve">
-<tt class="descname">validate_curve</tt><big>(</big><em>number</em>, <em>curve</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIMThermometer.validate_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIMThermometer.validate_curve" title="Permalink to this definition">¶</a></dt>
+<code class="descname">validate_curve</code><span class="sig-paren">(</span><em>number</em>, <em>curve</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIMThermometer.validate_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIMThermometer.validate_curve" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim.SIMThermometer.write_curve">
-<tt class="descname">write_curve</tt><big>(</big><em>number</em>, <em>curve</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIMThermometer.write_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIMThermometer.write_curve" title="Permalink to this definition">¶</a></dt>
+<code class="descname">write_curve</code><span class="sig-paren">(</span><em>number</em>, <em>curve</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIMThermometer.write_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIMThermometer.write_curve" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="exception">
 <dt id="kid_readout.equipment.sim.SIMTimeout">
-<em class="property">exception </em><tt class="descclassname">kid_readout.equipment.sim.</tt><tt class="descname">SIMTimeout</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIMTimeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIMTimeout" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#kid_readout.equipment.sim.SIMError" title="kid_readout.equipment.sim.SIMError"><tt class="xref py py-class docutils literal"><span class="pre">kid_readout.equipment.sim.SIMError</span></tt></a></p>
+<em class="property">exception </em><code class="descclassname">kid_readout.equipment.sim.</code><code class="descname">SIMTimeout</code><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIMTimeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIMTimeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#kid_readout.equipment.sim.SIMError" title="kid_readout.equipment.sim.SIMError"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.equipment.sim.SIMError</span></code></a></p>
 </dd></dl>
 
 <dl class="exception">
 <dt id="kid_readout.equipment.sim.SIMValueError">
-<em class="property">exception </em><tt class="descclassname">kid_readout.equipment.sim.</tt><tt class="descname">SIMValueError</tt><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIMValueError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIMValueError" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#kid_readout.equipment.sim.SIMError" title="kid_readout.equipment.sim.SIMError"><tt class="xref py py-class docutils literal"><span class="pre">kid_readout.equipment.sim.SIMError</span></tt></a></p>
+<em class="property">exception </em><code class="descclassname">kid_readout.equipment.sim.</code><code class="descname">SIMValueError</code><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#SIMValueError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.SIMValueError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#kid_readout.equipment.sim.SIMError" title="kid_readout.equipment.sim.SIMError"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.equipment.sim.SIMError</span></code></a></p>
 </dd></dl>
 
 <dl class="function">
 <dt id="kid_readout.equipment.sim.load_curve">
-<tt class="descclassname">kid_readout.equipment.sim.</tt><tt class="descname">load_curve</tt><big>(</big><em>filename</em>, <em>format='0'</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#load_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.load_curve" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">kid_readout.equipment.sim.</code><code class="descname">load_curve</code><span class="sig-paren">(</span><em>filename</em>, <em>format='0'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#load_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.load_curve" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="kid_readout.equipment.sim.save_curve">
-<tt class="descclassname">kid_readout.equipment.sim.</tt><tt class="descname">save_curve</tt><big>(</big><em>directory</em>, <em>curve</em>, <em>format='%.5f\t%.5f'</em>, <em>newline='\r\n'</em>, <em>extension='.txt'</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#save_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.save_curve" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">kid_readout.equipment.sim.</code><code class="descname">save_curve</code><span class="sig-paren">(</span><em>directory</em>, <em>curve</em>, <em>format='%.5f\t%.5f'</em>, <em>newline='\r\n'</em>, <em>extension='.txt'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim.html#save_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim.save_curve" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -663,133 +834,153 @@ monitor, the parameter number refers to diode channel 1, 2, 3, or
 <span id="kid-readout-equipment-sim900-module"></span><h2>kid_readout.equipment.sim900 module<a class="headerlink" href="#module-kid_readout.equipment.sim900" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="kid_readout.equipment.sim900.sim900">
-<em class="property">class </em><tt class="descclassname">kid_readout.equipment.sim900.</tt><tt class="descname">sim900</tt><big>(</big><em>port='/dev/ttyUSB1'</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">kid_readout.equipment.sim900.</code><code class="descname">sim900</code><span class="sig-paren">(</span><em>port='/dev/ttyUSB1'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.check_cal">
-<tt class="descname">check_cal</tt><big>(</big><em>entry</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.check_cal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.check_cal" title="Permalink to this definition">¶</a></dt>
+<code class="descname">check_cal</code><span class="sig-paren">(</span><em>entry</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.check_cal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.check_cal" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.close_sim900">
-<tt class="descname">close_sim900</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.close_sim900"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.close_sim900" title="Permalink to this definition">¶</a></dt>
+<code class="descname">close_sim900</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.close_sim900"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.close_sim900" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.close_sim921">
-<tt class="descname">close_sim921</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.close_sim921"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.close_sim921" title="Permalink to this definition">¶</a></dt>
+<code class="descname">close_sim921</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.close_sim921"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.close_sim921" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.close_sim921_1">
-<tt class="descname">close_sim921_1</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.close_sim921_1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.close_sim921_1" title="Permalink to this definition">¶</a></dt>
+<code class="descname">close_sim921_1</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.close_sim921_1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.close_sim921_1" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.close_sim921_6">
-<tt class="descname">close_sim921_6</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.close_sim921_6"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.close_sim921_6" title="Permalink to this definition">¶</a></dt>
+<code class="descname">close_sim921_6</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.close_sim921_6"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.close_sim921_6" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.close_sim922">
-<tt class="descname">close_sim922</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.close_sim922"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.close_sim922" title="Permalink to this definition">¶</a></dt>
+<code class="descname">close_sim922</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.close_sim922"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.close_sim922" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.close_sim925">
-<tt class="descname">close_sim925</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.close_sim925"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.close_sim925" title="Permalink to this definition">¶</a></dt>
+<code class="descname">close_sim925</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.close_sim925"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.close_sim925" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.connect_sim921">
-<tt class="descname">connect_sim921</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.connect_sim921"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.connect_sim921" title="Permalink to this definition">¶</a></dt>
+<code class="descname">connect_sim921</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.connect_sim921"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.connect_sim921" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.connect_sim921_1">
-<tt class="descname">connect_sim921_1</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.connect_sim921_1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.connect_sim921_1" title="Permalink to this definition">¶</a></dt>
+<code class="descname">connect_sim921_1</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.connect_sim921_1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.connect_sim921_1" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.connect_sim921_6">
-<tt class="descname">connect_sim921_6</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.connect_sim921_6"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.connect_sim921_6" title="Permalink to this definition">¶</a></dt>
+<code class="descname">connect_sim921_6</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.connect_sim921_6"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.connect_sim921_6" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.connect_sim922">
-<tt class="descname">connect_sim922</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.connect_sim922"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.connect_sim922" title="Permalink to this definition">¶</a></dt>
+<code class="descname">connect_sim922</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.connect_sim922"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.connect_sim922" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.connect_sim925">
-<tt class="descname">connect_sim925</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.connect_sim925"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.connect_sim925" title="Permalink to this definition">¶</a></dt>
+<code class="descname">connect_sim925</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.connect_sim925"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.connect_sim925" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.get_resistance">
-<tt class="descname">get_resistance</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.get_resistance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.get_resistance" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_resistance</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.get_resistance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.get_resistance" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.get_sim922_temp">
-<tt class="descname">get_sim922_temp</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.get_sim922_temp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.get_sim922_temp" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_sim922_temp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.get_sim922_temp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.get_sim922_temp" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.get_sim922_volts">
-<tt class="descname">get_sim922_volts</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.get_sim922_volts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.get_sim922_volts" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_sim922_volts</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.get_sim922_volts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.get_sim922_volts" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.get_temp">
-<tt class="descname">get_temp</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.get_temp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.get_temp" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_temp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.get_temp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.get_temp" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.load_calibration_curve">
-<tt class="descname">load_calibration_curve</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.load_calibration_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.load_calibration_curve" title="Permalink to this definition">¶</a></dt>
+<code class="descname">load_calibration_curve</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.load_calibration_curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.load_calibration_curve" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.load_calibration_curve_2">
-<tt class="descname">load_calibration_curve_2</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.load_calibration_curve_2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.load_calibration_curve_2" title="Permalink to this definition">¶</a></dt>
+<code class="descname">load_calibration_curve_2</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.load_calibration_curve_2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.load_calibration_curve_2" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.load_calibration_curve_diode">
-<tt class="descname">load_calibration_curve_diode</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.load_calibration_curve_diode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.load_calibration_curve_diode" title="Permalink to this definition">¶</a></dt>
+<code class="descname">load_calibration_curve_diode</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.load_calibration_curve_diode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.load_calibration_curve_diode" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.sendget">
-<tt class="descname">sendget</tt><big>(</big><em>command</em><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.sendget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.sendget" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sendget</code><span class="sig-paren">(</span><em>command</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.sendget"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.sendget" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.set_channel_1">
-<tt class="descname">set_channel_1</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.set_channel_1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.set_channel_1" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_channel_1</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.set_channel_1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.set_channel_1" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.set_channel_2">
-<tt class="descname">set_channel_2</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.set_channel_2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.set_channel_2" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_channel_2</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.set_channel_2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.set_channel_2" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.set_sim921_excitation">
-<tt class="descname">set_sim921_excitation</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.set_sim921_excitation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.set_sim921_excitation" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_sim921_excitation</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.set_sim921_excitation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.set_sim921_excitation" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.setup_sim900">
-<tt class="descname">setup_sim900</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.setup_sim900"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.setup_sim900" title="Permalink to this definition">¶</a></dt>
+<code class="descname">setup_sim900</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.setup_sim900"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.setup_sim900" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="kid_readout.equipment.sim900.sim900.setup_sim921">
-<tt class="descname">setup_sim921</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.setup_sim921"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.setup_sim921" title="Permalink to this definition">¶</a></dt>
+<code class="descname">setup_sim921</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/sim900.html#sim900.setup_sim921"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.sim900.sim900.setup_sim921" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.equipment.starcryo_temps">
+<span id="kid-readout-equipment-starcryo-temps-module"></span><h2>kid_readout.equipment.starcryo_temps module<a class="headerlink" href="#module-kid_readout.equipment.starcryo_temps" title="Permalink to this headline">¶</a></h2>
+<p>Routines for getting temperature data for starcryo cryostat
+Currently assumes SRS logs are in /data/readout/SRS</p>
+<dl class="function">
+<dt id="kid_readout.equipment.starcryo_temps.get_temperature_log_file_list">
+<code class="descclassname">kid_readout.equipment.starcryo_temps.</code><code class="descname">get_temperature_log_file_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/starcryo_temps.html#get_temperature_log_file_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.starcryo_temps.get_temperature_log_file_list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.equipment.starcryo_temps.get_temperatures_at">
+<code class="descclassname">kid_readout.equipment.starcryo_temps.</code><code class="descname">get_temperatures_at</code><span class="sig-paren">(</span><em>t</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/starcryo_temps.html#get_temperatures_at"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.starcryo_temps.get_temperatures_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.equipment.starcryo_temps.refresh_temperature_log_file_list">
+<code class="descclassname">kid_readout.equipment.starcryo_temps.</code><code class="descname">refresh_temperature_log_file_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/equipment/starcryo_temps.html#refresh_temperature_log_file_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.equipment.starcryo_temps.refresh_temperature_log_file_list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </div>
 <div class="section" id="module-kid_readout.equipment">
@@ -802,7 +993,7 @@ monitor, the parameter number refers to diode channel 1, 2, 3, or
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
@@ -810,24 +1001,36 @@ monitor, the parameter number refers to diode channel 1, 2, 3, or
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
 <li><a class="reference internal" href="#module-kid_readout.equipment.agilent_33220">kid_readout.equipment.agilent_33220 module</a></li>
 <li><a class="reference internal" href="#module-kid_readout.equipment.hittite_controller">kid_readout.equipment.hittite_controller module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.equipment.hpd_temps">kid_readout.equipment.hpd_temps module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.equipment.led_controller">kid_readout.equipment.led_controller module</a></li>
 <li><a class="reference internal" href="#module-kid_readout.equipment.lockin_controller">kid_readout.equipment.lockin_controller module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.equipment.parse_srs">kid_readout.equipment.parse_srs module</a></li>
 <li><a class="reference internal" href="#module-kid_readout.equipment.record_all">kid_readout.equipment.record_all module</a></li>
 <li><a class="reference internal" href="#module-kid_readout.equipment.record_all_downstairs">kid_readout.equipment.record_all_downstairs module</a></li>
 <li><a class="reference internal" href="#module-kid_readout.equipment.record_all_old">kid_readout.equipment.record_all_old module</a></li>
-<li><a class="reference internal" href="#module-kid_readout.equipment.rtlkid">kid_readout.equipment.rtlkid module</a></li>
+<li><a class="reference internal" href="#kid-readout-equipment-rtlkid-module">kid_readout.equipment.rtlkid module</a></li>
 <li><a class="reference internal" href="#module-kid_readout.equipment.sim">kid_readout.equipment.sim module</a></li>
 <li><a class="reference internal" href="#module-kid_readout.equipment.sim900">kid_readout.equipment.sim900 module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.equipment.starcryo_temps">kid_readout.equipment.starcryo_temps module</a></li>
 <li><a class="reference internal" href="#module-kid_readout.equipment">Module contents</a></li>
 </ul>
 </li>
 </ul>
 
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="_sources/kid_readout.equipment.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="kid_readout.analysis.timedomain.html"
+                        title="previous chapter">kid_readout.analysis.timedomain package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="kid_readout.measurement.html"
+                        title="next chapter">kid_readout.measurement package</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/kid_readout.equipment.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
@@ -835,16 +1038,13 @@ monitor, the parameter number refers to diode channel 1, 2, 3, or
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -853,12 +1053,19 @@ monitor, the parameter number refers to diode channel 1, 2, 3, or
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">KID Readout  documentation</a> &raquo;</li> 
+        <li class="right" >
+          <a href="kid_readout.measurement.html" title="kid_readout.measurement package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="kid_readout.analysis.timedomain.html" title="kid_readout.analysis.timedomain package"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="kid_readout.html" >kid_readout package</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2013, Author.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
     </div>
   </body>
 </html>

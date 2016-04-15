@@ -8,7 +8,7 @@
     
     <title>kid_readout &mdash; KID Readout  documentation</title>
     
-    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
@@ -25,8 +25,8 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="KID Readout  documentation" href="index.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -35,14 +35,14 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">KID Readout  documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">KID Readout  documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="kid-readout">
 <h1>kid_readout<a class="headerlink" href="#kid-readout" title="Permalink to this headline">¶</a></h1>
@@ -54,28 +54,15 @@
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#subpackages">Subpackages</a></li>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.archive">kid_readout.analysis.archive module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.demodulate_rtl">kid_readout.analysis.demodulate_rtl module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.fit_pulses">kid_readout.analysis.fit_pulses module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.dataframe">kid_readout.analysis.dataframe module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.fitter">kid_readout.analysis.fitter module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.iqnoise">kid_readout.analysis.iqnoise module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.khalil">kid_readout.analysis.khalil module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.kid_eqns">kid_readout.analysis.kid_eqns module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.kid_response">kid_readout.analysis.kid_response module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.lmfit_fitter">kid_readout.analysis.lmfit_fitter module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.mcfit">kid_readout.analysis.mcfit module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.mspsd">kid_readout.analysis.mspsd module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.noise_archive">kid_readout.analysis.noise_archive module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.noise_fit">kid_readout.analysis.noise_fit module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.noise_fitting">kid_readout.analysis.noise_fitting module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.noise_function">kid_readout.analysis.noise_function module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.noise_measurement">kid_readout.analysis.noise_measurement module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.noise_summary">kid_readout.analysis.noise_summary module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.plot_resonator">kid_readout.analysis.plot_resonator module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.plot_dataframe">kid_readout.analysis.plot_dataframe module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.plot_wafer">kid_readout.analysis.plot_wafer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.process_mmw_response">kid_readout.analysis.process_mmw_response module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#kid-readout-analysis-process-net-sweeps-module">kid_readout.analysis.process_net_sweeps module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#kid-readout-analysis-proposal-plots-module">kid_readout.analysis.proposal_plots module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.resonator">kid_readout.analysis.resonator module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.resonator_test">kid_readout.analysis.resonator_test module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis.time_constant_from_rtl">kid_readout.analysis.time_constant_from_rtl module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.html#module-kid_readout.analysis">Module contents</a></li>
 </ul>
 </li>
@@ -83,40 +70,54 @@
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.equipment.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.equipment.html#module-kid_readout.equipment.agilent_33220">kid_readout.equipment.agilent_33220 module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.equipment.html#module-kid_readout.equipment.hittite_controller">kid_readout.equipment.hittite_controller module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.equipment.html#module-kid_readout.equipment.hpd_temps">kid_readout.equipment.hpd_temps module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.equipment.html#module-kid_readout.equipment.led_controller">kid_readout.equipment.led_controller module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.equipment.html#module-kid_readout.equipment.lockin_controller">kid_readout.equipment.lockin_controller module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.equipment.html#module-kid_readout.equipment.parse_srs">kid_readout.equipment.parse_srs module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.equipment.html#module-kid_readout.equipment.record_all">kid_readout.equipment.record_all module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.equipment.html#kid-readout-equipment-record-all-downstairs-module">kid_readout.equipment.record_all_downstairs module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.equipment.html#module-kid_readout.equipment.record_all_downstairs">kid_readout.equipment.record_all_downstairs module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.equipment.html#module-kid_readout.equipment.record_all_old">kid_readout.equipment.record_all_old module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.equipment.html#module-kid_readout.equipment.rtlkid">kid_readout.equipment.rtlkid module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.equipment.html#kid-readout-equipment-rtlkid-module">kid_readout.equipment.rtlkid module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.equipment.html#module-kid_readout.equipment.sim">kid_readout.equipment.sim module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.equipment.html#module-kid_readout.equipment.sim900">kid_readout.equipment.sim900 module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.equipment.html#module-kid_readout.equipment.starcryo_temps">kid_readout.equipment.starcryo_temps module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.equipment.html#module-kid_readout.equipment">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="kid_readout.measurement.html">kid_readout.measurement package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.measurement.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.measurement.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.measurement.html#module-kid_readout.measurement.basic">kid_readout.measurement.basic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.measurement.html#module-kid_readout.measurement.core">kid_readout.measurement.core module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.measurement.html#module-kid_readout.measurement.legacy">kid_readout.measurement.legacy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.measurement.html#module-kid_readout.measurement.misc">kid_readout.measurement.misc module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.measurement.html#module-kid_readout.measurement.mmw_source">kid_readout.measurement.mmw_source module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.measurement.html#module-kid_readout.measurement">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="kid_readout.roach.html">kid_readout.roach package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.roach.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.roach.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.roach.html#module-kid_readout.roach.attenuator">kid_readout.roach.attenuator module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.roach.html#module-kid_readout.roach.baseband">kid_readout.roach.baseband module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.roach.html#module-kid_readout.roach.borph_utils">kid_readout.roach.borph_utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.roach.html#module-kid_readout.roach.calculate">kid_readout.roach.calculate module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.roach.html#module-kid_readout.roach.hardware_tools">kid_readout.roach.hardware_tools module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.roach.html#module-kid_readout.roach.heterodyne">kid_readout.roach.heterodyne module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.roach.html#module-kid_readout.roach.interface">kid_readout.roach.interface module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.roach.html#module-kid_readout.roach.r2_udp_catcher">kid_readout.roach.r2_udp_catcher module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.roach.html#module-kid_readout.roach.r2baseband">kid_readout.roach.r2baseband module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.roach.html#module-kid_readout.roach.r2heterodyne">kid_readout.roach.r2heterodyne module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.roach.html#module-kid_readout.roach.tools">kid_readout.roach.tools module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.roach.html#module-kid_readout.roach.udp_catcher">kid_readout.roach.udp_catcher module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.roach.html#module-kid_readout.roach.valon">kid_readout.roach.valon module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.roach.html#module-kid_readout.roach">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="kid_readout.utils.html">kid_readout.utils package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#submodules">Submodules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.borph_utils">kid_readout.utils.borph_utils module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.data_block">kid_readout.utils.data_block module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.data_file">kid_readout.utils.data_file module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.dataset">kid_readout.utils.dataset module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.despike">kid_readout.utils.despike module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.easync">kid_readout.utils.easync module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.fftfilt">kid_readout.utils.fftfilt module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.filters">kid_readout.utils.filters module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#kid-readout-utils-hpd-temps-module">kid_readout.utils.hpd_temps module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.jpl_data">kid_readout.utils.jpl_data module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.parse_srs">kid_readout.utils.parse_srs module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.plot_nc">kid_readout.utils.plot_nc module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.proc_sweep">kid_readout.utils.proc_sweep module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.readoutnc">kid_readout.utils.readoutnc module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.roach_interface">kid_readout.utils.roach_interface module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.roach_utils">kid_readout.utils.roach_utils module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.single_pixel">kid_readout.utils.single_pixel module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.starcryo_temps">kid_readout.utils.starcryo_temps module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.sweeps">kid_readout.utils.sweeps module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.time_tools">kid_readout.utils.time_tools module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.udp_catcher">kid_readout.utils.udp_catcher module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils.valon">kid_readout.utils.valon module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="kid_readout.utils.html#module-kid_readout.utils">Module contents</a></li>
 </ul>
 </li>
@@ -133,14 +134,16 @@
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="_sources/modules.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/modules.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
@@ -148,16 +151,13 @@
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -166,12 +166,12 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">KID Readout  documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">KID Readout  documentation</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2013, Author.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
     </div>
   </body>
 </html>

@@ -8,7 +8,7 @@
     
     <title>kid_readout.equipment.lockin_controller &mdash; KID Readout  documentation</title>
     
-    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
@@ -26,8 +26,8 @@
     <link rel="top" title="KID Readout  documentation" href="../../../index.html" />
     <link rel="up" title="Module code" href="../../index.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -36,50 +36,50 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
-          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <h1>Source code for kid_readout.equipment.lockin_controller</h1><div class="highlight"><pre>
-<span class="kn">import</span> <span class="nn">serial</span>
+<span></span><span class="kn">import</span> <span class="nn">serial</span>
 <span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;This module is deprecated use ColumbiaCMB/equipment/srs/lockin&quot;</span><span class="p">)</span>
+
+<span class="n">sensitivities</span> <span class="o">=</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">5</span><span class="p">])[</span><span class="bp">None</span><span class="p">,:])</span><span class="o">*</span><span class="p">((</span><span class="mf">10.</span><span class="o">**</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">9</span><span class="p">,</span><span class="mi">1</span><span class="p">))[:,</span><span class="bp">None</span><span class="p">]))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+<span class="n">time_constants</span> <span class="o">=</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">])[</span><span class="bp">None</span><span class="p">,:])</span><span class="o">*</span><span class="p">((</span><span class="mf">10.</span><span class="o">**</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">))[:,</span><span class="bp">None</span><span class="p">]))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
 
 <div class="viewcode-block" id="lockinController"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.lockin_controller.lockinController">[docs]</a><span class="k">class</span> <span class="nc">lockinController</span><span class="p">():</span>
-<span class="c">### Initialization ###</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serial_port</span><span class="o">=</span><span class="s">&#39;/dev/ttyUSB2&#39;</span><span class="p">,</span> <span class="n">terminator</span><span class="o">=</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">):</span>
-        <span class="c"># For linux, theself.serial port will be something like the default address.</span>
-        <span class="c"># However, for windows it will be something like &#39;COM6&#39;.</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serial_port</span><span class="o">=</span><span class="s1">&#39;/dev/ttyUSB2&#39;</span><span class="p">,</span> <span class="n">terminator</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">):</span>
+        <span class="c1"># For linux, the serial port will be something like the default address.</span>
+        <span class="c1"># However, for windows it will be something like &#39;COM6&#39;.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="o">=</span><span class="n">serial_port</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">baudrate</span><span class="o">=</span><span class="mi">19200</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">terminator</span><span class="o">=</span><span class="n">terminator</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">=</span><span class="n">serial</span><span class="o">.</span><span class="n">Serial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="n">baudrate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">baudrate</span><span class="p">,</span><span class="n">timeout</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">rtscts</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="c">#self.ser.close()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_constant_value</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sensitivity_value</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">setup_rs232_output</span><span class="p">()</span>
-        
-    
+
+
 <div class="viewcode-block" id="lockinController.setup_rs232_output"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.lockin_controller.lockinController.setup_rs232_output">[docs]</a>    <span class="k">def</span> <span class="nf">setup_rs232_output</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c">#ser=serial.Serial(self.address, baudrate=self.baudrate)</span>
-        <span class="c">#self.ser.open()</span>
         <span class="k">try</span><span class="p">:</span>
-           <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;OUTX 0&#39;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">terminator</span><span class="p">)</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;OUTX 0&#39;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">terminator</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">print</span> <span class="n">e</span>
             <span class="k">raise</span> <span class="n">e</span>
         <span class="k">finally</span><span class="p">:</span>
-            <span class="k">pass</span>
-<span class="c">#            self.ser.close()</span>
+            <span class="k">pass</span></div>
 
-<span class="c">### Basic send and receive methods ###</span>
-</div>
 <div class="viewcode-block" id="lockinController.send"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.lockin_controller.lockinController.send">[docs]</a>    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">msg</span><span class="p">):</span>
-       <span class="c">#self.ser=serial.Serial(self.address, baudrate=self.baudrate)</span>
-<span class="c">#        self.ser.open()</span>
         <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="o">.</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">msg</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">terminator</span><span class="p">)</span>
@@ -87,15 +87,12 @@
             <span class="k">print</span> <span class="n">e</span>
             <span class="k">raise</span> <span class="n">e</span>
         <span class="k">finally</span><span class="p">:</span>
-            <span class="k">pass</span>
-<span class="c">#            self.ser.close()</span>
-</div>
+            <span class="k">pass</span></div>
+
 <div class="viewcode-block" id="lockinController.send_and_receive"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.lockin_controller.lockinController.send_and_receive">[docs]</a>    <span class="k">def</span> <span class="nf">send_and_receive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">msg</span><span class="p">):</span>
-        <span class="c">#self.ser=serial.Serial(self.address, baudrate=self.baudrate, timeout=2)</span>
-<span class="c">#        self.ser.open()</span>
         <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="o">.</span><span class="mi">1</span><span class="p">)</span>
-        <span class="c"># This delay is necessary... for some reason. The system behaves very poorly otherwise.</span>
-        <span class="c"># Perhaps theself.serial port takes some time to initialize?</span>
+        <span class="c1"># This delay is necessary... for some reason. The system behaves very poorly otherwise.</span>
+        <span class="c1"># Perhaps theself.serial port takes some time to initialize?</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">msg</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">terminator</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_until_terminator</span><span class="p">()</span>
@@ -103,27 +100,69 @@
             <span class="k">print</span> <span class="n">e</span>
             <span class="k">raise</span> <span class="n">e</span>
         <span class="k">finally</span><span class="p">:</span>
-            <span class="k">pass</span>
-<span class="c">#            self.ser.close()</span>
-</div>
+            <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="lockinController.get_sensitivity"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.lockin_controller.lockinController.get_sensitivity">[docs]</a>    <span class="k">def</span> <span class="nf">get_sensitivity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;SENS?&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sensitivity_value</span> <span class="o">=</span> <span class="n">response</span>
+        <span class="k">return</span> <span class="n">response</span><span class="p">,</span> <span class="n">sensitivities</span><span class="p">[</span><span class="n">response</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="lockinController.set_sensitivity"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.lockin_controller.lockinController.set_sensitivity">[docs]</a>    <span class="k">def</span> <span class="nf">set_sensitivity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">sensitivity_volts</span><span class="p">):</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">sensitivities</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">sensitivity_volts</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sensitivities</span><span class="p">):</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sensitivities</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;SENS </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">idx</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sensitivity_value</span> <span class="o">=</span> <span class="n">idx</span></div>
+
+<div class="viewcode-block" id="lockinController.get_time_constant"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.lockin_controller.lockinController.get_time_constant">[docs]</a>    <span class="k">def</span> <span class="nf">get_time_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;OFLT?&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_constant_value</span> <span class="o">=</span> <span class="n">response</span>
+        <span class="k">return</span> <span class="n">response</span><span class="p">,</span> <span class="n">time_constants</span><span class="p">[</span><span class="n">response</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="lockinController.auto_range_measure"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.lockin_controller.lockinController.auto_range_measure">[docs]</a>    <span class="k">def</span> <span class="nf">auto_range_measure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">debug</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sensitivity_value</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">idx</span><span class="p">,</span><span class="n">sens</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_sensitivity</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s2">&quot;initialized sensitivity:&quot;</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span><span class="n">sens</span>
+        <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">r</span><span class="p">,</span><span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+        <span class="n">sens</span> <span class="o">=</span> <span class="n">sensitivities</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sensitivity_value</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s2">&quot;initial sensitivity: </span><span class="si">%g</span><span class="s2">, initial measurement </span><span class="si">%g</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sens</span><span class="p">,</span><span class="n">r</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">r</span> <span class="o">&gt;</span> <span class="n">sens</span><span class="o">/</span><span class="mf">2.0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_sensitivity</span><span class="p">(</span><span class="n">r</span><span class="o">*</span><span class="mi">10</span><span class="p">)</span>
+            <span class="n">sens</span> <span class="o">=</span> <span class="n">sensitivities</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sensitivity_value</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s2">&quot;setting sensitivity to </span><span class="si">%g</span><span class="s2">. new value </span><span class="si">%g</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">r</span><span class="o">*</span><span class="mi">10</span><span class="p">,</span><span class="n">sens</span><span class="p">)</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+            <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">r</span><span class="p">,</span><span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">sens</span> <span class="o">&gt;</span> <span class="mf">100e-9</span><span class="p">:</span>
+            <span class="k">while</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="n">sens</span><span class="o">/</span><span class="mf">1000.0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_sensitivity</span><span class="p">(</span><span class="n">r</span><span class="o">/</span><span class="mf">100.0</span><span class="p">)</span>
+                <span class="n">sens</span> <span class="o">=</span> <span class="n">sensitivities</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sensitivity_value</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+                    <span class="k">print</span> <span class="s2">&quot;setting sensitivity to </span><span class="si">%g</span><span class="s2">. new value </span><span class="si">%g</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">r</span><span class="o">/</span><span class="mi">1000</span><span class="p">,</span><span class="n">sens</span><span class="p">)</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+                <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">r</span><span class="p">,</span><span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">r</span><span class="p">,</span> <span class="n">sens</span></div>
+
 <div class="viewcode-block" id="lockinController.read_until_terminator"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.lockin_controller.lockinController.read_until_terminator">[docs]</a>    <span class="k">def</span> <span class="nf">read_until_terminator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">message</span><span class="o">=</span><span class="s">&#39;&#39;</span>
+        <span class="n">message</span><span class="o">=</span><span class="s1">&#39;&#39;</span>
         <span class="n">new_char</span><span class="o">=</span><span class="bp">None</span>
-        <span class="k">while</span> <span class="n">new_char</span><span class="o">!=</span><span class="s">&#39;</span><span class="se">\r</span><span class="s">&#39;</span><span class="p">:</span>
+        <span class="k">while</span> <span class="n">new_char</span><span class="o">!=</span><span class="s1">&#39;</span><span class="se">\r</span><span class="s1">&#39;</span><span class="p">:</span>
             <span class="n">new_char</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">new_char</span><span class="o">==</span><span class="s">&#39;&#39;</span><span class="p">:</span>
-                <span class="c"># This meansself.ser has timed out. We don&#39;t want an unending loop if the terminator has somehow been lost.</span>
-                <span class="k">print</span> <span class="s">&#39;Serial port timed out while reading.&#39;</span>
+            <span class="k">if</span> <span class="n">new_char</span><span class="o">==</span><span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="c1"># This meansself.ser has timed out. We don&#39;t want an unending loop if the terminator has somehow been lost.</span>
+                <span class="k">print</span> <span class="s1">&#39;Serial port timed out while reading.&#39;</span>
                 <span class="k">break</span>
             <span class="n">message</span><span class="o">+=</span><span class="n">new_char</span>
-        <span class="k">return</span> <span class="n">message</span>
+        <span class="k">return</span> <span class="n">message</span></div>
 
-<span class="c">### Stub methods ###</span>
-</div>
+    <span class="c1">### Stub methods ###</span>
+
 <div class="viewcode-block" id="lockinController.get_data"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.lockin_controller.lockinController.get_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">data_string</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_snap</span><span class="p">()</span>
-        <span class="n">data_string</span><span class="o">=</span><span class="n">data_string</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\r</span><span class="s">&#39;</span><span class="p">)</span>
-        <span class="n">data_list</span><span class="o">=</span><span class="n">data_string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">)</span>
+        <span class="n">data_string</span><span class="o">=</span><span class="n">data_string</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\r</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">data_list</span><span class="o">=</span><span class="n">data_string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">x</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">data_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="n">y</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">data_list</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
@@ -133,18 +172,18 @@
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="k">return</span> <span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span></div>
 <div class="viewcode-block" id="lockinController.get_snap"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.lockin_controller.lockinController.get_snap">[docs]</a>    <span class="k">def</span> <span class="nf">get_snap</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s">&#39;SNAP? 1,2,3,4&#39;</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;SNAP? 1,2,3,4&#39;</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="lockinController.get_idn"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.lockin_controller.lockinController.get_idn">[docs]</a>    <span class="k">def</span> <span class="nf">get_idn</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s">&#39;*IDN?&#39;</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;*IDN?&#39;</span><span class="p">)</span></div></div>
 </pre></div>
 
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-<div id="searchbox" style="display: none">
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../search.html" method="get">
       <input type="text" name="q" />
@@ -152,16 +191,13 @@
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -170,13 +206,13 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
-          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2013, Author.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
     </div>
   </body>
 </html>

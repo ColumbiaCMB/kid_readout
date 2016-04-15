@@ -8,7 +8,7 @@
     
     <title>kid_readout.utils package &mdash; KID Readout  documentation</title>
     
-    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
@@ -25,10 +25,10 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="KID Readout  documentation" href="index.html" />
     <link rel="up" title="kid_readout package" href="kid_readout.html" />
-    <link rel="prev" title="kid_readout.equipment package" href="kid_readout.equipment.html" /> 
+    <link rel="prev" title="kid_readout.roach.tests package" href="kid_readout.roach.tests.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -38,300 +38,22 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="kid_readout.equipment.html" title="kid_readout.equipment package"
+          <a href="kid_readout.roach.tests.html" title="kid_readout.roach.tests package"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">KID Readout  documentation</a> &raquo;</li>
-          <li><a href="kid_readout.html" accesskey="U">kid_readout package</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="kid_readout.html" accesskey="U">kid_readout package</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="kid-readout-utils-package">
 <h1>kid_readout.utils package<a class="headerlink" href="#kid-readout-utils-package" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="module-kid_readout.utils.borph_utils">
-<span id="kid-readout-utils-borph-utils-module"></span><h2>kid_readout.utils.borph_utils module<a class="headerlink" href="#module-kid_readout.utils.borph_utils" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="kid_readout.utils.borph_utils.get_bof_pid">
-<tt class="descclassname">kid_readout.utils.borph_utils.</tt><tt class="descname">get_bof_pid</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/borph_utils.html#get_bof_pid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.borph_utils.get_bof_pid" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.borph_utils.start_server">
-<tt class="descclassname">kid_readout.utils.borph_utils.</tt><tt class="descname">start_server</tt><big>(</big><em>bof_pid</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/borph_utils.html#start_server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.borph_utils.start_server" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</div>
-<div class="section" id="module-kid_readout.utils.data_block">
-<span id="kid-readout-utils-data-block-module"></span><h2>kid_readout.utils.data_block module<a class="headerlink" href="#module-kid_readout.utils.data_block" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="kid_readout.utils.data_block.DataBlock">
-<em class="property">class </em><tt class="descclassname">kid_readout.utils.data_block.</tt><tt class="descname">DataBlock</tt><big>(</big><em>data</em>, <em>tone</em>, <em>fftbin</em>, <em>nsamp</em>, <em>nfft</em>, <em>wavenorm</em>, <em>t0=0</em>, <em>fs=512000000.0</em>, <em>sweep_index=0</em>, <em>mmw_source_freq=0.0</em>, <em>mmw_source_modulation_freq=0.0</em>, <em>zbd_power_dbm=0.0</em>, <em>zbd_voltage=0.0</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/data_block.html#DataBlock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_block.DataBlock" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
-<dt id="kid_readout.utils.data_block.DataBlock.mean">
-<tt class="descname">mean</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/data_block.html#DataBlock.mean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_block.DataBlock.mean" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.data_block.DataBlock.std">
-<tt class="descname">std</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/data_block.html#DataBlock.std"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_block.DataBlock.std" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="kid_readout.utils.data_block.SweepData">
-<em class="property">class </em><tt class="descclassname">kid_readout.utils.data_block.</tt><tt class="descname">SweepData</tt><big>(</big><em>sweep_id=1</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/data_block.html#SweepData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_block.SweepData" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
-<dt id="kid_readout.utils.data_block.SweepData.add_block">
-<tt class="descname">add_block</tt><big>(</big><em>block</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/data_block.html#SweepData.add_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_block.SweepData.add_block" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="kid_readout.utils.data_block.SweepData.data">
-<tt class="descname">data</tt><a class="reference internal" href="_modules/kid_readout/utils/data_block.html#SweepData.data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_block.SweepData.data" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="kid_readout.utils.data_block.SweepData.errors">
-<tt class="descname">errors</tt><a class="reference internal" href="_modules/kid_readout/utils/data_block.html#SweepData.errors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_block.SweepData.errors" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="kid_readout.utils.data_block.SweepData.freqs">
-<tt class="descname">freqs</tt><a class="reference internal" href="_modules/kid_readout/utils/data_block.html#SweepData.freqs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_block.SweepData.freqs" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.data_block.SweepData.select_by_freq">
-<tt class="descname">select_by_freq</tt><big>(</big><em>freq</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/data_block.html#SweepData.select_by_freq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_block.SweepData.select_by_freq" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.data_block.SweepData.select_index">
-<tt class="descname">select_index</tt><big>(</big><em>index</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/data_block.html#SweepData.select_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_block.SweepData.select_index" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="kid_readout.utils.data_block.SweepData.sweep_indexes">
-<tt class="descname">sweep_indexes</tt><a class="reference internal" href="_modules/kid_readout/utils/data_block.html#SweepData.sweep_indexes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_block.SweepData.sweep_indexes" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="module-kid_readout.utils.data_file">
-<span id="kid-readout-utils-data-file-module"></span><h2>kid_readout.utils.data_file module<a class="headerlink" href="#module-kid_readout.utils.data_file" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="kid_readout.utils.data_file.DataFile">
-<em class="property">class </em><tt class="descclassname">kid_readout.utils.data_file.</tt><tt class="descname">DataFile</tt><big>(</big><em>base_dir='/home/data2'</em>, <em>suffix=''</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/data_file.html#DataFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_file.DataFile" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
-<dt id="kid_readout.utils.data_file.DataFile.add_block_to_timestream">
-<tt class="descname">add_block_to_timestream</tt><big>(</big><em>block</em>, <em>tsg=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/data_file.html#DataFile.add_block_to_timestream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_file.DataFile.add_block_to_timestream" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.data_file.DataFile.add_cryo_data">
-<tt class="descname">add_cryo_data</tt><big>(</big><em>cryod</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/data_file.html#DataFile.add_cryo_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_file.DataFile.add_cryo_data" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.data_file.DataFile.add_sweep">
-<tt class="descname">add_sweep</tt><big>(</big><em>sweep_data</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/data_file.html#DataFile.add_sweep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_file.DataFile.add_sweep" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.data_file.DataFile.add_timestream_data">
-<tt class="descname">add_timestream_data</tt><big>(</big><em>data</em>, <em>ri</em>, <em>t0</em>, <em>tsg=None</em>, <em>mmw_source_freq=0.0</em>, <em>mmw_source_modulation_freq=0.0</em>, <em>zbd_voltage=0.0</em>, <em>zbd_power_dbm=0.0</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/data_file.html#DataFile.add_timestream_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_file.DataFile.add_timestream_data" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.data_file.DataFile.close">
-<tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/data_file.html#DataFile.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_file.DataFile.close" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.data_file.DataFile.log_adc_snap">
-<tt class="descname">log_adc_snap</tt><big>(</big><em>ri</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/data_file.html#DataFile.log_adc_snap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_file.DataFile.log_adc_snap" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.data_file.DataFile.log_hw_state">
-<tt class="descname">log_hw_state</tt><big>(</big><em>ri</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/data_file.html#DataFile.log_hw_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_file.DataFile.log_hw_state" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.data_file.DataFile.sync">
-<tt class="descname">sync</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/data_file.html#DataFile.sync"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.data_file.DataFile.sync" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="module-kid_readout.utils.dataset">
-<span id="kid-readout-utils-dataset-module"></span><h2>kid_readout.utils.dataset module<a class="headerlink" href="#module-kid_readout.utils.dataset" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="kid_readout.utils.dataset.CoarseSweep">
-<em class="property">class </em><tt class="descclassname">kid_readout.utils.dataset.</tt><tt class="descname">CoarseSweep</tt><big>(</big><em>f</em>, <em>s21</em>, <em>coarse_resolution</em>, <em>n_subsweeps</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/dataset.html#CoarseSweep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.dataset.CoarseSweep" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-<p>This interface is going to change soon &#8211; it will figure out
-everything from the netCDF group, like the FineSweep.</p>
-<dl class="method">
-<dt id="kid_readout.utils.dataset.CoarseSweep.nth_subsweep">
-<tt class="descname">nth_subsweep</tt><big>(</big><em>n</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/dataset.html#CoarseSweep.nth_subsweep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.dataset.CoarseSweep.nth_subsweep" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.dataset.CoarseSweep.subsweep_derivative_rms">
-<tt class="descname">subsweep_derivative_rms</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/dataset.html#CoarseSweep.subsweep_derivative_rms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.dataset.CoarseSweep.subsweep_derivative_rms" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="kid_readout.utils.dataset.Dataset">
-<em class="property">class </em><tt class="descclassname">kid_readout.utils.dataset.</tt><tt class="descname">Dataset</tt><big>(</big><em>filename</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/dataset.html#Dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.dataset.Dataset" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-<dl class="method">
-<dt id="kid_readout.utils.dataset.Dataset.sweep">
-<tt class="descname">sweep</tt><big>(</big><em>sweep_name</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/dataset.html#Dataset.sweep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.dataset.Dataset.sweep" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the netCDF4.Group object corresponding to sweep_name.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.dataset.Dataset.sweep_names">
-<tt class="descname">sweep_names</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/dataset.html#Dataset.sweep_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.dataset.Dataset.sweep_names" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="kid_readout.utils.dataset.FineSweep">
-<em class="property">class </em><tt class="descclassname">kid_readout.utils.dataset.</tt><tt class="descname">FineSweep</tt><big>(</big><em>group</em>, <em>fit_subsweeps=False</em>, <em>scale_frequency=1000000.0</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/dataset.html#FineSweep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.dataset.FineSweep" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">collections.OrderedDict</span></tt></p>
-<p>A container class for a fine sweep.</p>
-<p>Parameters:
-group &#8211; a netCDF Group that contains fine sweep data.</p>
-<p>Keywords:
-fit_subsweeps &#8211; if True, the class will attempt to fit the data
-correponding to each index using the current resonator defaults.
-scale_frequency &#8211; frequency values from the data are multiplied
-by this number; the default of 1e6 assumes that the frequency is
-stored in MHz and converts it to Hz.</p>
-<dl class="method">
-<dt id="kid_readout.utils.dataset.FineSweep.build_index">
-<tt class="descname">build_index</tt><big>(</big><em>f_0</em>, <em>span</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/dataset.html#FineSweep.build_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.dataset.FineSweep.build_index" title="Permalink to this definition">¶</a></dt>
-<dd><p>Build the index for old data that doesn&#8217;t have an index. This
-works well if the subsweeps don&#8217;t overlap, but fails if they
-do. Data outside all ranges f_0 +/- span will fall into index
--1, which is a sign that the frequencies or span should be
-adjusted.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.dataset.FineSweep.fit_subsweeps">
-<tt class="descname">fit_subsweeps</tt><big>(</big><em>deglitch=True</em>, <em>threshold=2</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/dataset.html#FineSweep.fit_subsweeps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.dataset.FineSweep.fit_subsweeps" title="Permalink to this definition">¶</a></dt>
-<dd><p>Attempt to fit the data corresponding to each value of the
-index by instantiating a Resonator object with default
-settings. If <em>deglitch</em> is true then points identified as
-glitches with be masked.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.dataset.FineSweep.glitch">
-<tt class="descname">glitch</tt><big>(</big><em>data</em>, <em>threshold</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/dataset.html#FineSweep.glitch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.dataset.FineSweep.glitch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a boolean array with the same size as the data that is
-True where the absolute value of the second derivative is at
-least <em>threshold</em> standard deviations above the mean.</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="module-kid_readout.utils.despike">
-<span id="kid-readout-utils-despike-module"></span><h2>kid_readout.utils.despike module<a class="headerlink" href="#module-kid_readout.utils.despike" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="kid_readout.utils.despike.deglitch_block">
-<tt class="descclassname">kid_readout.utils.despike.</tt><tt class="descname">deglitch_block</tt><big>(</big><em>ts</em>, <em>thresh=5</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/despike.html#deglitch_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.despike.deglitch_block" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.despike.deglitch_window">
-<tt class="descclassname">kid_readout.utils.despike.</tt><tt class="descname">deglitch_window</tt><big>(</big><em>data</em>, <em>window_length</em>, <em>thresh=6</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/despike.html#deglitch_window"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.despike.deglitch_window" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.despike.despike_full">
-<tt class="descclassname">kid_readout.utils.despike.</tt><tt class="descname">despike_full</tt><big>(</big><em>data</em>, <em>window_length</em>, <em>rejection_threshold=7</em>, <em>preprocess_function=&lt;function lpf256 at 0x5512c08&gt;</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/despike.html#despike_full"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.despike.despike_full" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.despike.lpf256">
-<tt class="descclassname">kid_readout.utils.despike.</tt><tt class="descname">lpf256</tt><big>(</big><em>ts</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/despike.html#lpf256"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.despike.lpf256" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.despike.medmadmask">
-<tt class="descclassname">kid_readout.utils.despike.</tt><tt class="descname">medmadmask</tt><big>(</big><em>ts</em>, <em>thresh=8</em>, <em>axis=0</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/despike.html#medmadmask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.despike.medmadmask" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</div>
-<div class="section" id="module-kid_readout.utils.easync">
-<span id="kid-readout-utils-easync-module"></span><h2>kid_readout.utils.easync module<a class="headerlink" href="#module-kid_readout.utils.easync" title="Permalink to this headline">¶</a></h2>
-<p>easync.py - easier access to netCDF4 files</p>
-<dl class="class">
-<dt id="kid_readout.utils.easync.EasyGroup">
-<em class="property">class </em><tt class="descclassname">kid_readout.utils.easync.</tt><tt class="descname">EasyGroup</tt><big>(</big><em>group</em>, <em>filename</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/easync.html#EasyGroup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.easync.EasyGroup" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-</dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.easync.EasyNetCDF4">
-<tt class="descclassname">kid_readout.utils.easync.</tt><tt class="descname">EasyNetCDF4</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/easync.html#EasyNetCDF4"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.easync.EasyNetCDF4" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</div>
-<div class="section" id="module-kid_readout.utils.fftfilt">
-<span id="kid-readout-utils-fftfilt-module"></span><h2>kid_readout.utils.fftfilt module<a class="headerlink" href="#module-kid_readout.utils.fftfilt" title="Permalink to this headline">¶</a></h2>
-<p>Filter data with an FIR filter using the overlap-add method.</p>
-<dl class="function">
-<dt id="kid_readout.utils.fftfilt.fftfilt">
-<tt class="descclassname">kid_readout.utils.fftfilt.</tt><tt class="descname">fftfilt</tt><big>(</big><em>b</em>, <em>x</em>, <em>*n</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/fftfilt.html#fftfilt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.fftfilt.fftfilt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Filter the signal x with the FIR filter described by the
-coefficients in b using the overlap-add method. If the FFT
-length n is not specified, it and the overlap-add block length
-are selected so as to minimize the computational cost of
-the filtering operation.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.fftfilt.nextpow2">
-<tt class="descclassname">kid_readout.utils.fftfilt.</tt><tt class="descname">nextpow2</tt><big>(</big><em>x</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/fftfilt.html#nextpow2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.fftfilt.nextpow2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the first integer N such that 2**N &gt;= abs(x)</p>
-</dd></dl>
-
-</div>
-<div class="section" id="module-kid_readout.utils.filters">
-<span id="kid-readout-utils-filters-module"></span><h2>kid_readout.utils.filters module<a class="headerlink" href="#module-kid_readout.utils.filters" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="kid_readout.utils.filters.low_pass_fir">
-<tt class="descclassname">kid_readout.utils.filters.</tt><tt class="descname">low_pass_fir</tt><big>(</big><em>data</em>, <em>num_taps=256</em>, <em>cutoff=0.00390625</em>, <em>nyquist_freq=1.0</em>, <em>decimate_by=1</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/filters.html#low_pass_fir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.filters.low_pass_fir" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.filters.lpf">
-<tt class="descclassname">kid_readout.utils.filters.</tt><tt class="descname">lpf</tt><big>(</big><em>data</em>, <em>num_taps=256</em>, <em>cutoff=0.00390625</em>, <em>nyquist_freq=1.0</em>, <em>decimate_by=1</em><big>)</big><a class="headerlink" href="#kid_readout.utils.filters.lpf" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</div>
-<div class="section" id="kid-readout-utils-hpd-temps-module">
-<h2>kid_readout.utils.hpd_temps module<a class="headerlink" href="#kid-readout-utils-hpd-temps-module" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-kid_readout.utils.jpl_data">
 <span id="kid-readout-utils-jpl-data-module"></span><h2>kid_readout.utils.jpl_data module<a class="headerlink" href="#module-kid_readout.utils.jpl_data" title="Permalink to this headline">¶</a></h2>
@@ -343,21 +65,21 @@ numbers, some of which fix problems specific to that data set.</p>
 units of V / V, i.e., not dB.</p>
 <dl class="function">
 <dt id="kid_readout.utils.jpl_data.JPL_2013_August_dark">
-<tt class="descclassname">kid_readout.utils.jpl_data.</tt><tt class="descname">JPL_2013_August_dark</tt><big>(</big><em>directory</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/jpl_data.html#JPL_2013_August_dark"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.jpl_data.JPL_2013_August_dark" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">kid_readout.utils.jpl_data.</code><code class="descname">JPL_2013_August_dark</code><span class="sig-paren">(</span><em>directory</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/utils/jpl_data.html#JPL_2013_August_dark"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.jpl_data.JPL_2013_August_dark" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a list of 17 Resonators from Peter&#8217;s sweeps of the first
 JPL chip.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="kid_readout.utils.jpl_data.JPL_2013_August_dark_bath_temperature">
-<tt class="descclassname">kid_readout.utils.jpl_data.</tt><tt class="descname">JPL_2013_August_dark_bath_temperature</tt><big>(</big><em>directory</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/jpl_data.html#JPL_2013_August_dark_bath_temperature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.jpl_data.JPL_2013_August_dark_bath_temperature" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">kid_readout.utils.jpl_data.</code><code class="descname">JPL_2013_August_dark_bath_temperature</code><span class="sig-paren">(</span><em>directory</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/utils/jpl_data.html#JPL_2013_August_dark_bath_temperature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.jpl_data.JPL_2013_August_dark_bath_temperature" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a list of Resonators from Peter&#8217;s temperature sweeps of one
 resonance.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="kid_readout.utils.jpl_data.JPL_2014_May_light_bath_temperature">
-<tt class="descclassname">kid_readout.utils.jpl_data.</tt><tt class="descname">JPL_2014_May_light_bath_temperature</tt><big>(</big><em>directory</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/jpl_data.html#JPL_2014_May_light_bath_temperature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.jpl_data.JPL_2014_May_light_bath_temperature" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">kid_readout.utils.jpl_data.</code><code class="descname">JPL_2014_May_light_bath_temperature</code><span class="sig-paren">(</span><em>directory</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/utils/jpl_data.html#JPL_2014_May_light_bath_temperature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.jpl_data.JPL_2014_May_light_bath_temperature" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parameter directory is a string that is the path to the unzipped
 contents of the file Log0522JAlSKIP20_Tsweep.zip, which is
 posted on the SKIP wiki.</p>
@@ -383,7 +105,7 @@ frequency at the highest temperature of 0.4 K.</p>
 
 <dl class="function">
 <dt id="kid_readout.utils.jpl_data.JPL_2014_May_light_blackbody_temperature">
-<tt class="descclassname">kid_readout.utils.jpl_data.</tt><tt class="descname">JPL_2014_May_light_blackbody_temperature</tt><big>(</big><em>directory</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/jpl_data.html#JPL_2014_May_light_blackbody_temperature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.jpl_data.JPL_2014_May_light_blackbody_temperature" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">kid_readout.utils.jpl_data.</code><code class="descname">JPL_2014_May_light_blackbody_temperature</code><span class="sig-paren">(</span><em>directory</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/utils/jpl_data.html#JPL_2014_May_light_blackbody_temperature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.jpl_data.JPL_2014_May_light_blackbody_temperature" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parameter directory is a string that is the path to the unzipped
 contents of the file Log0522JAlSKIP20_bbT_sweep.zip, which is
 posted on the SKIP wiki.</p>
@@ -410,1103 +132,25 @@ order of increasing black body temperature.</p>
 
 <dl class="function">
 <dt id="kid_readout.utils.jpl_data.read_all_sweeps">
-<tt class="descclassname">kid_readout.utils.jpl_data.</tt><tt class="descname">read_all_sweeps</tt><big>(</big><em>directory</em>, <em>pattern='tr*.txt'</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/jpl_data.html#read_all_sweeps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.jpl_data.read_all_sweeps" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">kid_readout.utils.jpl_data.</code><code class="descname">read_all_sweeps</code><span class="sig-paren">(</span><em>directory</em>, <em>pattern='tr*.txt'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/utils/jpl_data.html#read_all_sweeps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.jpl_data.read_all_sweeps" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a list of tuples (freq_data, s21_data) from all text files
 in the given directory that match the given pattern.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="kid_readout.utils.jpl_data.read_sweep">
-<tt class="descclassname">kid_readout.utils.jpl_data.</tt><tt class="descname">read_sweep</tt><big>(</big><em>filename</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/jpl_data.html#read_sweep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.jpl_data.read_sweep" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">kid_readout.utils.jpl_data.</code><code class="descname">read_sweep</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/utils/jpl_data.html#read_sweep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.jpl_data.read_sweep" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a tuple (freq_data, s21_data) containing data from the
 given filename.</p>
 </dd></dl>
-
-</div>
-<div class="section" id="module-kid_readout.utils.parse_srs">
-<span id="kid-readout-utils-parse-srs-module"></span><h2>kid_readout.utils.parse_srs module<a class="headerlink" href="#module-kid_readout.utils.parse_srs" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="kid_readout.utils.parse_srs.SRSLogFile">
-<em class="property">class </em><tt class="descclassname">kid_readout.utils.parse_srs.</tt><tt class="descname">SRSLogFile</tt><big>(</big><em>filename</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/parse_srs.html#SRSLogFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.parse_srs.SRSLogFile" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-<p>Usage example: log_file[1].R returns an array of resistances for
-channel 1.</p>
-<dl class="class">
-<dt id="kid_readout.utils.parse_srs.SRSLogFile.Channel">
-<em class="property">class </em><tt class="descname">Channel</tt><big>(</big><em>time</em>, <em>R</em>, <em>T</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/parse_srs.html#SRSLogFile.Channel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.parse_srs.SRSLogFile.Channel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.parse_srs.SRSLogFile.convert_timestamp">
-<tt class="descclassname">SRSLogFile.</tt><tt class="descname">convert_timestamp</tt><big>(</big><em>timestamp</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/parse_srs.html#SRSLogFile.convert_timestamp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.parse_srs.SRSLogFile.convert_timestamp" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.parse_srs.convtime">
-<tt class="descclassname">kid_readout.utils.parse_srs.</tt><tt class="descname">convtime</tt><big>(</big><em>tstr</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/parse_srs.html#convtime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.parse_srs.convtime" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.parse_srs.get_all_temperature_data">
-<tt class="descclassname">kid_readout.utils.parse_srs.</tt><tt class="descname">get_all_temperature_data</tt><big>(</big><em>logdir='/home/data/SRS'</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/parse_srs.html#get_all_temperature_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.parse_srs.get_all_temperature_data" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.parse_srs.get_load_log">
-<tt class="descclassname">kid_readout.utils.parse_srs.</tt><tt class="descname">get_load_log</tt><big>(</big><em>fname</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/parse_srs.html#get_load_log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.parse_srs.get_load_log" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.parse_srs.get_temperature_at">
-<tt class="descclassname">kid_readout.utils.parse_srs.</tt><tt class="descname">get_temperature_at</tt><big>(</big><em>epoch</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/parse_srs.html#get_temperature_at"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.parse_srs.get_temperature_at" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.parse_srs.parse_srs_log">
-<tt class="descclassname">kid_readout.utils.parse_srs.</tt><tt class="descname">parse_srs_log</tt><big>(</big><em>fname</em>, <em>sensor=2</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/parse_srs.html#parse_srs_log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.parse_srs.parse_srs_log" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parse log file created by Heather&#8217;s SRS logger
-<em>fname</em> : file name of log
-<em>sensor</em> : which sensor to extract (right now 2 corresponds to the package thermometer)
-returns numpy arrays of unix times and the temperature values</p>
-</dd></dl>
-
-</div>
-<div class="section" id="module-kid_readout.utils.plot_nc">
-<span id="kid-readout-utils-plot-nc-module"></span><h2>kid_readout.utils.plot_nc module<a class="headerlink" href="#module-kid_readout.utils.plot_nc" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="kid_readout.utils.plot_nc.get_all_sweeps">
-<tt class="descclassname">kid_readout.utils.plot_nc.</tt><tt class="descname">get_all_sweeps</tt><big>(</big><em>fname</em>, <em>bif=False</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/plot_nc.html#get_all_sweeps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.plot_nc.get_all_sweeps" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.plot_nc.get_f0s">
-<tt class="descclassname">kid_readout.utils.plot_nc.</tt><tt class="descname">get_f0s</tt><big>(</big><em>swps</em>, <em>nres=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/plot_nc.html#get_f0s"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.plot_nc.get_f0s" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.plot_nc.plot_all_sweeps">
-<tt class="descclassname">kid_readout.utils.plot_nc.</tt><tt class="descname">plot_all_sweeps</tt><big>(</big><em>fname</em>, <em>figsize=(10</em>, <em>10)</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/plot_nc.html#plot_all_sweeps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.plot_nc.plot_all_sweeps" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.plot_nc.plot_f0">
-<tt class="descclassname">kid_readout.utils.plot_nc.</tt><tt class="descname">plot_f0</tt><big>(</big><em>swps</em>, <em>nres=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/plot_nc.html#plot_f0"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.plot_nc.plot_f0" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.plot_nc.plot_mag_s21">
-<tt class="descclassname">kid_readout.utils.plot_nc.</tt><tt class="descname">plot_mag_s21</tt><big>(</big><em>swps</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/plot_nc.html#plot_mag_s21"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.plot_nc.plot_mag_s21" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.plot_nc.plot_sweeps">
-<tt class="descclassname">kid_readout.utils.plot_nc.</tt><tt class="descname">plot_sweeps</tt><big>(</big><em>fname</em>, <em>figsize=(10</em>, <em>10)</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/plot_nc.html#plot_sweeps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.plot_nc.plot_sweeps" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.plot_nc.setup_axes">
-<tt class="descclassname">kid_readout.utils.plot_nc.</tt><tt class="descname">setup_axes</tt><big>(</big><em>nres</em>, <em>figsize=(15</em>, <em>10)</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/plot_nc.html#setup_axes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.plot_nc.setup_axes" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</div>
-<div class="section" id="module-kid_readout.utils.proc_sweep">
-<span id="kid-readout-utils-proc-sweep-module"></span><h2>kid_readout.utils.proc_sweep module<a class="headerlink" href="#module-kid_readout.utils.proc_sweep" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="kid_readout.utils.proc_sweep.extract_fine_sweeps">
-<tt class="descclassname">kid_readout.utils.proc_sweep.</tt><tt class="descname">extract_fine_sweeps</tt><big>(</big><em>fr</em>, <em>s21</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/proc_sweep.html#extract_fine_sweeps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.proc_sweep.extract_fine_sweeps" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</div>
-<div class="section" id="module-kid_readout.utils.readoutnc">
-<span id="kid-readout-utils-readoutnc-module"></span><h2>kid_readout.utils.readoutnc module<a class="headerlink" href="#module-kid_readout.utils.readoutnc" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="kid_readout.utils.readoutnc.ReadoutNetCDF">
-<em class="property">class </em><tt class="descclassname">kid_readout.utils.readoutnc.</tt><tt class="descname">ReadoutNetCDF</tt><big>(</big><em>filename</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/readoutnc.html#ReadoutNetCDF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.readoutnc.ReadoutNetCDF" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-<dl class="method">
-<dt id="kid_readout.utils.readoutnc.ReadoutNetCDF.close">
-<tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/readoutnc.html#ReadoutNetCDF.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.readoutnc.ReadoutNetCDF.close" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.readoutnc.ReadoutNetCDF.get_effective_dac_atten_at">
-<tt class="descname">get_effective_dac_atten_at</tt><big>(</big><em>epoch</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/readoutnc.html#ReadoutNetCDF.get_effective_dac_atten_at"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.readoutnc.ReadoutNetCDF.get_effective_dac_atten_at" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.readoutnc.ReadoutNetCDF.get_modulation_state_at">
-<tt class="descname">get_modulation_state_at</tt><big>(</big><em>epoch</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/readoutnc.html#ReadoutNetCDF.get_modulation_state_at"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.readoutnc.ReadoutNetCDF.get_modulation_state_at" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="kid_readout.utils.readoutnc.SweepGroup">
-<em class="property">class </em><tt class="descclassname">kid_readout.utils.readoutnc.</tt><tt class="descname">SweepGroup</tt><big>(</big><em>ncgroup</em>, <em>parent=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/readoutnc.html#SweepGroup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.readoutnc.SweepGroup" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-<dl class="attribute">
-<dt id="kid_readout.utils.readoutnc.SweepGroup.errors">
-<tt class="descname">errors</tt><a class="reference internal" href="_modules/kid_readout/utils/readoutnc.html#SweepGroup.errors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.readoutnc.SweepGroup.errors" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.readoutnc.SweepGroup.select_by_frequency">
-<tt class="descname">select_by_frequency</tt><big>(</big><em>freq</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/readoutnc.html#SweepGroup.select_by_frequency"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.readoutnc.SweepGroup.select_by_frequency" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.readoutnc.SweepGroup.select_by_index">
-<tt class="descname">select_by_index</tt><big>(</big><em>index</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/readoutnc.html#SweepGroup.select_by_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.readoutnc.SweepGroup.select_by_index" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="kid_readout.utils.readoutnc.TimestreamGroup">
-<em class="property">class </em><tt class="descclassname">kid_readout.utils.readoutnc.</tt><tt class="descname">TimestreamGroup</tt><big>(</big><em>ncgroup</em>, <em>parent=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/readoutnc.html#TimestreamGroup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.readoutnc.TimestreamGroup" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-<dl class="attribute">
-<dt id="kid_readout.utils.readoutnc.TimestreamGroup.data">
-<tt class="descname">data</tt><a class="reference internal" href="_modules/kid_readout/utils/readoutnc.html#TimestreamGroup.data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.readoutnc.TimestreamGroup.data" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.readoutnc.TimestreamGroup.get_data_index">
-<tt class="descname">get_data_index</tt><big>(</big><em>index</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/readoutnc.html#TimestreamGroup.get_data_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.readoutnc.TimestreamGroup.get_data_index" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="module-kid_readout.utils.roach_interface">
-<span id="kid-readout-utils-roach-interface-module"></span><h2>kid_readout.utils.roach_interface module<a class="headerlink" href="#module-kid_readout.utils.roach_interface" title="Permalink to this headline">¶</a></h2>
-<p>Classes to interface to ROACH hardware for KID readout systems</p>
-<dl class="class">
-<dt id="kid_readout.utils.roach_interface.RoachBaseband">
-<em class="property">class </em><tt class="descclassname">kid_readout.utils.roach_interface.</tt><tt class="descname">RoachBaseband</tt><big>(</big><em>roach=None</em>, <em>wafer=0</em>, <em>roachip='roach'</em>, <em>adc_valon=None</em>, <em>host_ip=None</em>, <em>initialize=True</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBaseband"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBaseband" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#kid_readout.utils.roach_interface.RoachInterface" title="kid_readout.utils.roach_interface.RoachInterface"><tt class="xref py py-class docutils literal"><span class="pre">kid_readout.utils.roach_interface.RoachInterface</span></tt></a></p>
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachBaseband.add_tone_bins">
-<tt class="descname">add_tone_bins</tt><big>(</big><em>bins</em>, <em>amps=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBaseband.add_tone_bins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBaseband.add_tone_bins" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachBaseband.add_tone_freqs">
-<tt class="descname">add_tone_freqs</tt><big>(</big><em>freqs</em>, <em>amps=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBaseband.add_tone_freqs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBaseband.add_tone_freqs" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachBaseband.calc_fft_bins">
-<tt class="descname">calc_fft_bins</tt><big>(</big><em>tone_bins</em>, <em>nsamp</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBaseband.calc_fft_bins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBaseband.calc_fft_bins" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate the FFT bins in which the tones will fall</p>
-<dl class="docutils">
-<dt>tone_bins <span class="classifier-delimiter">:</span> <span class="classifier">array of integers</span></dt>
-<dd>the tone bins (0 to nsamp - 1) which contain tones</dd>
-</dl>
-<p>nsamp : length of the playback bufffer</p>
-<p>returns : fft_bins, array of integers.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachBaseband.demodulate_data">
-<tt class="descname">demodulate_data</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBaseband.demodulate_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBaseband.demodulate_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Demodulate the data from the FFT bin</p>
-<p>This function assumes that self.select_fft_bins was called to set up the necessary class attributes</p>
-<p>data : array of complex data</p>
-<p>returns : demodulated data in an array of the same shape and dtype as <em>data</em></p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachBaseband.fft_bin_to_index">
-<tt class="descname">fft_bin_to_index</tt><big>(</big><em>bins</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBaseband.fft_bin_to_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBaseband.fft_bin_to_index" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert FFT bins to FPGA indexes</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachBaseband.get_current_bank">
-<tt class="descname">get_current_bank</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBaseband.get_current_bank"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBaseband.get_current_bank" title="Permalink to this definition">¶</a></dt>
-<dd><p>Determine what tone bank the ROACH is currently set to use</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachBaseband.get_data">
-<tt class="descname">get_data</tt><big>(</big><em>nread=2</em>, <em>demod=True</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBaseband.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBaseband.get_data" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachBaseband.get_data_katcp">
-<tt class="descname">get_data_katcp</tt><big>(</big><em>nread=10</em>, <em>demod=True</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBaseband.get_data_katcp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBaseband.get_data_katcp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a chunk of data</p>
-<p>nread: number of 4096 sample frames to read</p>
-<p>demod: should the data be demodulated before returning? Default, yes</p>
-<p>returns  dout,addrs</p>
-<dl class="docutils">
-<dt>dout: complex data stream. Real and imaginary parts are each 16 bit signed</dt>
-<dd>integers (but cast to numpy complex)</dd>
-<dt>addrs: counter values when each frame was read. Can be used to check that</dt>
-<dd>frames are contiguous</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachBaseband.get_data_seconds">
-<tt class="descname">get_data_seconds</tt><big>(</big><em>nseconds</em>, <em>demod=True</em>, <em>pow2=True</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBaseband.get_data_seconds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBaseband.get_data_seconds" title="Permalink to this definition">¶</a></dt>
-<dd><p>Capture data for specified length of time</p>
-<p>nseconds: Number of seconds</p>
-<p>demod: bool, Should the data be demodulated (default True)</p>
-<p>pow2: bool, If true, force the data length to the nearest power of 2</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachBaseband.get_data_udp">
-<tt class="descname">get_data_udp</tt><big>(</big><em>nread=2</em>, <em>demod=True</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBaseband.get_data_udp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBaseband.get_data_udp" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachBaseband.load_waveform">
-<tt class="descname">load_waveform</tt><big>(</big><em>wave</em>, <em>start_offset=0</em>, <em>fast=True</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBaseband.load_waveform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBaseband.load_waveform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Load waveform</p>
-<p>wave : array of 16-bit (dtype=&#8217;i2&#8217;) integers with waveform</p>
-<dl class="docutils">
-<dt>fast <span class="classifier-delimiter">:</span> <span class="classifier">boolean</span></dt>
-<dd>decide what method for loading the dram</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachBaseband.select_bank">
-<tt class="descname">select_bank</tt><big>(</big><em>bank</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBaseband.select_bank"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBaseband.select_bank" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachBaseband.select_fft_bins">
-<tt class="descname">select_fft_bins</tt><big>(</big><em>readout_selection</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBaseband.select_fft_bins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBaseband.select_fft_bins" title="Permalink to this definition">¶</a></dt>
-<dd><p>Select which subset of the available FFT bins to read out</p>
-<p>Initially we can only read out from a subset of the FFT bins, so this function selects which bins to read out right now
-This also takes care of writing the selection to the FPGA with the appropriate tweaks</p>
-<p>The readout selection is stored to self.readout_selection
-The FPGA readout indexes is stored in self.fpga_fft_readout_indexes
-The bins that we are reading out is stored in self.readout_fft_bins</p>
-<dl class="docutils">
-<dt>readout_selection <span class="classifier-delimiter">:</span> <span class="classifier">array of ints</span></dt>
-<dd>indexes into the self.fft_bins array to specify the bins to read out</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachBaseband.set_tone_bins">
-<tt class="descname">set_tone_bins</tt><big>(</big><em>bins</em>, <em>nsamp</em>, <em>amps=None</em>, <em>load=True</em>, <em>normfact=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBaseband.set_tone_bins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBaseband.set_tone_bins" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set the stimulus tones by specific integer bins</p>
-<dl class="docutils">
-<dt>bins <span class="classifier-delimiter">:</span> <span class="classifier">array of bins at which tones should be placed</span></dt>
-<dd>For Heterodyne system, negative frequencies should be placed in cannonical FFT order
-If 2d, interpret as (nwaves,ntones)</dd>
-<dt>nsamp <span class="classifier-delimiter">:</span> <span class="classifier">int, must be power of 2</span></dt>
-<dd>number of samples in the playback buffer. Frequency resolution will be fs/nsamp</dd>
-<dt>amps <span class="classifier-delimiter">:</span> <span class="classifier">optional array of floats, same length as bins array</span></dt>
-<dd>specify the relative amplitude of each tone. Can set to zero to read out a portion
-of the spectrum with no stimulus tone.</dd>
-</dl>
-<p>load : bool (debug only). If false, don&#8217;t actually load the waveform, just calculate it.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachBaseband.set_tone_freqs">
-<tt class="descname">set_tone_freqs</tt><big>(</big><em>freqs</em>, <em>nsamp</em>, <em>amps=None</em>, <em>load=True</em>, <em>normfact=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBaseband.set_tone_freqs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBaseband.set_tone_freqs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set the stimulus tones to generate</p>
-<dl class="docutils">
-<dt>freqs <span class="classifier-delimiter">:</span> <span class="classifier">array of frequencies in MHz</span></dt>
-<dd>For baseband system, these must be positive</dd>
-<dt>nsamp <span class="classifier-delimiter">:</span> <span class="classifier">int, must be power of 2</span></dt>
-<dd>number of samples in the playback buffer. Frequency resolution will be fs/nsamp</dd>
-<dt>amps <span class="classifier-delimiter">:</span> <span class="classifier">optional array of floats, same length as freqs array</span></dt>
-<dd>specify the relative amplitude of each tone. Can set to zero to read out a portion
-of the spectrum with no stimulus tone.</dd>
-<dt>load <span class="classifier-delimiter">:</span> <span class="classifier">bool (debug only). </span></dt>
-<dd>If false, don&#8217;t actually load the waveform, just calculate it.</dd>
-</dl>
-<p>returns:
-actual_freqs : array of the actual frequencies after quantization based on nsamp</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="kid_readout.utils.roach_interface.RoachBasebandWide">
-<em class="property">class </em><tt class="descclassname">kid_readout.utils.roach_interface.</tt><tt class="descname">RoachBasebandWide</tt><big>(</big><em>roach=None</em>, <em>wafer=0</em>, <em>roachip='roach'</em>, <em>adc_valon=None</em>, <em>host_ip=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBasebandWide"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBasebandWide" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#kid_readout.utils.roach_interface.RoachBaseband" title="kid_readout.utils.roach_interface.RoachBaseband"><tt class="xref py py-class docutils literal"><span class="pre">kid_readout.utils.roach_interface.RoachBaseband</span></tt></a></p>
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachBasebandWide.demodulate_data">
-<tt class="descname">demodulate_data</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBasebandWide.demodulate_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBasebandWide.demodulate_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Demodulate the data from the FFT bin</p>
-<p>This function assumes that self.select_fft_bins was called to set up the necessary class attributes</p>
-<p>data : array of complex data</p>
-<p>returns : demodulated data in an array of the same shape and dtype as <em>data</em></p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="kid_readout.utils.roach_interface.RoachBasebandWide10">
-<em class="property">class </em><tt class="descclassname">kid_readout.utils.roach_interface.</tt><tt class="descname">RoachBasebandWide10</tt><big>(</big><em>roach=None</em>, <em>wafer=0</em>, <em>roachip='roach'</em>, <em>adc_valon=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBasebandWide10"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBasebandWide10" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#kid_readout.utils.roach_interface.RoachBasebandWide" title="kid_readout.utils.roach_interface.RoachBasebandWide"><tt class="xref py py-class docutils literal"><span class="pre">kid_readout.utils.roach_interface.RoachBasebandWide</span></tt></a></p>
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachBasebandWide10.demodulate_data">
-<tt class="descname">demodulate_data</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachBasebandWide10.demodulate_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachBasebandWide10.demodulate_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Demodulate the data from the FFT bin</p>
-<p>This function assumes that self.select_fft_bins was called to set up the necessary class attributes</p>
-<p>data : array of complex data</p>
-<p>returns : demodulated data in an array of the same shape and dtype as <em>data</em></p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="kid_readout.utils.roach_interface.RoachHeterodyne">
-<em class="property">class </em><tt class="descclassname">kid_readout.utils.roach_interface.</tt><tt class="descname">RoachHeterodyne</tt><big>(</big><em>roach=None</em>, <em>wafer=0</em>, <em>roachip='roach'</em>, <em>adc_valon=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachHeterodyne"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachHeterodyne" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#kid_readout.utils.roach_interface.RoachInterface" title="kid_readout.utils.roach_interface.RoachInterface"><tt class="xref py py-class docutils literal"><span class="pre">kid_readout.utils.roach_interface.RoachInterface</span></tt></a></p>
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachHeterodyne.calc_fft_bins">
-<tt class="descname">calc_fft_bins</tt><big>(</big><em>tone_bins</em>, <em>nsamp</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachHeterodyne.calc_fft_bins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachHeterodyne.calc_fft_bins" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculate the FFT bins in which the tones will fall</p>
-<dl class="docutils">
-<dt>tone_bins: array of integers</dt>
-<dd>the tone bins (0 to nsamp - 1) which contain tones</dd>
-</dl>
-<p>nsamp : length of the playback bufffer</p>
-<p>returns: fft_bins, array of integers.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachHeterodyne.demodulate_data">
-<tt class="descname">demodulate_data</tt><big>(</big><em>data</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachHeterodyne.demodulate_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachHeterodyne.demodulate_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Demodulate the data from the FFT bin</p>
-<p>This function assumes that self.select_fft_bins was called to set up the necessary class attributes</p>
-<p>data : array of complex data</p>
-<p>returns : demodulated data in an array of the same shape and dtype as <em>data</em></p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachHeterodyne.fft_bin_to_index">
-<tt class="descname">fft_bin_to_index</tt><big>(</big><em>bins</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachHeterodyne.fft_bin_to_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachHeterodyne.fft_bin_to_index" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert FFT bins to FPGA indexes</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachHeterodyne.get_data">
-<tt class="descname">get_data</tt><big>(</big><em>nread=10</em>, <em>demod=True</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachHeterodyne.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachHeterodyne.get_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a chunk of data</p>
-<p>nread: number of 4096 sample frames to read</p>
-<p>demod: should the data be demodulated before returning? Default, yes</p>
-<p>returns  dout,addrs</p>
-<dl class="docutils">
-<dt>dout: complex data stream. Real and imaginary parts are each 16 bit signed </dt>
-<dd>integers (but cast to numpy complex)</dd>
-<dt>addrs: counter values when each frame was read. Can be used to check that </dt>
-<dd>frames are contiguous</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachHeterodyne.load_waveforms">
-<tt class="descname">load_waveforms</tt><big>(</big><em>i_wave</em>, <em>q_wave</em>, <em>fast=True</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachHeterodyne.load_waveforms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachHeterodyne.load_waveforms" title="Permalink to this definition">¶</a></dt>
-<dd><p>Load waveforms for the two DACs</p>
-<p>i_wave,q_wave : arrays of 16-bit (dtype=&#8217;i2&#8217;) integers with waveforms for the two DACs</p>
-<dl class="docutils">
-<dt>fast <span class="classifier-delimiter">:</span> <span class="classifier">boolean</span></dt>
-<dd>decide what method for loading the dram</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachHeterodyne.select_fft_bins">
-<tt class="descname">select_fft_bins</tt><big>(</big><em>readout_selection</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachHeterodyne.select_fft_bins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachHeterodyne.select_fft_bins" title="Permalink to this definition">¶</a></dt>
-<dd><p>Select which subset of the available FFT bins to read out</p>
-<p>Initially we can only read out from a subset of the FFT bins, so this function selects which bins to read out right now
-This also takes care of writing the selection to the FPGA with the appropriate tweaks</p>
-<p>The readout selection is stored to self.readout_selection
-The FPGA readout indexes is stored in self.fpga_fft_readout_indexes
-The bins that we are reading out is stored in self.readout_fft_bins</p>
-<dl class="docutils">
-<dt>readout_selection <span class="classifier-delimiter">:</span> <span class="classifier">array of ints</span></dt>
-<dd>indexes into the self.fft_bins array to specify the bins to read out</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachHeterodyne.set_adc_attenuator">
-<tt class="descname">set_adc_attenuator</tt><big>(</big><em>attendb</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachHeterodyne.set_adc_attenuator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachHeterodyne.set_adc_attenuator" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachHeterodyne.set_dac_attenuator">
-<tt class="descname">set_dac_attenuator</tt><big>(</big><em>attendb</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachHeterodyne.set_dac_attenuator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachHeterodyne.set_dac_attenuator" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachHeterodyne.set_lo">
-<tt class="descname">set_lo</tt><big>(</big><em>lomhz=1200.0</em>, <em>chan_spacing=2.0</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachHeterodyne.set_lo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachHeterodyne.set_lo" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set the local oscillator frequency for the IQ mixers</p>
-<p>lomhz: float, frequency in MHz</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachHeterodyne.set_tone_bins">
-<tt class="descname">set_tone_bins</tt><big>(</big><em>bins</em>, <em>nsamp</em>, <em>amps=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachHeterodyne.set_tone_bins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachHeterodyne.set_tone_bins" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set the stimulus tones by specific integer bins</p>
-<p>bins : array of bins at which tones should be placed
-For Heterodyne system, negative frequencies should be placed in cannonical FFT order</p>
-<p>nsamp : int, must be power of 2
-number of samples in the playback buffer. Frequency resolution will be fs/nsamp</p>
-<dl class="docutils">
-<dt>amps <span class="classifier-delimiter">:</span> <span class="classifier">optional array of floats, same length as bins array</span></dt>
-<dd>specify the relative amplitude of each tone. Can set to zero to read out a portion
-of the spectrum with no stimulus tone.</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachHeterodyne.set_tone_freqs">
-<tt class="descname">set_tone_freqs</tt><big>(</big><em>freqs</em>, <em>nsamp</em>, <em>amps=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachHeterodyne.set_tone_freqs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachHeterodyne.set_tone_freqs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set the stimulus tones to generate</p>
-<dl class="docutils">
-<dt>freqs <span class="classifier-delimiter">:</span> <span class="classifier">array of frequencies in MHz</span></dt>
-<dd>For Heterodyne system, these can be positive or negative to produce tones above and
-below the local oscillator frequency.</dd>
-<dt>nsamp <span class="classifier-delimiter">:</span> <span class="classifier">int, must be power of 2</span></dt>
-<dd>number of samples in the playback buffer. Frequency resolution will be fs/nsamp</dd>
-<dt>amps <span class="classifier-delimiter">:</span> <span class="classifier">optional array of floats, same length as freqs array</span></dt>
-<dd>specify the relative amplitude of each tone. Can set to zero to read out a portion
-of the spectrum with no stimulus tone.</dd>
-</dl>
-<p>returns:
-actual_freqs : array of the actual frequencies after quantization based on nsamp</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="kid_readout.utils.roach_interface.RoachInterface">
-<em class="property">class </em><tt class="descclassname">kid_readout.utils.roach_interface.</tt><tt class="descname">RoachInterface</tt><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachInterface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachInterface" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-<p>Base class for readout systems.
-These methods define an abstract interface that can be relied on to be consistent between
-the baseband and heterodyne readout systems</p>
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachInterface.auto_level_adc">
-<tt class="descname">auto_level_adc</tt><big>(</big><em>goal=-2.0</em>, <em>max_tries=3</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachInterface.auto_level_adc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachInterface.auto_level_adc" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachInterface.get_modulation_rate_hz">
-<tt class="descname">get_modulation_rate_hz</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachInterface.get_modulation_rate_hz"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachInterface.get_modulation_rate_hz" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachInterface.get_raw_adc">
-<tt class="descname">get_raw_adc</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachInterface.get_raw_adc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachInterface.get_raw_adc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Grab raw ADC samples</p>
-<p>returns: s0,s1
-s0 and s1 are the samples from adc 0 and adc 1 respectively
-Each sample is a 12 bit signed integer (cast to a numpy float)</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachInterface.initialize">
-<tt class="descname">initialize</tt><big>(</big><em>fs=512.0</em>, <em>start_udp=True</em>, <em>use_config=True</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachInterface.initialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachInterface.initialize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reprogram the ROACH and get things running</p>
-<dl class="docutils">
-<dt>fs: float</dt>
-<dd>Sampling frequency in MHz</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachInterface.measure_fs">
-<tt class="descname">measure_fs</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachInterface.measure_fs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachInterface.measure_fs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Estimate the sampling rate</p>
-<p>This takes about 2 seconds to run
-returns: fs, the approximate sampling rate in MHz</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachInterface.save_state">
-<tt class="descname">save_state</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachInterface.save_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachInterface.save_state" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachInterface.set_adc_attenuator">
-<tt class="descname">set_adc_attenuator</tt><big>(</big><em>attendb</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachInterface.set_adc_attenuator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachInterface.set_adc_attenuator" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachInterface.set_attenuator">
-<tt class="descname">set_attenuator</tt><big>(</big><em>attendb</em>, <em>gpio_reg='gpioa'</em>, <em>data_bit=8</em>, <em>clk_bit=4</em>, <em>le_bit=2</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachInterface.set_attenuator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachInterface.set_attenuator" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachInterface.set_dac_atten">
-<tt class="descname">set_dac_atten</tt><big>(</big><em>attendb</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachInterface.set_dac_atten"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachInterface.set_dac_atten" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for set_dac_attenuator</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachInterface.set_dac_attenuator">
-<tt class="descname">set_dac_attenuator</tt><big>(</big><em>attendb</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachInterface.set_dac_attenuator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachInterface.set_dac_attenuator" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachInterface.set_fft_gain">
-<tt class="descname">set_fft_gain</tt><big>(</big><em>gain</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachInterface.set_fft_gain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachInterface.set_fft_gain" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set the gain in the FFT</p>
-<p>At each stage of the FFT there is the option to downshift (divide by 2) the data, reducing the overall
-voltage gain by a factor of 2. Therefore, the FFT gain can only be of the form 2^k for k nonnegative</p>
-<p>gain: the number of stages to not divide on. The final gain will be 2^gain</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.roach_interface.RoachInterface.set_modulation_output">
-<tt class="descname">set_modulation_output</tt><big>(</big><em>rate='low'</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#RoachInterface.set_modulation_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.RoachInterface.set_modulation_output" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="docutils">
-<dt>rate: can be &#8216;high&#8217;, &#8216;low&#8217;, 1-8.</dt>
-<dd>modulation output signal switching state. &#8216;high&#8217; and &#8216;low&#8217; set the TTL output to a constant level.
-Integers 1-8 set the switching rate to cycle every 2**k spectra</dd>
-</dl>
-<p>returns: float, switching rate in Hz.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.roach_interface.compute_window">
-<tt class="descclassname">kid_readout.utils.roach_interface.</tt><tt class="descname">compute_window</tt><big>(</big><em>npfb=32768</em>, <em>taps=2</em>, <em>wfunc=&lt;function flattop at 0x59add70&gt;</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#compute_window"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.compute_window" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.roach_interface.test_sweep">
-<tt class="descclassname">kid_readout.utils.roach_interface.</tt><tt class="descname">test_sweep</tt><big>(</big><em>ri</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_interface.html#test_sweep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_interface.test_sweep" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</div>
-<div class="section" id="module-kid_readout.utils.roach_utils">
-<span id="kid-readout-utils-roach-utils-module"></span><h2>kid_readout.utils.roach_utils module<a class="headerlink" href="#module-kid_readout.utils.roach_utils" title="Permalink to this headline">¶</a></h2>
-<p>Misc utils related to the ROACH hardware</p>
-<dl class="function">
-<dt id="kid_readout.utils.roach_utils.ntone_power_correction">
-<tt class="descclassname">kid_readout.utils.roach_utils.</tt><tt class="descname">ntone_power_correction</tt><big>(</big><em>ntones</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/roach_utils.html#ntone_power_correction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.roach_utils.ntone_power_correction" title="Permalink to this definition">¶</a></dt>
-<dd><p>Power correction in dB relative to a single tone</p>
-<p><em>ntones</em> : number of tones simultaneously output</p>
-</dd></dl>
-
-</div>
-<div class="section" id="module-kid_readout.utils.single_pixel">
-<span id="kid-readout-utils-single-pixel-module"></span><h2>kid_readout.utils.single_pixel module<a class="headerlink" href="#module-kid_readout.utils.single_pixel" title="Permalink to this headline">¶</a></h2>
-<p>Classes to interface to single pixel KID readout systems</p>
-<dl class="class">
-<dt id="kid_readout.utils.single_pixel.SinglePixelBaseband">
-<em class="property">class </em><tt class="descclassname">kid_readout.utils.single_pixel.</tt><tt class="descname">SinglePixelBaseband</tt><big>(</big><em>roach=None</em>, <em>wafer=0</em>, <em>roachip='roach'</em>, <em>adc_valon=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelBaseband"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelBaseband" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#kid_readout.utils.single_pixel.SinglePixelReadout" title="kid_readout.utils.single_pixel.SinglePixelReadout"><tt class="xref py py-class docutils literal"><span class="pre">kid_readout.utils.single_pixel.SinglePixelReadout</span></tt></a></p>
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelBaseband.get_data">
-<tt class="descname">get_data</tt><big>(</big><em>nread=10</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelBaseband.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelBaseband.get_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a stream of data from a single FFT bin</p>
-<p>nread: number of 4096 sample frames to read</p>
-<p>returns  dout,addrs</p>
-<dl class="docutils">
-<dt>dout: complex data stream. Real and imaginary parts are each 16 bit signed </dt>
-<dd>integers (but cast to numpy complex)</dd>
-<dt>addrs: counter values when each frame was read. Can be used to check that </dt>
-<dd>frames are contiguous</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelBaseband.load_waveform">
-<tt class="descname">load_waveform</tt><big>(</big><em>wave</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelBaseband.load_waveform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelBaseband.load_waveform" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelBaseband.select_bin">
-<tt class="descname">select_bin</tt><big>(</big><em>ibin</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelBaseband.select_bin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelBaseband.select_bin" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set the register which selects the FFT bin we get data from</p>
-<p>ibin: 0 to nfft -1</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelBaseband.set_channel">
-<tt class="descname">set_channel</tt><big>(</big><em>ch</em>, <em>dphi=None</em>, <em>amp=-3</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelBaseband.set_channel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelBaseband.set_channel" title="Permalink to this definition">¶</a></dt>
-<dd><p>ch: channel number (0 to dac_ns-1)</p>
-<dl class="docutils">
-<dt>dphi: phase offset between I and Q components in turns (nominally 1/4 = pi/2 radians)</dt>
-<dd>not used for Baseband readout</dd>
-</dl>
-<p>amp: amplitude relative to full scale in dB</p>
-<p>nfft: size of the fft</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelBaseband.set_tone">
-<tt class="descname">set_tone</tt><big>(</big><em>f0</em>, <em>dphi=None</em>, <em>amp=-3</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelBaseband.set_tone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelBaseband.set_tone" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="kid_readout.utils.single_pixel.SinglePixelHeterodyne">
-<em class="property">class </em><tt class="descclassname">kid_readout.utils.single_pixel.</tt><tt class="descname">SinglePixelHeterodyne</tt><big>(</big><em>roach=None</em>, <em>roachip='roach'</em>, <em>adc_valon=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelHeterodyne"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelHeterodyne" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#kid_readout.utils.single_pixel.SinglePixelReadout" title="kid_readout.utils.single_pixel.SinglePixelReadout"><tt class="xref py py-class docutils literal"><span class="pre">kid_readout.utils.single_pixel.SinglePixelReadout</span></tt></a></p>
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelHeterodyne.get_data">
-<tt class="descname">get_data</tt><big>(</big><em>nread=10</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelHeterodyne.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelHeterodyne.get_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a stream of data from a single FFT bin</p>
-<p>nread: number of 4096 sample frames to read</p>
-<p>returns  dout,addrs</p>
-<dl class="docutils">
-<dt>dout: complex data stream. Real and imaginary parts are each 16 bit signed </dt>
-<dd>integers (but cast to numpy complex)</dd>
-<dt>addrs: counter values when each frame was read. Can be used to check that </dt>
-<dd>frames are contiguous</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelHeterodyne.load_waveform">
-<tt class="descname">load_waveform</tt><big>(</big><em>iwave</em>, <em>qwave</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelHeterodyne.load_waveform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelHeterodyne.load_waveform" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelHeterodyne.select_bin">
-<tt class="descname">select_bin</tt><big>(</big><em>ibin</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelHeterodyne.select_bin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelHeterodyne.select_bin" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set the register which selects the FFT bin we get data from</p>
-<p>ibin: 0 to nfft -1</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelHeterodyne.set_channel">
-<tt class="descname">set_channel</tt><big>(</big><em>ch</em>, <em>dphi=-0.25</em>, <em>amp=-3</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelHeterodyne.set_channel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelHeterodyne.set_channel" title="Permalink to this definition">¶</a></dt>
-<dd><p>ch: channel number (-dac_ns/2 to dac_ns/2-1)
-dphi: phase offset between I and Q components in turns (nominally -1/4 = pi/2 radians)
-amp: amplitude relative to full scale in dB
-nfft: size of the fft</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelHeterodyne.set_tone">
-<tt class="descname">set_tone</tt><big>(</big><em>f0</em>, <em>dphi=0.25</em>, <em>amp=-3</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelHeterodyne.set_tone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelHeterodyne.set_tone" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="kid_readout.utils.single_pixel.SinglePixelReadout">
-<em class="property">class </em><tt class="descclassname">kid_readout.utils.single_pixel.</tt><tt class="descname">SinglePixelReadout</tt><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelReadout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelReadout" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-<p>Base class for single pixel readout systems.
-These methods define an abstract interface that can be relied on to be consistent between
-the baseband and heterodyne readout systems</p>
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelReadout.get_data">
-<tt class="descname">get_data</tt><big>(</big><em>nread=10</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelReadout.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelReadout.get_data" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelReadout.get_raw_adc">
-<tt class="descname">get_raw_adc</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelReadout.get_raw_adc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelReadout.get_raw_adc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Grab raw ADC samples</p>
-<p>returns: s0,s1
-s0 and s1 are the samples from adc 0 and adc 1 respectively
-Each sample is a 12 bit signed integer (cast to a numpy float)</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelReadout.initialize">
-<tt class="descname">initialize</tt><big>(</big><em>fs=500.0</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelReadout.initialize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelReadout.initialize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reprogram the ROACH and get things running</p>
-<dl class="docutils">
-<dt>fs: float</dt>
-<dd>Sampling frequency in MHz</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelReadout.measure_fs">
-<tt class="descname">measure_fs</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelReadout.measure_fs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelReadout.measure_fs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Estimate the sampling rate</p>
-<p>This takes about 2 seconds to run
-returns: fs, the approximate sampling rate in MHz</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelReadout.select_bin">
-<tt class="descname">select_bin</tt><big>(</big><em>ibin</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelReadout.select_bin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelReadout.select_bin" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelReadout.set_adc_attenuator">
-<tt class="descname">set_adc_attenuator</tt><big>(</big><em>attendb</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelReadout.set_adc_attenuator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelReadout.set_adc_attenuator" title="Permalink to this definition">¶</a></dt>
-<dd><p>attendb: attenuation of 0 to 31.5 dB in increments of 0.5</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelReadout.set_attenuator">
-<tt class="descname">set_attenuator</tt><big>(</big><em>attendb</em>, <em>gpio_reg='gpioa'</em>, <em>data_bit=8</em>, <em>clk_bit=4</em>, <em>le_bit=2</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelReadout.set_attenuator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelReadout.set_attenuator" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelReadout.set_channel">
-<tt class="descname">set_channel</tt><big>(</big><em>ch</em>, <em>dphi=None</em>, <em>amp=-3</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelReadout.set_channel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelReadout.set_channel" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelReadout.set_dac_attenuator">
-<tt class="descname">set_dac_attenuator</tt><big>(</big><em>attendb</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelReadout.set_dac_attenuator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelReadout.set_dac_attenuator" title="Permalink to this definition">¶</a></dt>
-<dd><p>attendb: attenuation of 0 to 31.5 dB in increments of 0.5</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelReadout.set_fft_gain">
-<tt class="descname">set_fft_gain</tt><big>(</big><em>gain</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelReadout.set_fft_gain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelReadout.set_fft_gain" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set the gain in the FFT</p>
-<p>At each stage of the FFT there is the option to downshift (divide by 2) the data, reducing the overall
-voltage gain by a factor of 2. Therefore, the FFT gain can only be of the form 2^k for k nonnegative</p>
-<p>gain: the number of stages to divide on. The final gain will be 2^gain</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="kid_readout.utils.single_pixel.SinglePixelReadout.set_tone">
-<tt class="descname">set_tone</tt><big>(</big><em>f0</em>, <em>dphi=None</em>, <em>amp=-3</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/single_pixel.html#SinglePixelReadout.set_tone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.single_pixel.SinglePixelReadout.set_tone" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="module-kid_readout.utils.starcryo_temps">
-<span id="kid-readout-utils-starcryo-temps-module"></span><h2>kid_readout.utils.starcryo_temps module<a class="headerlink" href="#module-kid_readout.utils.starcryo_temps" title="Permalink to this headline">¶</a></h2>
-<p>Routines for getting temperature data for starcryo cryostat
-Currently assumes SRS logs are in /home/data/SRS</p>
-<dl class="function">
-<dt id="kid_readout.utils.starcryo_temps.get_temperature_log_file_list">
-<tt class="descclassname">kid_readout.utils.starcryo_temps.</tt><tt class="descname">get_temperature_log_file_list</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/starcryo_temps.html#get_temperature_log_file_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.starcryo_temps.get_temperature_log_file_list" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.starcryo_temps.get_temperatures_at">
-<tt class="descclassname">kid_readout.utils.starcryo_temps.</tt><tt class="descname">get_temperatures_at</tt><big>(</big><em>t</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/starcryo_temps.html#get_temperatures_at"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.starcryo_temps.get_temperatures_at" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.starcryo_temps.refresh_temperature_log_file_list">
-<tt class="descclassname">kid_readout.utils.starcryo_temps.</tt><tt class="descname">refresh_temperature_log_file_list</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/starcryo_temps.html#refresh_temperature_log_file_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.starcryo_temps.refresh_temperature_log_file_list" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</div>
-<div class="section" id="module-kid_readout.utils.sweeps">
-<span id="kid-readout-utils-sweeps-module"></span><h2>kid_readout.utils.sweeps module<a class="headerlink" href="#module-kid_readout.utils.sweeps" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt>
-<tt class="descname">coarse_sweep(ri, freqs=array([  10.        ,   10.49608355,   10.9921671 ,   11.48825065,</tt></dt>
-<dt>
-<tt class="descname">11.9843342 ,   12.48041775,   12.97650131,   13.47258486,</tt></dt>
-<dt>
-<tt class="descname">13.96866841,   14.46475196,   14.96083551,   15.45691906,</tt></dt>
-<dt>
-<tt class="descname">15.95300261,   16.44908616,   16.94516971,   17.44125326,</tt></dt>
-<dt>
-<tt class="descname">17.93733681,   18.43342037,   18.92950392,   19.42558747,</tt></dt>
-<dt>
-<tt class="descname">19.92167102,   20.41775457,   20.91383812,   21.40992167,</tt></dt>
-<dt>
-<tt class="descname">21.90600522,   22.40208877,   22.89817232,   23.39425587,</tt></dt>
-<dt>
-<tt class="descname">23.89033943,   24.38642298,   24.88250653,   25.37859008,</tt></dt>
-<dt>
-<tt class="descname">25.87467363,   26.37075718,   26.86684073,   27.36292428,</tt></dt>
-<dt>
-<tt class="descname">27.85900783,   28.35509138,   28.85117493,   29.34725849,</tt></dt>
-<dt>
-<tt class="descname">29.84334204,   30.33942559,   30.83550914,   31.33159269,</tt></dt>
-<dt>
-<tt class="descname">31.82767624,   32.32375979,   32.81984334,   33.31592689,</tt></dt>
-<dt>
-<tt class="descname">33.81201044,   34.30809399,   34.80417755,   35.3002611 ,</tt></dt>
-<dt>
-<tt class="descname">35.79634465,   36.2924282 ,   36.78851175,   37.2845953 ,</tt></dt>
-<dt>
-<tt class="descname">37.78067885,   38.2767624 ,   38.77284595,   39.2689295 ,</tt></dt>
-<dt>
-<tt class="descname">39.76501305,   40.26109661,   40.75718016,   41.25326371,</tt></dt>
-<dt>
-<tt class="descname">41.74934726,   42.24543081,   42.74151436,   43.23759791,</tt></dt>
-<dt>
-<tt class="descname">43.73368146,   44.22976501,   44.72584856,   45.22193211,</tt></dt>
-<dt>
-<tt class="descname">45.71801567,   46.21409922,   46.71018277,   47.20626632,</tt></dt>
-<dt>
-<tt class="descname">47.70234987,   48.19843342,   48.69451697,   49.19060052,</tt></dt>
-<dt>
-<tt class="descname">49.68668407,   50.18276762,   50.67885117,   51.17493473,</tt></dt>
-<dt>
-<tt class="descname">51.67101828,   52.16710183,   52.66318538,   53.15926893,</tt></dt>
-<dt>
-<tt class="descname">53.65535248,   54.15143603,   54.64751958,   55.14360313,</tt></dt>
-<dt>
-<tt class="descname">55.63968668,   56.13577023,   56.63185379,   57.12793734,</tt></dt>
-<dt>
-<tt class="descname">57.62402089,   58.12010444,   58.61618799,   59.11227154,</tt></dt>
-<dt>
-<tt class="descname">59.60835509,   60.10443864,   60.60052219,   61.09660574,</tt></dt>
-<dt>
-<tt class="descname">61.5926893 ,   62.08877285,   62.5848564 ,   63.08093995,</tt></dt>
-<dt>
-<tt class="descname">63.5770235 ,   64.07310705,   64.5691906 ,   65.06527415,</tt></dt>
-<dt>
-<tt class="descname">65.5613577 ,   66.05744125,   66.5535248 ,   67.04960836,</tt></dt>
-<dt>
-<tt class="descname">67.54569191,   68.04177546,   68.53785901,   69.03394256,</tt></dt>
-<dt>
-<tt class="descname">69.53002611,   70.02610966,   70.52219321,   71.01827676,</tt></dt>
-<dt>
-<tt class="descname">71.51436031,   72.01044386,   72.50652742,   73.00261097,</tt></dt>
-<dt>
-<tt class="descname">73.49869452,   73.99477807,   74.49086162,   74.98694517,</tt></dt>
-<dt>
-<tt class="descname">75.48302872,   75.97911227,   76.47519582,   76.97127937,</tt></dt>
-<dt>
-<tt class="descname">77.46736292,   77.96344648,   78.45953003,   78.95561358,</tt></dt>
-<dt>
-<tt class="descname">79.45169713,   79.94778068,   80.44386423,   80.93994778,</tt></dt>
-<dt>
-<tt class="descname">81.43603133,   81.93211488,   82.42819843,   82.92428198,</tt></dt>
-<dt>
-<tt class="descname">83.42036554,   83.91644909,   84.41253264,   84.90861619,</tt></dt>
-<dt>
-<tt class="descname">85.40469974,   85.90078329,   86.39686684,   86.89295039,</tt></dt>
-<dt>
-<tt class="descname">87.38903394,   87.88511749,   88.38120104,   88.8772846 ,</tt></dt>
-<dt>
-<tt class="descname">89.37336815,   89.8694517 ,   90.36553525,   90.8616188 ,</tt></dt>
-<dt>
-<tt class="descname">91.35770235,   91.8537859 ,   92.34986945,   92.845953  ,</tt></dt>
-<dt>
-<tt class="descname">93.34203655,   93.8381201 ,   94.33420366,   94.83028721,</tt></dt>
-<dt>
-<tt class="descname">95.32637076,   95.82245431,   96.31853786,   96.81462141,</tt></dt>
-<dt>
-<tt class="descname">97.31070496,   97.80678851,   98.30287206,   98.79895561,</tt></dt>
-<dt>
-<tt class="descname">99.29503916,   99.79112272,  100.28720627,  100.78328982,</tt></dt>
-<dt>
-<tt class="descname">101.27937337,  101.77545692,  102.27154047,  102.76762402,</tt></dt>
-<dt>
-<tt class="descname">103.26370757,  103.75979112,  104.25587467,  104.75195822,</tt></dt>
-<dt>
-<tt class="descname">105.24804178,  105.74412533,  106.24020888,  106.73629243,</tt></dt>
-<dt>
-<tt class="descname">107.23237598,  107.72845953,  108.22454308,  108.72062663,</tt></dt>
-<dt>
-<tt class="descname">109.21671018,  109.71279373,  110.20887728,  110.70496084,</tt></dt>
-<dt>
-<tt class="descname">111.20104439,  111.69712794,  112.19321149,  112.68929504,</tt></dt>
-<dt>
-<tt class="descname">113.18537859,  113.68146214,  114.17754569,  114.67362924,</tt></dt>
-<dt>
-<tt class="descname">115.16971279,  115.66579634,  116.1618799 ,  116.65796345,</tt></dt>
-<dt>
-<tt class="descname">117.154047  ,  117.65013055,  118.1462141 ,  118.64229765,</tt></dt>
-<dt>
-<tt class="descname">119.1383812 ,  119.63446475,  120.1305483 ,  120.62663185,</tt></dt>
-<dt>
-<tt class="descname">121.1227154 ,  121.61879896,  122.11488251,  122.61096606,</tt></dt>
-<dt>
-<tt class="descname">123.10704961,  123.60313316,  124.09921671,  124.59530026,</tt></dt>
-<dt>
-<tt class="descname">125.09138381,  125.58746736,  126.08355091,  126.57963446,</tt></dt>
-<dt>
-<tt class="descname">127.07571802,  127.57180157,  128.06788512,  128.56396867,</tt></dt>
-<dt>
-<tt class="descname">129.06005222,  129.55613577,  130.05221932,  130.54830287,</tt></dt>
-<dt>
-<tt class="descname">131.04438642,  131.54046997,  132.03655352,  132.53263708,</tt></dt>
-<dt>
-<tt class="descname">133.02872063,  133.52480418,  134.02088773,  134.51697128,</tt></dt>
-<dt>
-<tt class="descname">135.01305483,  135.50913838,  136.00522193,  136.50130548,</tt></dt>
-<dt>
-<tt class="descname">136.99738903,  137.49347258,  137.98955614,  138.48563969,</tt></dt>
-<dt>
-<tt class="descname">138.98172324,  139.47780679,  139.97389034,  140.46997389,</tt></dt>
-<dt>
-<tt class="descname">140.96605744,  141.46214099,  141.95822454,  142.45430809,</tt></dt>
-<dt>
-<tt class="descname">142.95039164,  143.4464752 ,  143.94255875,  144.4386423 ,</tt></dt>
-<dt>
-<tt class="descname">144.93472585,  145.4308094 ,  145.92689295,  146.4229765 ,</tt></dt>
-<dt>
-<tt class="descname">146.91906005,  147.4151436 ,  147.91122715,  148.4073107 ,</tt></dt>
-<dt>
-<tt class="descname">148.90339426,  149.39947781,  149.89556136,  150.39164491,</tt></dt>
-<dt>
-<tt class="descname">150.88772846,  151.38381201,  151.87989556,  152.37597911,</tt></dt>
-<dt>
-<tt class="descname">152.87206266,  153.36814621,  153.86422977,  154.36031332,</tt></dt>
-<dt>
-<tt class="descname">154.85639687,  155.35248042,  155.84856397,  156.34464752,</tt></dt>
-<dt>
-<tt class="descname">156.84073107,  157.33681462,  157.83289817,  158.32898172,</tt></dt>
-<dt>
-<tt class="descname">158.82506527,  159.32114883,  159.81723238,  160.31331593,</tt></dt>
-<dt>
-<tt class="descname">160.80939948,  161.30548303,  161.80156658,  162.29765013,</tt></dt>
-<dt>
-<tt class="descname">162.79373368,  163.28981723,  163.78590078,  164.28198433,</tt></dt>
-<dt>
-<tt class="descname">164.77806789,  165.27415144,  165.77023499,  166.26631854,</tt></dt>
-<dt>
-<tt class="descname">166.76240209,  167.25848564,  167.75456919,  168.25065274,</tt></dt>
-<dt>
-<tt class="descname">168.74673629,  169.24281984,  169.73890339,  170.23498695,</tt></dt>
-<dt>
-<tt class="descname">170.7310705 ,  171.22715405,  171.7232376 ,  172.21932115,</tt></dt>
-<dt>
-<tt class="descname">172.7154047 ,  173.21148825,  173.7075718 ,  174.20365535,</tt></dt>
-<dt>
-<tt class="descname">174.6997389 ,  175.19582245,  175.69190601,  176.18798956,</tt></dt>
-<dt>
-<tt class="descname">176.68407311,  177.18015666,  177.67624021,  178.17232376,</tt></dt>
-<dt>
-<tt class="descname">178.66840731,  179.16449086,  179.66057441,  180.15665796,</tt></dt>
-<dt>
-<tt class="descname">180.65274151,  181.14882507,  181.64490862,  182.14099217,</tt></dt>
-<dt>
-<tt class="descname">182.63707572,  183.13315927,  183.62924282,  184.12532637,</tt></dt>
-<dt>
-<tt class="descname">184.62140992,  185.11749347,  185.61357702,  186.10966057,</tt></dt>
-<dt>
-<tt class="descname">186.60574413,  187.10182768,  187.59791123,  188.09399478,</tt></dt>
-<dt>
-<tt class="descname">188.59007833,  189.08616188,  189.58224543,  190.07832898,</tt></dt>
-<dt>
-<tt class="descname">190.57441253,  191.07049608,  191.56657963,  192.06266319,</tt></dt>
-<dt>
-<tt class="descname">192.55874674,  193.05483029,  193.55091384,  194.04699739,</tt></dt>
-<dt>
-<tt class="descname">194.54308094,  195.03916449,  195.53524804,  196.03133159,</tt></dt>
-<dt>
-<tt class="descname">196.52741514,  197.02349869,  197.51958225,  198.0156658 ,</tt></dt>
-<dt>
-<tt class="descname">198.51174935,  199.0078329 ,  199.50391645,  200.        ]), nsamp=32768, nchan_per_step=4, reads_per_step=2, callback=None, sweep_id=1, sweep_data=None)</tt></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.sweeps.do_prepared_sweep">
-<tt class="descclassname">kid_readout.utils.sweeps.</tt><tt class="descname">do_prepared_sweep</tt><big>(</big><em>ri</em>, <em>nchan_per_step=8</em>, <em>reads_per_step=2</em>, <em>callback=None</em>, <em>sweep_data=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/sweeps.html#do_prepared_sweep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.sweeps.do_prepared_sweep" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.sweeps.fine_sweep">
-<tt class="descclassname">kid_readout.utils.sweeps.</tt><tt class="descname">fine_sweep</tt><big>(</big><em>ri</em>, <em>center_freqs</em>, <em>sweep_width=0.1</em>, <em>npoints=128</em>, <em>nsamp=1048576</em>, <em>sweep_data=None</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/sweeps.html#fine_sweep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.sweeps.fine_sweep" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.sweeps.prepare_sweep">
-<tt class="descclassname">kid_readout.utils.sweeps.</tt><tt class="descname">prepare_sweep</tt><big>(</big><em>ri</em>, <em>center_freqs</em>, <em>offsets</em>, <em>nsamp=2097152</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/sweeps.html#prepare_sweep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.sweeps.prepare_sweep" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.sweeps.reduce_catcher">
-<tt class="descclassname">kid_readout.utils.sweeps.</tt><tt class="descname">reduce_catcher</tt><big>(</big><em>din</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/sweeps.html#reduce_catcher"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.sweeps.reduce_catcher" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt>
-<tt class="descname">segmented_fine_sweep(ri, center_freqs, segments=[array([-0.01  , -0.0095, -0.009 , -0.0085, -0.008 , -0.0075, -0.007 ,</tt></dt>
-<dt>
-<tt class="descname">-0.0065, -0.006 , -0.0055, -0.005 , -0.0045, -0.004 , -0.0035,</tt></dt>
-<dt>
-<tt class="descname">-0.003 , -0.0025, -0.002 , -0.0015, -0.001 , -0.0005,  0.    ,</tt></dt>
-<dt>
-<tt class="descname">0.0005,  0.001 ,  0.0015,  0.002 ,  0.0025,  0.003 ,  0.0035,</tt></dt>
-<dt>
-<tt class="descname">0.004 ,  0.0045,  0.005 ,  0.0055,  0.006 ,  0.0065,  0.007 ,</tt></dt>
-<dt>
-<tt class="descname">0.0075,  0.008 ,  0.0085,  0.009 ,  0.0095])], nchan_per_step=4, reads_per_step=2, sweep_id=2)</tt></dt>
-<dd></dd></dl>
 
 </div>
 <div class="section" id="module-kid_readout.utils.time_tools">
 <span id="kid-readout-utils-time-tools-module"></span><h2>kid_readout.utils.time_tools module<a class="headerlink" href="#module-kid_readout.utils.time_tools" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="kid_readout.utils.time_tools.date_to_unix_time">
-<tt class="descclassname">kid_readout.utils.time_tools.</tt><tt class="descname">date_to_unix_time</tt><big>(</big><em>dstr</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/time_tools.html#date_to_unix_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.time_tools.date_to_unix_time" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">kid_readout.utils.time_tools.</code><code class="descname">date_to_unix_time</code><span class="sig-paren">(</span><em>dstr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/utils/time_tools.html#date_to_unix_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.time_tools.date_to_unix_time" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-
-</div>
-<div class="section" id="module-kid_readout.utils.udp_catcher">
-<span id="kid-readout-utils-udp-catcher-module"></span><h2>kid_readout.utils.udp_catcher module<a class="headerlink" href="#module-kid_readout.utils.udp_catcher" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="kid_readout.utils.udp_catcher.decode_packets">
-<tt class="descclassname">kid_readout.utils.udp_catcher.</tt><tt class="descname">decode_packets</tt><big>(</big><em>plist</em>, <em>streamid</em>, <em>chans</em>, <em>nfft</em>, <em>pkts_per_chunk=16</em>, <em>capture_failures=True</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/udp_catcher.html#decode_packets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.udp_catcher.decode_packets" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.udp_catcher.get_udp_data">
-<tt class="descclassname">kid_readout.utils.udp_catcher.</tt><tt class="descname">get_udp_data</tt><big>(</big><em>ri</em>, <em>npkts</em>, <em>streamid</em>, <em>chans</em>, <em>nfft</em>, <em>stream_reg='streamid'</em>, <em>addr=('192.168.1.1'</em>, <em>12345)</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/udp_catcher.html#get_udp_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.udp_catcher.get_udp_data" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.udp_catcher.get_udp_packets">
-<tt class="descclassname">kid_readout.utils.udp_catcher.</tt><tt class="descname">get_udp_packets</tt><big>(</big><em>ri</em>, <em>npkts</em>, <em>streamid</em>, <em>stream_reg='streamid'</em>, <em>addr=('192.168.1.1'</em>, <em>12345)</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/udp_catcher.html#get_udp_packets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.udp_catcher.get_udp_packets" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</div>
-<div class="section" id="module-kid_readout.utils.valon">
-<span id="kid-readout-utils-valon-module"></span><h2>kid_readout.utils.valon module<a class="headerlink" href="#module-kid_readout.utils.valon" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="kid_readout.utils.valon.check_output">
-<tt class="descclassname">kid_readout.utils.valon.</tt><tt class="descname">check_output</tt><big>(</big><em>*popenargs</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/valon.html#check_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.valon.check_output" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run command with arguments and return its output as a byte string.</p>
-<p>If the exit code was non-zero it raises a CalledProcessError.  The
-CalledProcessError object will have the return code in the returncode
-attribute and output in the output attribute.</p>
-<p>The arguments are the same as for the Popen constructor.  Example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">check_output</span><span class="p">([</span><span class="s">&quot;ls&quot;</span><span class="p">,</span> <span class="s">&quot;-l&quot;</span><span class="p">,</span> <span class="s">&quot;/dev/null&quot;</span><span class="p">])</span>
-<span class="go">&#39;crw-rw-rw- 1 root root 1, 3 Oct 18  2007 /dev/null\n&#39;</span>
-</pre></div>
-</div>
-<p>The stdout argument is not allowed as it is used internally.
-To capture standard error in the result, use stderr=STDOUT.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">check_output</span><span class="p">([</span><span class="s">&quot;/bin/sh&quot;</span><span class="p">,</span> <span class="s">&quot;-c&quot;</span><span class="p">,</span>
-<span class="gp">... </span>              <span class="s">&quot;ls -l non_existent_file ; exit 0&quot;</span><span class="p">],</span>
-<span class="gp">... </span>             <span class="n">stderr</span><span class="o">=</span><span class="n">STDOUT</span><span class="p">)</span>
-<span class="go">&#39;ls: non_existent_file: No such file or directory\n&#39;</span>
-</pre></div>
-</div>
-<p>copied from python2.7</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.valon.find_valons">
-<tt class="descclassname">kid_readout.utils.valon.</tt><tt class="descname">find_valons</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/valon.html#find_valons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.valon.find_valons" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.valon.find_valons_by_id">
-<tt class="descclassname">kid_readout.utils.valon.</tt><tt class="descname">find_valons_by_id</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/valon.html#find_valons_by_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.valon.find_valons_by_id" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="kid_readout.utils.valon.find_valons_with_dmesg">
-<tt class="descclassname">kid_readout.utils.valon.</tt><tt class="descname">find_valons_with_dmesg</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/kid_readout/utils/valon.html#find_valons_with_dmesg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.utils.valon.find_valons_with_dmesg" title="Permalink to this definition">¶</a></dt>
-<dd><p>Find /dev/ttyUSB* ports with FTDI chips which are probably Valons</p>
-<p>Works by parsing the dmesg output and looking for lines containing FTDI (the brand of
-usb-rs232 chip used) and &#8216;attached to&#8217; which will contain the ttyUSB* string</p>
-<p>returns a list of all unique ports that have FTDI chips.
-The list is sorted starting with the most recent entry in dmesg.
-Duplicate ports are ignored (only the most recent entry (line in dmesg) for that port is returned)</p>
-</dd></dl>
 
 </div>
 <div class="section" id="module-kid_readout.utils">
@@ -1518,48 +162,30 @@ Duplicate ports are ignored (only the most recent entry (line in dmesg) for that
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">kid_readout.utils package</a><ul>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-kid_readout.utils.borph_utils">kid_readout.utils.borph_utils module</a></li>
-<li><a class="reference internal" href="#module-kid_readout.utils.data_block">kid_readout.utils.data_block module</a></li>
-<li><a class="reference internal" href="#module-kid_readout.utils.data_file">kid_readout.utils.data_file module</a></li>
-<li><a class="reference internal" href="#module-kid_readout.utils.dataset">kid_readout.utils.dataset module</a></li>
-<li><a class="reference internal" href="#module-kid_readout.utils.despike">kid_readout.utils.despike module</a></li>
-<li><a class="reference internal" href="#module-kid_readout.utils.easync">kid_readout.utils.easync module</a></li>
-<li><a class="reference internal" href="#module-kid_readout.utils.fftfilt">kid_readout.utils.fftfilt module</a></li>
-<li><a class="reference internal" href="#module-kid_readout.utils.filters">kid_readout.utils.filters module</a></li>
-<li><a class="reference internal" href="#kid-readout-utils-hpd-temps-module">kid_readout.utils.hpd_temps module</a></li>
 <li><a class="reference internal" href="#module-kid_readout.utils.jpl_data">kid_readout.utils.jpl_data module</a></li>
-<li><a class="reference internal" href="#module-kid_readout.utils.parse_srs">kid_readout.utils.parse_srs module</a></li>
-<li><a class="reference internal" href="#module-kid_readout.utils.plot_nc">kid_readout.utils.plot_nc module</a></li>
-<li><a class="reference internal" href="#module-kid_readout.utils.proc_sweep">kid_readout.utils.proc_sweep module</a></li>
-<li><a class="reference internal" href="#module-kid_readout.utils.readoutnc">kid_readout.utils.readoutnc module</a></li>
-<li><a class="reference internal" href="#module-kid_readout.utils.roach_interface">kid_readout.utils.roach_interface module</a></li>
-<li><a class="reference internal" href="#module-kid_readout.utils.roach_utils">kid_readout.utils.roach_utils module</a></li>
-<li><a class="reference internal" href="#module-kid_readout.utils.single_pixel">kid_readout.utils.single_pixel module</a></li>
-<li><a class="reference internal" href="#module-kid_readout.utils.starcryo_temps">kid_readout.utils.starcryo_temps module</a></li>
-<li><a class="reference internal" href="#module-kid_readout.utils.sweeps">kid_readout.utils.sweeps module</a></li>
 <li><a class="reference internal" href="#module-kid_readout.utils.time_tools">kid_readout.utils.time_tools module</a></li>
-<li><a class="reference internal" href="#module-kid_readout.utils.udp_catcher">kid_readout.utils.udp_catcher module</a></li>
-<li><a class="reference internal" href="#module-kid_readout.utils.valon">kid_readout.utils.valon module</a></li>
 <li><a class="reference internal" href="#module-kid_readout.utils">Module contents</a></li>
 </ul>
 </li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="kid_readout.equipment.html"
-                        title="previous chapter">kid_readout.equipment package</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="_sources/kid_readout.utils.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+  <p class="topless"><a href="kid_readout.roach.tests.html"
+                        title="previous chapter">kid_readout.roach.tests package</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/kid_readout.utils.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
@@ -1567,16 +193,13 @@ Duplicate ports are ignored (only the most recent entry (line in dmesg) for that
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -1586,15 +209,15 @@ Duplicate ports are ignored (only the most recent entry (line in dmesg) for that
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="kid_readout.equipment.html" title="kid_readout.equipment package"
+          <a href="kid_readout.roach.tests.html" title="kid_readout.roach.tests package"
              >previous</a> |</li>
-        <li><a href="index.html">KID Readout  documentation</a> &raquo;</li>
-          <li><a href="kid_readout.html" >kid_readout package</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="kid_readout.html" >kid_readout package</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2013, Author.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
     </div>
   </body>
 </html>

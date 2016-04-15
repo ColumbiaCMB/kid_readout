@@ -8,7 +8,7 @@
     
     <title>kid_readout.analysis.tests.test_resonator &mdash; KID Readout  documentation</title>
     
-    <link rel="stylesheet" href="../../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
@@ -26,8 +26,8 @@
     <link rel="top" title="KID Readout  documentation" href="../../../../index.html" />
     <link rel="up" title="Module code" href="../../../index.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -36,21 +36,21 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
-          <li><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <h1>Source code for kid_readout.analysis.tests.test_resonator</h1><div class="highlight"><pre>
-<span class="kn">import</span> <span class="nn">kid_readout.analysis.resonator</span>
+<span></span><span class="kn">import</span> <span class="nn">kid_readout.analysis.resonator.legacy_resonator</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="c">#import nose.tools</span>
+<span class="c1">#import nose.tools</span>
 
 <div class="viewcode-block" id="test_dtype_agreement"><a class="viewcode-back" href="../../../../kid_readout.analysis.tests.html#kid_readout.analysis.tests.test_resonator.test_dtype_agreement">[docs]</a><span class="k">def</span> <span class="nf">test_dtype_agreement</span><span class="p">():</span>
     <span class="n">dtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">complex64</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">complex128</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span>
@@ -63,27 +63,28 @@
             <span class="n">errors</span> <span class="o">=</span> <span class="n">errors</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype2</span><span class="p">)</span>
             <span class="n">x_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">110</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">iscomplexobj</span><span class="p">(</span><span class="n">y_data</span><span class="p">):</span>
-                <span class="c"># if the data is complex, the errors will automatically be coerced to match, so this shouldn&#39;t fail</span>
-                <span class="n">kid_readout</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">resonator</span><span class="o">.</span><span class="n">fit_best_resonator</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="n">x_data</span><span class="p">,</span><span class="n">s21</span><span class="o">=</span><span class="n">y_data</span><span class="p">,</span><span class="n">errors</span><span class="o">=</span><span class="n">errors</span><span class="p">)</span>
-                <span class="k">print</span> <span class="s">&quot;didn&#39;t fail&quot;</span>
+                <span class="c1"># if the data is complex, the errors will automatically be coerced to match, so this shouldn&#39;t fail</span>
+                <span class="n">kid_readout</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">resonator</span><span class="o">.</span><span class="n">legacy_resonator</span><span class="o">.</span><span class="n">fit_best_resonator</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="n">x_data</span><span class="p">,</span> <span class="n">s21</span><span class="o">=</span><span class="n">y_data</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="n">errors</span><span class="p">)</span>
+                <span class="k">print</span> <span class="s2">&quot;didn&#39;t fail&quot;</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="c"># data is real, so it should fail in any case</span>
+                <span class="c1"># data is real, so it should fail in any case</span>
                 <span class="k">try</span><span class="p">:</span>
-                    <span class="n">kid_readout</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">resonator</span><span class="o">.</span><span class="n">fit_best_resonator</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="n">x_data</span><span class="p">,</span><span class="n">s21</span><span class="o">=</span><span class="n">y_data</span><span class="p">,</span><span class="n">errors</span><span class="o">=</span><span class="n">errors</span><span class="p">)</span>
+                    <span class="n">kid_readout</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">resonator</span><span class="o">.</span><span class="n">legacy_resonator</span><span class="o">.</span><span class="n">fit_best_resonator</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="n">x_data</span><span class="p">,</span> <span class="n">s21</span><span class="o">=</span><span class="n">y_data</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="n">errors</span><span class="p">)</span>
                 <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-                    <span class="k">print</span> <span class="s">&quot;failed as expected&quot;</span>
-                    <span class="k">pass</span>
-</div>
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+                    <span class="k">print</span> <span class="s2">&quot;failed as expected&quot;</span>
+                    <span class="k">pass</span></div>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">test_dtype_agreement</span><span class="p">()</span>
+
 </pre></div>
 
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-<div id="searchbox" style="display: none">
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../../../search.html" method="get">
       <input type="text" name="q" />
@@ -91,16 +92,13 @@
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -109,13 +107,13 @@
         <li class="right" >
           <a href="../../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
-          <li><a href="../../../index.html" >Module code</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2013, Author.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
     </div>
   </body>
 </html>

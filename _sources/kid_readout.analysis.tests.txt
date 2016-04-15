@@ -12,6 +12,14 @@ kid_readout.analysis.tests.test_fitter module
     :undoc-members:
     :show-inheritance:
 
+kid_readout.analysis.tests.test_iqnoise module
+----------------------------------------------
+
+.. automodule:: kid_readout.analysis.tests.test_iqnoise
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 kid_readout.analysis.tests.test_resonator module
 ------------------------------------------------
 

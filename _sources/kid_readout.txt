@@ -8,6 +8,8 @@ Subpackages
 
     kid_readout.analysis
     kid_readout.equipment
+    kid_readout.measurement
+    kid_readout.roach
     kid_readout.utils
 
 Module contents
