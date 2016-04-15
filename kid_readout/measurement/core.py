@@ -201,6 +201,9 @@ class Measurement(Node):
         if analyze:
             self.analyze()
 
+    def as_class(self, class_):
+        return class_(**self.__dict__)
+
     def analyze(self):
         """
         Analyze the raw data and create all data products.
