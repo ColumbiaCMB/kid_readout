@@ -101,6 +101,23 @@ class RoachStream(core.Measurement):
                                         self.s21_raw.shape[-1] ** (1 / 2))
         return self._s21_raw_mean_error
 
+    def folded_shape(self, array, period_samples=None):
+        if period_samples is None:
+            period_samples = calculate.modulation_period_samples(self.roach_state)
+        if period_samples == 0:
+            raise ValueError("Cannot fold unmodulated data or with period=0")
+        shape = list(array.shape)
+        shape[-1]=-1
+        shape.append(period_samples)
+        return tuple(shape)
+
+    def fold(self, array, period_samples=None, reduce=np.mean):
+        reshaped = array.reshape(self.folded_shape(array,period_samples=period_samples))
+        if reduce:
+            return reduce(reshaped,axis=reshaped.ndim-2)
+        else:
+            return reshaped
+
     def __getitem__(self, key):
         """
         Return a StreamArray containing only the data corresponding to the times given in the slice. If no start (stop)
@@ -478,6 +495,8 @@ class SingleSweepStream(core.Measurement):
         self.sweep._parent = self
         self.stream = stream
         self.stream._parent = self
+        self.fold = stream.fold
+        self.folded_shape = stream.folded_shape
         self._stream_s21_normalized = None
         self._stream_s21_normalized_deglitched = None
         self._q = None
