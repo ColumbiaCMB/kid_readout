@@ -1,0 +1,402 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.measurement.legacy &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for kid_readout.measurement.legacy</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">kid_readout.measurement.basic</span> <span class="kn">import</span> <span class="p">(</span><span class="n">SingleStream</span><span class="p">,</span> <span class="n">SingleSweep</span><span class="p">,</span> <span class="n">SingleResonatorSweep</span><span class="p">,</span> <span class="n">SingleSweepStream</span><span class="p">,</span>
+                                           <span class="n">StreamArray</span><span class="p">,</span> <span class="n">SweepArray</span><span class="p">,</span> <span class="n">ResonatorSweepArray</span><span class="p">,</span> <span class="n">SweepStreamArray</span><span class="p">)</span>
+
+<span class="c1"># High-level functions that extract state information for all the hardware.</span>
+
+<div class="viewcode-block" id="sweep_state_from_rnc"><a class="viewcode-back" href="../../../kid_readout.measurement.html#kid_readout.measurement.legacy.sweep_state_from_rnc">[docs]</a><span class="k">def</span> <span class="nf">sweep_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">sweep_group_index</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a dictionary containing the state information from the given ReadoutNetCDF instance that is common to all</span>
+<span class="sd">    channels for the given SweepGroup index in the file. This function does not return any per-channel arrays.</span>
+
+<span class="sd">    :param rnc: a ReadoutNetCDF instance.</span>
+<span class="sd">    :param sweep_group_index: the index of the SweepGroup in the rnc.sweeps list.</span>
+<span class="sd">    :return: a dict containing common state information.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;gitinfo&#39;</span><span class="p">:</span> <span class="n">rnc</span><span class="o">.</span><span class="n">gitinfo</span><span class="p">}</span>
+    <span class="c1"># The TimestreamGroup of a SweepGroup doesn&#39;t have any millimeter-wave source info or ZBD info.</span>
+    <span class="n">mmw_source_state</span> <span class="o">=</span> <span class="n">mmw_source_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mmw_source_state</span><span class="p">:</span>
+        <span class="n">state</span><span class="p">[</span><span class="s1">&#39;mmw_source&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mmw_source_state</span>
+    <span class="k">return</span> <span class="n">state</span></div>
+
+
+<div class="viewcode-block" id="timestream_state_from_rnc"><a class="viewcode-back" href="../../../kid_readout.measurement.html#kid_readout.measurement.legacy.timestream_state_from_rnc">[docs]</a><span class="k">def</span> <span class="nf">timestream_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">timestream_group_index</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a dictionary containing the state information from the given ReadoutNetCDF instance that is common to all</span>
+<span class="sd">    channels for the given TimestreamGroup index in the file. This function does not return any per-channel arrays.</span>
+
+<span class="sd">    :param rnc: a ReadoutNetCDF instance.</span>
+<span class="sd">    :param timestream_group_index: the index of the TimestreamGroup in the rnc.timestreams list.</span>
+<span class="sd">    :return: a dict containing common state information.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tg</span> <span class="o">=</span> <span class="n">rnc</span><span class="o">.</span><span class="n">timestreams</span><span class="p">[</span><span class="n">timestream_group_index</span><span class="p">]</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;gitinfo&#39;</span><span class="p">:</span> <span class="n">rnc</span><span class="o">.</span><span class="n">gitinfo</span><span class="p">}</span>
+    <span class="n">mmw_source_state</span> <span class="o">=</span> <span class="n">mmw_source_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mmw_source_state</span><span class="p">:</span>
+        <span class="n">state</span><span class="p">[</span><span class="s1">&#39;mmw_source&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mmw_source_state</span>
+        <span class="n">state</span><span class="p">[</span><span class="s1">&#39;mmw_source&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">mmw_source_state_from_tg</span><span class="p">(</span><span class="n">tg</span><span class="p">))</span>
+    <span class="n">lockin_state</span> <span class="o">=</span> <span class="n">lockin_state_from_tg</span><span class="p">(</span><span class="n">tg</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">lockin_state</span><span class="p">:</span>
+        <span class="n">state</span><span class="p">[</span><span class="s1">&#39;lockin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lockin_state</span>
+    <span class="k">return</span> <span class="n">state</span></div>
+
+<span class="c1"># Roach.</span>
+
+<div class="viewcode-block" id="global_roach_state_from_rnc"><a class="viewcode-back" href="../../../kid_readout.measurement.html#kid_readout.measurement.legacy.global_roach_state_from_rnc">[docs]</a><span class="k">def</span> <span class="nf">global_roach_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a dictionary containing roach state information from the given ReadoutNetCDF instance that is common to all</span>
+<span class="sd">    measurements in the file.</span>
+
+<span class="sd">    :param rnc: a ReadoutNetCDF instance.</span>
+<span class="sd">    :return: a dict containing state information.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;boffile&#39;</span><span class="p">:</span> <span class="n">rnc</span><span class="o">.</span><span class="n">boffile</span><span class="p">,</span>
+             <span class="s1">&#39;heterodyne&#39;</span><span class="p">:</span> <span class="n">rnc</span><span class="o">.</span><span class="n">heterodyne</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">state</span></div>
+
+
+<div class="viewcode-block" id="timestream_roach_state_from_rnc"><a class="viewcode-back" href="../../../kid_readout.measurement.html#kid_readout.measurement.legacy.timestream_roach_state_from_rnc">[docs]</a><span class="k">def</span> <span class="nf">timestream_roach_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">timestream_group_index</span><span class="p">):</span>
+    <span class="n">tg</span> <span class="o">=</span> <span class="n">rnc</span><span class="o">.</span><span class="n">timestreams</span><span class="p">[</span><span class="n">timestream_group_index</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">epoch</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;TimestreamGroup epoch values differ.&quot;</span><span class="p">)</span>
+    <span class="n">roach_state</span> <span class="o">=</span> <span class="n">global_roach_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">)</span>
+    <span class="n">roach_state</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">roach_state_from_rnc_at_epoch</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">tg</span><span class="o">.</span><span class="n">epoch</span><span class="o">.</span><span class="n">min</span><span class="p">()))</span>
+    <span class="n">roach_state</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">roach_state_from_tg</span><span class="p">(</span><span class="n">tg</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">roach_state</span></div>
+
+
+<div class="viewcode-block" id="sweep_roach_state_from_rnc"><a class="viewcode-back" href="../../../kid_readout.measurement.html#kid_readout.measurement.legacy.sweep_roach_state_from_rnc">[docs]</a><span class="k">def</span> <span class="nf">sweep_roach_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">sweep_group_index</span><span class="p">):</span>
+    <span class="n">sg</span> <span class="o">=</span> <span class="n">rnc</span><span class="o">.</span><span class="n">sweeps</span><span class="p">[</span><span class="n">sweep_group_index</span><span class="p">]</span>
+    <span class="n">roach_state</span> <span class="o">=</span> <span class="n">global_roach_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">)</span>
+    <span class="n">roach_state</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">roach_state_from_rnc_at_epoch</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">sg</span><span class="o">.</span><span class="n">start_epoch</span><span class="p">))</span>
+    <span class="n">roach_state</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">roach_state_from_tg</span><span class="p">(</span><span class="n">sg</span><span class="o">.</span><span class="n">timestream_group</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">roach_state</span></div>
+
+
+<div class="viewcode-block" id="roach_state_from_rnc_at_epoch"><a class="viewcode-back" href="../../../kid_readout.measurement.html#kid_readout.measurement.legacy.roach_state_from_rnc_at_epoch">[docs]</a><span class="k">def</span> <span class="nf">roach_state_from_rnc_at_epoch</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">epoch</span><span class="p">):</span>
+    <span class="n">hardware_state_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">rnc</span><span class="o">.</span><span class="n">_get_hwstate_index_at</span><span class="p">(</span><span class="n">epoch</span><span class="p">))</span>
+    <span class="n">hardware_state_epoch</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">rnc</span><span class="o">.</span><span class="n">hardware_state_epoch</span><span class="p">[</span><span class="n">hardware_state_index</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">epoch</span> <span class="o">&lt;</span> <span class="n">hardware_state_epoch</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;epoch &lt; hardware_state_epoch&quot;</span><span class="p">)</span>
+    <span class="n">adc_attenuation</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">rnc</span><span class="o">.</span><span class="n">adc_atten</span><span class="p">[</span><span class="n">hardware_state_index</span><span class="p">])</span>
+    <span class="n">dac_attenuation</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">rnc</span><span class="o">.</span><span class="n">dac_atten</span><span class="p">[</span><span class="n">hardware_state_index</span><span class="p">])</span>
+    <span class="n">num_tones</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">rnc</span><span class="o">.</span><span class="n">num_tones</span><span class="p">[</span><span class="n">hardware_state_index</span><span class="p">])</span>
+    <span class="n">modulation_rate</span><span class="p">,</span> <span class="n">modulation_output</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">rnc</span><span class="o">.</span><span class="n">get_modulation_state_at</span><span class="p">(</span><span class="n">epoch</span><span class="p">)]</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;hardware_state_index&#39;</span><span class="p">:</span> <span class="n">hardware_state_index</span><span class="p">,</span>
+             <span class="s1">&#39;hardware_state_epoch&#39;</span><span class="p">:</span> <span class="n">hardware_state_epoch</span><span class="p">,</span>
+             <span class="s1">&#39;adc_attenuation&#39;</span><span class="p">:</span> <span class="n">adc_attenuation</span><span class="p">,</span>
+             <span class="s1">&#39;dac_attenuation&#39;</span><span class="p">:</span> <span class="n">dac_attenuation</span><span class="p">,</span>
+             <span class="s1">&#39;num_tones&#39;</span><span class="p">:</span> <span class="n">num_tones</span><span class="p">,</span>
+             <span class="s1">&#39;modulation_rate&#39;</span><span class="p">:</span> <span class="n">modulation_rate</span><span class="p">,</span>
+             <span class="s1">&#39;modulation_output&#39;</span><span class="p">:</span> <span class="n">modulation_output</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">state</span></div>
+
+
+<div class="viewcode-block" id="roach_state_from_tg"><a class="viewcode-back" href="../../../kid_readout.measurement.html#kid_readout.measurement.legacy.roach_state_from_tg">[docs]</a><span class="k">def</span> <span class="nf">roach_state_from_tg</span><span class="p">(</span><span class="n">tg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a dictionary containing state information from the given TimestreamGroup tg.</span>
+
+<span class="sd">    This function returns values that do not vary per-channel and are not recorded in the rnc by epoch. All frequency</span>
+<span class="sd">    and rate values are converted to Hz if they are in other units.</span>
+
+<span class="sd">    :param tg: the TimestreamGroup from which to extract roach state.</span>
+<span class="sd">    :return: a dict containing state information.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;adc_sample_rate&#39;</span><span class="p">:</span> <span class="mf">1e6</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">common</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">adc_sampling_freq</span><span class="p">)),</span>
+             <span class="s1">&#39;dac_sample_rate&#39;</span><span class="p">:</span> <span class="mf">1e6</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">common</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">adc_sampling_freq</span><span class="p">)),</span>
+             <span class="s1">&#39;num_filterbank_channels&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">common</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">nfft</span><span class="p">)),</span>
+             <span class="s1">&#39;num_tone_samples&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">common</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">tone_nsamp</span><span class="p">)),</span>
+             <span class="s1">&#39;stream_sample_rate&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">common</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">)),</span>
+             <span class="s1">&#39;waveform_normalization&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">common</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">wavenorm</span><span class="p">)),</span>
+             <span class="s1">&#39;bank&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>  <span class="c1"># I don&#39;t think this is available in the data.</span>
+             <span class="c1"># These were removed because they are derived:</span>
+             <span class="c1">#&#39;modulation&#39;: {&#39;duty_cycle&#39;: float(common(tg.modulation_duty_cycle)),</span>
+             <span class="c1">#               &#39;frequency&#39;: float(common(tg.modulation_freq)),  # tg.mmw_source_modulation_freq deprecated</span>
+             <span class="c1">#               &#39;num_samples&#39;: int(common(tg.modulation_period_samples)),</span>
+             <span class="c1">#               &#39;tone_phase&#39;: float(common(tg.modulation_phase))}}</span>
+             <span class="p">}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">state</span><span class="p">[</span><span class="s1">&#39;lo_frequency&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e6</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">common</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">lo</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">state</span></div>
+
+<span class="c1"># Millimeter-wave source.</span>
+
+<span class="c1"># TODO: implement ticks instead of turns, but keep turns available?</span>
+<span class="c1"># TODO: add modulation_source entry.</span>
+<div class="viewcode-block" id="mmw_source_state_from_rnc"><a class="viewcode-back" href="../../../kid_readout.measurement.html#kid_readout.measurement.legacy.mmw_source_state_from_rnc">[docs]</a><span class="k">def</span> <span class="nf">mmw_source_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a dictionary containing millimeter-wave source information from the given ReadoutNetCDF instance.</span>
+
+<span class="sd">    :param rnc: a ReadoutNetCDF instance.</span>
+<span class="sd">    :return: a dict containing state information.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">turns</span> <span class="o">=</span> <span class="n">rnc</span><span class="o">.</span><span class="n">mmw_atten_turns</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">turns</span><span class="p">)):</span>
+        <span class="n">ticks_per_turn</span> <span class="o">=</span> <span class="mi">25</span>
+        <span class="n">state</span><span class="p">[</span><span class="s1">&#39;mickey_ticks&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ticks_per_turn</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">turns</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">state</span><span class="p">[</span><span class="s1">&#39;minnie_ticks&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ticks_per_turn</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">turns</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">state</span></div>
+
+
+<div class="viewcode-block" id="mmw_source_state_from_tg"><a class="viewcode-back" href="../../../kid_readout.measurement.html#kid_readout.measurement.legacy.mmw_source_state_from_tg">[docs]</a><span class="k">def</span> <span class="nf">mmw_source_state_from_tg</span><span class="p">(</span><span class="n">tg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a dictionary containing millimeter-wave source information from the given TimestreamGroup instance.</span>
+
+<span class="sd">    The only value currently returned is the millimeter-wave source output frequency. This is given in Hz in continuous-</span>
+<span class="sd">    wave mode, and is None in broadband mode.</span>
+
+<span class="sd">    :param tg: a TimestreamGroup instance.</span>
+<span class="sd">    :return: a dict containing state information.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;output_frequency&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">}</span>
+    <span class="n">f_mmw</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">common</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">mmw_source_freq</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">f_mmw</span><span class="p">:</span>
+        <span class="n">state</span><span class="p">[</span><span class="s1">&#39;output_frequency&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_mmw</span>
+    <span class="k">return</span> <span class="n">state</span></div>
+
+<span class="c1"># Lock-in amplifier.</span>
+
+<div class="viewcode-block" id="lockin_state_from_tg"><a class="viewcode-back" href="../../../kid_readout.measurement.html#kid_readout.measurement.legacy.lockin_state_from_tg">[docs]</a><span class="k">def</span> <span class="nf">lockin_state_from_tg</span><span class="p">(</span><span class="n">tg</span><span class="p">):</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;rms_voltage&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">common</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">zbd_voltage</span><span class="p">)),</span>
+             <span class="s1">&#39;zbd_power_db_arb&#39;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">common</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">zbd_power_dbm</span><span class="p">))}</span>
+    <span class="k">return</span> <span class="n">state</span></div>
+
+<span class="c1"># Helper functions</span>
+
+<div class="viewcode-block" id="common"><a class="viewcode-back" href="../../../kid_readout.measurement.html#kid_readout.measurement.legacy.common">[docs]</a><span class="k">def</span> <span class="nf">common</span><span class="p">(</span><span class="n">sequence</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the common value if all elements of the sequence are equal, or raise a ValueError if not.</span>
+
+<span class="sd">    :param sequence: a sequence containing nominally equal numbers.</span>
+<span class="sd">    :return: the common value.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">sequence</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Not all sequence elements are equal: {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sequence</span><span class="p">))</span></div>
+
+
+<span class="c1"># These functions are intended to use the new code to read legacy data.</span>
+<span class="c1"># TODO: change description functionality to add_legacy_origin</span>
+
+
+<div class="viewcode-block" id="stream_from_rnc"><a class="viewcode-back" href="../../../kid_readout.measurement.html#kid_readout.measurement.legacy.stream_from_rnc">[docs]</a><span class="k">def</span> <span class="nf">stream_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">timestream_group_index</span><span class="p">,</span> <span class="n">tone_index</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">roach_state</span> <span class="o">=</span> <span class="n">timestream_roach_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">timestream_group_index</span><span class="p">)</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">timestream_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">timestream_group_index</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">description</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">description</span> <span class="o">=</span> <span class="s1">&#39;ReadoutNetCDF(</span><span class="se">\&quot;</span><span class="s1">{}</span><span class="se">\&quot;</span><span class="s1">).timestreams[{}]&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">rnc</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="n">timestream_group_index</span><span class="p">)</span>
+    <span class="n">tg</span> <span class="o">=</span> <span class="n">rnc</span><span class="o">.</span><span class="n">timestreams</span><span class="p">[</span><span class="n">timestream_group_index</span><span class="p">]</span>
+    <span class="c1"># A TimestreamGroup has arrays in roach FPGA order.</span>
+    <span class="n">increasing_order</span> <span class="o">=</span> <span class="n">tg</span><span class="o">.</span><span class="n">tonebin</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+    <span class="n">tone_bin</span> <span class="o">=</span> <span class="n">tg</span><span class="o">.</span><span class="n">tonebin</span><span class="p">[</span><span class="n">increasing_order</span><span class="p">]</span>
+    <span class="n">amplitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">tone_bin</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+    <span class="n">phase</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">tone_bin</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+    <span class="c1"># TODO: decide what to do about these values: invert to RoachInterface values or ignore them?</span>
+    <span class="n">fpga_fft_bin_plus_one</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">fftbin</span><span class="p">[</span><span class="n">increasing_order</span><span class="p">][</span><span class="n">tone_index</span><span class="p">])</span>
+    <span class="c1"># All the epoch and data_len_seconds values are the same. Assume regular sampling.</span>
+    <span class="n">epoch</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">common</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">epoch</span><span class="p">))</span>
+    <span class="n">s21_raw</span> <span class="o">=</span> <span class="n">tg</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">increasing_order</span><span class="p">,</span> <span class="p">:][</span><span class="n">tone_index</span><span class="p">]</span>
+    <span class="n">data_demodulated</span> <span class="o">=</span> <span class="bp">True</span>  <span class="c1"># Modify this if possible to determine from the rnc.</span>
+    <span class="k">return</span> <span class="n">SingleStream</span><span class="p">(</span><span class="n">tone_bin</span><span class="o">=</span><span class="n">tone_bin</span><span class="p">,</span> <span class="n">tone_amplitude</span><span class="o">=</span><span class="n">amplitude</span><span class="p">,</span> <span class="n">tone_phase</span><span class="o">=</span><span class="n">phase</span><span class="p">,</span> <span class="n">tone_index</span><span class="o">=</span><span class="n">tone_index</span><span class="p">,</span>
+                        <span class="n">filterbank_bin</span><span class="o">=</span><span class="n">fpga_fft_bin_plus_one</span><span class="p">,</span> <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span> <span class="n">s21_raw</span><span class="o">=</span><span class="n">s21_raw</span><span class="p">,</span> <span class="n">data_demodulated</span><span class="o">=</span><span class="n">data_demodulated</span><span class="p">,</span>
+                        <span class="n">roach_state</span><span class="o">=</span><span class="n">roach_state</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="streamarray_from_rnc"><a class="viewcode-back" href="../../../kid_readout.measurement.html#kid_readout.measurement.legacy.streamarray_from_rnc">[docs]</a><span class="k">def</span> <span class="nf">streamarray_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">timestream_group_index</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">roach_state</span> <span class="o">=</span> <span class="n">timestream_roach_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">timestream_group_index</span><span class="p">)</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">timestream_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">timestream_group_index</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">description</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">description</span> <span class="o">=</span> <span class="s1">&#39;ReadoutNetCDF(</span><span class="se">\&quot;</span><span class="s1">{}</span><span class="se">\&quot;</span><span class="s1">).timestreams[{}]&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">rnc</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="n">timestream_group_index</span><span class="p">)</span>
+    <span class="n">tg</span> <span class="o">=</span> <span class="n">rnc</span><span class="o">.</span><span class="n">timestreams</span><span class="p">[</span><span class="n">timestream_group_index</span><span class="p">]</span>
+    <span class="c1"># A TimestreamGroup has arrays in roach FPGA order.</span>
+    <span class="n">increasing_order</span> <span class="o">=</span> <span class="n">tg</span><span class="o">.</span><span class="n">tonebin</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+    <span class="n">tone_bin</span> <span class="o">=</span> <span class="n">tg</span><span class="o">.</span><span class="n">tonebin</span><span class="p">[</span><span class="n">increasing_order</span><span class="p">]</span>
+    <span class="n">amplitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">tone_bin</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+    <span class="n">phase</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">tone_bin</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+    <span class="n">tone_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">tone_bin</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+    <span class="c1"># TODO: decide what to do about these values: invert to RoachInterface values or ignore them?</span>
+    <span class="n">fpga_fft_bin_plus_one</span> <span class="o">=</span> <span class="n">tg</span><span class="o">.</span><span class="n">fftbin</span><span class="p">[</span><span class="n">increasing_order</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
+    <span class="c1"># All the epoch and data_len_seconds values are the same. Assume regular sampling.</span>
+    <span class="n">epoch</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">common</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">epoch</span><span class="p">))</span>
+    <span class="n">s21_raw</span> <span class="o">=</span> <span class="n">tg</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">increasing_order</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">data_demodulated</span> <span class="o">=</span> <span class="bp">True</span>  <span class="c1"># Modify this if possible to determine from the rnc.</span>
+    <span class="k">return</span> <span class="n">StreamArray</span><span class="p">(</span><span class="n">tone_bin</span><span class="o">=</span><span class="n">tone_bin</span><span class="p">,</span> <span class="n">tone_amplitude</span><span class="o">=</span><span class="n">amplitude</span><span class="p">,</span> <span class="n">tone_phase</span><span class="o">=</span><span class="n">phase</span><span class="p">,</span> <span class="n">tone_index</span><span class="o">=</span><span class="n">tone_index</span><span class="p">,</span>
+                       <span class="n">filterbank_bin</span><span class="o">=</span><span class="n">fpga_fft_bin_plus_one</span><span class="p">,</span> <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span> <span class="n">s21_raw</span><span class="o">=</span><span class="n">s21_raw</span><span class="p">,</span>
+                       <span class="n">data_demodulated</span><span class="o">=</span><span class="n">data_demodulated</span><span class="p">,</span> <span class="n">roach_state</span><span class="o">=</span><span class="n">roach_state</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="sweep_from_rnc"><a class="viewcode-back" href="../../../kid_readout.measurement.html#kid_readout.measurement.legacy.sweep_from_rnc">[docs]</a><span class="k">def</span> <span class="nf">sweep_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">sweep_group_index</span><span class="p">,</span> <span class="n">tone_index</span><span class="p">,</span> <span class="n">resonator</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">roach_state</span> <span class="o">=</span> <span class="n">sweep_roach_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">sweep_group_index</span><span class="p">)</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">sweep_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">sweep_group_index</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">description</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">description</span> <span class="o">=</span> <span class="s1">&#39;ReadoutNetCDF(</span><span class="se">\&quot;</span><span class="s1">{}</span><span class="se">\&quot;</span><span class="s1">).sweeps[{}]&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">rnc</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="n">sweep_group_index</span><span class="p">)</span>
+    <span class="n">sg</span> <span class="o">=</span> <span class="n">rnc</span><span class="o">.</span><span class="n">sweeps</span><span class="p">[</span><span class="n">sweep_group_index</span><span class="p">]</span>
+    <span class="n">tg</span> <span class="o">=</span> <span class="n">sg</span><span class="o">.</span><span class="n">timestream_group</span>
+    <span class="n">sweep_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">sweep_index</span><span class="p">)</span>
+    <span class="n">start_epochs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">epoch</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">tg</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">sweep_indices</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="n">start_epochs</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">tg</span><span class="o">.</span><span class="n">num_data_samples</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Data shape problem.&quot;</span><span class="p">)</span>
+    <span class="n">streams</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># Extract simultaneously-sampled data</span>
+    <span class="k">for</span> <span class="n">start_epoch</span> <span class="ow">in</span> <span class="n">start_epochs</span><span class="p">:</span>
+        <span class="n">simultaneous</span> <span class="o">=</span> <span class="n">tg</span><span class="o">.</span><span class="n">epoch</span> <span class="o">==</span> <span class="n">start_epoch</span>
+        <span class="n">unordered_tone_bin</span> <span class="o">=</span> <span class="n">tg</span><span class="o">.</span><span class="n">tonebin</span><span class="p">[</span><span class="n">simultaneous</span><span class="p">]</span>
+        <span class="n">increasing_order</span> <span class="o">=</span> <span class="n">unordered_tone_bin</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+        <span class="n">tone_bin</span> <span class="o">=</span> <span class="n">unordered_tone_bin</span><span class="p">[</span><span class="n">increasing_order</span><span class="p">]</span>  <span class="c1"># Assume monotonic frequencies at each epoch:</span>
+        <span class="n">amplitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">tone_bin</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+        <span class="n">phase</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">tone_bin</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+        <span class="n">fpga_fft_bin_plus_one</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">fftbin</span><span class="p">[</span><span class="n">simultaneous</span><span class="p">][</span><span class="n">increasing_order</span><span class="p">][</span><span class="n">tone_index</span><span class="p">])</span>
+        <span class="c1"># All of the epochs are the same</span>
+        <span class="n">epoch</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">common</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">epoch</span><span class="p">[</span><span class="n">simultaneous</span><span class="p">]))</span>
+        <span class="n">s21_raw</span> <span class="o">=</span> <span class="n">tg</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">simultaneous</span><span class="p">,</span> <span class="p">:][</span><span class="n">increasing_order</span><span class="p">][</span><span class="n">tone_index</span><span class="p">]</span>
+        <span class="n">data_demodulated</span> <span class="o">=</span> <span class="bp">True</span>  <span class="c1"># Modify this if possible to determine from the rnc.</span>
+        <span class="n">streams</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">SingleStream</span><span class="p">(</span><span class="n">tone_bin</span><span class="o">=</span><span class="n">tone_bin</span><span class="p">,</span> <span class="n">tone_amplitude</span><span class="o">=</span><span class="n">amplitude</span><span class="p">,</span> <span class="n">tone_phase</span><span class="o">=</span><span class="n">phase</span><span class="p">,</span> <span class="n">tone_index</span><span class="o">=</span><span class="n">tone_index</span><span class="p">,</span>
+                                    <span class="n">filterbank_bin</span><span class="o">=</span><span class="n">fpga_fft_bin_plus_one</span><span class="p">,</span> <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span> <span class="n">s21_raw</span><span class="o">=</span><span class="n">s21_raw</span><span class="p">,</span>
+                                    <span class="n">data_demodulated</span><span class="o">=</span><span class="n">data_demodulated</span><span class="p">,</span> <span class="n">roach_state</span><span class="o">=</span><span class="n">roach_state</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">resonator</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">SingleResonatorSweep</span><span class="p">(</span><span class="n">streams</span><span class="o">=</span><span class="n">streams</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">SingleSweep</span><span class="p">(</span><span class="n">streams</span><span class="o">=</span><span class="n">streams</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="sweeparray_from_rnc"><a class="viewcode-back" href="../../../kid_readout.measurement.html#kid_readout.measurement.legacy.sweeparray_from_rnc">[docs]</a><span class="k">def</span> <span class="nf">sweeparray_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">sweep_group_index</span><span class="p">,</span> <span class="n">resonator</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">roach_state</span> <span class="o">=</span> <span class="n">sweep_roach_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">sweep_group_index</span><span class="p">)</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">sweep_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">sweep_group_index</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">description</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">description</span> <span class="o">=</span> <span class="s1">&#39;ReadoutNetCDF(</span><span class="se">\&quot;</span><span class="s1">{}</span><span class="se">\&quot;</span><span class="s1">).sweeps[{}]&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">rnc</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="n">sweep_group_index</span><span class="p">)</span>
+    <span class="n">sg</span> <span class="o">=</span> <span class="n">rnc</span><span class="o">.</span><span class="n">sweeps</span><span class="p">[</span><span class="n">sweep_group_index</span><span class="p">]</span>
+    <span class="n">tg</span> <span class="o">=</span> <span class="n">sg</span><span class="o">.</span><span class="n">timestream_group</span>
+    <span class="n">sweep_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">sweep_index</span><span class="p">)</span>
+    <span class="n">start_epochs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">epoch</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">tg</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">sweep_indices</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="n">start_epochs</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">tg</span><span class="o">.</span><span class="n">num_data_samples</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Data shape problem.&quot;</span><span class="p">)</span>
+    <span class="n">stream_arrays</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># Extract simultaneously-sampled data</span>
+    <span class="k">for</span> <span class="n">start_epoch</span> <span class="ow">in</span> <span class="n">start_epochs</span><span class="p">:</span>
+        <span class="n">simultaneous</span> <span class="o">=</span> <span class="n">tg</span><span class="o">.</span><span class="n">epoch</span> <span class="o">==</span> <span class="n">start_epoch</span>
+        <span class="n">unordered_tone_bin</span> <span class="o">=</span> <span class="n">tg</span><span class="o">.</span><span class="n">tonebin</span><span class="p">[</span><span class="n">simultaneous</span><span class="p">]</span>
+        <span class="n">increasing_order</span> <span class="o">=</span> <span class="n">unordered_tone_bin</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+        <span class="n">tone_bin</span> <span class="o">=</span> <span class="n">unordered_tone_bin</span><span class="p">[</span><span class="n">increasing_order</span><span class="p">]</span>  <span class="c1"># Assume the the frequencies remain monotonic at each epoch.</span>
+        <span class="n">amplitude</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">tone_bin</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+        <span class="n">phase</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">tone_bin</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+        <span class="n">tone_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">tone_bin</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>  <span class="c1"># For these data, all the tones are read out.</span>
+        <span class="n">fpga_fft_bin_plus_one</span> <span class="o">=</span> <span class="n">tg</span><span class="o">.</span><span class="n">fftbin</span><span class="p">[</span><span class="n">simultaneous</span><span class="p">][</span><span class="n">increasing_order</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
+        <span class="c1"># All of the epochs are the same</span>
+        <span class="n">epoch</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">common</span><span class="p">(</span><span class="n">tg</span><span class="o">.</span><span class="n">epoch</span><span class="p">[</span><span class="n">simultaneous</span><span class="p">]))</span>
+        <span class="n">s21_raw</span> <span class="o">=</span> <span class="n">tg</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">simultaneous</span><span class="p">,</span> <span class="p">:][</span><span class="n">increasing_order</span><span class="p">]</span>
+        <span class="n">data_demodulated</span> <span class="o">=</span> <span class="bp">True</span>  <span class="c1"># Modify this if possible to determine from the rnc.</span>
+        <span class="n">stream_arrays</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">StreamArray</span><span class="p">(</span><span class="n">tone_bin</span><span class="o">=</span><span class="n">tone_bin</span><span class="p">,</span> <span class="n">tone_amplitude</span><span class="o">=</span><span class="n">amplitude</span><span class="p">,</span> <span class="n">tone_phase</span><span class="o">=</span><span class="n">phase</span><span class="p">,</span>
+                                         <span class="n">tone_index</span><span class="o">=</span><span class="n">tone_index</span><span class="p">,</span> <span class="n">filterbank_bin</span><span class="o">=</span><span class="n">fpga_fft_bin_plus_one</span><span class="p">,</span> <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span>
+                                         <span class="n">s21_raw</span><span class="o">=</span><span class="n">s21_raw</span><span class="p">,</span> <span class="n">data_demodulated</span><span class="o">=</span><span class="n">data_demodulated</span><span class="p">,</span> <span class="n">roach_state</span><span class="o">=</span><span class="n">roach_state</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">resonator</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ResonatorSweepArray</span><span class="p">(</span><span class="n">stream_arrays</span><span class="o">=</span><span class="n">stream_arrays</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">SweepArray</span><span class="p">(</span><span class="n">stream_arrays</span><span class="o">=</span><span class="n">stream_arrays</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="sweepstream_from_rnc"><a class="viewcode-back" href="../../../kid_readout.measurement.html#kid_readout.measurement.legacy.sweepstream_from_rnc">[docs]</a><span class="k">def</span> <span class="nf">sweepstream_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">sweep_group_index</span><span class="p">,</span> <span class="n">timestream_group_index</span><span class="p">,</span> <span class="n">tone_index</span><span class="p">):</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">global_roach_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">)</span>
+    <span class="n">sweep</span> <span class="o">=</span> <span class="n">sweep_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">sweep_group_index</span><span class="p">,</span> <span class="n">tone_index</span><span class="p">)</span>
+    <span class="n">stream</span> <span class="o">=</span> <span class="n">stream_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">timestream_group_index</span><span class="p">,</span> <span class="n">tone_index</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">SingleSweepStream</span><span class="p">(</span><span class="n">sweep</span><span class="p">,</span> <span class="n">stream</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="sweepstreamarray_from_rnc"><a class="viewcode-back" href="../../../kid_readout.measurement.html#kid_readout.measurement.legacy.sweepstreamarray_from_rnc">[docs]</a><span class="k">def</span> <span class="nf">sweepstreamarray_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">sweep_group_index</span><span class="p">,</span> <span class="n">timestream_group_index</span><span class="p">):</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">global_roach_state_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">)</span>
+    <span class="n">sweep_array</span> <span class="o">=</span> <span class="n">sweeparray_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">sweep_group_index</span><span class="p">)</span>
+    <span class="n">stream_array</span> <span class="o">=</span> <span class="n">streamarray_from_rnc</span><span class="p">(</span><span class="n">rnc</span><span class="p">,</span> <span class="n">timestream_group_index</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">SweepStreamArray</span><span class="p">(</span><span class="n">sweep_array</span><span class="p">,</span> <span class="n">stream_array</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

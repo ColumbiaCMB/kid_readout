@@ -1,0 +1,195 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.analysis.resonator.lmfit_models &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../../index.html" />
+    <link rel="up" title="Module code" href="../../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for kid_readout.analysis.resonator.lmfit_models</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">lmfit</span>
+<span class="kn">import</span> <span class="nn">equations</span>
+<span class="kn">from</span> <span class="nn">distutils.version</span> <span class="kn">import</span> <span class="n">StrictVersion</span>
+
+<div class="viewcode-block" id="update_param_values_and_limits"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.lmfit_models.update_param_values_and_limits">[docs]</a><span class="k">def</span> <span class="nf">update_param_values_and_limits</span><span class="p">(</span><span class="n">pars</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;_max&#39;</span><span class="p">):</span>
+            <span class="n">key_name</span> <span class="o">=</span> <span class="n">key</span><span class="p">[:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="s1">&#39;_max&#39;</span><span class="p">)]</span>
+            <span class="n">attr</span> <span class="o">=</span> <span class="s1">&#39;max&#39;</span>
+        <span class="k">elif</span> <span class="n">key</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;_min&#39;</span><span class="p">):</span>
+            <span class="n">key_name</span> <span class="o">=</span> <span class="n">key</span><span class="p">[:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="s1">&#39;_min&#39;</span><span class="p">)]</span>
+            <span class="n">attr</span> <span class="o">=</span> <span class="s1">&#39;min&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">key_name</span> <span class="o">=</span> <span class="n">key</span>
+            <span class="n">attr</span> <span class="o">=</span> <span class="s1">&#39;value&#39;</span>
+        <span class="n">pname</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">key_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pname</span> <span class="ow">in</span> <span class="n">pars</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">pars</span><span class="p">[</span><span class="n">pname</span><span class="p">],</span><span class="n">attr</span><span class="p">,</span><span class="n">val</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pars</span></div>
+
+<span class="c1"># Version 0.9.3 of lmfit incorporates changes that allow models that return complex values.</span>
+<span class="c1"># For earlier versions, we need the following work around</span>
+<span class="k">if</span> <span class="n">StrictVersion</span><span class="p">(</span><span class="n">lmfit</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">StrictVersion</span><span class="p">(</span><span class="s1">&#39;0.9.3&#39;</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">ComplexModel</span><span class="p">(</span><span class="n">lmfit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">_residual</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">params</span><span class="p">,</span><span class="n">data</span><span class="p">,</span><span class="n">weights</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">diff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-</span> <span class="n">data</span>
+            <span class="n">diff_as_ri</span> <span class="o">=</span> <span class="n">diff</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;complex&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="s1">&#39;float&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">weights_as_ri</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;complex&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="s1">&#39;float&#39;</span><span class="p">)</span>
+                <span class="n">diff_as_ri</span> <span class="o">*=</span> <span class="n">weights_as_ri</span>
+            <span class="n">retval</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">diff_as_ri</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">retval</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">ComplexModel</span> <span class="o">=</span> <span class="n">lmfit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">Model</span>
+
+<div class="viewcode-block" id="GeneralCableModel"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.lmfit_models.GeneralCableModel">[docs]</a><span class="k">class</span> <span class="nc">GeneralCableModel</span><span class="p">(</span><span class="n">ComplexModel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">GeneralCableModel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">equations</span><span class="o">.</span><span class="n">general_cable</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_param_hint</span><span class="p">(</span><span class="s1">&#39;f_min&#39;</span><span class="p">,</span><span class="n">vary</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_param_hint</span><span class="p">(</span><span class="s1">&#39;phi&#39;</span><span class="p">,</span><span class="nb">min</span><span class="o">=-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span><span class="nb">max</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_param_hint</span><span class="p">(</span><span class="s1">&#39;A_mag&#39;</span><span class="p">,</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GeneralCableModel.guess"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.lmfit_models.GeneralCableModel.guess">[docs]</a>    <span class="k">def</span> <span class="nf">guess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span><span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_params</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">f_min</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">f_max</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="n">abs_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">A_min</span> <span class="o">=</span> <span class="n">abs_data</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">A_max</span> <span class="o">=</span> <span class="n">abs_data</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="n">A_slope</span><span class="p">,</span><span class="n">A_offset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">f</span><span class="o">-</span><span class="n">f_min</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">data</span><span class="p">),</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">A_mag</span> <span class="o">=</span> <span class="n">A_offset</span>
+        <span class="n">A_mag_slope</span> <span class="o">=</span> <span class="n">A_slope</span> <span class="o">/</span> <span class="n">A_mag</span>
+        <span class="n">phi_slope</span><span class="p">,</span> <span class="n">phi_offset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">f</span><span class="o">-</span><span class="n">f_min</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">unwrap</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">data</span><span class="p">)),</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">delay</span> <span class="o">=</span> <span class="o">-</span><span class="n">phi_slope</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_params</span><span class="p">(</span><span class="n">delay</span><span class="o">=</span><span class="n">delay</span><span class="p">,</span> <span class="n">phi</span> <span class="o">=</span> <span class="n">phi_offset</span><span class="p">,</span> <span class="n">f_min</span><span class="o">=</span><span class="n">f_min</span><span class="p">,</span> <span class="n">A_mag</span><span class="o">=</span><span class="n">A_mag</span><span class="p">,</span> <span class="n">A_slope</span><span class="o">=</span><span class="n">A_mag_slope</span><span class="p">)</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">update_param_values_and_limits</span><span class="p">(</span><span class="n">params</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">,</span>
+                                                <span class="n">phi_offset_min</span><span class="o">=</span><span class="n">phi_offset</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span>
+                                                <span class="n">phi_offset_max</span><span class="o">=</span><span class="n">phi_offset</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span>
+                                                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">update_param_values_and_limits</span><span class="p">(</span><span class="n">params</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="LinearResonatorModel"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.lmfit_models.LinearResonatorModel">[docs]</a><span class="k">class</span> <span class="nc">LinearResonatorModel</span><span class="p">(</span><span class="n">ComplexModel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LinearResonatorModel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">equations</span><span class="o">.</span><span class="n">linear_resonator</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_param_hint</span><span class="p">(</span><span class="s1">&#39;Q&#39;</span><span class="p">,</span> <span class="nb">min</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># Enforce Q is positive</span>
+
+<div class="viewcode-block" id="LinearResonatorModel.guess"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.lmfit_models.LinearResonatorModel.guess">[docs]</a>    <span class="k">def</span> <span class="nf">guess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span><span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_params</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">argmin_s21</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
+        <span class="n">fmin</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">fmax</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="n">f_0_guess</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">argmin_s21</span><span class="p">]</span> <span class="c1"># guess that the resonance is the lowest point</span>
+        <span class="n">Q_min</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="p">(</span><span class="n">f_0_guess</span><span class="o">/</span><span class="p">(</span><span class="n">fmax</span><span class="o">-</span><span class="n">fmin</span><span class="p">))</span> <span class="c1"># assume the user isn&#39;t trying to fit just a small part of a resonance curve.</span>
+        <span class="n">delta_f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="c1">#assume f is sorted</span>
+        <span class="n">min_delta_f</span> <span class="o">=</span> <span class="n">delta_f</span><span class="p">[</span><span class="n">delta_f</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">Q_max</span> <span class="o">=</span> <span class="n">f_0_guess</span><span class="o">/</span><span class="n">min_delta_f</span> <span class="c1"># assume data actually samples the resonance reasonably</span>
+        <span class="n">Q_guess</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Q_min</span><span class="o">*</span><span class="n">Q_max</span><span class="p">)</span> <span class="c1"># geometric mean, why not?</span>
+        <span class="n">s21_min</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">argmin_s21</span><span class="p">])</span>
+        <span class="n">s21_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="n">Q_e_real_guess</span> <span class="o">=</span> <span class="n">Q_guess</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">s21_min</span><span class="o">/</span><span class="n">s21_max</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s2">&quot;fmin=&quot;</span><span class="p">,</span><span class="n">fmin</span><span class="p">,</span><span class="s2">&quot;fmax=&quot;</span><span class="p">,</span><span class="n">fmax</span><span class="p">,</span><span class="s2">&quot;f_0_guess=&quot;</span><span class="p">,</span><span class="n">f_0_guess</span>
+            <span class="k">print</span> <span class="s2">&quot;Qmin=&quot;</span><span class="p">,</span><span class="n">Q_min</span><span class="p">,</span><span class="s2">&quot;Q_max=&quot;</span><span class="p">,</span><span class="n">Q_max</span><span class="p">,</span><span class="s2">&quot;Q_guess=&quot;</span><span class="p">,</span><span class="n">Q_guess</span><span class="p">,</span><span class="s2">&quot;Q_e_real_guess=&quot;</span><span class="p">,</span><span class="n">Q_e_real_guess</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_params</span><span class="p">(</span><span class="n">Q</span><span class="o">=</span><span class="n">Q_guess</span><span class="p">,</span> <span class="n">Q_e_real</span><span class="o">=</span><span class="n">Q_e_real_guess</span><span class="p">,</span> <span class="n">Q_e_imag</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">f_0</span><span class="o">=</span><span class="n">f_0_guess</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">Q&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="n">Q_min</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">Q_max</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">f_0&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="n">fmin</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">fmax</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">Q_e_real&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mf">1e7</span><span class="p">)</span>
+        <span class="n">params</span><span class="p">[</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">Q_e_imag&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="nb">min</span><span class="o">=-</span><span class="mf">1e7</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mf">1e7</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">update_param_values_and_limits</span><span class="p">(</span><span class="n">params</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="InverseLinearResonatorModel"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.lmfit_models.InverseLinearResonatorModel">[docs]</a><span class="k">class</span> <span class="nc">InverseLinearResonatorModel</span><span class="p">(</span><span class="n">ComplexModel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">InverseLinearResonatorModel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">equations</span><span class="o">.</span><span class="n">inverse_linear_resonator</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NonlinearResonatorModel"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.lmfit_models.NonlinearResonatorModel">[docs]</a><span class="k">class</span> <span class="nc">NonlinearResonatorModel</span><span class="p">(</span><span class="n">ComplexModel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">NonlinearResonatorModel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">equations</span><span class="o">.</span><span class="n">nonlinear_resonator</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

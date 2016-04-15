@@ -1,0 +1,343 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.analysis.resonator.lmfit_resonator &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../../index.html" />
+    <link rel="up" title="Module code" href="../../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for kid_readout.analysis.resonator.lmfit_resonator</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+
+<span class="kn">import</span> <span class="nn">lmfit</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">kid_readout.analysis.lmfit_fitter</span> <span class="kn">import</span> <span class="n">FitterWithAttributeAccess</span>
+<span class="kn">from</span> <span class="nn">kid_readout.analysis.resonator</span> <span class="kn">import</span> <span class="n">lmfit_models</span>
+
+
+<div class="viewcode-block" id="BaseResonator"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.lmfit_resonator.BaseResonator">[docs]</a><span class="k">class</span> <span class="nc">BaseResonator</span><span class="p">(</span><span class="n">FitterWithAttributeAccess</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frequency</span><span class="p">,</span> <span class="n">s21</span><span class="p">,</span> <span class="n">errors</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        General resonator fitting class.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        frequency: array of floats</span>
+<span class="sd">            Frequencies at which data was measured</span>
+<span class="sd">        s21: array of complex</span>
+<span class="sd">            measured S21 data</span>
+<span class="sd">        errors: None or array of complex</span>
+<span class="sd">            errors on the real and imaginary parts of the s21 data. None means use no errors</span>
+<span class="sd">        model: an lmfit.Model</span>
+<span class="sd">            the model for the resonator. Common models are provided in lmfit_models. If the model is composite,</span>
+<span class="sd">            it is assumed to be of the form background * target, where target is the model of the target resonator</span>
+<span class="sd">            itself, and background represents any other nuisance effects (cable delay, other adjacent resonators etc.)</span>
+<span class="sd">        kwargs:</span>
+<span class="sd">            passed on to model.fit</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">iscomplexobj</span><span class="p">(</span><span class="n">s21</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Resonator s21 must be complex.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">errors</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">iscomplexobj</span><span class="p">(</span><span class="n">errors</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Resonator s21 errors must be complex.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">errors</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="n">errors</span><span class="o">.</span><span class="n">real</span> <span class="o">+</span> <span class="mi">1j</span><span class="o">/</span><span class="n">errors</span><span class="o">.</span><span class="n">imag</span>
+        <span class="c1"># kwargs get passed from Fitter to Model.fit directly. Signature is:</span>
+        <span class="c1">#    def fit(self, data, params=None, weights=None, method=&#39;leastsq&#39;,</span>
+        <span class="c1">#            iter_cb=None, scale_covar=True, verbose=False, fit_kws=None, **kwargs):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BaseResonator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">s21</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="n">frequency</span><span class="p">,</span>
+                                        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span> <span class="o">=</span> <span class="n">frequency</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">errors</span> <span class="o">=</span> <span class="n">errors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="n">weights</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Q_i</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">Q</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">Q_e</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Q_e</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q_e_real</span> <span class="o">+</span> <span class="mi">1j</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">Q_e_imag</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">s21</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">target</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span><span class="n">lmfit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">CompositeModel</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">right</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
+
+<div class="viewcode-block" id="BaseResonator.target_s21"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.lmfit_resonator.BaseResonator.target_s21">[docs]</a>    <span class="k">def</span> <span class="nf">target_s21</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frequency</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">frequency</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">frequency</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_result</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="n">frequency</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">background</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span><span class="n">lmfit</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">CompositeModel</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">left</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+<div class="viewcode-block" id="BaseResonator.background_s21"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.lmfit_resonator.BaseResonator.background_s21">[docs]</a>    <span class="k">def</span> <span class="nf">background_s21</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frequency</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">frequency</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">frequency</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span>
+        <span class="n">background</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">background</span>
+        <span class="k">if</span> <span class="n">background</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">frequency</span><span class="p">):</span>
+                <span class="k">return</span> <span class="mf">1.0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">frequency</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">background</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_result</span><span class="o">.</span><span class="n">params</span><span class="p">,</span><span class="n">f</span><span class="o">=</span><span class="n">frequency</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BaseResonator.remove_background"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.lmfit_resonator.BaseResonator.remove_background">[docs]</a>    <span class="k">def</span> <span class="nf">remove_background</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frequency</span><span class="p">,</span> <span class="n">s21_raw</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Normalize s21 data, removing arbitrary ampltude, delay, and phase terms</span>
+<span class="sd">        </span>
+<span class="sd">        frequency : float or array of floats</span>
+<span class="sd">            frequency in same units as the model was built with, at which normalization should be computed</span>
+<span class="sd">            </span>
+<span class="sd">        s21_raw : complex or array of complex</span>
+<span class="sd">            raw s21 data which should be normalized</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">normalization</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">background_s21</span><span class="p">(</span><span class="n">frequency</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">s21_raw</span> <span class="o">/</span> <span class="n">normalization</span></div>
+
+
+<div class="viewcode-block" id="BaseResonator.approximate_target_gradient"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.lmfit_resonator.BaseResonator.approximate_target_gradient">[docs]</a>    <span class="k">def</span> <span class="nf">approximate_target_gradient</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frequency</span><span class="p">,</span> <span class="n">delta_f</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the approximate gradient of the target model dS21/df at the given frequency.</span>
+<span class="sd">        </span>
+<span class="sd">        The units will be S21 / Hz</span>
+<span class="sd">        </span>
+<span class="sd">        frequency : float or array of floats</span>
+<span class="sd">            frequency in same units as the model was built with, at which normalized gradient should be evaluated</span>
+<span class="sd">        delta_f : float default 1</span>
+<span class="sd">            frequency offset used to calculate gradient</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">f1</span> <span class="o">=</span> <span class="n">frequency</span> <span class="o">+</span> <span class="n">delta_f</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_s21</span><span class="p">(</span><span class="n">frequency</span><span class="p">)</span>
+        <span class="n">y1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_s21</span><span class="p">(</span><span class="n">f1</span><span class="p">)</span>
+        <span class="n">gradient</span> <span class="o">=</span> <span class="p">(</span><span class="n">y1</span> <span class="o">-</span> <span class="n">y</span><span class="p">)</span><span class="o">/</span><span class="n">delta_f</span>  <span class="c1"># division by 1 Hz is implied.</span>
+        <span class="k">return</span> <span class="n">gradient</span></div>
+
+<div class="viewcode-block" id="BaseResonator.project_s21_to_frequency"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.lmfit_resonator.BaseResonator.project_s21_to_frequency">[docs]</a>    <span class="k">def</span> <span class="nf">project_s21_to_frequency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frequency</span><span class="p">,</span> <span class="n">s21</span><span class="p">,</span> <span class="n">use_data_mean</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">s21_already_normalized</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Project s21 data onto the orthogonal vectors tangent and perpendicular to the resonance circle at the </span>
+<span class="sd">        measurement frequency</span>
+<span class="sd">        </span>
+<span class="sd">        This results in complex data with the real part projected along the frequency direction (in Hz) and the </span>
+<span class="sd">        imaginary part projected along the dissipation direction (also in pseudo-Hz).</span>
+<span class="sd">        </span>
+<span class="sd">        freq : float</span>
+<span class="sd">            frequency in same units as the model was built with, at which the S21 data was measured.</span>
+<span class="sd">        </span>
+<span class="sd">        s21 : complex or array of complex</span>
+<span class="sd">            Raw S21 data measured at the indicated frequency</span>
+<span class="sd">        </span>
+<span class="sd">        use_data_mean : bool, default True</span>
+<span class="sd">            if true, center the data on the mean of the data before projecting.</span>
+<span class="sd">            if false, center the data on the value of the model evaluated at the measurement frequency.</span>
+<span class="sd">            </span>
+<span class="sd">        s21_already_normalized : bool, default False</span>
+<span class="sd">            if true, the s21 data has already been normalized</span>
+<span class="sd">            if false, first normalize the s21 data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">s21_already_normalized</span><span class="p">:</span>
+            <span class="n">normalized_s21</span> <span class="o">=</span> <span class="n">s21</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">normalized_s21</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">remove_background</span><span class="p">(</span><span class="n">frequency</span><span class="p">,</span> <span class="n">s21</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">use_data_mean</span><span class="p">:</span>
+            <span class="n">mean_</span> <span class="o">=</span> <span class="n">normalized_s21</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mean_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_s21</span><span class="p">(</span><span class="n">frequency</span><span class="p">)</span>
+        <span class="n">gradient</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">approximate_target_gradient</span><span class="p">(</span><span class="n">frequency</span><span class="p">)</span>
+        <span class="n">delta_freq</span> <span class="o">=</span> <span class="p">(</span><span class="n">normalized_s21</span> <span class="o">-</span> <span class="n">mean_</span><span class="p">)</span> <span class="o">/</span> <span class="n">gradient</span>
+        <span class="k">return</span> <span class="n">delta_freq</span></div>
+
+<div class="viewcode-block" id="BaseResonator.convert_s21_to_freq_fluctuation"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.lmfit_resonator.BaseResonator.convert_s21_to_freq_fluctuation">[docs]</a>    <span class="k">def</span> <span class="nf">convert_s21_to_freq_fluctuation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="n">s21</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Use formula in Phil&#39;s LTD paper to convert S21 data to frequency fluctuations.</span>
+
+<span class="sd">        The result of this is the same as Re(S21/(dS21/df)), so the same as self.project_s21_to_delta_freq().real</span>
+
+<span class="sd">        freq : float</span>
+<span class="sd">            frequency in same units as the model was built with, at which the S21 data was measured.</span>
+
+<span class="sd">        s21 : complex or array of complex</span>
+<span class="sd">            Raw S21 data measured at the indicated frequency</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">normalized_s21</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">s21</span><span class="p">)</span>
+        <span class="n">gradient</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">approx_normalized_gradient</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span>
+        <span class="c1"># using notation from Phil&#39;s LTD paper</span>
+        <span class="n">I</span> <span class="o">=</span> <span class="n">normalized_s21</span><span class="o">.</span><span class="n">real</span>
+        <span class="n">Q</span> <span class="o">=</span> <span class="n">normalized_s21</span><span class="o">.</span><span class="n">imag</span>
+        <span class="n">dIdf</span> <span class="o">=</span> <span class="n">gradient</span><span class="o">.</span><span class="n">real</span>
+        <span class="n">dQdf</span> <span class="o">=</span> <span class="n">gradient</span><span class="o">.</span><span class="n">imag</span>
+        <span class="n">ef</span> <span class="o">=</span> <span class="p">(</span><span class="n">I</span> <span class="o">*</span> <span class="n">dIdf</span> <span class="o">+</span> <span class="n">Q</span> <span class="o">*</span> <span class="n">dQdf</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">dIdf</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">dQdf</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ef</span></div></div>
+
+
+<div class="viewcode-block" id="LinearResonator"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.lmfit_resonator.LinearResonator">[docs]</a><span class="k">class</span> <span class="nc">LinearResonator</span><span class="p">(</span><span class="n">BaseResonator</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frequency</span><span class="p">,</span> <span class="n">s21</span><span class="p">,</span> <span class="n">errors</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LinearResonator</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="n">frequency</span><span class="p">,</span> <span class="n">s21</span><span class="o">=</span><span class="n">s21</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="n">errors</span><span class="p">,</span>
+                                             <span class="n">model</span> <span class="o">=</span> <span class="n">lmfit_models</span><span class="o">.</span><span class="n">LinearResonatorModel</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<span class="n">_general_cable_model</span> <span class="o">=</span> <span class="n">lmfit_models</span><span class="o">.</span><span class="n">GeneralCableModel</span><span class="p">()</span>
+<span class="n">_linear_resonator_model</span> <span class="o">=</span> <span class="n">lmfit_models</span><span class="o">.</span><span class="n">LinearResonatorModel</span><span class="p">()</span>
+<span class="n">_linear_resonator_with_cable</span> <span class="o">=</span> <span class="p">(</span><span class="n">_general_cable_model</span>
+                                <span class="o">*</span> <span class="n">_linear_resonator_model</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">_linear_resonator_with_cable_guess</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">cable_params</span> <span class="o">=</span> <span class="n">_general_cable_model</span><span class="o">.</span><span class="n">guess</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span><span class="n">f</span><span class="o">=</span><span class="n">f</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">resonator_params</span> <span class="o">=</span> <span class="n">_linear_resonator_model</span><span class="o">.</span><span class="n">guess</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span><span class="n">f</span><span class="o">=</span><span class="n">f</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">cable_params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">resonator_params</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cable_params</span>
+<span class="n">_linear_resonator_with_cable</span><span class="o">.</span><span class="n">guess</span> <span class="o">=</span> <span class="n">_linear_resonator_with_cable_guess</span>
+<div class="viewcode-block" id="LinearResonatorWithCable"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.lmfit_resonator.LinearResonatorWithCable">[docs]</a><span class="k">class</span> <span class="nc">LinearResonatorWithCable</span><span class="p">(</span><span class="n">BaseResonator</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frequency</span><span class="p">,</span> <span class="n">s21</span><span class="p">,</span> <span class="n">errors</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LinearResonatorWithCable</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="n">frequency</span><span class="p">,</span> <span class="n">s21</span><span class="o">=</span><span class="n">s21</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="n">errors</span><span class="p">,</span>
+                                             <span class="n">model</span> <span class="o">=</span> <span class="n">_linear_resonator_with_cable</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<span class="n">_background_resonator_model</span> <span class="o">=</span> <span class="n">lmfit_models</span><span class="o">.</span><span class="n">LinearResonatorModel</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;bg_&#39;</span><span class="p">)</span>
+<span class="n">_foreground_resonator_model</span> <span class="o">=</span> <span class="n">lmfit_models</span><span class="o">.</span><span class="n">LinearResonatorModel</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;fg_&#39;</span><span class="p">)</span>
+
+<span class="n">_colliding_linear_resonators_with_cable</span> <span class="o">=</span> <span class="p">((</span><span class="n">_general_cable_model</span> <span class="o">*</span> <span class="n">_background_resonator_model</span><span class="p">)</span>
+                                                      <span class="o">*</span> <span class="n">_foreground_resonator_model</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">_colliding_linear_resonators_with_cable_guess</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">cable_params</span> <span class="o">=</span> <span class="n">_general_cable_model</span><span class="o">.</span><span class="n">guess</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span><span class="n">f</span><span class="o">=</span><span class="n">f</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">resonator_params</span> <span class="o">=</span> <span class="n">_foreground_resonator_model</span><span class="o">.</span><span class="n">guess</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span><span class="n">f</span><span class="o">=</span><span class="n">f</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">bg_resonator_params</span> <span class="o">=</span> <span class="n">_background_resonator_model</span><span class="o">.</span><span class="n">guess</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span><span class="n">f</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">cable_params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">resonator_params</span><span class="p">)</span>
+    <span class="n">cable_params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">bg_resonator_params</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cable_params</span>
+<span class="n">_colliding_linear_resonators_with_cable</span><span class="o">.</span><span class="n">guess</span> <span class="o">=</span> <span class="n">_colliding_linear_resonators_with_cable_guess</span>
+
+<div class="viewcode-block" id="CollidingLinearResonatorsWithCable"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.lmfit_resonator.CollidingLinearResonatorsWithCable">[docs]</a><span class="k">class</span> <span class="nc">CollidingLinearResonatorsWithCable</span><span class="p">(</span><span class="n">BaseResonator</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frequency</span><span class="p">,</span> <span class="n">s21</span><span class="p">,</span> <span class="n">errors</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">CollidingLinearResonatorsWithCable</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="n">frequency</span><span class="p">,</span> <span class="n">s21</span><span class="o">=</span><span class="n">s21</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="n">errors</span><span class="p">,</span>
+                                             <span class="n">model</span> <span class="o">=</span> <span class="n">_colliding_linear_resonators_with_cable</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GeneralCable"><a class="viewcode-back" href="../../../../kid_readout.analysis.resonator.html#kid_readout.analysis.resonator.lmfit_resonator.GeneralCable">[docs]</a><span class="k">class</span> <span class="nc">GeneralCable</span><span class="p">(</span><span class="n">FitterWithAttributeAccess</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frequency</span><span class="p">,</span> <span class="n">s21</span><span class="p">,</span> <span class="n">errors</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        General resonator fitting class.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        frequency: array of floats</span>
+<span class="sd">            Frequencies at which data was measured</span>
+<span class="sd">        s21: array of complex</span>
+<span class="sd">            measured S21 data</span>
+<span class="sd">        errors: None or array of complex</span>
+<span class="sd">            errors on the real and imaginary parts of the s21 data. None means use no errors</span>
+<span class="sd">        kwargs:</span>
+<span class="sd">            passed on to model.fit</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">iscomplexobj</span><span class="p">(</span><span class="n">s21</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;S21 must be complex.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">errors</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">iscomplexobj</span><span class="p">(</span><span class="n">errors</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;S21 errors must be complex.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">errors</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="n">errors</span><span class="o">.</span><span class="n">real</span> <span class="o">+</span> <span class="mi">1j</span><span class="o">/</span><span class="n">errors</span><span class="o">.</span><span class="n">imag</span>
+        <span class="c1"># kwargs get passed from Fitter to Model.fit directly. Signature is:</span>
+        <span class="c1">#    def fit(self, data, params=None, weights=None, method=&#39;leastsq&#39;,</span>
+        <span class="c1">#            iter_cb=None, scale_covar=True, verbose=False, fit_kws=None, **kwargs):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">GeneralCable</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">s21</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="n">frequency</span><span class="p">,</span>
+                                        <span class="n">model</span><span class="o">=</span><span class="n">lmfit_models</span><span class="o">.</span><span class="n">GeneralCableModel</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="n">weights</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span> <span class="o">=</span> <span class="n">frequency</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">errors</span> <span class="o">=</span> <span class="n">errors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="n">weights</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,324 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.equipment.sim900 &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for kid_readout.equipment.sim900</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">logging</span> 
+<span class="kn">import</span> <span class="nn">serial</span> 
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">sys</span> 
+
+<div class="viewcode-block" id="sim900"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900">[docs]</a><span class="k">class</span> <span class="nc">sim900</span><span class="p">():</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">port</span><span class="o">=</span><span class="s2">&quot;/dev/ttyUSB1&quot;</span><span class="p">):</span>
+        <span class="c1">#open port, connect to sim900</span>
+        <span class="c1">#self.ser = serial.Serial(0, baudrate = 9600, timeout = 2)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span> <span class="o">=</span> <span class="n">serial</span><span class="o">.</span><span class="n">Serial</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="n">port</span><span class="p">,</span> <span class="n">baudrate</span><span class="o">=</span><span class="mi">9600</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_sim900</span><span class="p">()</span>
+<div class="viewcode-block" id="sim900.setup_sim900"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.setup_sim900">[docs]</a>    <span class="k">def</span> <span class="nf">setup_sim900</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#flush all port butters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;FLSH</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1">#reset module interfaces</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;SRST</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;*IDN?</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span></div>
+    
+<div class="viewcode-block" id="sim900.close_sim900"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.close_sim900">[docs]</a>    <span class="k">def</span> <span class="nf">close_sim900</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close_sim921</span><span class="p">()</span> <span class="c1">#to be safe</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">isOpen</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="sim900.connect_sim921"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.connect_sim921">[docs]</a>    <span class="k">def</span> <span class="nf">connect_sim921</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#connect to sim921</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;CONN 4, &#39;xxx&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;*IDN?</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>  </div>
+
+<div class="viewcode-block" id="sim900.close_sim921_1"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.close_sim921_1">[docs]</a>    <span class="k">def</span> <span class="nf">close_sim921_1</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;xxx</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="sim900.connect_sim921_1"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.connect_sim921_1">[docs]</a>    <span class="k">def</span> <span class="nf">connect_sim921_1</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#connect to sim921</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;CONN 1, &#39;xxx&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;*IDN?</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="sim900.close_sim921_6"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.close_sim921_6">[docs]</a>    <span class="k">def</span> <span class="nf">close_sim921_6</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;xxx</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+<div class="viewcode-block" id="sim900.connect_sim921_6"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.connect_sim921_6">[docs]</a>    <span class="k">def</span> <span class="nf">connect_sim921_6</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#connect to sim921</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;CONN 6, &#39;xxx&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;*IDN?</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="sim900.close_sim921"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.close_sim921">[docs]</a>    <span class="k">def</span> <span class="nf">close_sim921</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;xxx</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>    </div>
+
+<div class="viewcode-block" id="sim900.setup_sim921"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.setup_sim921">[docs]</a>    <span class="k">def</span> <span class="nf">setup_sim921</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;CURV 2</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span><span class="c1">#set calibration curve to use</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;DTEM 1</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span><span class="c1">#set display in Kelvin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;AGAI 1</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span><span class="c1">#let the gain autorange</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;ADIS 1</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span><span class="c1">#let the display autorange</span></div>
+
+<div class="viewcode-block" id="sim900.set_sim921_excitation"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.set_sim921_excitation">[docs]</a>    <span class="k">def</span> <span class="nf">set_sim921_excitation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;FREQ 10</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="c1">#set frequency, at 10hz -CHECK</span>
+        
+        <span class="c1">#we want .3microA going across the RuOx600- CHECK</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;RANG 6</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="c1">#set range to 20 kohms (5) 6</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;MODE 2</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="c1">#set excitation mode to voltage  biased</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;EXON 1</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="c1">#set exctiation mode on</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;EXCI 2</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="c1">#set excitiation to 30 microVolts (4)</span></div>
+        
+        
+<div class="viewcode-block" id="sim900.load_calibration_curve"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.load_calibration_curve">[docs]</a>    <span class="k">def</span> <span class="nf">load_calibration_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#this program loads a calibration curve into the 1st slot</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;CINI 1, 0, &#39;roxcal&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="c1">#initialize calibration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curve_num</span> <span class="o">=</span> <span class="s1">&#39;CAPT 1&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ender</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="c1">#get calibration file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curve_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;3628data_reversed.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curve</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">curve_file</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curve_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">curve</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">curve</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">resistance</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">temp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+              
+            <span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">curve_num</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ender</span><span class="p">)</span> <span class="c1">#format it</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span><span class="p">)</span> <span class="c1">#feed in data points (cure, res, temp)</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            
+            <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span></div>
+             
+    
+<div class="viewcode-block" id="sim900.load_calibration_curve_2"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.load_calibration_curve_2">[docs]</a>    <span class="k">def</span> <span class="nf">load_calibration_curve_2</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#this program loads a calibration curve into the 1st slot</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;CINI 1, 0, &#39;roxstan&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="c1">#initialize calibration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curve_num</span> <span class="o">=</span> <span class="s1">&#39;CAPT 1&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ender</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+        
+        <span class="c1">#get calibration file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curve_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;RO600.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curve</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">curve_file</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curve_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">curve</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">curve</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">resistance</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">temp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+              
+            <span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">curve_num</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+            <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span> <span class="c1">#format it</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span><span class="p">)</span> <span class="c1">#feed in data points (cure, res, temp)</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            
+            <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span>
+            <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">ender</span>   </div>
+    
+
+<div class="viewcode-block" id="sim900.load_calibration_curve_diode"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.load_calibration_curve_diode">[docs]</a>    <span class="k">def</span> <span class="nf">load_calibration_curve_diode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#this program loads a calibration curve into the 1st slot</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;CINI 1, 0, &#39;diode1&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="c1">#initialize calibration</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">curve_num</span> <span class="o">=</span> <span class="s1">&#39;CAPT 1&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ender</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+
+        <span class="c1">#get calibration file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curve_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;D6042351.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curve</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">curve_file</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curve_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">curve</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">curve</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">temp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">volt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">curve_num</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span> <span class="c1">#format it</span>
+            
+            <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span><span class="p">)</span> <span class="c1">#feed in data points (cure, res, temp)</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+            <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span>
+            <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">ender</span>   
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;CURV 1,1</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+        
+
+
+<div class="viewcode-block" id="sim900.check_cal"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.check_cal">[docs]</a>    <span class="k">def</span> <span class="nf">check_cal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ender</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;CAPT? 2&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="p">)]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ender</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">cal_message</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span></div>
+
+<div class="viewcode-block" id="sim900.get_resistance"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.get_resistance">[docs]</a>    <span class="k">def</span> <span class="nf">get_resistance</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;RVAL?</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+     <span class="c1">#sys.stdout.flush()    </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msg</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="sim900.get_temp"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.get_temp">[docs]</a>    <span class="k">def</span> <span class="nf">get_temp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;TVAL?</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+     <span class="c1">#sys.stdout.flush()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="sim900.get_sim922_temp"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.get_sim922_temp">[docs]</a>    <span class="k">def</span> <span class="nf">get_sim922_temp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;TVAL? 0</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="sim900.get_sim922_volts"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.get_sim922_volts">[docs]</a>    <span class="k">def</span> <span class="nf">get_sim922_volts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;VOLT? 0</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>    
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">msg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="sim900.connect_sim925"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.connect_sim925">[docs]</a>    <span class="k">def</span> <span class="nf">connect_sim925</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#connect to sim925, multiplexer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;CONN 3, &#39;xyz&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;*IDN?</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="c1">#print self.msg</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="sim900.close_sim925"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.close_sim925">[docs]</a>    <span class="k">def</span> <span class="nf">close_sim925</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;xyz</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="sim900.set_channel_1"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.set_channel_1">[docs]</a>    <span class="k">def</span> <span class="nf">set_channel_1</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;CHAN 1</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="sim900.set_channel_2"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.set_channel_2">[docs]</a>    <span class="k">def</span> <span class="nf">set_channel_2</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;CHAN 2</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="sim900.connect_sim922"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.connect_sim922">[docs]</a>    <span class="k">def</span> <span class="nf">connect_sim922</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#connect to sim922, diode </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;CONN 8, &#39;zzz&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;*IDN?</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="sim900.close_sim922"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.close_sim922">[docs]</a>    <span class="k">def</span> <span class="nf">close_sim922</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;zzz</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="sim900.sendget"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim900.sim900.sendget">[docs]</a>    <span class="k">def</span> <span class="nf">sendget</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">command</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">:</span>
+            <span class="n">command</span> <span class="o">=</span> <span class="n">command</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="o">.</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span></div></div>
+
+<span class="c1">#sndt, port number + message </span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

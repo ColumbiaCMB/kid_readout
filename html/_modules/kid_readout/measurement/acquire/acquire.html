@@ -1,0 +1,201 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.measurement.acquire.acquire &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../../index.html" />
+    <link rel="up" title="Module code" href="../../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for kid_readout.measurement.acquire.acquire</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Basic framework for acquiring a roach measurement that includes both sweep(s) and stream(s).</span>
+
+<span class="sd">Acquire</span>
+<span class="sd">-Initialize equipment.</span>
+<span class="sd">-Initialize roach: preload frequencies, if necessary.</span>
+<span class="sd">-Create state dictionary containing state from all equipment, including temperatures, if possible.</span>
+<span class="sd">-Run a coarse sweep, if necessary: create a SweepArray and extract resonance frequencies.</span>
+<span class="sd">-Run fine sweeps to map out resonance frequencies carefully.</span>
+<span class="sd">If desired, we can combine the data from coarse and fine sweeps into a single SweepArray.</span>
+<span class="sd">All streams in these sweeps are created with the same roach state, which should not change during the sweeps.</span>
+<span class="sd">The sweep(s) are created with the experiment state, which should also not change.</span>
+
+<span class="sd">Acquire streams:</span>
+<span class="sd">-Initialize equipment for stream(s).</span>
+<span class="sd">-Initialize roach for stream(s).</span>
+<span class="sd">-Create experiment state dictionary.</span>
+<span class="sd">-Acquire a StreamArray.</span>
+<span class="sd">-Repeat the stream acquisition as needed</span>
+<span class="sd">-Instantiate the final measurement with all data, and save it to disk.</span>
+<span class="sd">-Clean up equipment.</span>
+
+<span class="sd">If instead we want to save data as it is collected, we can do that by writing a blank final measurement to disk, then</span>
+<span class="sd">writing the sub-measurements as they are acquired.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">kid_readout.measurement</span> <span class="kn">import</span> <span class="n">core</span><span class="p">,</span> <span class="n">basic</span>
+
+
+<div class="viewcode-block" id="load_baseband_sweep_tones"><a class="viewcode-back" href="../../../../kid_readout.measurement.acquire.html#kid_readout.measurement.acquire.acquire.load_baseband_sweep_tones">[docs]</a><span class="k">def</span> <span class="nf">load_baseband_sweep_tones</span><span class="p">(</span><span class="n">ri</span><span class="p">,</span> <span class="n">tone_banks</span><span class="p">,</span> <span class="n">num_tone_samples</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">ri</span><span class="o">.</span><span class="n">set_tone_freqs</span><span class="p">(</span><span class="n">freqs</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">tone_banks</span><span class="p">),</span> <span class="n">nsamp</span><span class="o">=</span><span class="n">num_tone_samples</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="load_heterodyne_sweep_tones"><a class="viewcode-back" href="../../../../kid_readout.measurement.acquire.html#kid_readout.measurement.acquire.acquire.load_heterodyne_sweep_tones">[docs]</a><span class="k">def</span> <span class="nf">load_heterodyne_sweep_tones</span><span class="p">(</span><span class="n">ri</span><span class="p">,</span> <span class="n">tone_banks</span><span class="p">,</span> <span class="n">num_tone_samples</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">ri</span><span class="o">.</span><span class="n">set_tone_freqs</span><span class="p">(</span><span class="n">freqs</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">tone_banks</span><span class="p">),</span> <span class="n">nsamp</span><span class="o">=</span><span class="n">num_tone_samples</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="run_sweep"><a class="viewcode-back" href="../../../../kid_readout.measurement.acquire.html#kid_readout.measurement.acquire.acquire.run_sweep">[docs]</a><span class="k">def</span> <span class="nf">run_sweep</span><span class="p">(</span><span class="n">ri</span><span class="p">,</span> <span class="n">tone_banks</span><span class="p">,</span> <span class="n">num_tone_samples</span><span class="p">,</span> <span class="n">length_seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a SweepArray acquired using the given tone banks.</span>
+
+<span class="sd">    :param ri: a RoachInterface subclass instance.</span>
+<span class="sd">    :param tone_banks: an iterable of arrays of frequencies to use for the sweep.</span>
+<span class="sd">    :param num_tone_samples: the number of samples in the playback buffer; must be a power of two.</span>
+<span class="sd">    :param length_seconds: the duration of each data stream.</span>
+<span class="sd">    :param state: the non-roach state to pass to the SweepArray.</span>
+<span class="sd">    :param description: a string containing a description of the measurement.</span>
+<span class="sd">    :param kwargs: keyword arguments passed to ri.get_measurement()</span>
+<span class="sd">    :return: a SweepArray instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">stream_arrays</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">MeasurementList</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">tone_bank</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tone_banks</span><span class="p">):</span>
+        <span class="n">ri</span><span class="o">.</span><span class="n">set_tone_freqs</span><span class="p">(</span><span class="n">tone_bank</span><span class="p">,</span> <span class="n">nsamp</span><span class="o">=</span><span class="n">num_tone_samples</span><span class="p">)</span>
+        <span class="n">ri</span><span class="o">.</span><span class="n">select_fft_bins</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">tone_bank</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+        <span class="n">ri</span><span class="o">.</span><span class="n">_sync</span><span class="p">()</span>
+        
+        <span class="n">stream_arrays</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ri</span><span class="o">.</span><span class="n">get_measurement</span><span class="p">(</span><span class="n">num_seconds</span><span class="o">=</span><span class="n">length_seconds</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">basic</span><span class="o">.</span><span class="n">SweepArray</span><span class="p">(</span><span class="n">stream_arrays</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="run_loaded_sweep"><a class="viewcode-back" href="../../../../kid_readout.measurement.acquire.html#kid_readout.measurement.acquire.acquire.run_loaded_sweep">[docs]</a><span class="k">def</span> <span class="nf">run_loaded_sweep</span><span class="p">(</span><span class="n">ri</span><span class="p">,</span> <span class="n">length_seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">tone_bank_indices</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">bin_indices</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                                                                                                            <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a SweepArray acquired using previously-loaded tones.</span>
+
+<span class="sd">    :param ri: a RoachInterface subclass instance.</span>
+<span class="sd">    :param tone_bank_indices: the indices of the tone banks to use in the sweep; the default is to use all existing.</span>
+<span class="sd">    :param length_seconds: the duration of each data stream.</span>
+<span class="sd">    :param state: the non-roach state to pass to the SweepArray.</span>
+<span class="sd">    :param description: a string containing a description of the measurement.</span>
+<span class="sd">    :param kwargs: keyword arguments passed to ri.get_measurement()</span>
+<span class="sd">    :return: a SweepArray instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">tone_bank_indices</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">tone_bank_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">ri</span><span class="o">.</span><span class="n">tone_bins</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">bin_indices</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">bin_indices</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">ri</span><span class="o">.</span><span class="n">tone_bins</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">stream_arrays</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">MeasurementList</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">tone_bank_index</span> <span class="ow">in</span> <span class="n">tone_bank_indices</span><span class="p">:</span>
+        <span class="n">ri</span><span class="o">.</span><span class="n">select_bank</span><span class="p">(</span><span class="n">tone_bank_index</span><span class="p">)</span>
+        <span class="n">ri</span><span class="o">.</span><span class="n">select_fft_bins</span><span class="p">(</span><span class="n">bin_indices</span><span class="p">)</span>
+        <span class="n">ri</span><span class="o">.</span><span class="n">_sync</span><span class="p">()</span>
+        <span class="n">stream_arrays</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ri</span><span class="o">.</span><span class="n">get_measurement</span><span class="p">(</span><span class="n">num_seconds</span><span class="o">=</span><span class="n">length_seconds</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">basic</span><span class="o">.</span><span class="n">SweepArray</span><span class="p">(</span><span class="n">stream_arrays</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="run_multipart_sweep"><a class="viewcode-back" href="../../../../kid_readout.measurement.acquire.html#kid_readout.measurement.acquire.acquire.run_multipart_sweep">[docs]</a><span class="k">def</span> <span class="nf">run_multipart_sweep</span><span class="p">(</span><span class="n">ri</span><span class="p">,</span> <span class="n">length_seconds</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">num_tones_read_at_once</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                                                                                                            <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">num_tones</span> <span class="o">=</span> <span class="n">ri</span><span class="o">.</span><span class="n">tone_bins</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">num_steps</span> <span class="o">=</span> <span class="n">num_tones</span> <span class="o">//</span> <span class="n">num_tones_read_at_once</span>
+    <span class="k">if</span> <span class="n">num_steps</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">num_steps</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">indices_to_read</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_tones</span><span class="p">)</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_steps</span><span class="p">):</span>
+        <span class="k">print</span> <span class="s2">&quot;running sweep step&quot;</span><span class="p">,</span><span class="n">step</span><span class="p">,</span><span class="s2">&quot;of&quot;</span><span class="p">,</span><span class="n">num_steps</span>
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">run_loaded_sweep</span><span class="p">(</span><span class="n">ri</span><span class="p">,</span><span class="n">length_seconds</span><span class="o">=</span><span class="n">length_seconds</span><span class="p">,</span><span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span><span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                                      <span class="n">bin_indices</span><span class="o">=</span><span class="n">indices_to_read</span><span class="p">[</span><span class="n">step</span><span class="p">::</span><span class="n">num_steps</span><span class="p">],</span><span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+    <span class="n">stream_arrays</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">MeasurementList</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
+        <span class="n">stream_arrays</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">stream_arrays</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">basic</span><span class="o">.</span><span class="n">SweepArray</span><span class="p">(</span><span class="n">stream_arrays</span><span class="p">,</span><span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span><span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="extendable_sweepstreamlist"><a class="viewcode-back" href="../../../../kid_readout.measurement.acquire.html#kid_readout.measurement.acquire.acquire.extendable_sweepstreamlist">[docs]</a><span class="k">def</span> <span class="nf">extendable_sweepstreamlist</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="n">sweep</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">default_name</span><span class="p">(</span><span class="n">basic</span><span class="o">.</span><span class="n">SweepStreamList</span><span class="p">)</span>
+    <span class="n">iolist</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">IOList</span><span class="p">(</span><span class="n">io</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="n">ss</span> <span class="o">=</span> <span class="n">basic</span><span class="o">.</span><span class="n">SweepStreamList</span><span class="p">(</span><span class="n">sweep</span><span class="p">,</span> <span class="n">iolist</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ss</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ss</span></div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

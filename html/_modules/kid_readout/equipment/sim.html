@@ -1,0 +1,858 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.equipment.sim &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for kid_readout.equipment.sim</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module contains classes to interface with SRS SIM hardware.</span>
+
+<span class="sd">The classes do not maintain any internal state that corresponds to hardware settings: all state queries are directed</span>
+<span class="sd">to the hardware.</span>
+
+<span class="sd">As described below in more detail, the query commands return strings, booleans, or floats.</span>
+
+<span class="sd">Settings such as excitation codes that take only integer values accept either an integer or a string corresponding to</span>
+<span class="sd">an integer; they return a string corresponding to an integer.</span>
+
+<span class="sd">Many of the SIM commands accept either an integer or a token. For example, the SIM921 excitation mode can be set to</span>
+<span class="sd">constant current using either &#39;MODE CURRENT&#39; or &#39;MODE 2&#39;. These commands accept a valid token, a string corresponding</span>
+<span class="sd">to an integer, or an integer. Depending on the token mode, they return a string that is either a token or represents</span>
+<span class="sd">an integer.</span>
+
+<span class="sd">Settings that can be only &#39;OFF&#39; or &#39;ON&#39; are fundamentally boolean. The corresponding commands accept strings (&#39;OFF&#39;,</span>
+<span class="sd">&#39;0&#39;) or (&#39;ON&#39;, &#39;1&#39;), or booleans. These commands always return True or False, not a string, regardless of the token</span>
+<span class="sd">mode.</span>
+
+<span class="sd">Commands that return values measured by an instrument, such as a resistance, return floats.</span>
+
+<span class="sd">Commands that accept tokens are case-insensitive. (However, note that calibration curve identification strings are</span>
+<span class="sd">converted to uppercase.)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">serial</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+
+
+<div class="viewcode-block" id="SIMError"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIMError">[docs]</a><span class="k">class</span> <span class="nc">SIMError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="SIMValueError"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIMValueError">[docs]</a><span class="k">class</span> <span class="nc">SIMValueError</span><span class="p">(</span><span class="n">SIMError</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="SIMTimeout"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIMTimeout">[docs]</a><span class="k">class</span> <span class="nc">SIMTimeout</span><span class="p">(</span><span class="n">SIMError</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="SIM"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM">[docs]</a><span class="k">class</span> <span class="nc">SIM</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="n">termination</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+
+    <span class="n">token_to_boolean</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;OFF&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
+                        <span class="s1">&#39;0&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
+                        <span class="s1">&#39;ON&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
+                        <span class="s1">&#39;1&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">}</span>
+
+    <span class="n">boolean_to_token</span> <span class="o">=</span> <span class="p">{</span><span class="bp">True</span><span class="p">:</span> <span class="s1">&#39;ON&#39;</span><span class="p">,</span>
+                        <span class="bp">False</span><span class="p">:</span> <span class="s1">&#39;OFF&#39;</span><span class="p">}</span>
+
+    <span class="c1"># This is experimental. The methods that send commands wait for this time in seconds:</span>
+    <span class="n">communication_delay</span> <span class="o">=</span> <span class="mf">1e-3</span>
+
+    <span class="c1"># TODO: figure out the acceptable formats for floats</span>
+    <span class="n">float_format</span> <span class="o">=</span> <span class="s1">&#39;:.6f&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serial</span><span class="p">,</span> <span class="n">parent_and_port</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">)):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">serial</span> <span class="o">=</span> <span class="n">serial</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent_and_port</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">parent_and_port</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+<div class="viewcode-block" id="SIM.send"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM.send">[docs]</a>    <span class="k">def</span> <span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">serial</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">message</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">termination</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">communication_delay</span><span class="p">)</span></div>
+
+    <span class="c1"># Consider raising SIMTimeout for blank messages;</span>
+    <span class="c1"># needs to handle disconnection elegantly.</span>
+<div class="viewcode-block" id="SIM.receive"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM.receive">[docs]</a>    <span class="k">def</span> <span class="nf">receive</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">serial</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">response</span></div>
+
+<div class="viewcode-block" id="SIM.send_and_receive"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM.send_and_receive">[docs]</a>    <span class="k">def</span> <span class="nf">send_and_receive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">serial</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">message</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">termination</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">serial</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">communication_delay</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span></div>
+
+    <span class="c1"># Handle boolean user input for commands that accept (&#39;OFF&#39;, &#39;0&#39;, &#39;ON&#39;, &#39;1&#39;).</span>
+    <span class="k">def</span> <span class="nf">_boolean_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thing</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">boolean_to_token</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">token_to_boolean</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">thing</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="n">thing</span><span class="p">)]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SIMValueError</span><span class="p">(</span><span class="s2">&quot;Invalid boolean setting {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">thing</span><span class="p">))</span>
+
+    <span class="c1"># Handle boolean output for commands that return (&#39;OFF&#39;, &#39;0&#39;, &#39;ON&#39;, &#39;1&#39;).</span>
+    <span class="k">def</span> <span class="nf">_boolean_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thing</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">token_to_boolean</span><span class="p">[</span><span class="n">thing</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">token</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The token mode.</span>
+
+<span class="sd">        This property implements the TOKN(?) command.</span>
+
+<span class="sd">        When True, the SIM returns tokens such as &#39;ON&#39; or &#39;VOLTAGE&#39;; when False, the SIM returns integer codes instead.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_boolean_output</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;TOKN?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@token.setter</span>
+    <span class="k">def</span> <span class="nf">token</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">boolean</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;TOKN {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_boolean_input</span><span class="p">([</span><span class="n">boolean</span><span class="p">])))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">identification</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;*IDN?&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SIM.reset"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;*RST&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SIM.clear_status"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM.clear_status">[docs]</a>    <span class="k">def</span> <span class="nf">clear_status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Clear all status registers. The registers cleared vary by device.</span>
+
+<span class="sd">        This method implements the *CLS command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;*CLS&#39;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SIM900"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM900">[docs]</a><span class="k">class</span> <span class="nc">SIM900</span><span class="p">(</span><span class="n">SIM</span><span class="p">):</span>
+
+    <span class="c1"># This is the ASCII &lt;ESC&gt; character.</span>
+    <span class="n">escape</span> <span class="o">=</span> <span class="nb">chr</span><span class="p">(</span><span class="mi">27</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serial_port</span><span class="p">,</span> <span class="n">baudrate</span><span class="o">=</span><span class="mi">9600</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">autodetect</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">serial</span> <span class="o">=</span> <span class="n">serial</span><span class="o">.</span><span class="n">Serial</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="n">serial_port</span><span class="p">,</span> <span class="n">baudrate</span><span class="o">=</span><span class="n">baudrate</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ports</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">([(</span><span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                                  <span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                                  <span class="p">(</span><span class="s1">&#39;3&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                                  <span class="p">(</span><span class="s1">&#39;4&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                                  <span class="p">(</span><span class="s1">&#39;5&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                                  <span class="p">(</span><span class="s1">&#39;6&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                                  <span class="p">(</span><span class="s1">&#39;7&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                                  <span class="p">(</span><span class="s1">&#39;8&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)])</span>
+
+<span class="c1"># The other ports have different functions that aren&#39;t implemented yet.</span>
+<span class="c1">#                                  (&#39;9&#39;, None),</span>
+<span class="c1">#                                  (&#39;A&#39;, None),</span>
+<span class="c1">#                                  (&#39;B&#39;, None),</span>
+<span class="c1">#                                  (&#39;C&#39;, None),</span>
+<span class="c1">#                                  (&#39;D&#39;, None)])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">SIM_reset</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">autodetect</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">autodetect</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SIM900.broadcast"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM900.broadcast">[docs]</a>    <span class="k">def</span> <span class="nf">broadcast</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;BRDT &quot;{}&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">message</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SIM900.parse_definite_length"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM900.parse_definite_length">[docs]</a>    <span class="k">def</span> <span class="nf">parse_definite_length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="n">length_bytes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">message</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">message</span><span class="p">[</span><span class="mi">2</span> <span class="o">+</span> <span class="n">length_bytes</span><span class="p">:]</span></div>
+
+<div class="viewcode-block" id="SIM900.parse_message"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM900.parse_message">[docs]</a>    <span class="k">def</span> <span class="nf">parse_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse a message of the form</span>
+<span class="sd">        &#39;MSG 1,something&#39;</span>
+<span class="sd">        and return the port and message:</span>
+<span class="sd">        (&#39;1&#39;, &#39;something&#39;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">header</span><span class="p">,</span> <span class="n">content</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">port</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">port</span><span class="p">,</span> <span class="n">content</span></div>
+
+<div class="viewcode-block" id="SIM900.flush"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM900.flush">[docs]</a>    <span class="k">def</span> <span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Flush the SIM900 input and output queue for the given port, or for all ports if no port is given.</span>
+
+<span class="sd">        This method implements the FLSH command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">port</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;FLSH&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">str</span><span class="p">(</span><span class="n">port</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ports</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;FLSH {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">port</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SIMValueError</span><span class="p">(</span><span class="s2">&quot;Invalid port {}&#39;.format(port)&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SIM900.SIM_reset"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM900.SIM_reset">[docs]</a>    <span class="k">def</span> <span class="nf">SIM_reset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Send the SIM reset signal to the given SIM port, meaning port</span>
+<span class="sd">        1 through port 8, or to all SIM ports if no port is specified.</span>
+
+<span class="sd">        This method implements the SRST command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">port</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;SRST&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">int</span><span class="p">(</span><span class="n">port</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;SRST {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">port</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SIMValueError</span><span class="p">(</span><span class="s2">&quot;Invalid port {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">port</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SIM900.connect"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM900.connect">[docs]</a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">connected</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SIMError</span><span class="p">(</span><span class="s2">&quot;Connected to port {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">connected</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;CONN {}, &quot;{}&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">port</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">escape</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connected</span> <span class="o">=</span> <span class="n">port</span></div>
+
+<div class="viewcode-block" id="SIM900.disconnect"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM900.disconnect">[docs]</a>    <span class="k">def</span> <span class="nf">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">escape</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connected</span> <span class="o">=</span> <span class="bp">None</span></div>
+
+<div class="viewcode-block" id="SIM900.autodetect"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM900.autodetect">[docs]</a>    <span class="k">def</span> <span class="nf">autodetect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Upgrade with methods when available.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;BRER 510&#39;</span><span class="p">)</span> <span class="c1"># Turn on broadcasting for ports 1-8</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;RPER 510&#39;</span><span class="p">)</span> <span class="c1"># Turn on pass-through for ports 1-8</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="s1">&#39;*IDN?&#39;</span><span class="p">)</span> <span class="c1"># Ask everything for its identification</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;WAIT 1000&#39;</span><span class="p">)</span> <span class="c1"># Wait for one second</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;BRER 0&#39;</span><span class="p">)</span> <span class="c1"># Turn off broadcasting</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;RPER 0&#39;</span><span class="p">)</span> <span class="c1"># Turn off message pass-through. Check that this keeps self-sent messages on!</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">serial</span><span class="o">.</span><span class="n">readlines</span><span class="p">()]</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span> <span class="k">if</span> <span class="n">line</span><span class="p">]</span> <span class="c1"># Remove blank messages</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+            <span class="n">port</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_message</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="n">SRS</span><span class="p">,</span> <span class="n">sim</span><span class="p">,</span> <span class="n">serial_number</span><span class="p">,</span> <span class="n">firmware_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_definite_length</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="n">port</span><span class="p">]</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()[</span><span class="n">sim</span><span class="p">](</span><span class="bp">self</span><span class="o">.</span><span class="n">serial</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">))</span> <span class="c1"># Update</span>
+            <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ports</span><span class="p">[</span><span class="n">port</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SIMThermometer"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIMThermometer">[docs]</a><span class="k">class</span> <span class="nc">SIMThermometer</span><span class="p">(</span><span class="n">SIM</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This is intended to be an abstract class that allows the</span>
+<span class="sd">    temperature sensors to share code.</span>
+
+<span class="sd">    For the SIM921 resistance bridge, the parameter number refers to</span>
+<span class="sd">    calibration curve 1, 2, or 3. For the SIM922 diode temperature</span>
+<span class="sd">    monitor, the parameter number refers to diode channel 1, 2, 3, or</span>
+<span class="sd">    4; there can be only one user calibration curve stored per channel.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># This is the maximum fractional error used by the</span>
+    <span class="c1"># validate_curve() method. It allows for a small rounding error</span>
+    <span class="c1"># due to limited storage space in the SIM.  I have seen fractional</span>
+    <span class="c1"># errors of up to 1.2e-5 or so.</span>
+    <span class="n">maximum_fractional_error</span> <span class="o">=</span> <span class="mf">1e-4</span>
+
+    <span class="c1"># Consider adding enumeration of allowable curve numbers.</span>
+<div class="viewcode-block" id="SIMThermometer.curve_info"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIMThermometer.curve_info">[docs]</a>    <span class="k">def</span> <span class="nf">curve_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number</span><span class="p">):</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;CINI? {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">number</span><span class="p">))</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="n">format</span> <span class="o">=</span> <span class="n">message</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">identification</span> <span class="o">=</span> <span class="n">message</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">message</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">format</span><span class="p">,</span> <span class="n">identification</span><span class="p">,</span> <span class="n">points</span></div>
+
+<div class="viewcode-block" id="SIMThermometer.initialize_curve"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIMThermometer.initialize_curve">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number</span><span class="p">,</span> <span class="n">format</span><span class="p">,</span> <span class="n">identification</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;CINI {}, {}, {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="n">format</span><span class="p">,</span> <span class="n">identification</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SIMThermometer.read_curve"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIMThermometer.read_curve">[docs]</a>    <span class="k">def</span> <span class="nf">read_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number</span><span class="p">):</span>
+        <span class="n">format</span><span class="p">,</span> <span class="n">identification</span><span class="p">,</span> <span class="n">points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">curve_info</span><span class="p">(</span><span class="n">number</span><span class="p">)</span>
+        <span class="n">sensor</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">temperature</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># The indexing is one-based.</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">points</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="c1"># The SIM921 separator is a comma, as its manual says, but</span>
+            <span class="c1"># the SIM922 separator is a space and its manual lies.</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;CAPT? {}, {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">CAPT_separator</span><span class="p">)</span>
+            <span class="n">sensor</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">message</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="n">temperature</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">message</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">CalibrationCurve</span><span class="p">(</span><span class="n">sensor</span><span class="p">,</span> <span class="n">temperature</span><span class="p">,</span> <span class="n">identification</span><span class="p">,</span> <span class="n">format</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SIMThermometer.write_curve"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIMThermometer.write_curve">[docs]</a>    <span class="k">def</span> <span class="nf">write_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number</span><span class="p">,</span> <span class="n">curve</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">curve</span><span class="o">.</span><span class="n">sensor</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximum_temperature_points</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SIMError</span><span class="p">(</span><span class="s2">&quot;Curve contains too many points.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initialize_curve</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="n">curve</span><span class="o">.</span><span class="n">format</span><span class="p">,</span> <span class="n">curve</span><span class="o">.</span><span class="n">identification</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">curve</span><span class="o">.</span><span class="n">sensor</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">serial</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;CAPT {}, {}, {}{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="n">curve</span><span class="o">.</span><span class="n">sensor</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">curve</span><span class="o">.</span><span class="n">temperature</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">termination</span><span class="p">))</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">write_delay</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_curve</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="n">curve</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SIMError</span><span class="p">(</span><span class="s2">&quot;Curve data was not written correctly.&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SIMThermometer.validate_curve"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIMThermometer.validate_curve">[docs]</a>    <span class="k">def</span> <span class="nf">validate_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number</span><span class="p">,</span> <span class="n">curve</span><span class="p">):</span>
+        <span class="n">format</span><span class="p">,</span> <span class="n">identification</span><span class="p">,</span> <span class="n">points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">curve_info</span><span class="p">(</span><span class="n">number</span><span class="p">)</span>
+        <span class="n">stored</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_curve</span><span class="p">(</span><span class="n">number</span><span class="p">)</span>
+        <span class="c1"># If the writing speed is too fast some points may be skipped,</span>
+        <span class="c1"># which will cause the array comparisons below to raise a</span>
+        <span class="c1"># ValueError.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">stored</span><span class="o">.</span><span class="n">sensor</span> <span class="o">/</span> <span class="n">curve</span><span class="o">.</span><span class="n">sensor</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span>
+                           <span class="bp">self</span><span class="o">.</span><span class="n">maximum_fractional_error</span><span class="p">)</span> <span class="ow">and</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">stored</span><span class="o">.</span><span class="n">temperature</span> <span class="o">/</span> <span class="n">curve</span><span class="o">.</span><span class="n">temperature</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span>
+                           <span class="bp">self</span><span class="o">.</span><span class="n">maximum_fractional_error</span><span class="p">)</span> <span class="ow">and</span>
+                    <span class="p">(</span><span class="n">stored</span><span class="o">.</span><span class="n">identification</span> <span class="o">==</span> <span class="n">curve</span><span class="o">.</span><span class="n">identification</span><span class="p">)</span> <span class="ow">and</span>
+                    <span class="p">(</span><span class="n">stored</span><span class="o">.</span><span class="n">format</span> <span class="o">==</span> <span class="n">curve</span><span class="o">.</span><span class="n">format</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span></div></div>
+
+
+<div class="viewcode-block" id="SIM921"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM921">[docs]</a><span class="k">class</span> <span class="nc">SIM921</span><span class="p">(</span><span class="n">SIMThermometer</span><span class="p">):</span>
+
+    <span class="c1"># The documentation for the CAPT command is correct.</span>
+    <span class="n">CAPT_separator</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span>
+
+    <span class="c1"># The manual doesn&#39;t mention the maximum number of points per</span>
+    <span class="c1"># curve, but with the other system we ran into problems when using</span>
+    <span class="c1"># more points.</span>
+    <span class="n">maximum_temperature_points</span> <span class="o">=</span> <span class="mi">225</span>
+
+    <span class="c1"># This is in seconds; points were occasionally dropped at 0.1 seconds.</span>
+    <span class="n">write_delay</span> <span class="o">=</span> <span class="mf">0.5</span>
+
+    <span class="c1"># Minimum and maximum excitation frequencies in Hz:</span>
+    <span class="n">minimum_frequency</span> <span class="o">=</span> <span class="mf">1.95</span>
+    <span class="n">maximum_frequency</span> <span class="o">=</span> <span class="mf">61.1</span>
+
+    <span class="c1"># Excitation commands</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">frequency</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The excitation frequency in Hz.</span>
+
+<span class="sd">        This property implements the FREQ(?) command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;FREQ?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@frequency.setter</span>
+    <span class="k">def</span> <span class="nf">frequency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frequency</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">minimum_frequency</span> <span class="o">&lt;=</span> <span class="n">frequency</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximum_frequency</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SIMValueError</span><span class="p">(</span><span class="s2">&quot;Valid excitation frequency range is from {} to {} Hz&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">minimum_frequency</span><span class="p">,</span>
+                                                                                              <span class="bp">self</span><span class="o">.</span><span class="n">maximum_frequency</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;FREQ {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">frequency</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The resistance range code. See the manual for code meanings.</span>
+
+<span class="sd">        This property implements the RANG(?) command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;RANG?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@range.setter</span>
+    <span class="k">def</span> <span class="nf">range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">code</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">int</span><span class="p">(</span><span class="n">code</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SIMValueError</span><span class="p">(</span><span class="s2">&quot;Valid range codes are integers 0 through 9.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;RANG {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">code</span><span class="p">)))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">excitation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The voltage excitation code. See the manual for code meanings.</span>
+
+<span class="sd">        This property implements the EXCI(?) command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;EXCI?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@excitation.setter</span>
+    <span class="k">def</span> <span class="nf">excitation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">code</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">int</span><span class="p">(</span><span class="n">code</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SIMValueError</span><span class="p">(</span><span class="s2">&quot;Valid excitation codes are integers -1 through 8.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;EXCI {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">code</span><span class="p">)))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">excitation_on</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The excitation state.</span>
+
+<span class="sd">        This property implements the EXON(?) command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_boolean_output</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;EXON?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@excitation_on.setter</span>
+    <span class="k">def</span> <span class="nf">excitation_on</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">boolean</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;EXON {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_boolean_input</span><span class="p">(</span><span class="n">boolean</span><span class="p">)))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">excitation_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The excitation mode.</span>
+
+<span class="sd">        This property implements the MODE(?) command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;MODE?&#39;</span><span class="p">)</span>
+
+    <span class="nd">@excitation_mode.setter</span>
+    <span class="k">def</span> <span class="nf">excitation_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">str</span><span class="p">(</span><span class="n">mode</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;PASSIVE&#39;</span><span class="p">,</span> <span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="s1">&#39;CURRENT&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;VOLTAGE&#39;</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">,</span> <span class="s1">&#39;POWER&#39;</span><span class="p">,</span> <span class="s1">&#39;3&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SIMValueError</span><span class="p">(</span><span class="s2">&quot;Invalid excitation mode.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;MODE {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mode</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">excitation_current</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The actual excitation current amplitude, in amperes.</span>
+
+<span class="sd">        This property implements the IEXC? command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;IEXC?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">excitation_voltage</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The actual excitation voltage amplitude, in volts.</span>
+
+<span class="sd">        This property implements the VEXC? command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;VEXC?&#39;</span><span class="p">))</span>
+
+    <span class="c1"># Measurement commands</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">resistance</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the measured resistance.</span>
+
+<span class="sd">        This property implements the RVAL? command.</span>
+
+<span class="sd">        Multiple measurements and streaming are not yet implemented.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;RVAL?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">resistance_deviation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The resistance deviation, in ohms, from the setpoint.</span>
+
+<span class="sd">        This property implements the RDEV? command.</span>
+
+<span class="sd">        Multiple measurements and streaming are not yet implemented.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;RDEV?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">temperature</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the temperature calculated using the current calibration curve.</span>
+
+<span class="sd">        This property implements the TVAL? command.</span>
+
+<span class="sd">        Multiple measurements and streaming are not yet implemented.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;TVAL?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">temperature_deviation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The temperature deviation, in ohms, from the setpoint.</span>
+
+<span class="sd">        This property implements the TDEV? command.</span>
+
+<span class="sd">        Multiple measurements and streaming are not yet implemented.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;TDEV?&#39;</span><span class="p">))</span>
+
+    <span class="c1"># The PHAS? command is not yet implemented.</span>
+
+    <span class="c1"># The TPER(?) command is not yet implemented.</span>
+
+    <span class="c1"># The SOUT command is not yet implemented.</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">display</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The display state. See the manual for meanings.</span>
+
+<span class="sd">        This property implements the DISP(?) command.</span>
+
+<span class="sd">        Only the range codes are implemented, not the string values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;DISP?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@display.setter</span>
+    <span class="k">def</span> <span class="nf">display</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">code</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">int</span><span class="p">(</span><span class="n">code</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">9</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SIMValueError</span><span class="p">(</span><span class="s2">&quot;Valid display codes are integers 0 through 8.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;DISP {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">code</span><span class="p">)))</span>
+
+    <span class="c1"># Post-detection processing commands.</span>
+
+<div class="viewcode-block" id="SIM921.filter_reset"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM921.filter_reset">[docs]</a>    <span class="k">def</span> <span class="nf">filter_reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reset the post-detection filter.</span>
+
+<span class="sd">        This method implements the FRST command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;FRST&#39;</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">time_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The filter time constant code. See the manual for meanings.</span>
+
+<span class="sd">        This property implements the TCON(?) command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;TCON?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@time_constant.setter</span>
+    <span class="k">def</span> <span class="nf">time_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">code</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">int</span><span class="p">(</span><span class="n">code</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SIMValueError</span><span class="p">(</span><span class="s2">&quot;Valid time constant codes are integers -1 through 6.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;TCON {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">code</span><span class="p">)))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">phase_hold</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The phase hold state.</span>
+
+<span class="sd">        This property implements the PHLD command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_boolean_output</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;PHLD?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@phase_hold.setter</span>
+    <span class="k">def</span> <span class="nf">phase_hold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">boolean</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;PHLD {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_boolean_input</span><span class="p">(</span><span class="n">boolean</span><span class="p">)))</span>
+
+    <span class="c1"># Calibration curve commands</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">display_temperature</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The temperature display mode.</span>
+
+<span class="sd">        This property implements the DTEM(?) command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_boolean_output</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;DTEM?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@display_temperature.setter</span>
+    <span class="k">def</span> <span class="nf">display_temperature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">boolean</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;DTEM {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_boolean_input</span><span class="p">(</span><span class="n">boolean</span><span class="p">)))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">analog_output_temperature</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The analog output mode.</span>
+
+<span class="sd">        This property implements the ATEM(?) command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_boolean_output</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;ATEM?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@analog_output_temperature.setter</span>
+    <span class="k">def</span> <span class="nf">analog_output_temperature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">boolean</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;ATEM {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_boolean_input</span><span class="p">(</span><span class="n">boolean</span><span class="p">)))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">active_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The number of the active calibration curve: 1, 2, or 3.</span>
+
+<span class="sd">        This property implements the CURV(?) command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;CURV?&#39;</span><span class="p">)</span>
+
+    <span class="nd">@active_curve.setter</span>
+    <span class="k">def</span> <span class="nf">active_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">str</span><span class="p">(</span><span class="n">number</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">,</span> <span class="s1">&#39;3&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SIMValueError</span><span class="p">(</span><span class="s2">&quot;Curve number must be 1, 2, or 3.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;CURV {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">number</span><span class="p">))</span>
+
+    <span class="c1"># The CINI(?) and CAPT(?) commands are implemented in SIMThermometer.</span>
+
+    <span class="c1"># Autoranging commands</span>
+
+    <span class="c1"># TODO: figure out why this takes so long.</span>
+    <span class="c1"># TODO: figure out if this is necessary or even helpful when we know the appropriate range and excitation.</span>
+    <span class="c1"># TODO: figure out if this is returning too early and causing communication problems.</span>
+<div class="viewcode-block" id="SIM921.autorange_gain"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM921.autorange_gain">[docs]</a>    <span class="k">def</span> <span class="nf">autorange_gain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform a gain autorange cycle. The manual says this should take about two seconds, but it usually takes longer.</span>
+
+<span class="sd">        This method implements the AGAI(?) command.</span>
+
+<span class="sd">        This method will return only when the autorange cycle completes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;AGAI ON&#39;</span><span class="p">)</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_boolean_output</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;AGAI?&#39;</span><span class="p">)):</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">autorange_display</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The display autorange mode.</span>
+
+<span class="sd">        This property implements the ADIS(?) command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_boolean_output</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;ADIS?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@autorange_display.setter</span>
+    <span class="k">def</span> <span class="nf">autorange_display</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">boolean</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;ADIS {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_boolean_input</span><span class="p">(</span><span class="n">boolean</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="SIM921.autocalibrate"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM921.autocalibrate">[docs]</a>    <span class="k">def</span> <span class="nf">autocalibrate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initiate the internal autocalibration cycle.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;ACAL&#39;</span><span class="p">)</span></div>
+
+    <span class="c1"># Setpoint and analog output commands.</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">resistance_setpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Assign the setpoint, or offset, used for analog output when in resistance mode.</span>
+
+<span class="sd">        This property implements the RSET(?) command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;RSET?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@resistance_setpoint.setter</span>
+    <span class="k">def</span> <span class="nf">resistance_setpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resistance</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">((</span><span class="s1">&#39;RSET {&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">float_format</span> <span class="o">+</span> <span class="s1">&#39;}&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">resistance</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">temperature_setpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Assign the setpoint, or offset, used for analog output when in temperature mode.</span>
+
+<span class="sd">        This property implements the TSET(?) command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;TSET?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@temperature_setpoint.setter</span>
+    <span class="k">def</span> <span class="nf">temperature_setpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">temperature</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">((</span><span class="s1">&#39;TSET {&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">float_format</span> <span class="o">+</span> <span class="s1">&#39;}&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">temperature</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">analog_output_volts_per_ohm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the analog output scale in resistance mode.</span>
+
+<span class="sd">        This property implements the VOHM(?) command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;VOHM?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@analog_output_volts_per_ohm.setter</span>
+    <span class="k">def</span> <span class="nf">analog_output_volts_per_ohm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volts_per_ohm</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">((</span><span class="s1">&#39;VOHM {&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">float_format</span> <span class="o">+</span> <span class="s1">&#39;}&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">volts_per_ohm</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">analog_output_volts_per_kelvin</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the analog output scale in temperature mode.</span>
+
+<span class="sd">        This property implements the TKEL(?) command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;TKEL?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@analog_output_volts_per_kelvin.setter</span>
+    <span class="k">def</span> <span class="nf">analog_output_volts_per_kelvin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volts_per_kelvin</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">((</span><span class="s1">&#39;VKEL {&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">float_format</span> <span class="o">+</span> <span class="s1">&#39;}&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">volts_per_kelvin</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">analog_output_manual_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the analog output manual mode. In manual mode, the output value is set using the AMAN command.</span>
+
+<span class="sd">        This property implements the AMAN(?) command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_boolean_output</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;AMAN?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@analog_output_manual_mode.setter</span>
+    <span class="k">def</span> <span class="nf">analog_output_manual_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">boolean</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;AMAN {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_boolean_input</span><span class="p">(</span><span class="n">boolean</span><span class="p">)))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">analog_output_manual_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the analog output manual value in volts.</span>
+
+<span class="sd">        This property implements the AOUT(?) command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;AOUT?&#39;</span><span class="p">))</span>
+
+    <span class="nd">@analog_output_manual_value.setter</span>
+    <span class="k">def</span> <span class="nf">analog_output_manual_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">volts</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">((</span><span class="s1">&#39;AOUT {&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">float_format</span> <span class="o">+</span> <span class="s1">&#39;}&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">volts</span><span class="p">))</span></div>
+
+    <span class="c1"># Interface commands.</span>
+    <span class="c1"># The *IDN, *RST, and TOKN commands are implemented in SIM.</span>
+
+    <span class="c1"># Status commands.</span>
+
+
+    <span class="c1"># The *CLS command is implemented in SIM.</span>
+
+
+<div class="viewcode-block" id="SIM922"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM922">[docs]</a><span class="k">class</span> <span class="nc">SIM922</span><span class="p">(</span><span class="n">SIMThermometer</span><span class="p">):</span>
+
+    <span class="c1"># The documentation for the CAPT command is incorrect: the</span>
+    <span class="c1"># separator is a space, not a comma.</span>
+    <span class="n">CAPT_separator</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span>
+
+    <span class="c1"># The manual says that this is the maximum number of points per</span>
+    <span class="c1"># tone_index, but I haven&#39;t checked it yet.</span>
+    <span class="n">maximum_temperature_points</span> <span class="o">=</span> <span class="mi">256</span>
+
+    <span class="c1"># This is in seconds; points were sometimes dropped at 0.5 seconds and below.</span>
+    <span class="n">write_delay</span> <span class="o">=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="SIM922.voltage"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM922.voltage">[docs]</a>    <span class="k">def</span> <span class="nf">voltage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;VOLT? {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">channel</span><span class="p">)))</span></div>
+
+<div class="viewcode-block" id="SIM922.temperature"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM922.temperature">[docs]</a>    <span class="k">def</span> <span class="nf">temperature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;TVAL? {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">channel</span><span class="p">)))</span></div>
+
+<div class="viewcode-block" id="SIM922.get_curve_type"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM922.get_curve_type">[docs]</a>    <span class="k">def</span> <span class="nf">get_curve_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_and_receive</span><span class="p">(</span><span class="s1">&#39;CURV? {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">channel</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SIM922.set_curve_type"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM922.set_curve_type">[docs]</a>    <span class="k">def</span> <span class="nf">set_curve_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">curve_type</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">str</span><span class="p">(</span><span class="n">curve_type</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="s1">&#39;STAN&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;USER&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SIMValueError</span><span class="p">(</span><span class="s2">&quot;Invalid curve type.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;CURV {}, {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">curve_type</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="SIM925"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.SIM925">[docs]</a><span class="k">class</span> <span class="nc">SIM925</span><span class="p">(</span><span class="n">SIM</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="CalibrationCurve"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.CalibrationCurve">[docs]</a><span class="k">class</span> <span class="nc">CalibrationCurve</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sensor</span><span class="p">,</span> <span class="n">temperature</span><span class="p">,</span> <span class="n">identification</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="s1">&#39;0&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This class represents and calibration curve.</span>
+
+<span class="sd">        This class stores identification strings as uppercase because</span>
+<span class="sd">        the hardware stores them that way. This allows the</span>
+<span class="sd">        validate_curve() method to work.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sensor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sensor</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sensor</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SIMError</span><span class="p">(</span><span class="s2">&quot;Sensor values must increase monotonically.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">temperature</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">sensor</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SIMError</span><span class="p">(</span><span class="s2">&quot;Different numbers of sensor and temperature points.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">identification</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">15</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SIMError</span><span class="p">(</span><span class="s2">&quot;Identification string may be at most 15 characters.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">identification</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">identification</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">format</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="load_curve"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.load_curve">[docs]</a><span class="k">def</span> <span class="nf">load_curve</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="s1">&#39;0&#39;</span><span class="p">):</span>
+    <span class="n">identification</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">filename</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">sensor</span><span class="p">,</span> <span class="n">temperature</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">unpack</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">CalibrationCurve</span><span class="p">(</span><span class="n">sensor</span><span class="p">,</span> <span class="n">temperature</span><span class="p">,</span> <span class="n">identification</span><span class="p">,</span> <span class="n">format</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="save_curve"><a class="viewcode-back" href="../../../kid_readout.equipment.html#kid_readout.equipment.sim.save_curve">[docs]</a><span class="k">def</span> <span class="nf">save_curve</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">curve</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%.5f</span><span class="se">\t</span><span class="si">%.5f</span><span class="s1">&#39;</span><span class="p">),</span> <span class="n">newline</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\r\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="s1">&#39;.txt&#39;</span><span class="p">):</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">curve</span><span class="o">.</span><span class="n">identification</span> <span class="o">+</span> <span class="n">extension</span><span class="p">)</span>
+    <span class="n">columns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">curve</span><span class="o">.</span><span class="n">sensor</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">columns</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">curve</span><span class="o">.</span><span class="n">sensor</span>
+    <span class="n">columns</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">curve</span><span class="o">.</span><span class="n">temperature</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">columns</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="n">format</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="n">newline</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">filename</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

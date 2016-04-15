@@ -1,0 +1,463 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.analysis package &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="index.html" />
+    <link rel="up" title="kid_readout package" href="kid_readout.html" />
+    <link rel="next" title="kid_readout.analysis.physics package" href="kid_readout.analysis.physics.html" />
+    <link rel="prev" title="kid_readout package" href="kid_readout.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="kid_readout.analysis.physics.html" title="kid_readout.analysis.physics package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="kid_readout.html" title="kid_readout package"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="kid_readout.html" accesskey="U">kid_readout package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="kid-readout-analysis-package">
+<h1>kid_readout.analysis package<a class="headerlink" href="#kid-readout-analysis-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="kid_readout.analysis.physics.html">kid_readout.analysis.physics package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.physics.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.physics.html#module-kid_readout.analysis.physics.kid_eqns">kid_readout.analysis.physics.kid_eqns module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.physics.html#module-kid_readout.analysis.physics.mbint">kid_readout.analysis.physics.mbint module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.physics.html#module-kid_readout.analysis.physics.mkid">kid_readout.analysis.physics.mkid module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.physics.html#module-kid_readout.analysis.physics">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="kid_readout.analysis.resonator.html">kid_readout.analysis.resonator package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.resonator.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="kid_readout.analysis.resonator.test.html">kid_readout.analysis.resonator.test package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.resonator.test.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.resonator.test.html#module-kid_readout.analysis.resonator.test.resonator_test">kid_readout.analysis.resonator.test.resonator_test module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.resonator.test.html#module-kid_readout.analysis.resonator.test.test_lmfit_resonator">kid_readout.analysis.resonator.test.test_lmfit_resonator module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kid_readout.analysis.resonator.test.html#module-kid_readout.analysis.resonator.test">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.resonator.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.resonator.html#module-kid_readout.analysis.resonator.equations">kid_readout.analysis.resonator.equations module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.resonator.html#module-kid_readout.analysis.resonator.helpers">kid_readout.analysis.resonator.helpers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.resonator.html#module-kid_readout.analysis.resonator.inverse">kid_readout.analysis.resonator.inverse module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.resonator.html#module-kid_readout.analysis.resonator.khalil">kid_readout.analysis.resonator.khalil module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.resonator.html#module-kid_readout.analysis.resonator.legacy_resonator">kid_readout.analysis.resonator.legacy_resonator module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.resonator.html#module-kid_readout.analysis.resonator.lmfit_models">kid_readout.analysis.resonator.lmfit_models module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.resonator.html#module-kid_readout.analysis.resonator.lmfit_resonator">kid_readout.analysis.resonator.lmfit_resonator module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.resonator.html#module-kid_readout.analysis.resonator.plot_resonator">kid_readout.analysis.resonator.plot_resonator module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.resonator.html#module-kid_readout.analysis.resonator">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="kid_readout.analysis.resources.html">kid_readout.analysis.resources package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.resources.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.resources.html#module-kid_readout.analysis.resources.experiments">kid_readout.analysis.resources.experiments module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.resources.html#module-kid_readout.analysis.resources.hpd_experiments">kid_readout.analysis.resources.hpd_experiments module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.resources.html#module-kid_readout.analysis.resources.local_settings">kid_readout.analysis.resources.local_settings module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.resources.html#module-kid_readout.analysis.resources.skip5x4">kid_readout.analysis.resources.skip5x4 module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.resources.html#module-kid_readout.analysis.resources.starcryo_experiments">kid_readout.analysis.resources.starcryo_experiments module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.resources.html#module-kid_readout.analysis.resources">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="kid_readout.analysis.tests.html">kid_readout.analysis.tests package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.tests.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.tests.html#module-kid_readout.analysis.tests.test_fitter">kid_readout.analysis.tests.test_fitter module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.tests.html#module-kid_readout.analysis.tests.test_iqnoise">kid_readout.analysis.tests.test_iqnoise module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.tests.html#module-kid_readout.analysis.tests.test_resonator">kid_readout.analysis.tests.test_resonator module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.tests.html#module-kid_readout.analysis.tests">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="kid_readout.analysis.timedomain.html">kid_readout.analysis.timedomain package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.timedomain.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.timedomain.html#module-kid_readout.analysis.timedomain.cross_spectrum">kid_readout.analysis.timedomain.cross_spectrum module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.timedomain.html#module-kid_readout.analysis.timedomain.demodulate_rtl">kid_readout.analysis.timedomain.demodulate_rtl module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.timedomain.html#module-kid_readout.analysis.timedomain.despike">kid_readout.analysis.timedomain.despike module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.timedomain.html#module-kid_readout.analysis.timedomain.fftfilt">kid_readout.analysis.timedomain.fftfilt module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.timedomain.html#module-kid_readout.analysis.timedomain.filters">kid_readout.analysis.timedomain.filters module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.timedomain.html#module-kid_readout.analysis.timedomain.fit_pulses">kid_readout.analysis.timedomain.fit_pulses module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.timedomain.html#module-kid_readout.analysis.timedomain.iqnoise">kid_readout.analysis.timedomain.iqnoise module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.timedomain.html#module-kid_readout.analysis.timedomain.noise_fit">kid_readout.analysis.timedomain.noise_fit module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.analysis.timedomain.html#module-kid_readout.analysis.timedomain">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="kid-readout-analysis-archive-module">
+<h2>kid_readout.analysis.archive module<a class="headerlink" href="#kid-readout-analysis-archive-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="kid-readout-analysis-dataframe-module">
+<h2>kid_readout.analysis.dataframe module<a class="headerlink" href="#kid-readout-analysis-dataframe-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-kid_readout.analysis.fitter">
+<span id="kid-readout-analysis-fitter-module"></span><h2>kid_readout.analysis.fitter module<a class="headerlink" href="#module-kid_readout.analysis.fitter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="kid_readout.analysis.fitter.Fitter">
+<em class="property">class </em><code class="descclassname">kid_readout.analysis.fitter.</code><code class="descname">Fitter</code><span class="sig-paren">(</span><em>x_data</em>, <em>y_data</em>, <em>model=&lt;function line_model&gt;</em>, <em>guess=&lt;function line_guess&gt;</em>, <em>functions={}</em>, <em>mask=None</em>, <em>errors=None</em>, <em>method='leastsq'</em>, <em>**minimize_keywords</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/fitter.html#Fitter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.fitter.Fitter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>This class makes it easier to use lmfit. All of the
+model-dependent behavior is contained in functions that are
+supplied to the class. There is a little bit of Python magic that
+allows for easy access to the fit parameters and functions of only
+the fit parameters.</p>
+<dl class="method">
+<dt id="kid_readout.analysis.fitter.Fitter.approx_gradient">
+<code class="descname">approx_gradient</code><span class="sig-paren">(</span><em>x</em>, <em>params=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/fitter.html#Fitter.approx_gradient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.fitter.Fitter.approx_gradient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimate the model gradient dy/dx at the given x-values using a two-point approximation.</p>
+<p>Note that this is currently written to use a fixed fractional step size in x, not a fixed step size,
+so be careful if x spans a large range of values or includes zero.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.fitter.Fitter.fit">
+<code class="descname">fit</code><span class="sig-paren">(</span><em>initial</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/fitter.html#Fitter.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.fitter.Fitter.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit using the data and model given at instantiation.</p>
+<p>initial: a Parameters object containing initial values; it is modified by lmfit.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.fitter.Fitter.inverse">
+<code class="descname">inverse</code><span class="sig-paren">(</span><em>y</em>, <em>params=None</em>, <em>guess=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/fitter.html#Fitter.inverse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.fitter.Fitter.inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the modeled x-values that correspond to the given y-values.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.fitter.Fitter.model">
+<code class="descname">model</code><span class="sig-paren">(</span><em>params=None</em>, <em>x=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/fitter.html#Fitter.model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.fitter.Fitter.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the model evaluated with the given parameters at the given x-values. Defaults are the fit-derived
+params and the x-values corresponding to the data.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.fitter.line_guess">
+<code class="descclassname">kid_readout.analysis.fitter.</code><code class="descname">line_guess</code><span class="sig-paren">(</span><em>x</em>, <em>y</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/fitter.html#line_guess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.fitter.line_guess" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.fitter.line_model">
+<code class="descclassname">kid_readout.analysis.fitter.</code><code class="descname">line_model</code><span class="sig-paren">(</span><em>params</em>, <em>x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/fitter.html#line_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.fitter.line_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.fitter.x_intercept">
+<code class="descclassname">kid_readout.analysis.fitter.</code><code class="descname">x_intercept</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/fitter.html#x_intercept"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.fitter.x_intercept" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="kid-readout-analysis-kid-response-module">
+<h2>kid_readout.analysis.kid_response module<a class="headerlink" href="#kid-readout-analysis-kid-response-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-kid_readout.analysis.lmfit_fitter">
+<span id="kid-readout-analysis-lmfit-fitter-module"></span><h2>kid_readout.analysis.lmfit_fitter module<a class="headerlink" href="#module-kid_readout.analysis.lmfit_fitter" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="kid_readout.analysis.lmfit_fitter.FitterWithAttributeAccess">
+<em class="property">class </em><code class="descclassname">kid_readout.analysis.lmfit_fitter.</code><code class="descname">FitterWithAttributeAccess</code><span class="sig-paren">(</span><em>data</em>, <em>model=None</em>, <em>axes_style={}</em>, <em>data_style={}</em>, <em>init_style={}</em>, <em>best_style={}</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/lmfit_fitter.html#FitterWithAttributeAccess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.lmfit_fitter.FitterWithAttributeAccess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">lmfit.ui.basefitter.MPLFitter</span></code></p>
+</dd></dl>
+
+</div>
+<div class="section" id="kid-readout-analysis-mcfit-module">
+<h2>kid_readout.analysis.mcfit module<a class="headerlink" href="#kid-readout-analysis-mcfit-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-kid_readout.analysis.noise_measurement">
+<span id="kid-readout-analysis-noise-measurement-module"></span><h2>kid_readout.analysis.noise_measurement module<a class="headerlink" href="#module-kid_readout.analysis.noise_measurement" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="kid_readout.analysis.noise_measurement.SweepNoiseMeasurement">
+<em class="property">class </em><code class="descclassname">kid_readout.analysis.noise_measurement.</code><code class="descname">SweepNoiseMeasurement</code><span class="sig-paren">(</span><em>sweep_filename</em>, <em>sweep_group_index=0</em>, <em>timestream_filename=None</em>, <em>timestream_group_index=0</em>, <em>resonator_index=0</em>, <em>low_pass_cutoff_Hz=4.0</em>, <em>dac_chain_gain=-49</em>, <em>delay_estimate=None</em>, <em>deglitch_threshold=5</em>, <em>cryostat=None</em>, <em>mask_sweep_indicies=None</em>, <em>use_sweep_group_timestream=False</em>, <em>conjugate_data=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/noise_measurement.html#SweepNoiseMeasurement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.noise_measurement.SweepNoiseMeasurement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="attribute">
+<dt id="kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.fractional_fluctuation_timeseries">
+<code class="descname">fractional_fluctuation_timeseries</code><a class="headerlink" href="#kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.fractional_fluctuation_timeseries" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the fractional fluctuation timeseries (projected divided by resonant frequency)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.get_deglitched_timeseries">
+<code class="descname">get_deglitched_timeseries</code><span class="sig-paren">(</span><em>window_in_seconds=1.0</em>, <em>thresh=None</em>, <em>use_old_deglitcher=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/noise_measurement.html#SweepNoiseMeasurement.get_deglitched_timeseries"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.get_deglitched_timeseries" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the deglitched, projected timeseries</p>
+<dl class="docutils">
+<dt>window_in_seconds</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">float</span><dd>deglitching window duration</dd>
+<dt>thresh</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">float</span><dd>threshold in median absoute deviations.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.get_projected_fractional_fluctuation_spectra">
+<code class="descname">get_projected_fractional_fluctuation_spectra</code><span class="sig-paren">(</span><em>NFFT=4096</em>, <em>window=&lt;function window_none&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/noise_measurement.html#SweepNoiseMeasurement.get_projected_fractional_fluctuation_spectra"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.get_projected_fractional_fluctuation_spectra" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the PSD of the fractional fluctuation timeseries using mlab.psd.</p>
+<dl class="docutils">
+<dt>NFFT</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">int</span><dd>length of the FFT to compute. Sets freuqency resolution.</dd>
+<dt>window</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">function</span><dd>windowing function. i.e. mlab.window_hamming etc.</dd>
+</dl>
+<p>Returns: freqs,prr,pii</p>
+<dl class="docutils">
+<dt>freqs</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">float array</span><dd>Frequencies in Hz</dd>
+<dt>prr</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">float array</span><dd>dissipation spectrum. Units are 1/Hz</dd>
+<dt>pii</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">float array</span><dd>frequency fluctuation spectrum. Units are 1/Hz</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.normalized_timeseries">
+<code class="descname">normalized_timeseries</code><a class="headerlink" href="#kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.normalized_timeseries" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the timeseries after normalizing it to remove the arbitrary amplitude, phase, and delay corrections
+determined by the resonator fit</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.original_timeseries">
+<code class="descname">original_timeseries</code><a class="headerlink" href="#kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.original_timeseries" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the original demodulated timeseries</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.plot">
+<code class="descname">plot</code><span class="sig-paren">(</span><em>fig=None</em>, <em>title=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/noise_measurement.html#SweepNoiseMeasurement.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make standard plot of noise sweep</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.projected_timeseries">
+<code class="descname">projected_timeseries</code><a class="headerlink" href="#kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.projected_timeseries" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the timeseries after projecting it into the dissipation and frequency directions (in units of Hz)
+determined by the resonator fit</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.resonator_model">
+<code class="descname">resonator_model</code><a class="headerlink" href="#kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.resonator_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.sweep">
+<code class="descname">sweep</code><a class="headerlink" href="#kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.sweep" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the sweep group from the netcdf file</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.timestream">
+<code class="descname">timestream</code><a class="headerlink" href="#kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.timestream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the timestream group from the netcdf file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.to_dataframe">
+<code class="descname">to_dataframe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/noise_measurement.html#SweepNoiseMeasurement.to_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.noise_measurement.SweepNoiseMeasurement.to_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.noise_measurement.find_nc_file">
+<code class="descclassname">kid_readout.analysis.noise_measurement.</code><code class="descname">find_nc_file</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/noise_measurement.html#find_nc_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.noise_measurement.find_nc_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find nc data file based on partial filename</p>
+<p>Some pkls have incomplete timestream and sweep filenames, so we use this to complete them.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.noise_measurement.load_noise_pkl">
+<code class="descclassname">kid_readout.analysis.noise_measurement.</code><code class="descname">load_noise_pkl</code><span class="sig-paren">(</span><em>pklname</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/noise_measurement.html#load_noise_pkl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.noise_measurement.load_noise_pkl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.noise_measurement.plot_noise_nc">
+<code class="descclassname">kid_readout.analysis.noise_measurement.</code><code class="descname">plot_noise_nc</code><span class="sig-paren">(</span><em>fglob</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/noise_measurement.html#plot_noise_nc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.noise_measurement.plot_noise_nc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create noise measurements from all noise sweeps in a netcdf file, make plots, and pickle the noise measurements</p>
+<dl class="docutils">
+<dt>fglob</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">string or list</span><dd>filename glob. Can be either a filename, which can contain * or ? wildcards, or a list of files</dd>
+<dt>plot_all</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">bool (default False)</span><dd>if True, plot all sweeps, otherwise just plot the first one for each resonator</dd>
+</dl>
+<p><a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs are passed to the noise measurement class</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.noise_measurement.save_noise_pkl">
+<code class="descclassname">kid_readout.analysis.noise_measurement.</code><code class="descname">save_noise_pkl</code><span class="sig-paren">(</span><em>pklname</em>, <em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/noise_measurement.html#save_noise_pkl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.noise_measurement.save_noise_pkl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="kid-readout-analysis-plot-dataframe-module">
+<h2>kid_readout.analysis.plot_dataframe module<a class="headerlink" href="#kid-readout-analysis-plot-dataframe-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-kid_readout.analysis.plot_wafer">
+<span id="kid-readout-analysis-plot-wafer-module"></span><h2>kid_readout.analysis.plot_wafer module<a class="headerlink" href="#module-kid_readout.analysis.plot_wafer" title="Permalink to this headline">¶</a></h2>
+<p>This module is for plotting functions related to the physical layout of a detector wafer.</p>
+<dl class="function">
+<dt id="kid_readout.analysis.plot_wafer.scatter">
+<code class="descclassname">kid_readout.analysis.plot_wafer.</code><code class="descname">scatter</code><span class="sig-paren">(</span><em>values</em>, <em>mask=None</em>, <em>colormap=&lt;matplotlib.colors.LinearSegmentedColormap object&gt;</em>, <em>size=40</em>, <em>colorbar=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/plot_wafer.html#scatter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.plot_wafer.scatter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.plot_wafer.scatter_text">
+<code class="descclassname">kid_readout.analysis.plot_wafer.</code><code class="descname">scatter_text</code><span class="sig-paren">(</span><em>values</em>, <em>x_offset=-0.5</em>, <em>y_offset=0.15</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/plot_wafer.html#scatter_text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.plot_wafer.scatter_text" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.analysis.process_mmw_response">
+<span id="kid-readout-analysis-process-mmw-response-module"></span><h2>kid_readout.analysis.process_mmw_response module<a class="headerlink" href="#module-kid_readout.analysis.process_mmw_response" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="kid_readout.analysis.process_mmw_response.MmwResponse">
+<em class="property">class </em><code class="descclassname">kid_readout.analysis.process_mmw_response.</code><code class="descname">MmwResponse</code><span class="sig-paren">(</span><em>ncfilename</em>, <em>resonator_index</em>, <em>data_is_aligned=True</em>, <em>use_bifurcation_model=False</em>, <em>timestream_group_index=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/process_mmw_response.html#MmwResponse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.process_mmw_response.MmwResponse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="kid_readout.analysis.process_mmw_response.MmwResponse.plot">
+<code class="descname">plot</code><span class="sig-paren">(</span><em>fig=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/process_mmw_response.html#MmwResponse.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.process_mmw_response.MmwResponse.plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.process_mmw_response.determine_timestream_index_by_frequency">
+<code class="descclassname">kid_readout.analysis.process_mmw_response.</code><code class="descname">determine_timestream_index_by_frequency</code><span class="sig-paren">(</span><em>timestream_group</em>, <em>freq</em>, <em>num_resonators</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/process_mmw_response.html#determine_timestream_index_by_frequency"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.process_mmw_response.determine_timestream_index_by_frequency" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.process_mmw_response.plot_file">
+<code class="descclassname">kid_readout.analysis.process_mmw_response.</code><code class="descname">plot_file</code><span class="sig-paren">(</span><em>filename</em>, <em>num_resonators=16</em>, <em>reference_spectrum=None</em>, <em>data_is_aligned=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/process_mmw_response.html#plot_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.process_mmw_response.plot_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.process_mmw_response.plot_file_with_air_spacer_reference">
+<code class="descclassname">kid_readout.analysis.process_mmw_response.</code><code class="descname">plot_file_with_air_spacer_reference</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/process_mmw_response.html#plot_file_with_air_spacer_reference"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.process_mmw_response.plot_file_with_air_spacer_reference" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.analysis">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-kid_readout.analysis" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">kid_readout.analysis package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#kid-readout-analysis-archive-module">kid_readout.analysis.archive module</a></li>
+<li><a class="reference internal" href="#kid-readout-analysis-dataframe-module">kid_readout.analysis.dataframe module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.fitter">kid_readout.analysis.fitter module</a></li>
+<li><a class="reference internal" href="#kid-readout-analysis-kid-response-module">kid_readout.analysis.kid_response module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.lmfit_fitter">kid_readout.analysis.lmfit_fitter module</a></li>
+<li><a class="reference internal" href="#kid-readout-analysis-mcfit-module">kid_readout.analysis.mcfit module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.noise_measurement">kid_readout.analysis.noise_measurement module</a></li>
+<li><a class="reference internal" href="#kid-readout-analysis-plot-dataframe-module">kid_readout.analysis.plot_dataframe module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.plot_wafer">kid_readout.analysis.plot_wafer module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.process_mmw_response">kid_readout.analysis.process_mmw_response module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="kid_readout.html"
+                        title="previous chapter">kid_readout package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="kid_readout.analysis.physics.html"
+                        title="next chapter">kid_readout.analysis.physics package</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/kid_readout.analysis.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="kid_readout.analysis.physics.html" title="kid_readout.analysis.physics package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="kid_readout.html" title="kid_readout package"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="kid_readout.html" >kid_readout package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

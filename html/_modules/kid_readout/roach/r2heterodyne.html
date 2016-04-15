@@ -1,0 +1,209 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.roach.r2heterodyne &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for kid_readout.roach.r2heterodyne</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Classes to interface to ROACH2 hardware for KID readout systems</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">__author__</span> <span class="o">=</span> <span class="s1">&#39;gjones&#39;</span>
+
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.signal</span>
+
+<span class="kn">import</span> <span class="nn">kid_readout.roach.r2_udp_catcher</span>
+<span class="kn">import</span> <span class="nn">tools</span>
+<span class="kn">from</span> <span class="nn">interface</span> <span class="kn">import</span> <span class="n">RoachInterface</span>
+<span class="kn">from</span> <span class="nn">heterodyne</span> <span class="kn">import</span> <span class="n">RoachHeterodyne</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">numexpr</span>
+
+    <span class="n">have_numexpr</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">have_numexpr</span> <span class="o">=</span> <span class="bp">False</span>
+
+
+
+<div class="viewcode-block" id="Roach2Heterodyne"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.r2heterodyne.Roach2Heterodyne">[docs]</a><span class="k">class</span> <span class="nc">Roach2Heterodyne</span><span class="p">(</span><span class="n">RoachHeterodyne</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">roach</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">wafer</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">roachip</span><span class="o">=</span><span class="s1">&#39;r2kid&#39;</span><span class="p">,</span> <span class="n">adc_valon</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">host_ip</span><span class="o">=</span><span class="s1">&#39;10.0.0.1&#39;</span><span class="p">,</span> <span class="n">initialize</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                 <span class="n">nfs_root</span><span class="o">=</span><span class="s1">&#39;/srv/roach_boot/etch&#39;</span><span class="p">,</span> <span class="n">lo_valon</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">iq_delay</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">attenuator</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Roach2Heterodyne</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">roach</span><span class="o">=</span><span class="n">roach</span><span class="p">,</span><span class="n">wafer</span><span class="o">=</span><span class="n">wafer</span><span class="p">,</span><span class="n">roachip</span><span class="o">=</span><span class="n">roachip</span><span class="p">,</span> <span class="n">adc_valon</span><span class="o">=</span><span class="n">adc_valon</span><span class="p">,</span>
+                                            <span class="n">host_ip</span><span class="o">=</span><span class="n">host_ip</span><span class="p">,</span> <span class="n">nfs_root</span><span class="o">=</span><span class="n">nfs_root</span><span class="p">,</span> <span class="n">lo_valon</span><span class="o">=</span><span class="n">lo_valon</span><span class="p">,</span> <span class="n">attenuator</span><span class="o">=</span><span class="n">attenuator</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">lo_frequency</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">heterodyne</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boffile</span> <span class="o">=</span> <span class="s1">&#39;r2iq2xpfb14mcr12gb_2016_Feb_20_0948.bof&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">wafer</span> <span class="o">=</span> <span class="n">wafer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raw_adc_ns</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">12</span>  <span class="c1"># number of samples in the raw ADC buffer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nfft</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">14</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fpga_output_buffer</span> <span class="o">=</span> <span class="s1">&#39;ppout</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">wafer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iq_delay</span> <span class="o">=</span> <span class="n">iq_delay</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase0</span> <span class="o">=</span> <span class="bp">None</span>      <span class="c1">#initial sequence number, if none then no data has been read in yet</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_general_setup</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">initialize</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Roach2Heterodyne.initialize"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.r2heterodyne.Roach2Heterodyne.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mf">512.0</span><span class="p">,</span> <span class="n">cal_qdr</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">use_config</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Roach2Heterodyne</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span><span class="n">start_udp</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span><span class="n">use_config</span><span class="o">=</span><span class="n">use_config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;destip&#39;</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">inet_aton</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host_ip</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;u4&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;destport&#39;</span><span class="p">,</span><span class="mi">55555</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;txrst&#39;</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;txrst&#39;</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">tap_start</span><span class="p">(</span><span class="s1">&#39;gbe&#39;</span><span class="p">,</span><span class="s1">&#39;one_GbE&#39;</span><span class="p">,</span><span class="mh">0x021111123456</span><span class="p">,</span><span class="mh">0x0A000002</span><span class="p">,</span><span class="mi">12345</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">cal_qdr</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">qdr</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="n">qdr</span><span class="o">.</span><span class="n">Qdr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="p">,</span><span class="s1">&#39;qdr0&#39;</span><span class="p">)</span>
+            <span class="n">q</span><span class="o">.</span><span class="n">qdr_cal</span><span class="p">(</span><span class="n">verbosity</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Roach2Heterodyne.set_tone_bins"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.r2heterodyne.Roach2Heterodyne.set_tone_bins">[docs]</a>    <span class="k">def</span> <span class="nf">set_tone_bins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bins</span><span class="p">,</span> <span class="n">nsamp</span><span class="p">,</span> <span class="n">amps</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">load</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">normfact</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">phases</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Roach2Heterodyne</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">set_tone_bins</span><span class="p">(</span><span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">,</span> <span class="n">nsamp</span><span class="o">=</span><span class="n">nsamp</span><span class="p">,</span> <span class="n">amps</span><span class="o">=</span><span class="n">amps</span><span class="p">,</span> <span class="n">load</span><span class="o">=</span><span class="n">load</span><span class="p">,</span> <span class="n">normfact</span><span class="o">=</span><span class="n">normfact</span><span class="p">,</span> <span class="n">phases</span><span class="o">=</span><span class="n">phases</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Roach2Heterodyne.load_waveforms"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.r2heterodyne.Roach2Heterodyne.load_waveforms">[docs]</a>    <span class="k">def</span> <span class="nf">load_waveforms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i_wave</span><span class="p">,</span> <span class="n">q_wave</span><span class="p">,</span> <span class="n">fast</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">start_offset</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load waveforms for the two DACs</span>
+
+<span class="sd">        i_wave,q_wave : arrays of 16-bit (dtype=&#39;i2&#39;) integers with waveforms for the two DACs</span>
+
+<span class="sd">        fast : boolean</span>
+<span class="sd">            decide what method for loading the dram</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1">#somehow the r2 qdr has the dac0/1 outputs switched...</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i_wave</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;i2&#39;</span><span class="p">)</span>
+        <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">q_wave</span><span class="p">[::</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">q_wave</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">data</span><span class="p">[</span><span class="mi">2</span><span class="p">::</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">i_wave</span><span class="p">[::</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">data</span><span class="p">[</span><span class="mi">3</span><span class="p">::</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">i_wave</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">blindwrite</span><span class="p">(</span><span class="s1">&#39;qdr0_memory&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">tostring</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_unpause_dram</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_pause_dram</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;qdr_en&#39;</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_unpause_dram</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;qdr_en&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Roach2Heterodyne.get_raw_adc"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.r2heterodyne.Roach2Heterodyne.get_raw_adc">[docs]</a>    <span class="k">def</span> <span class="nf">get_raw_adc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Grab raw ADC samples</span>
+<span class="sd">        returns: s0,s1</span>
+<span class="sd">        s0 and s1 are the samples from adc 0 and adc 1 respectively</span>
+<span class="sd">        Each sample is a 12 bit signed integer (cast to a numpy float)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;adc_snap_ctrl&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;adc_snap_ctrl&#39;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">s0</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;adc_snap_bram&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_adc_ns</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;i2&#39;</span><span class="p">))</span>
+        <span class="n">sb</span> <span class="o">=</span> <span class="n">s0</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="s1">&#39;&gt;i4&#39;</span><span class="p">)</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">sb</span><span class="p">[::</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="s1">&#39;&gt;i2&#39;</span><span class="p">)</span> <span class="o">/</span> <span class="mf">16.</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">sb</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="s1">&#39;&gt;i2&#39;</span><span class="p">)</span> <span class="o">/</span> <span class="mf">16.</span>
+        <span class="k">return</span> <span class="n">i</span><span class="p">,</span> <span class="n">q</span></div>
+
+<div class="viewcode-block" id="Roach2Heterodyne.get_data_udp"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.r2heterodyne.Roach2Heterodyne.get_data_udp">[docs]</a>    <span class="k">def</span> <span class="nf">get_data_udp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nread</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">demod</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">seqnos</span> <span class="o">=</span> <span class="n">kid_readout</span><span class="o">.</span><span class="n">roach</span><span class="o">.</span><span class="n">r2_udp_catcher</span><span class="o">.</span><span class="n">get_udp_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">npkts</span><span class="o">=</span><span class="n">nread</span><span class="p">,</span>
+                                                                     <span class="n">nchans</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">readout_selection</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                                                     <span class="n">addr</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host_ip</span><span class="p">,</span> <span class="mi">55555</span><span class="p">))</span>  <span class="c1"># , stream_reg, addr)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase0</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phase0</span> <span class="o">=</span> <span class="n">seqnos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">demod</span><span class="p">:</span>
+            <span class="n">seqnos</span> <span class="o">-=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase0</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">demodulate_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">seqnos</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">seqnos</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">blocks_per_second_per_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">chan_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">*</span> <span class="mf">1e6</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nfft</span><span class="p">)</span>  <span class="c1"># samples per second for one tone_index</span>
+        <span class="n">samples_per_channel_per_block</span> <span class="o">=</span> <span class="mi">256</span>
+        <span class="k">return</span> <span class="n">chan_rate</span> <span class="o">/</span> <span class="n">samples_per_channel_per_block</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

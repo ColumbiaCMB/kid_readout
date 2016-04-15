@@ -1,0 +1,696 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.measurement.io package &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="index.html" />
+    <link rel="up" title="kid_readout.measurement package" href="kid_readout.measurement.html" />
+    <link rel="next" title="kid_readout.measurement.io.test package" href="kid_readout.measurement.io.test.html" />
+    <link rel="prev" title="kid_readout.measurement.acquire.test package" href="kid_readout.measurement.acquire.test.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="kid_readout.measurement.io.test.html" title="kid_readout.measurement.io.test package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="kid_readout.measurement.acquire.test.html" title="kid_readout.measurement.acquire.test package"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="kid_readout.html" >kid_readout package</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="kid_readout.measurement.html" accesskey="U">kid_readout.measurement package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="kid-readout-measurement-io-package">
+<h1>kid_readout.measurement.io package<a class="headerlink" href="#kid-readout-measurement-io-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="kid_readout.measurement.io.test.html">kid_readout.measurement.io.test package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.measurement.io.test.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.measurement.io.test.html#module-kid_readout.measurement.io.test.test_nc">kid_readout.measurement.io.test.test_nc module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.measurement.io.test.html#module-kid_readout.measurement.io.test.test_npy">kid_readout.measurement.io.test.test_npy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kid_readout.measurement.io.test.html#module-kid_readout.measurement.io.test">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-kid_readout.measurement.io.data_block">
+<span id="kid-readout-measurement-io-data-block-module"></span><h2>kid_readout.measurement.io.data_block module<a class="headerlink" href="#module-kid_readout.measurement.io.data_block" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="kid_readout.measurement.io.data_block.DataBlock">
+<em class="property">class </em><code class="descclassname">kid_readout.measurement.io.data_block.</code><code class="descname">DataBlock</code><span class="sig-paren">(</span><em>data</em>, <em>tone</em>, <em>fftbin</em>, <em>nsamp</em>, <em>nfft</em>, <em>wavenorm</em>, <em>t0=0</em>, <em>fs=512000000.0</em>, <em>sweep_index=0</em>, <em>mmw_source_freq=0.0</em>, <em>mmw_source_modulation_freq=0.0</em>, <em>zbd_power_dbm=0.0</em>, <em>zbd_voltage=0.0</em>, <em>lo=0.0</em>, <em>heterodyne=False</em>, <em>hardware_delay_estimate=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/data_block.html#DataBlock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.data_block.DataBlock" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="kid_readout.measurement.io.data_block.DataBlock.mean">
+<code class="descname">mean</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/data_block.html#DataBlock.mean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.data_block.DataBlock.mean" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.data_block.DataBlock.mean_error">
+<code class="descname">mean_error</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/data_block.html#DataBlock.mean_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.data_block.DataBlock.mean_error" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="kid_readout.measurement.io.data_block.SweepData">
+<em class="property">class </em><code class="descclassname">kid_readout.measurement.io.data_block.</code><code class="descname">SweepData</code><span class="sig-paren">(</span><em>sweep_id=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/data_block.html#SweepData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.data_block.SweepData" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="kid_readout.measurement.io.data_block.SweepData.add_block">
+<code class="descname">add_block</code><span class="sig-paren">(</span><em>block</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/data_block.html#SweepData.add_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.data_block.SweepData.add_block" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.data_block.SweepData.data">
+<code class="descname">data</code><a class="headerlink" href="#kid_readout.measurement.io.data_block.SweepData.data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.data_block.SweepData.errors">
+<code class="descname">errors</code><a class="headerlink" href="#kid_readout.measurement.io.data_block.SweepData.errors" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.data_block.SweepData.freqs">
+<code class="descname">freqs</code><a class="headerlink" href="#kid_readout.measurement.io.data_block.SweepData.freqs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.data_block.SweepData.lo">
+<code class="descname">lo</code><a class="headerlink" href="#kid_readout.measurement.io.data_block.SweepData.lo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.data_block.SweepData.select_by_freq">
+<code class="descname">select_by_freq</code><span class="sig-paren">(</span><em>freq</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/data_block.html#SweepData.select_by_freq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.data_block.SweepData.select_by_freq" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.data_block.SweepData.select_index">
+<code class="descname">select_index</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/data_block.html#SweepData.select_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.data_block.SweepData.select_index" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.data_block.SweepData.sweep_indexes">
+<code class="descname">sweep_indexes</code><a class="headerlink" href="#kid_readout.measurement.io.data_block.SweepData.sweep_indexes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.measurement.io.data_file">
+<span id="kid-readout-measurement-io-data-file-module"></span><h2>kid_readout.measurement.io.data_file module<a class="headerlink" href="#module-kid_readout.measurement.io.data_file" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="kid_readout.measurement.io.data_file.DataFile">
+<em class="property">class </em><code class="descclassname">kid_readout.measurement.io.data_file.</code><code class="descname">DataFile</code><span class="sig-paren">(</span><em>base_dir='/data/readout'</em>, <em>suffix=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/data_file.html#DataFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.data_file.DataFile" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="kid_readout.measurement.io.data_file.DataFile.add_block_to_timestream">
+<code class="descname">add_block_to_timestream</code><span class="sig-paren">(</span><em>block</em>, <em>tsg=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/data_file.html#DataFile.add_block_to_timestream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.data_file.DataFile.add_block_to_timestream" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.data_file.DataFile.add_cryo_data">
+<code class="descname">add_cryo_data</code><span class="sig-paren">(</span><em>cryod</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/data_file.html#DataFile.add_cryo_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.data_file.DataFile.add_cryo_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.data_file.DataFile.add_sweep">
+<code class="descname">add_sweep</code><span class="sig-paren">(</span><em>sweep_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/data_file.html#DataFile.add_sweep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.data_file.DataFile.add_sweep" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.data_file.DataFile.add_timestream_data">
+<code class="descname">add_timestream_data</code><span class="sig-paren">(</span><em>data</em>, <em>ri</em>, <em>t0</em>, <em>tsg=None</em>, <em>mmw_source_freq=0.0</em>, <em>mmw_source_modulation_freq=0.0</em>, <em>zbd_voltage=0.0</em>, <em>zbd_power_dbm=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/data_file.html#DataFile.add_timestream_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.data_file.DataFile.add_timestream_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.data_file.DataFile.close">
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/data_file.html#DataFile.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.data_file.DataFile.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.data_file.DataFile.log_adc_snap">
+<code class="descname">log_adc_snap</code><span class="sig-paren">(</span><em>ri</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/data_file.html#DataFile.log_adc_snap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.data_file.DataFile.log_adc_snap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.data_file.DataFile.log_hw_state">
+<code class="descname">log_hw_state</code><span class="sig-paren">(</span><em>ri</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/data_file.html#DataFile.log_hw_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.data_file.DataFile.log_hw_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.data_file.DataFile.sync">
+<code class="descname">sync</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/data_file.html#DataFile.sync"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.data_file.DataFile.sync" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.measurement.io.easync">
+<span id="kid-readout-measurement-io-easync-module"></span><h2>kid_readout.measurement.io.easync module<a class="headerlink" href="#module-kid_readout.measurement.io.easync" title="Permalink to this headline">¶</a></h2>
+<p>easync.py - easier access to netCDF4 files</p>
+<dl class="class">
+<dt id="kid_readout.measurement.io.easync.EasyGroup">
+<em class="property">class </em><code class="descclassname">kid_readout.measurement.io.easync.</code><code class="descname">EasyGroup</code><span class="sig-paren">(</span><em>group</em>, <em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/easync.html#EasyGroup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.easync.EasyGroup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.measurement.io.easync.EasyNetCDF4">
+<code class="descclassname">kid_readout.measurement.io.easync.</code><code class="descname">EasyNetCDF4</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/easync.html#EasyNetCDF4"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.easync.EasyNetCDF4" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.measurement.io.helpers">
+<span id="kid-readout-measurement-io-helpers-module"></span><h2>kid_readout.measurement.io.helpers module<a class="headerlink" href="#module-kid_readout.measurement.io.helpers" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="kid_readout.measurement.io.helpers.new_nc_file">
+<code class="descclassname">kid_readout.measurement.io.helpers.</code><code class="descname">new_nc_file</code><span class="sig-paren">(</span><em>suffix=''</em>, <em>directory='/data/readout'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/helpers.html#new_nc_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.helpers.new_nc_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.measurement.io.memory">
+<span id="kid-readout-measurement-io-memory-module"></span><h2>kid_readout.measurement.io.memory module<a class="headerlink" href="#module-kid_readout.measurement.io.memory" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="kid_readout.measurement.io.memory.Dictionary">
+<em class="property">class </em><code class="descclassname">kid_readout.measurement.io.memory.</code><code class="descname">Dictionary</code><span class="sig-paren">(</span><em>root_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/memory.html#Dictionary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.memory.Dictionary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="kid_readout.measurement.html#kid_readout.measurement.core.IO" title="kid_readout.measurement.core.IO"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.measurement.core.IO</span></code></a></p>
+<p>This class implements the IO interface in memory using dictionaries. It is intended for testing.</p>
+<dl class="method">
+<dt id="kid_readout.measurement.io.memory.Dictionary.array_names">
+<code class="descname">array_names</code><span class="sig-paren">(</span><em>node_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/memory.html#Dictionary.array_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.memory.Dictionary.array_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the names of all arrays contained in the measurement at node_path.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.memory.Dictionary.close">
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/memory.html#Dictionary.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.memory.Dictionary.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close open files.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.memory.Dictionary.closed">
+<code class="descname">closed</code><a class="headerlink" href="#kid_readout.measurement.io.memory.Dictionary.closed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if all files are closed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.memory.Dictionary.create_node">
+<code class="descname">create_node</code><span class="sig-paren">(</span><em>node_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/memory.html#Dictionary.create_node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.memory.Dictionary.create_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a node at the end of the given path; all but the final node in the path must already exist.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.memory.Dictionary.measurement_names">
+<code class="descname">measurement_names</code><span class="sig-paren">(</span><em>node_path=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/memory.html#Dictionary.measurement_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.memory.Dictionary.measurement_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the names of all measurements contained in the measurement at node_path.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.memory.Dictionary.other_names">
+<code class="descname">other_names</code><span class="sig-paren">(</span><em>node_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/memory.html#Dictionary.other_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.memory.Dictionary.other_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the names of all other variables contained in the measurement at node_path.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.memory.Dictionary.read_array">
+<code class="descname">read_array</code><span class="sig-paren">(</span><em>node_path</em>, <em>key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/memory.html#Dictionary.read_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.memory.Dictionary.read_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read array key from node_path.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.memory.Dictionary.read_other">
+<code class="descname">read_other</code><span class="sig-paren">(</span><em>node_path</em>, <em>key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/memory.html#Dictionary.read_other"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.memory.Dictionary.read_other" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read non-array object with name key from node_path.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.memory.Dictionary.write_array">
+<code class="descname">write_array</code><span class="sig-paren">(</span><em>node_path</em>, <em>key</em>, <em>value</em>, <em>dimensions</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/memory.html#Dictionary.write_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.memory.Dictionary.write_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write value, a numpy array, to node_path with name key.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.memory.Dictionary.write_other">
+<code class="descname">write_other</code><span class="sig-paren">(</span><em>node_path</em>, <em>key</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/memory.html#Dictionary.write_other"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.memory.Dictionary.write_other" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write value to node_path with name key.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.measurement.io.nc">
+<span id="kid-readout-measurement-io-nc-module"></span><h2>kid_readout.measurement.io.nc module<a class="headerlink" href="#module-kid_readout.measurement.io.nc" title="Permalink to this headline">¶</a></h2>
+<p>This module implements reading and writing of Measurement subclasses to disk using netCDF4.</p>
+<p>Each node is a netCDF4 group;
+numpy arrays that are have entries in the dimensions dictionary are stored as netCDF4 variables;
+other sequences like lists and tuples, or arrays that do not have a dimensions entry, are stored as variables with</p>
+<blockquote>
+<div>special names (for restrictions, see below);</div></blockquote>
+<p>dicts are stored hierarchically as groups with special names;
+other instance attribute are stored as ncattrs of the group.</p>
+<p>Limitations and issues.</p>
+<p>netCDF4 returns strings as unicode.
+We could easily convert all strings to Python str type.</p>
+<p>netCDF4 returns sequence ncattrs as numpy ndarrays.
+On read, all arrays are converted to lists.</p>
+<p>netCDF4 cannot store None or boolean types as ncattrs.
+These are stored as special strings that are attributes of the IO class, and converted back on read.
+This is a little bit gross but probably safe in practice.</p>
+<dl class="class">
+<dt id="kid_readout.measurement.io.nc.CachedSingleStream">
+<em class="property">class </em><code class="descclassname">kid_readout.measurement.io.nc.</code><code class="descname">CachedSingleStream</code><span class="sig-paren">(</span><em>tone_bin</em>, <em>tone_amplitude</em>, <em>tone_phase</em>, <em>tone_index</em>, <em>filterbank_bin</em>, <em>epoch</em>, <em>s21_raw</em>, <em>data_demodulated</em>, <em>roach_state</em>, <em>state=None</em>, <em>analyze=False</em>, <em>description='Stream'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/nc.html#CachedSingleStream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.nc.CachedSingleStream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="kid_readout.measurement.html#kid_readout.measurement.basic.SingleStream" title="kid_readout.measurement.basic.SingleStream"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.measurement.basic.SingleStream</span></code></a></p>
+<p>This class contains time-ordered data from a single channel.</p>
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.nc.CachedSingleStream.dimensions">
+<code class="descname">dimensions</code><em class="property"> = {'tone_amplitude': ('tone_bin',), 'tone_bin': ('tone_bin',), 'tone_phase': ('tone_bin',)}</em><a class="headerlink" href="#kid_readout.measurement.io.nc.CachedSingleStream.dimensions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.nc.CachedSingleStream.s21_raw">
+<code class="descname">s21_raw</code><a class="headerlink" href="#kid_readout.measurement.io.nc.CachedSingleStream.s21_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="kid_readout.measurement.io.nc.CachedStreamArray">
+<em class="property">class </em><code class="descclassname">kid_readout.measurement.io.nc.</code><code class="descname">CachedStreamArray</code><span class="sig-paren">(</span><em>tone_bin</em>, <em>tone_amplitude</em>, <em>tone_phase</em>, <em>tone_index</em>, <em>filterbank_bin</em>, <em>epoch</em>, <em>s21_raw</em>, <em>data_demodulated</em>, <em>roach_state</em>, <em>state=None</em>, <em>analyze=False</em>, <em>description='Stream'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/nc.html#CachedStreamArray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.nc.CachedStreamArray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="kid_readout.measurement.html#kid_readout.measurement.basic.StreamArray" title="kid_readout.measurement.basic.StreamArray"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.measurement.basic.StreamArray</span></code></a></p>
+<p>This class represents simultaneously-sampled data from multiple channels.</p>
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.nc.CachedStreamArray.dimensions">
+<code class="descname">dimensions</code><em class="property"> = {'tone_amplitude': ('tone_bin',), 'filterbank_bin': ('tone_index',), 'tone_bin': ('tone_bin',), 'tone_index': ('tone_index',), 'tone_phase': ('tone_bin',)}</em><a class="headerlink" href="#kid_readout.measurement.io.nc.CachedStreamArray.dimensions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.nc.CachedStreamArray.s21_raw">
+<code class="descname">s21_raw</code><a class="headerlink" href="#kid_readout.measurement.io.nc.CachedStreamArray.s21_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="kid_readout.measurement.io.nc.NCFile">
+<em class="property">class </em><code class="descclassname">kid_readout.measurement.io.nc.</code><code class="descname">NCFile</code><span class="sig-paren">(</span><em>root_path</em>, <em>cache_s21_raw=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/nc.html#NCFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.nc.NCFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="kid_readout.measurement.html#kid_readout.measurement.core.IO" title="kid_readout.measurement.core.IO"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.measurement.core.IO</span></code></a></p>
+<dl class="method">
+<dt id="kid_readout.measurement.io.nc.NCFile.array_names">
+<code class="descname">array_names</code><span class="sig-paren">(</span><em>node_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/nc.html#NCFile.array_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.nc.NCFile.array_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.nc.NCFile.close">
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/nc.html#NCFile.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.nc.NCFile.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.nc.NCFile.closed">
+<code class="descname">closed</code><a class="headerlink" href="#kid_readout.measurement.io.nc.NCFile.closed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.nc.NCFile.create_node">
+<code class="descname">create_node</code><span class="sig-paren">(</span><em>node_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/nc.html#NCFile.create_node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.nc.NCFile.create_node" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.nc.NCFile.is_dict">
+<code class="descname">is_dict</code><em class="property"> = '.dict'</em><a class="headerlink" href="#kid_readout.measurement.io.nc.NCFile.is_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.nc.NCFile.is_list">
+<code class="descname">is_list</code><em class="property"> = '.list'</em><a class="headerlink" href="#kid_readout.measurement.io.nc.NCFile.is_list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.nc.NCFile.measurement_names">
+<code class="descname">measurement_names</code><span class="sig-paren">(</span><em>node_path=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/nc.html#NCFile.measurement_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.nc.NCFile.measurement_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.nc.NCFile.npy_to_netcdf">
+<code class="descname">npy_to_netcdf</code><em class="property"> = {dtype('complex64'): {'datatype': dtype([('real', '&lt;f4'), ('imag', '&lt;f4')]), 'name': 'complex64'}, dtype('complex128'): {'datatype': dtype([('real', '&lt;f8'), ('imag', '&lt;f8')]), 'name': 'complex128'}}</em><a class="headerlink" href="#kid_readout.measurement.io.nc.NCFile.npy_to_netcdf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.nc.NCFile.on_read">
+<code class="descname">on_read</code><em class="property"> = {'_True': True, '_None': None, '_False': False}</em><a class="headerlink" href="#kid_readout.measurement.io.nc.NCFile.on_read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.nc.NCFile.on_write">
+<code class="descname">on_write</code><em class="property"> = {False: '_False', True: '_True', None: '_None'}</em><a class="headerlink" href="#kid_readout.measurement.io.nc.NCFile.on_write" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.nc.NCFile.other_names">
+<code class="descname">other_names</code><span class="sig-paren">(</span><em>node_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/nc.html#NCFile.other_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.nc.NCFile.other_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.nc.NCFile.read">
+<code class="descname">read</code><span class="sig-paren">(</span><em>node_path</em>, <em>translate=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/nc.html#NCFile.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.nc.NCFile.read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.nc.NCFile.read_array">
+<code class="descname">read_array</code><span class="sig-paren">(</span><em>node_path</em>, <em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/nc.html#NCFile.read_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.nc.NCFile.read_array" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.nc.NCFile.read_other">
+<code class="descname">read_other</code><span class="sig-paren">(</span><em>node_path</em>, <em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/nc.html#NCFile.read_other"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.nc.NCFile.read_other" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.nc.NCFile.write_array">
+<code class="descname">write_array</code><span class="sig-paren">(</span><em>node_path</em>, <em>name</em>, <em>array</em>, <em>dimensions</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/nc.html#NCFile.write_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.nc.NCFile.write_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write the given array to the node at node_path with the given name and dimensions.</p>
+<p>When writing arrays to a node, each dimension is created the first time it appears in the dimensions tuple.
+The dimension is created with size equal to the corresponding dimension of the given array. Thus, there is no
+restriction on the order in which arrays are written. Writing will still fail if two arrays share a dimension
+name and have different shape along the corresponding axes. Since this would have caused
+Measurement._validate_dimensions() to fail, this should not happen unless array sizes are modified after
+instantiation somehow.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>node_path</strong> &#8211; the node path as a string.</li>
+<li><strong>name</strong> &#8211; the name of the variable.</li>
+<li><strong>array</strong> &#8211; the array containing the data.</li>
+<li><strong>dimensions</strong> &#8211; a tuple of strings with the dimensions that correspond to the dimensions of the array.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.nc.NCFile.write_other">
+<code class="descname">write_other</code><span class="sig-paren">(</span><em>node_path</em>, <em>key</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/nc.html#NCFile.write_other"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.nc.NCFile.write_other" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="kid_readout.measurement.io.nc.NCVariable">
+<em class="property">class </em><code class="descclassname">kid_readout.measurement.io.nc.</code><code class="descname">NCVariable</code><span class="sig-paren">(</span><em>variable</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/nc.html#NCVariable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.nc.NCVariable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.nc.NCVariable.dtype">
+<code class="descname">dtype</code><a class="headerlink" href="#kid_readout.measurement.io.nc.NCVariable.dtype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.nc.NCVariable.shape">
+<code class="descname">shape</code><a class="headerlink" href="#kid_readout.measurement.io.nc.NCVariable.shape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.nc.NCVariable.size">
+<code class="descname">size</code><a class="headerlink" href="#kid_readout.measurement.io.nc.NCVariable.size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.measurement.io.npy">
+<span id="kid-readout-measurement-io-npy-module"></span><h2>kid_readout.measurement.io.npy module<a class="headerlink" href="#module-kid_readout.measurement.io.npy" title="Permalink to this headline">¶</a></h2>
+<p>This module implements reading and writing of Measurements using a directory hierarchy and numpy arrays.</p>
+<p>Each node is a string representing a directory.
+Numpy arrays are stored as .npy files.
+Other attributes are stored using json.</p>
+<p>Limitations:
+Because json has only a single sequence type, all sequences that are not numpy arrays are returned as lists.</p>
+<dl class="class">
+<dt id="kid_readout.measurement.io.npy.NumpyDirectory">
+<em class="property">class </em><code class="descclassname">kid_readout.measurement.io.npy.</code><code class="descname">NumpyDirectory</code><span class="sig-paren">(</span><em>root_path</em>, <em>memmap=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/npy.html#NumpyDirectory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.npy.NumpyDirectory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="kid_readout.measurement.html#kid_readout.measurement.core.IO" title="kid_readout.measurement.core.IO"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.measurement.core.IO</span></code></a></p>
+<dl class="method">
+<dt id="kid_readout.measurement.io.npy.NumpyDirectory.array_names">
+<code class="descname">array_names</code><span class="sig-paren">(</span><em>node_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/npy.html#NumpyDirectory.array_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.npy.NumpyDirectory.array_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.npy.NumpyDirectory.close">
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/npy.html#NumpyDirectory.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.npy.NumpyDirectory.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Disable further reading or writing of files. Note that this doesn&#8217;t actually close any memmapped files. The
+numpy.memmap documentation says that to close them you have to delete the memmap object, and it&#8217;s not clear
+to me how to do that here.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.npy.NumpyDirectory.closed">
+<code class="descname">closed</code><a class="headerlink" href="#kid_readout.measurement.io.npy.NumpyDirectory.closed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.npy.NumpyDirectory.create_node">
+<code class="descname">create_node</code><span class="sig-paren">(</span><em>node_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/npy.html#NumpyDirectory.create_node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.npy.NumpyDirectory.create_node" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.npy.NumpyDirectory.measurement_names">
+<code class="descname">measurement_names</code><span class="sig-paren">(</span><em>node_path=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/npy.html#NumpyDirectory.measurement_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.npy.NumpyDirectory.measurement_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.npy.NumpyDirectory.other_names">
+<code class="descname">other_names</code><span class="sig-paren">(</span><em>node_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/npy.html#NumpyDirectory.other_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.npy.NumpyDirectory.other_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.npy.NumpyDirectory.read_array">
+<code class="descname">read_array</code><span class="sig-paren">(</span><em>node_path</em>, <em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/npy.html#NumpyDirectory.read_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.npy.NumpyDirectory.read_array" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.npy.NumpyDirectory.read_other">
+<code class="descname">read_other</code><span class="sig-paren">(</span><em>node_path</em>, <em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/npy.html#NumpyDirectory.read_other"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.npy.NumpyDirectory.read_other" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.npy.NumpyDirectory.write_array">
+<code class="descname">write_array</code><span class="sig-paren">(</span><em>node_path</em>, <em>key</em>, <em>value</em>, <em>dimensions</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/npy.html#NumpyDirectory.write_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.npy.NumpyDirectory.write_array" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.npy.NumpyDirectory.write_other">
+<code class="descname">write_other</code><span class="sig-paren">(</span><em>node_path</em>, <em>key</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/npy.html#NumpyDirectory.write_other"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.npy.NumpyDirectory.write_other" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.measurement.io.readoutnc">
+<span id="kid-readout-measurement-io-readoutnc-module"></span><h2>kid_readout.measurement.io.readoutnc module<a class="headerlink" href="#module-kid_readout.measurement.io.readoutnc" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="kid_readout.measurement.io.readoutnc.ReadoutNetCDF">
+<em class="property">class </em><code class="descclassname">kid_readout.measurement.io.readoutnc.</code><code class="descname">ReadoutNetCDF</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/readoutnc.html#ReadoutNetCDF"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.readoutnc.ReadoutNetCDF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="kid_readout.measurement.io.readoutnc.ReadoutNetCDF.close">
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/readoutnc.html#ReadoutNetCDF.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.readoutnc.ReadoutNetCDF.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.readoutnc.ReadoutNetCDF.get_delay_estimate">
+<code class="descname">get_delay_estimate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/readoutnc.html#ReadoutNetCDF.get_delay_estimate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.readoutnc.ReadoutNetCDF.get_delay_estimate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.readoutnc.ReadoutNetCDF.get_effective_dac_atten_at">
+<code class="descname">get_effective_dac_atten_at</code><span class="sig-paren">(</span><em>epoch</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/readoutnc.html#ReadoutNetCDF.get_effective_dac_atten_at"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.readoutnc.ReadoutNetCDF.get_effective_dac_atten_at" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the dac attenuator value and total signal attenuation at a given time
+:param epoch: unix timestamp
+:return: dac attenuator in dB, total attenuation in dB</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.readoutnc.ReadoutNetCDF.get_modulation_state_at">
+<code class="descname">get_modulation_state_at</code><span class="sig-paren">(</span><em>epoch</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/readoutnc.html#ReadoutNetCDF.get_modulation_state_at"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.readoutnc.ReadoutNetCDF.get_modulation_state_at" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the source modulation TTL output state at a given time
+:param epoch: unix timestamp
+:return: modulation output state: 0 -&gt; low, 1 -&gt; high, 2 -&gt; modulated</p>
+<blockquote>
+<div>modulation rate parameter: FIXME</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="kid_readout.measurement.io.readoutnc.SweepGroup">
+<em class="property">class </em><code class="descclassname">kid_readout.measurement.io.readoutnc.</code><code class="descname">SweepGroup</code><span class="sig-paren">(</span><em>ncgroup</em>, <em>parent=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/readoutnc.html#SweepGroup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.readoutnc.SweepGroup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.readoutnc.SweepGroup.errors">
+<code class="descname">errors</code><a class="headerlink" href="#kid_readout.measurement.io.readoutnc.SweepGroup.errors" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.readoutnc.SweepGroup.select_by_frequency">
+<code class="descname">select_by_frequency</code><span class="sig-paren">(</span><em>freq</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/readoutnc.html#SweepGroup.select_by_frequency"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.readoutnc.SweepGroup.select_by_frequency" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.readoutnc.SweepGroup.select_by_index">
+<code class="descname">select_by_index</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/readoutnc.html#SweepGroup.select_by_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.readoutnc.SweepGroup.select_by_index" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="kid_readout.measurement.io.readoutnc.TimestreamGroup">
+<em class="property">class </em><code class="descclassname">kid_readout.measurement.io.readoutnc.</code><code class="descname">TimestreamGroup</code><span class="sig-paren">(</span><em>ncgroup</em>, <em>parent=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/readoutnc.html#TimestreamGroup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.readoutnc.TimestreamGroup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="attribute">
+<dt id="kid_readout.measurement.io.readoutnc.TimestreamGroup.data">
+<code class="descname">data</code><a class="headerlink" href="#kid_readout.measurement.io.readoutnc.TimestreamGroup.data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.measurement.io.readoutnc.TimestreamGroup.get_data_index">
+<code class="descname">get_data_index</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/measurement/io/readoutnc.html#TimestreamGroup.get_data_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.measurement.io.readoutnc.TimestreamGroup.get_data_index" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.measurement.io">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-kid_readout.measurement.io" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">kid_readout.measurement.io package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-kid_readout.measurement.io.data_block">kid_readout.measurement.io.data_block module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.measurement.io.data_file">kid_readout.measurement.io.data_file module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.measurement.io.easync">kid_readout.measurement.io.easync module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.measurement.io.helpers">kid_readout.measurement.io.helpers module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.measurement.io.memory">kid_readout.measurement.io.memory module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.measurement.io.nc">kid_readout.measurement.io.nc module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.measurement.io.npy">kid_readout.measurement.io.npy module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.measurement.io.readoutnc">kid_readout.measurement.io.readoutnc module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.measurement.io">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="kid_readout.measurement.acquire.test.html"
+                        title="previous chapter">kid_readout.measurement.acquire.test package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="kid_readout.measurement.io.test.html"
+                        title="next chapter">kid_readout.measurement.io.test package</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/kid_readout.measurement.io.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="kid_readout.measurement.io.test.html" title="kid_readout.measurement.io.test package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="kid_readout.measurement.acquire.test.html" title="kid_readout.measurement.acquire.test package"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="kid_readout.html" >kid_readout package</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="kid_readout.measurement.html" >kid_readout.measurement package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

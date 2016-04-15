@@ -1,0 +1,490 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.measurement.io.nc &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../../index.html" />
+    <link rel="up" title="Module code" href="../../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for kid_readout.measurement.io.nc</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module implements reading and writing of Measurement subclasses to disk using netCDF4.</span>
+
+<span class="sd">Each node is a netCDF4 group;</span>
+<span class="sd">numpy arrays that are have entries in the dimensions dictionary are stored as netCDF4 variables;</span>
+<span class="sd">other sequences like lists and tuples, or arrays that do not have a dimensions entry, are stored as variables with</span>
+<span class="sd">  special names (for restrictions, see below);</span>
+<span class="sd">dicts are stored hierarchically as groups with special names;</span>
+<span class="sd">other instance attribute are stored as ncattrs of the group.</span>
+
+<span class="sd">Limitations and issues.</span>
+
+<span class="sd">netCDF4 returns strings as unicode.</span>
+<span class="sd">We could easily convert all strings to Python str type.</span>
+
+<span class="sd">netCDF4 returns sequence ncattrs as numpy ndarrays.</span>
+<span class="sd">On read, all arrays are converted to lists.</span>
+
+<span class="sd">netCDF4 cannot store None or boolean types as ncattrs.</span>
+<span class="sd">These are stored as special strings that are attributes of the IO class, and converted back on read.</span>
+<span class="sd">This is a little bit gross but probably safe in practice.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">netCDF4</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">kid_readout.measurement</span> <span class="kn">import</span> <span class="n">core</span><span class="p">,</span> <span class="n">basic</span>
+
+
+<div class="viewcode-block" id="NCFile"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.nc.NCFile">[docs]</a><span class="k">class</span> <span class="nc">NCFile</span><span class="p">(</span><span class="n">core</span><span class="o">.</span><span class="n">IO</span><span class="p">):</span>
+
+    <span class="c1"># These special strings are used to store None, True, and False as ncattrs.</span>
+    <span class="n">on_write</span> <span class="o">=</span> <span class="p">{</span><span class="bp">None</span><span class="p">:</span> <span class="s1">&#39;_None&#39;</span><span class="p">,</span>
+                <span class="bp">True</span><span class="p">:</span> <span class="s1">&#39;_True&#39;</span><span class="p">,</span>
+                <span class="bp">False</span><span class="p">:</span> <span class="s1">&#39;_False&#39;</span><span class="p">}</span>
+
+    <span class="n">on_read</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_None&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
+               <span class="s1">&#39;_True&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
+               <span class="s1">&#39;_False&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">}</span>
+
+    <span class="c1"># This dictionary translates between numpy complex dtypes and netCDF4 compound types.</span>
+    <span class="n">npy_to_netcdf</span> <span class="o">=</span> <span class="p">{</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s1">&#39;complex64&#39;</span><span class="p">):</span> <span class="p">{</span><span class="s1">&#39;datatype&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">([(</span><span class="s1">&#39;real&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;imag&#39;</span><span class="p">,</span> <span class="s1">&#39;f4&#39;</span><span class="p">)]),</span>
+                                             <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;complex64&#39;</span><span class="p">},</span>
+                     <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s1">&#39;complex128&#39;</span><span class="p">):</span> <span class="p">{</span><span class="s1">&#39;datatype&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">([(</span><span class="s1">&#39;real&#39;</span><span class="p">,</span> <span class="s1">&#39;f8&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;imag&#39;</span><span class="p">,</span> <span class="s1">&#39;f8&#39;</span><span class="p">)]),</span>
+                                              <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;complex128&#39;</span><span class="p">}}</span>
+
+    <span class="c1"># Dictionaries are stored as Groups with names that end with this string.</span>
+    <span class="n">is_dict</span> <span class="o">=</span> <span class="s1">&#39;.dict&#39;</span>
+    <span class="c1"># Sequences that are not explicitly declared as arrays with their own dimensions are stored as Variables with names</span>
+    <span class="c1"># that end with this string, and are returned on read as lists.</span>
+    <span class="n">is_list</span> <span class="o">=</span> <span class="s1">&#39;.list&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root_path</span><span class="p">,</span> <span class="n">cache_s21_raw</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">NCFile</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">root_path</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">root_path</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache_s21_raw</span> <span class="o">=</span> <span class="n">cache_s21_raw</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="n">netCDF4</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span><span class="n">keepweakref</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="n">netCDF4</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">root_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">clobber</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NCFile.close"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.nc.NCFile.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+            <span class="k">pass</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">closed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">isopen</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Upgrade netCDF4!&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NCFile.read"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.nc.NCFile.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_path</span><span class="p">,</span> <span class="n">translate</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">translate</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">translate</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache_s21_raw</span><span class="p">:</span>
+            <span class="n">translate</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;kid_readout.measurement.basic.SingleStream&#39;</span><span class="p">:</span>
+                                  <span class="s1">&#39;kid_readout.measurement.io.nc.CachedSingleStream&#39;</span><span class="p">,</span>
+                              <span class="s1">&#39;kid_readout.measurement.basic.StreamArray&#39;</span><span class="p">:</span>
+                                  <span class="s1">&#39;kid_readout.measurement.io.nc.CachedStreamArray&#39;</span><span class="p">})</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_node</span><span class="p">(</span><span class="n">node_path</span><span class="p">,</span> <span class="n">translate</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NCFile.create_node"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.nc.NCFile.create_node">[docs]</a>    <span class="k">def</span> <span class="nf">create_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_path</span><span class="p">):</span>
+        <span class="c1"># This will correctly fail to validate an attempt to create the root node with node_path = &#39;&#39;</span>
+        <span class="n">core</span><span class="o">.</span><span class="n">validate_node_path</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+        <span class="n">existing</span><span class="p">,</span> <span class="n">new</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_get_node</span><span class="p">(</span><span class="n">existing</span><span class="p">)</span><span class="o">.</span><span class="n">createGroup</span><span class="p">(</span><span class="n">new</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NCFile.write_array"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.nc.NCFile.write_array">[docs]</a>    <span class="k">def</span> <span class="nf">write_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_path</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write the given array to the node at node_path with the given name and dimensions.</span>
+
+<span class="sd">        When writing arrays to a node, each dimension is created the first time it appears in the dimensions tuple.</span>
+<span class="sd">        The dimension is created with size equal to the corresponding dimension of the given array. Thus, there is no</span>
+<span class="sd">        restriction on the order in which arrays are written. Writing will still fail if two arrays share a dimension</span>
+<span class="sd">        name and have different shape along the corresponding axes. Since this would have caused</span>
+<span class="sd">        Measurement._validate_dimensions() to fail, this should not happen unless array sizes are modified after</span>
+<span class="sd">        instantiation somehow.</span>
+
+<span class="sd">        :param node_path: the node path as a string.</span>
+<span class="sd">        :param name: the name of the variable.</span>
+<span class="sd">        :param array: the array containing the data.</span>
+<span class="sd">        :param dimensions: a tuple of strings with the dimensions that correspond to the dimensions of the array.</span>
+<span class="sd">        :return: None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_node</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">dimension</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dimensions</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">dimension</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">dimensions</span><span class="p">:</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">createDimension</span><span class="p">(</span><span class="n">dimension</span><span class="p">,</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">n</span><span class="p">])</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">npy_datatype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">npy_to_netcdf</span><span class="p">[</span><span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="p">][</span><span class="s1">&#39;datatype&#39;</span><span class="p">]</span>
+            <span class="n">netcdf_datatype</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">createCompoundType</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">npy_to_netcdf</span><span class="p">[</span><span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="p">][</span><span class="s1">&#39;datatype&#39;</span><span class="p">],</span>
+                                                      <span class="bp">self</span><span class="o">.</span><span class="n">npy_to_netcdf</span><span class="p">[</span><span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="p">][</span><span class="s1">&#39;name&#39;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="n">npy_datatype</span> <span class="o">=</span> <span class="n">netcdf_datatype</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">dtype</span>
+        <span class="n">variable</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">createVariable</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">netcdf_datatype</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">)</span>
+        <span class="n">variable</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">npy_datatype</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NCFile.write_other"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.nc.NCFile.write_other">[docs]</a>    <span class="k">def</span> <span class="nf">write_other</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_path</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_node</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write_to_group</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NCFile.read_array"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.nc.NCFile.read_array">[docs]</a>    <span class="k">def</span> <span class="nf">read_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_path</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_node</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+        <span class="n">nc_variable</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;s21_raw&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache_s21_raw</span><span class="p">:</span>  <span class="c1"># hacktastic</span>
+            <span class="k">return</span> <span class="n">nc_variable</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">nc_variable</span><span class="p">[:]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">nc_variable</span><span class="o">.</span><span class="n">datatype</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NCFile.read_other"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.nc.NCFile.read_other">[docs]</a>    <span class="k">def</span> <span class="nf">read_other</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_path</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_node</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_dict</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_dict</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">name</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_dict</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">name</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_list</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_sequence</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">name</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_list</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_read</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NCFile.measurement_names"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.nc.NCFile.measurement_names">[docs]</a>    <span class="k">def</span> <span class="nf">measurement_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_path</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_node</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">groups</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_dict</span><span class="p">)]</span></div>
+
+<div class="viewcode-block" id="NCFile.array_names"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.nc.NCFile.array_names">[docs]</a>    <span class="k">def</span> <span class="nf">array_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_path</span><span class="p">):</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_node</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">variables</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_list</span><span class="p">)]</span></div>
+
+<div class="viewcode-block" id="NCFile.other_names"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.nc.NCFile.other_names">[docs]</a>    <span class="k">def</span> <span class="nf">other_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_path</span><span class="p">):</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_node</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+        <span class="n">dicts</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_dict</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">groups</span> <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_dict</span><span class="p">)]</span>
+        <span class="n">lists</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_list</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">variables</span> <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_list</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">ncattrs</span><span class="p">()</span> <span class="o">+</span> <span class="n">lists</span> <span class="o">+</span> <span class="n">dicts</span></div>
+
+    <span class="c1"># Private methods.</span>
+
+    <span class="k">def</span> <span class="nf">_get_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_path</span><span class="p">):</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span>
+        <span class="k">if</span> <span class="n">node_path</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">core</span><span class="o">.</span><span class="n">validate_node_path</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">core</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">node_path</span><span class="p">):</span>
+                <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">node</span>
+
+    <span class="k">def</span> <span class="nf">_write_to_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This method directly writes non-container values to the given Group or calls the appropriate function to</span>
+<span class="sd">        write container values.</span>
+
+<span class="sd">        :param group: the netCDF4 Group.</span>
+<span class="sd">        :param key: the external name of the value to write, with no special suffix.</span>
+<span class="sd">        :param value: the value to write</span>
+<span class="sd">        :return: None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_write_dict</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">key</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_dict</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_write_sequence</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">key</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_list</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_write</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">k</span><span class="p">:</span>  <span class="c1"># we need to use identity because, e.g., 0 == False evaluates to True.</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+                    <span class="k">return</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_write_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write the given sequence (value) to the given netCDF4 Group using the given name (key).</span>
+
+<span class="sd">        It attempts to determine the appropriate data type to use by creating a numpy array from the sequence and</span>
+<span class="sd">        examining its dtype. This should succeed for sequences that contain only numbers, only strings or unicode, or</span>
+<span class="sd">        only booleans. Obviously, this will result in some type conversion for mixed arrays, and will fail completely</span>
+<span class="sd">        in some cases. Note that netCDF4 will not accept None as a value in an array.</span>
+
+<span class="sd">        :param group: the netCDF Group.</span>
+<span class="sd">        :param key: the name of the dimension and variable to use for storing the sequence, ending with self.is_list.</span>
+<span class="sd">        :param value: the sequence to store.</span>
+<span class="sd">        :return: None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unicode_</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">str_</span><span class="p">):</span>
+            <span class="n">group</span><span class="o">.</span><span class="n">createDimension</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">array</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+            <span class="n">variable</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">createVariable</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>  <span class="c1"># This creates a variable-length string array.</span>
+            <span class="n">variable</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">object</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">:</span>  <span class="c1"># This seems to be True only if all elements are bool.</span>
+            <span class="n">group</span><span class="o">.</span><span class="n">createDimension</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">array</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+            <span class="n">variable</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">createVariable</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>  <span class="c1"># See above; booleans are stored as strings.</span>
+            <span class="n">variable</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">on_write</span><span class="p">[</span><span class="n">obj</span><span class="p">]</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">array</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">object</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">group</span><span class="o">.</span><span class="n">createDimension</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">array</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+            <span class="n">variable</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">createVariable</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+            <span class="n">variable</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">array</span>
+
+    <span class="k">def</span> <span class="nf">_read_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a list containing the stored sequence with the given name (key) from the given netCDF4 Group.</span>
+
+<span class="sd">        :param group: the netCDF4 Group to read from.</span>
+<span class="sd">        :param key: the name of the Variable to read, ending with self.is_list.</span>
+<span class="sd">        :return: a list containing the contents of the Variable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">array</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">key</span><span class="p">][:]</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>  <span class="c1"># An empty Variable raises an IndexError</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">on_read</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">array</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_write_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">dict_name</span><span class="p">,</span> <span class="n">dictionary</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a new Group with the given name and write the given dictionary to it.</span>
+
+<span class="sd">        :param group: the netCDF4 Group.</span>
+<span class="sd">        :param dict_name: the name of the dictionary, ending with self.is_dict.</span>
+<span class="sd">        :param dictionary: the dict to write.</span>
+<span class="sd">        :return: None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dict_group</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">createGroup</span><span class="p">(</span><span class="n">dict_name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dictionary</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_write_to_group</span><span class="p">(</span><span class="n">dict_group</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_read_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">):</span>
+        <span class="n">ncattrs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_read</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+        <span class="n">list_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">variables</span> <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_list</span><span class="p">)]</span>
+        <span class="n">lists</span> <span class="o">=</span> <span class="p">[(</span><span class="n">list_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_list</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_sequence</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">list_name</span><span class="p">))</span>
+                 <span class="k">for</span> <span class="n">list_name</span> <span class="ow">in</span> <span class="n">list_names</span><span class="p">]</span>
+        <span class="n">dict_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">groups</span> <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_dict</span><span class="p">)]</span>
+        <span class="n">dicts</span> <span class="o">=</span> <span class="p">[(</span><span class="n">dict_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_dict</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_dict</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">dict_name</span><span class="p">]))</span>
+                 <span class="k">for</span> <span class="n">dict_name</span> <span class="ow">in</span> <span class="n">dict_names</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">ncattrs</span> <span class="o">+</span> <span class="n">lists</span> <span class="o">+</span> <span class="n">dicts</span><span class="p">)</span></div>
+
+
+<span class="c1"># Classes that implement caching of s21_raw</span>
+
+
+<div class="viewcode-block" id="NCVariable"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.nc.NCVariable">[docs]</a><span class="k">class</span> <span class="nc">NCVariable</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variable</span> <span class="o">=</span> <span class="n">variable</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">variable</span><span class="p">[</span><span class="n">item</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">variable</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">size</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">variable</span><span class="o">.</span><span class="n">size</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">variable</span><span class="o">.</span><span class="n">datatype</span><span class="o">.</span><span class="n">name</span></div>
+
+
+<div class="viewcode-block" id="CachedSingleStream"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.nc.CachedSingleStream">[docs]</a><span class="k">class</span> <span class="nc">CachedSingleStream</span><span class="p">(</span><span class="n">basic</span><span class="o">.</span><span class="n">SingleStream</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This class contains time-ordered data from a single channel.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Think about how to handle this</span>
+    <span class="n">dimensions</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;tone_bin&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;tone_bin&#39;</span><span class="p">,),</span>
+                  <span class="s1">&#39;tone_amplitude&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;tone_bin&#39;</span><span class="p">,),</span>
+                  <span class="s1">&#39;tone_phase&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;tone_bin&#39;</span><span class="p">,)}</span>
+    <span class="c1">#              &#39;s21_raw&#39;: (&#39;sample_time&#39;,)}</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tone_bin</span><span class="p">,</span> <span class="n">tone_amplitude</span><span class="p">,</span> <span class="n">tone_phase</span><span class="p">,</span> <span class="n">tone_index</span><span class="p">,</span> <span class="n">filterbank_bin</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">s21_raw</span><span class="p">,</span>
+                 <span class="n">data_demodulated</span><span class="p">,</span> <span class="n">roach_state</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">analyze</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;Stream&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a new CachedSingleStream instance. This class stores the netCDF4 Variable containing the s21_raw data</span>
+<span class="sd">        instead of a numpy array so that the data is not read from disk unless requested. The Variable is stored using</span>
+<span class="sd">        a thin wrapper that takes the proper view of the complex data. Note that because it contains an attribute,</span>
+<span class="sd">        s21_raw_variable, that is not writeable, instances currently cannot be written back to disk.</span>
+
+<span class="sd">        :param tone_bin: an array of integers representing the frequencies of the tones played during the measurement.</span>
+<span class="sd">        :param tone_amplitude: an array of floats representing the amplitudes of the tones played during the</span>
+<span class="sd">          measurement.</span>
+<span class="sd">        :param tone_phase: an array of floats representing the radian phases of the tones played during the measurement.</span>
+<span class="sd">        :param tone_index: an int for which tone_bin[tone_index] corresponds to the frequency used to produce s21_raw.</span>
+<span class="sd">        :param filterbank_bin: an int that is the filter bank bin in which the tone lies.</span>
+<span class="sd">        :param epoch: a float that is the unix timestamp of first sample of the time stream.</span>
+<span class="sd">        :param s21_raw: a netCDF4 Variable containing a 1-D array of complex float s21 data, demodulated or not.</span>
+<span class="sd">        :param data_demodulated: True if the s21_raw data are demodulated.</span>
+<span class="sd">        :param roach_state: a dict containing state information for the roach.</span>
+<span class="sd">        :param state: a dict containing all non-roach state information.</span>
+<span class="sd">        :param analyze: if True, call the analyze() method at the end of instantiation.</span>
+<span class="sd">        :param description: a string describing this measurement.</span>
+<span class="sd">        :return: a new CachedSingleStream instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tone_bin</span> <span class="o">=</span> <span class="n">tone_bin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tone_amplitude</span> <span class="o">=</span> <span class="n">tone_amplitude</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tone_phase</span> <span class="o">=</span> <span class="n">tone_phase</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tone_index</span> <span class="o">=</span> <span class="n">tone_index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filterbank_bin</span> <span class="o">=</span> <span class="n">filterbank_bin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epoch</span> <span class="o">=</span> <span class="n">epoch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_s21_raw_variable</span> <span class="o">=</span> <span class="n">NCVariable</span><span class="p">(</span><span class="n">s21_raw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_s21_raw</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_demodulated</span> <span class="o">=</span> <span class="n">data_demodulated</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">roach_state</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">to_state_dict</span><span class="p">(</span><span class="n">roach_state</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_frequency</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sample_time</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_baseband_frequency</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_s21_raw_mean</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_s21_raw_mean_error</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">basic</span><span class="o">.</span><span class="n">RoachStream</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">analyze</span><span class="o">=</span><span class="n">analyze</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">s21_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_s21_raw</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_s21_raw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_s21_raw_variable</span><span class="p">[:]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_s21_raw</span></div>
+
+
+<div class="viewcode-block" id="CachedStreamArray"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.nc.CachedStreamArray">[docs]</a><span class="k">class</span> <span class="nc">CachedStreamArray</span><span class="p">(</span><span class="n">basic</span><span class="o">.</span><span class="n">StreamArray</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This class represents simultaneously-sampled data from multiple channels.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">dimensions</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;tone_bin&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;tone_bin&#39;</span><span class="p">,),</span>
+                  <span class="s1">&#39;tone_amplitude&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;tone_bin&#39;</span><span class="p">,),</span>
+                  <span class="s1">&#39;tone_phase&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;tone_bin&#39;</span><span class="p">,),</span>
+                  <span class="s1">&#39;tone_index&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;tone_index&#39;</span><span class="p">,),</span>
+                  <span class="s1">&#39;filterbank_bin&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;tone_index&#39;</span><span class="p">,)}</span>
+    <span class="c1"># Skip validation of s21_raw.</span>
+    <span class="c1">#                  &#39;s21_raw&#39;: (&#39;tone_index&#39;, &#39;sample_time&#39;)}</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tone_bin</span><span class="p">,</span> <span class="n">tone_amplitude</span><span class="p">,</span> <span class="n">tone_phase</span><span class="p">,</span> <span class="n">tone_index</span><span class="p">,</span> <span class="n">filterbank_bin</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">s21_raw</span><span class="p">,</span>
+                 <span class="n">data_demodulated</span><span class="p">,</span> <span class="n">roach_state</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">analyze</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;Stream&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a new CachedStreamArray instance. This class stores the netCDF4 Variable containing the s21_raw data</span>
+<span class="sd">        instead of a numpy array so that the data is not read from disk unless requested. The Variable is stored using</span>
+<span class="sd">        a thin wrapper that takes the proper view of the complex data. Note that because it contains an attribute,</span>
+<span class="sd">        s21_raw_variable, that is not writeable, instances currently cannot be written back to disk.</span>
+
+<span class="sd">        :param tone_bin: an array of integers representing the frequencies of the tones played during the measurement.</span>
+<span class="sd">        :param tone_amplitude: an array of floats representing the amplitudes of the tones played during the</span>
+<span class="sd">          measurement.</span>
+<span class="sd">        :param tone_phase: an array of floats representing the radian phases of the tones played during the measurement.</span>
+<span class="sd">        :param tone_index: an int array for which tone_bin[tone_index] gives the integer frequencies of the tones read</span>
+<span class="sd">          out in this measurement.</span>
+<span class="sd">        :param filterbank_bin: an int array of filter bank bins in which the read out tones lie.</span>
+<span class="sd">        :param epoch: a float that is the unix timestamp of first sample of the time stream.</span>
+<span class="sd">        :param s21_raw: a netCDF4 Variable containing a 2-D array of complex float s21 data, demodulated or not.</span>
+<span class="sd">        :param data_demodulated: True if the s21_raw data are demodulated.</span>
+<span class="sd">        :param roach_state: a dict containing state information for the roach.</span>
+<span class="sd">        :param state: a dict containing all non-roach state information.</span>
+<span class="sd">        :param analyze: if True, call the analyze() method at the end of instantiation.</span>
+<span class="sd">        :param description: a string describing this measurement.</span>
+<span class="sd">        :return: a new CachedStreamArray instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tone_bin</span> <span class="o">=</span> <span class="n">tone_bin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tone_amplitude</span> <span class="o">=</span> <span class="n">tone_amplitude</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tone_phase</span> <span class="o">=</span> <span class="n">tone_phase</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tone_index</span> <span class="o">=</span> <span class="n">tone_index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filterbank_bin</span> <span class="o">=</span> <span class="n">filterbank_bin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epoch</span> <span class="o">=</span> <span class="n">epoch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21_raw_variable</span> <span class="o">=</span> <span class="n">NCVariable</span><span class="p">(</span><span class="n">s21_raw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_s21_raw</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_demodulated</span> <span class="o">=</span> <span class="n">data_demodulated</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">roach_state</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">to_state_dict</span><span class="p">(</span><span class="n">roach_state</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_frequency</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sample_time</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_baseband_frequency</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_s21_raw_mean</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_s21_raw_mean_error</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">basic</span><span class="o">.</span><span class="n">RoachStream</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">analyze</span><span class="o">=</span><span class="n">analyze</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">s21_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_s21_raw</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_s21_raw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">s21_raw_variable</span><span class="p">[:]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_s21_raw</span>
+
+    <span class="k">def</span> <span class="nf">_validate_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">CachedStreamArray</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_validate_dimensions</span><span class="p">()</span>
+        <span class="c1"># Validate the first index of s21_raw. The other index isn&#39;t constrained, anyway.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">s21_raw_variable</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">tone_index</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;s21_raw_variable.shape[0] does not match tone_index.size.&quot;</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

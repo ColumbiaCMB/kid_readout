@@ -1,0 +1,192 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.measurement.io.memory &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../../index.html" />
+    <link rel="up" title="Module code" href="../../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for kid_readout.measurement.io.memory</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">kid_readout.measurement</span> <span class="kn">import</span> <span class="n">core</span>
+
+
+<div class="viewcode-block" id="Dictionary"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.memory.Dictionary">[docs]</a><span class="k">class</span> <span class="nc">Dictionary</span><span class="p">(</span><span class="n">core</span><span class="o">.</span><span class="n">IO</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This class implements the IO interface in memory using dictionaries. It is intended for testing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_array</span> <span class="o">=</span> <span class="s1">&#39;_array&#39;</span>
+    <span class="n">_measurement</span> <span class="o">=</span> <span class="s1">&#39;_measurement&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root_path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a new diskless Dictionary object.</span>
+
+<span class="sd">        :param root_path: the path to the root directory or file; not used.</span>
+<span class="sd">        :return: a new Dictionary object that can read from and write to the root object at the given path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Dictionary</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">root_path</span><span class="o">=</span><span class="n">root_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_measurement</span><span class="p">:</span> <span class="p">{},</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">_array</span><span class="p">:</span> <span class="p">{}}</span>
+
+<div class="viewcode-block" id="Dictionary.close"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.memory.Dictionary.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Close open files.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="bp">None</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">closed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return True if all files are closed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="ow">is</span> <span class="bp">None</span>
+
+<div class="viewcode-block" id="Dictionary.create_node"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.memory.Dictionary.create_node">[docs]</a>    <span class="k">def</span> <span class="nf">create_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a node at the end of the given path; all but the final node in the path must already exist.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">core</span><span class="o">.</span><span class="n">validate_node_path</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+        <span class="n">existing</span><span class="p">,</span> <span class="n">new</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+        <span class="n">existing_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_node</span><span class="p">(</span><span class="n">existing</span><span class="p">)</span>
+        <span class="n">existing_node</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_measurement</span><span class="p">][</span><span class="n">new</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_measurement</span><span class="p">:</span> <span class="p">{},</span>
+                                                 <span class="bp">self</span><span class="o">.</span><span class="n">_array</span><span class="p">:</span> <span class="p">{}}</span></div>
+
+<div class="viewcode-block" id="Dictionary.write_other"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.memory.Dictionary.write_other">[docs]</a>    <span class="k">def</span> <span class="nf">write_other</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_path</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write value to node_path with name key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_node</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+        <span class="n">node</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span></div>
+
+<div class="viewcode-block" id="Dictionary.write_array"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.memory.Dictionary.write_array">[docs]</a>    <span class="k">def</span> <span class="nf">write_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_path</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write value, a numpy array, to node_path with name key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_node</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+        <span class="n">node</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_array</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span></div>
+
+<div class="viewcode-block" id="Dictionary.read_array"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.memory.Dictionary.read_array">[docs]</a>    <span class="k">def</span> <span class="nf">read_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_path</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read array key from node_path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_node</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_array</span><span class="p">][</span><span class="n">key</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Dictionary.read_other"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.memory.Dictionary.read_other">[docs]</a>    <span class="k">def</span> <span class="nf">read_other</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_path</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read non-array object with name key from node_path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_node</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Dictionary.measurement_names"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.memory.Dictionary.measurement_names">[docs]</a>    <span class="k">def</span> <span class="nf">measurement_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_path</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the names of all measurements contained in the measurement at node_path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_node</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_measurement</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Dictionary.array_names"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.memory.Dictionary.array_names">[docs]</a>    <span class="k">def</span> <span class="nf">array_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the names of all arrays contained in the measurement at node_path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_node</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_array</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Dictionary.other_names"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.memory.Dictionary.other_names">[docs]</a>    <span class="k">def</span> <span class="nf">other_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the names of all other variables contained in the measurement at node_path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_node</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">node</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">core</span><span class="o">.</span><span class="n">RESERVED_NAMES</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)]</span></div>
+
+    <span class="c1"># Private methods.</span>
+
+    <span class="k">def</span> <span class="nf">_get_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_path</span><span class="p">):</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span>
+        <span class="k">if</span> <span class="n">node_path</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">core</span><span class="o">.</span><span class="n">validate_node_path</span><span class="p">(</span><span class="n">node_path</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">core</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="n">node_path</span><span class="p">):</span>
+                <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_measurement</span><span class="p">][</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">node</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

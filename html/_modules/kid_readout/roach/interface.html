@@ -1,0 +1,822 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.roach.interface &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for kid_readout.roach.interface</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">scipy</span>
+<span class="kn">import</span> <span class="nn">borph_utils</span>
+<span class="kn">from</span> <span class="nn">kid_readout.roach.tests.mock_roach</span> <span class="kn">import</span> <span class="n">MockRoach</span>
+<span class="kn">import</span> <span class="nn">udp_catcher</span>
+<span class="kn">from</span> <span class="nn">kid_readout.analysis.resources.local_settings</span> <span class="kn">import</span> <span class="n">BASE_DATA_DIR</span>
+<span class="kn">from</span> <span class="nn">kid_readout.roach</span> <span class="kn">import</span> <span class="n">tools</span>
+<span class="kn">from</span> <span class="nn">kid_readout.measurement.core</span> <span class="kn">import</span> <span class="n">StateDict</span>
+<span class="kn">from</span> <span class="nn">kid_readout.measurement.basic</span> <span class="kn">import</span> <span class="n">StreamArray</span>
+
+
+<span class="n">CONFIG_FILE_NAME_TEMPLATE</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DATA_DIR</span><span class="p">,</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_config.npz&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RoachInterface"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface">[docs]</a><span class="k">class</span> <span class="nc">RoachInterface</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for readout systems.</span>
+
+<span class="sd">    These methods define an abstract interface that can be relied on to be consistent between the baseband and</span>
+<span class="sd">    heterodyne readout systems.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">roach</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">roachip</span><span class="o">=</span><span class="s1">&#39;roach&#39;</span><span class="p">,</span> <span class="n">adc_valon</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">host_ip</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">nfs_root</span><span class="o">=</span><span class="s1">&#39;/srv/roach_boot/etch&#39;</span><span class="p">,</span> <span class="n">lo_valon</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Class to represent the baseband readout system (low-frequency (150 MHz), no mixers)</span>
+
+<span class="sd">        roach: an FpgaClient instance for communicating with the ROACH.</span>
+<span class="sd">                If not specified, will try to instantiate one connected to *roachip*</span>
+<span class="sd">        roachip: (optional). Network address of the ROACH if you don&#39;t want to provide an FpgaClient</span>
+<span class="sd">        adc_valon: a Valon class, a string, or None</span>
+<span class="sd">                Provide access to the Valon class which controls the Valon synthesizer which provides</span>
+<span class="sd">                the ADC and DAC sampling clock.</span>
+<span class="sd">                The default None value will use the valon.find_valon function to locate a synthesizer</span>
+<span class="sd">                and create a Valon class for you.</span>
+<span class="sd">                You can alternatively pass a string such as &#39;/dev/ttyUSB0&#39; to specify the port for the</span>
+<span class="sd">                synthesizer, which will then be used for creating a Valon class.</span>
+<span class="sd">                Finally, for test suites, you can directly pass a Valon class or a class with the same</span>
+<span class="sd">                interface.</span>
+<span class="sd">        host_ip: Override IP address to which the ROACH should send it&#39;s data. If left as None,</span>
+<span class="sd">                the host_ip will be set appropriately based on the hostname.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_using_mock_roach</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="n">roach</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">roach</span>
+            <span class="c1"># Check if we&#39;re using a fake ROACH for testing. If so, disable additional externalities</span>
+            <span class="c1"># This logic could be made more general if desired (i.e. has attribute mock</span>
+            <span class="c1">#  or type name matches regex including &#39;mock&#39;</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">roach</span><span class="p">)</span> <span class="ow">is</span> <span class="n">MockRoach</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_using_mock_roach</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">corr.katcp_wrapper</span> <span class="kn">import</span> <span class="n">FpgaClient</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">FpgaClient</span><span class="p">(</span><span class="n">roachip</span><span class="p">)</span>
+            <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">timeout</span> <span class="o">=</span> <span class="mi">10</span>
+            <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">is_connected</span><span class="p">():</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">timeout</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Connection timeout to roach&quot;</span><span class="p">)</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">adc_valon</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">kid_readout.roach</span> <span class="kn">import</span> <span class="n">valon</span>
+            <span class="n">ports</span> <span class="o">=</span> <span class="n">valon</span><span class="o">.</span><span class="n">find_valons</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ports</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon_port</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="k">print</span> <span class="s2">&quot;Warning: No valon found!&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">port</span> <span class="ow">in</span> <span class="n">ports</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon_port</span> <span class="o">=</span> <span class="n">port</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon</span> <span class="o">=</span> <span class="n">valon</span><span class="o">.</span><span class="n">Synthesizer</span><span class="p">(</span><span class="n">port</span><span class="p">)</span>
+                        <span class="n">f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon</span><span class="o">.</span><span class="n">get_frequency_a</span><span class="p">()</span>
+                        <span class="k">break</span>
+                    <span class="k">except</span><span class="p">:</span>
+                        <span class="k">pass</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">adc_valon</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">kid_readout.roach</span> <span class="kn">import</span> <span class="n">valon</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon_port</span> <span class="o">=</span> <span class="n">adc_valon</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon</span> <span class="o">=</span> <span class="n">valon</span><span class="o">.</span><span class="n">Synthesizer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">adc_valon_port</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon</span> <span class="o">=</span> <span class="n">adc_valon</span>
+
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">lo_valon</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">kid_readout.roach</span> <span class="kn">import</span> <span class="n">valon</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lo_valon_port</span> <span class="o">=</span> <span class="n">lo_valon</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lo_valon</span> <span class="o">=</span> <span class="n">valon</span><span class="o">.</span><span class="n">Synthesizer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lo_valon_port</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lo_valon</span> <span class="o">=</span> <span class="n">lo_valon</span>
+
+        <span class="k">if</span> <span class="n">host_ip</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">hostname</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostname</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">hostname</span> <span class="o">==</span> <span class="s1">&#39;detectors&#39;</span><span class="p">:</span>
+                <span class="n">host_ip</span> <span class="o">=</span> <span class="s1">&#39;192.168.1.1&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">host_ip</span> <span class="o">=</span> <span class="s1">&#39;192.168.1.1&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host_ip</span> <span class="o">=</span> <span class="n">host_ip</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">roachip</span> <span class="o">=</span> <span class="n">roachip</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nfs_root</span> <span class="o">=</span> <span class="n">nfs_root</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_config_file_name</span> <span class="o">=</span> <span class="n">CONFIG_FILE_NAME_TEMPLATE</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">roachip</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">adc_atten</span> <span class="o">=</span> <span class="mf">31.5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dac_atten</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fft_gain</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fft_bins</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tone_nsamp</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tone_bins</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phases</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">amps</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">readout_selection</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modulation_output</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modulation_rate</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wavenorm</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">loopback</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">debug_register</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="c1"># Things to be configured by subclasses</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lo_frequency</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">heterodyne</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bof_pid</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boffile</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wafer</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raw_adc_ns</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">12</span>  <span class="c1"># number of samples in the raw ADC buffer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nfft</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="c1"># Boffile specific register names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fpga_output_buffer</span> <span class="o">=</span> <span class="bp">None</span>
+
+
+    <span class="k">def</span> <span class="nf">_general_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Intended to be called after or at the end of subclass __init__</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_window_mag</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">compute_window</span><span class="p">(</span><span class="n">npfb</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nfft</span><span class="p">,</span> <span class="n">taps</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">wfunc</span><span class="o">=</span><span class="n">scipy</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">flattop</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hardware_delay_estimate</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">boffile_delay_estimates</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">boffile</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hardware_delay_estimate</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">get_delay_estimate_for_nfft</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nfft</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">heterodyne</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">adc_valon</span><span class="o">.</span><span class="n">get_frequency_a</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s2">&quot;warning couldn&#39;t get valon frequency, assuming 512 MHz&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="mf">512.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bank</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_current_bank</span><span class="p">()</span>
+
+    <span class="c1"># FPGA Functions</span>
+    <span class="k">def</span> <span class="nf">_update_bof_pid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bof_pid</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_using_mock_roach</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bof_pid</span> <span class="o">=</span> <span class="n">borph_utils</span><span class="o">.</span><span class="n">get_bof_pid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">roachip</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bof_pid</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="c1">#            raise e</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">num_tones</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        num_tones : int or None</span>
+<span class="sd">            number of tones being played. None if unknown/not programmmed</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tone_bins</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">num_tones</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">num_tones</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tone_bins</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="c1"># We may want to update this later if some tones have</span>
+                                                 <span class="c1"># zero tone_amplitude</span>
+        <span class="k">return</span> <span class="n">num_tones</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">state_arrays</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_state_arrays</span><span class="p">()</span>
+
+<div class="viewcode-block" id="RoachInterface.get_state_arrays"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.get_state_arrays">[docs]</a>    <span class="k">def</span> <span class="nf">get_state_arrays</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">copy_or_none</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">x</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">StateDict</span><span class="p">(</span>
+                  <span class="n">tone_bin</span><span class="o">=</span><span class="n">copy_or_none</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tone_bins</span><span class="p">),</span>
+                  <span class="n">tone_amplitude</span><span class="o">=</span><span class="n">copy_or_none</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">amps</span><span class="p">),</span>
+                  <span class="n">tone_phase</span><span class="o">=</span><span class="n">copy_or_none</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phases</span><span class="p">),</span>
+                  <span class="n">tone_index</span><span class="o">=</span><span class="n">copy_or_none</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">readout_selection</span><span class="p">),</span>
+                  <span class="n">filterbank_bin</span><span class="o">=</span><span class="n">copy_or_none</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fft_bins</span><span class="p">),</span>
+                  <span class="p">)</span>
+        <span class="k">return</span> <span class="n">state</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">active_state_arrays</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_active_state_arrays</span><span class="p">()</span>
+
+<div class="viewcode-block" id="RoachInterface.get_active_state_arrays"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.get_active_state_arrays">[docs]</a>    <span class="k">def</span> <span class="nf">get_active_state_arrays</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_state_arrays</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">tone_bin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">tone_bin</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">tone_bin</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">bank</span><span class="p">,:]</span>
+        <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">filterbank_bin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">filterbank_bin</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">filterbank_bin</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">bank</span><span class="p">,:]</span>
+        <span class="k">return</span> <span class="n">state</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">()</span>
+
+<div class="viewcode-block" id="RoachInterface.get_state"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.get_state">[docs]</a>    <span class="k">def</span> <span class="nf">get_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">include_registers</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="n">roach_state</span> <span class="o">=</span> <span class="n">StateDict</span><span class="p">(</span><span class="n">boffile</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">boffile</span><span class="p">,</span>
+                          <span class="n">heterodyne</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">heterodyne</span><span class="p">,</span>
+                          <span class="n">adc_sample_rate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span><span class="o">*</span><span class="mf">1e6</span><span class="p">,</span> <span class="c1"># roach still uses MHz, so convert to Hz</span>
+                          <span class="n">lo_frequency</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lo_frequency</span><span class="o">*</span><span class="mf">1e6</span><span class="p">,</span> <span class="c1"># roach still uses MHz, so convert to Hz</span>
+                          <span class="n">num_tones</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_tones</span><span class="p">,</span>
+                          <span class="n">modulation_rate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">modulation_rate</span><span class="p">,</span>
+                          <span class="n">modulation_output</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">modulation_output</span><span class="p">,</span>
+                          <span class="n">waveform_normalization</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">wavenorm</span><span class="p">,</span>
+                          <span class="n">num_tone_samples</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tone_nsamp</span><span class="p">,</span>
+                          <span class="n">num_filterbank_channels</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nfft</span><span class="p">,</span>
+                          <span class="n">dac_attenuation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dac_atten</span><span class="p">,</span>
+                          <span class="n">bank</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bank</span><span class="p">,</span>
+                          <span class="n">loopback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">loopback</span><span class="p">,</span>
+                          <span class="n">debug_register</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">debug_register</span><span class="p">,</span>
+                          <span class="p">)</span>
+        <span class="k">if</span> <span class="n">include_registers</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">register</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_values_for_writeable_registers</span><span class="p">:</span>
+                <span class="n">roach_state</span><span class="p">[</span><span class="n">register</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read_int</span><span class="p">(</span><span class="n">register</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">roach_state</span></div>
+
+
+<div class="viewcode-block" id="RoachInterface.get_raw_adc"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.get_raw_adc">[docs]</a>    <span class="k">def</span> <span class="nf">get_raw_adc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Grab raw ADC samples</span>
+
+<span class="sd">        returns: s0,s1</span>
+<span class="sd">        s0 and s1 are the samples from adc 0 and adc 1 respectively</span>
+<span class="sd">        Each sample is a 12 bit signed integer (cast to a numpy float)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;i0_ctrl&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;q0_ctrl&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;i0_ctrl&#39;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;q0_ctrl&#39;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">s0</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;i0_bram&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_adc_ns</span> <span class="o">*</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;i2&#39;</span><span class="p">))</span> <span class="o">/</span> <span class="mf">16.0</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;q0_bram&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_adc_ns</span> <span class="o">*</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;i2&#39;</span><span class="p">))</span> <span class="o">/</span> <span class="mf">16.0</span>
+        <span class="k">return</span> <span class="n">s0</span><span class="p">,</span> <span class="n">s1</span></div>
+
+<div class="viewcode-block" id="RoachInterface.auto_level_adc"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.auto_level_adc">[docs]</a>    <span class="k">def</span> <span class="nf">auto_level_adc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">goal</span><span class="o">=-</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">max_tries</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">adc_atten</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_adc_attenuator</span><span class="p">(</span><span class="mf">31.5</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="n">max_tries</span><span class="p">:</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_raw_adc</span><span class="p">()</span>
+            <span class="n">dbfs</span> <span class="o">=</span> <span class="mi">20</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">ptp</span><span class="p">()</span> <span class="o">/</span> <span class="mf">4096.0</span><span class="p">)</span>  <span class="c1"># fraction of full scale</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dbfs</span> <span class="o">-</span> <span class="n">goal</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s2">&quot;success at: </span><span class="si">%.1f</span><span class="s2"> dB&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">adc_atten</span>
+                <span class="k">break</span>
+            <span class="n">newatten</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">adc_atten</span> <span class="o">+</span> <span class="p">(</span><span class="n">dbfs</span> <span class="o">-</span> <span class="n">goal</span><span class="p">)</span>
+            <span class="k">print</span> <span class="s2">&quot;at: </span><span class="si">%.1f</span><span class="s2"> dBFS, current atten: </span><span class="si">%.1f</span><span class="s2"> dB, next trying: </span><span class="si">%.1f</span><span class="s2"> dB&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">dbfs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">adc_atten</span><span class="p">,</span> <span class="n">newatten</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_adc_attenuator</span><span class="p">(</span><span class="n">newatten</span><span class="p">)</span>
+            <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="RoachInterface.set_fft_gain"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.set_fft_gain">[docs]</a>    <span class="k">def</span> <span class="nf">set_fft_gain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gain</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the gain in the FFT</span>
+
+<span class="sd">        At each stage of the FFT there is the option to downshift (divide by 2) the data, reducing the overall</span>
+<span class="sd">        voltage gain by a factor of 2. Therefore, the FFT gain can only be of the form 2^k for k nonnegative</span>
+
+<span class="sd">        gain: the number of stages to not divide on. The final gain will be 2^gain</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fftshift</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">20</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">gain</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># this expression puts downsifts at the earliest stages of the FFT</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fft_gain</span> <span class="o">=</span> <span class="n">gain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;fftshift&#39;</span><span class="p">,</span> <span class="n">fftshift</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_state</span><span class="p">()</span></div>
+
+    <span class="c1"># TODO: this should raise a RoachError or return None if no bank is selected or the Roach isn&#39;t programmed.</span>
+<div class="viewcode-block" id="RoachInterface.get_current_bank"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.get_current_bank">[docs]</a>    <span class="k">def</span> <span class="nf">get_current_bank</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determine what tone bank the ROACH is currently set to use</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">bank_reg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read_int</span><span class="p">(</span><span class="s1">&#39;dram_bank&#39;</span><span class="p">)</span>
+            <span class="n">mask_reg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read_int</span><span class="p">(</span><span class="s1">&#39;dram_mask&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mask_reg</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bank</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># if mask is not set, bank is undefined, so call it 0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bank</span> <span class="o">=</span> <span class="n">bank_reg</span> <span class="o">/</span> <span class="p">(</span><span class="n">mask_reg</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bank</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># this catches the case that the ROACH is not yet programmed</span></div>
+
+<div class="viewcode-block" id="RoachInterface.select_bank"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.select_bank">[docs]</a>    <span class="k">def</span> <span class="nf">select_bank</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bank</span><span class="p">):</span>
+        <span class="n">dram_addr_per_bank</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tone_nsamp</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># number of dram addresses per bank</span>
+        <span class="n">mask_reg</span> <span class="o">=</span> <span class="n">dram_addr_per_bank</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">bank_reg</span> <span class="o">=</span> <span class="n">dram_addr_per_bank</span> <span class="o">*</span> <span class="n">bank</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pause_dram</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;dram_bank&#39;</span><span class="p">,</span> <span class="n">bank_reg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;dram_mask&#39;</span><span class="p">,</span> <span class="n">mask_reg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_unpause_dram</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bank</span> <span class="o">=</span> <span class="n">bank</span></div>
+<span class="c1">#        try:</span>
+<span class="c1">#            self.select_fft_bins(self.readout_selection)</span>
+<span class="c1">#        except AttributeError:</span>
+<span class="c1">#            self.select_fft_bins(np.arange(self.tone_bins.shape[1]))</span>
+
+
+<div class="viewcode-block" id="RoachInterface.set_modulation_output"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.set_modulation_output">[docs]</a>    <span class="k">def</span> <span class="nf">set_modulation_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="s1">&#39;low&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        rate: can be &#39;high&#39;, &#39;low&#39;, 1-8.</span>
+<span class="sd">            modulation output signal switching state. &#39;high&#39; and &#39;low&#39; set the TTL output to a constant level.</span>
+<span class="sd">            Integers 1-8 set the switching rate to cycle every 2**k spectra</span>
+<span class="sd">        returns: float, switching rate in Hz.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rate_register</span> <span class="o">=</span> <span class="s1">&#39;gpiob&#39;</span>
+        <span class="k">if</span> <span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">rate</span><span class="p">))</span> <span class="o">==</span> <span class="s1">&#39;low&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="n">rate_register</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modulation_rate</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modulation_output</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_state</span><span class="p">()</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">rate</span><span class="p">))</span> <span class="o">==</span> <span class="s1">&#39;high&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="n">rate_register</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modulation_rate</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modulation_output</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_state</span><span class="p">()</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="n">rate</span> <span class="o">&gt;=</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">rate</span> <span class="o">&lt;=</span> <span class="mi">8</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="n">rate_register</span><span class="p">,</span> <span class="mi">10</span> <span class="o">-</span> <span class="n">rate</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modulation_rate</span> <span class="o">=</span> <span class="n">rate</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modulation_output</span> <span class="o">=</span> <span class="mi">2</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_state</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_modulation_rate_hz</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid value for rate: got </span><span class="si">%s</span><span class="s1">, expected one of &quot;high&quot;, &quot;low&quot;, or 1-8&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">rate</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="RoachInterface.get_modulation_rate_hz"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.get_modulation_rate_hz">[docs]</a>    <span class="k">def</span> <span class="nf">get_modulation_rate_hz</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">modulation_rate</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rate_in_hz</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">*</span> <span class="mf">1e6</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nfft</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="bp">self</span><span class="o">.</span><span class="n">modulation_rate</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">rate_in_hz</span></div>
+
+<div class="viewcode-block" id="RoachInterface.set_loopback"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.set_loopback">[docs]</a>    <span class="k">def</span> <span class="nf">set_loopback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">enable</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Must be implemented by subclasses&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RoachInterface.save_state"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.save_state">[docs]</a>    <span class="k">def</span> <span class="nf">save_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_using_mock_roach</span><span class="p">:</span>
+            <span class="k">return</span> <span class="c1">#don&#39;t save anything when using mock</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_config_file_name</span><span class="p">,</span>
+                 <span class="n">boffile</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">boffile</span><span class="p">,</span>
+                 <span class="n">adc_atten</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">adc_atten</span><span class="p">,</span>
+                 <span class="n">dac_atten</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dac_atten</span><span class="p">,</span>
+                 <span class="n">bof_pid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bof_pid</span><span class="p">,</span>
+                 <span class="n">fft_bins</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fft_bins</span><span class="p">,</span>
+                 <span class="n">fft_gain</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fft_gain</span><span class="p">,</span>
+                 <span class="n">tone_nsamp</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tone_nsamp</span><span class="p">,</span>
+                 <span class="n">tone_bins</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tone_bins</span><span class="p">,</span>
+                 <span class="n">phases</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phases</span><span class="p">,</span>
+                 <span class="n">modulation_rate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">modulation_rate</span><span class="p">,</span>
+                 <span class="n">modulation_output</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">modulation_output</span><span class="p">,</span>
+                 <span class="n">lo_frequency</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lo_frequency</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_config_file_name</span><span class="p">,</span> <span class="mo">0777</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="RoachInterface.initialize"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mf">512.0</span><span class="p">,</span> <span class="n">start_udp</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">use_config</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reprogram the ROACH and get things running</span>
+
+<span class="sd">        fs: float</span>
+<span class="sd">            Sampling frequency in MHz</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">use_config</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_config_file_name</span><span class="p">)</span>
+                <span class="k">print</span> <span class="s2">&quot;Loaded ROACH state from&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_file_name</span>
+            <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s2">&quot;Could not load previous state&quot;</span>
+                <span class="n">state</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_update_bof_pid</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bof_pid</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bof_pid</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">bof_pid</span> <span class="o">!=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;bof_pid&#39;</span><span class="p">]:</span>
+                <span class="k">print</span> <span class="s2">&quot;ROACH configuration does not match saved state&quot;</span>
+                <span class="n">state</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;boffile&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">boffile</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s2">&quot;Reinitializing system&quot;</span>
+            <span class="k">print</span> <span class="s2">&quot;Deprogramming&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_set_fs</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">progdev</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="k">print</span> <span class="s2">&quot;Programming&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">boffile</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">progdev</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boffile</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bof_pid</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_bof_pid</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_fft_gain</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;dacctrl&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;dacctrl&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">estfs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measure_fs</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fs</span> <span class="o">-</span> <span class="n">estfs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">2.0</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s2">&quot;Warning! FPGA clock may not be locked to sampling clock!&quot;</span>
+            <span class="k">print</span> <span class="s2">&quot;Requested sampling rate </span><span class="si">%.1f</span><span class="s2"> MHz. Estimated sampling rate </span><span class="si">%.1f</span><span class="s2"> MHz&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">estfs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">start_udp</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_using_mock_roach</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s2">&quot;starting udp server process on PPC&quot;</span>
+                <span class="n">borph_utils</span><span class="o">.</span><span class="n">start_server</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bof_pid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">roachip</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_loopback</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adc_atten</span> <span class="o">=</span> <span class="mf">31.5</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dac_atten</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fft_bins</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tone_nsamp</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tone_bins</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phases</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modulation_output</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modulation_rate</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_state</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adc_atten</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;adc_atten&#39;</span><span class="p">][()]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dac_atten</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;dac_atten&#39;</span><span class="p">][()]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fft_bins</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;fft_bins&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fft_gain</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;fft_gain&#39;</span><span class="p">][()]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tone_nsamp</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;tone_nsamp&#39;</span><span class="p">][()]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tone_bins</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;tone_bins&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phases</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;phases&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modulation_output</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;modulation_output&#39;</span><span class="p">][()]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modulation_rate</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;modulation_rate&#39;</span><span class="p">][()]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lo_frequency</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;lo_frequency&#39;</span><span class="p">][()]</span></div>
+
+<div class="viewcode-block" id="RoachInterface.measure_fs"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.measure_fs">[docs]</a>    <span class="k">def</span> <span class="nf">measure_fs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Estimate the sampling rate</span>
+
+<span class="sd">        This takes about 2 seconds to run</span>
+<span class="sd">        returns: fs, the approximate sampling rate in MHz</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">est_brd_clk</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_pause_dram</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;dram_rst&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_unpause_dram</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;dram_rst&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># TODO: This should raise a RoachError if data is too large to fit in memory.</span>
+    <span class="k">def</span> <span class="nf">_load_dram</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">start_offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">fast</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">fast</span><span class="p">:</span>
+            <span class="n">load_dram</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_dram_ssh</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">load_dram</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_dram_katcp</span>
+        <span class="n">nbytes</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">nbytes</span>
+        <span class="c1"># PPC can only access 64MB at a time, so need to break the data into chunks of this size</span>
+        <span class="n">bank_size</span> <span class="o">=</span> <span class="p">(</span><span class="mi">64</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">20</span><span class="p">)</span>
+        <span class="n">nbanks</span><span class="p">,</span> <span class="n">rem</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">nbytes</span><span class="p">,</span> <span class="n">bank_size</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rem</span><span class="p">:</span>
+            <span class="n">nbanks</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">nbanks</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">nbanks</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">bank_size_units</span> <span class="o">=</span> <span class="n">bank_size</span> <span class="o">/</span> <span class="n">data</span><span class="o">.</span><span class="n">itemsize</span>  <span class="c1"># calculate how many entries in the data array fit in one 64 MB bank</span>
+
+        <span class="n">start_offset_bytes</span> <span class="o">=</span> <span class="n">start_offset</span> <span class="o">*</span> <span class="n">data</span><span class="o">.</span><span class="n">itemsize</span>
+        <span class="n">bank_offset</span> <span class="o">=</span> <span class="n">start_offset_bytes</span> <span class="o">//</span> <span class="n">bank_size</span>
+        <span class="n">start_offset_bytes</span> <span class="o">=</span> <span class="n">start_offset_bytes</span> <span class="o">-</span> <span class="n">bank_size</span> <span class="o">*</span> <span class="n">bank_offset</span>
+        <span class="k">print</span> <span class="s2">&quot;bank_offset=&quot;</span><span class="p">,</span> <span class="n">bank_offset</span><span class="p">,</span> <span class="s2">&quot;start_offset=&quot;</span><span class="p">,</span> <span class="n">start_offset</span><span class="p">,</span> <span class="s2">&quot;start_offset_bytes=&quot;</span><span class="p">,</span> <span class="n">start_offset_bytes</span>
+        <span class="k">for</span> <span class="n">bank</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nbanks</span><span class="p">):</span>
+            <span class="k">print</span> <span class="s2">&quot;writing DRAM bank&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">bank</span> <span class="o">+</span> <span class="n">bank_offset</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;dram_controller&#39;</span><span class="p">,</span> <span class="n">bank</span> <span class="o">+</span> <span class="n">bank_offset</span><span class="p">)</span>
+            <span class="n">load_dram</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">bank</span> <span class="o">*</span> <span class="n">bank_size_units</span><span class="p">:(</span><span class="n">bank</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">bank_size_units</span><span class="p">],</span> <span class="n">offset_bytes</span><span class="o">=</span><span class="n">start_offset_bytes</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_load_dram_katcp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">tries</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+        <span class="k">while</span> <span class="n">tries</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_pause_dram</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_dram</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">tostring</span><span class="p">())</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_unpause_dram</span><span class="p">()</span>
+                <span class="k">return</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s2">&quot;failure writing to dram, trying again&quot;</span>
+            <span class="c1">#                print e</span>
+            <span class="n">tries</span> <span class="o">=</span> <span class="n">tries</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Writing to dram failed!&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_load_dram_ssh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">offset_bytes</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">datafile</span><span class="o">=</span><span class="s1">&#39;boffiles/dram.bin&#39;</span><span class="p">):</span>
+        <span class="n">offset_blocks</span> <span class="o">=</span> <span class="n">offset_bytes</span> <span class="o">/</span> <span class="mi">512</span>  <span class="c1">#dd uses blocks of 512 bytes by default</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_bof_pid</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pause_dram</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_using_mock_roach</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span> <span class="c1">#TODO: Can make this take a realistic amount of time if desired</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">tofile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nfs_root</span><span class="p">,</span> <span class="n">datafile</span><span class="p">))</span>
+            <span class="n">dram_file</span> <span class="o">=</span> <span class="s1">&#39;/proc/</span><span class="si">%d</span><span class="s1">/hw/ioreg/dram_memory&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">bof_pid</span>
+            <span class="n">datafile</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">datafile</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">borph_utils</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span>
+                <span class="p">(</span><span class="s1">&#39;ssh root@</span><span class="si">%s</span><span class="s1"> &quot;dd seek=</span><span class="si">%d</span><span class="s1"> if=</span><span class="si">%s</span><span class="s1"> of=</span><span class="si">%s</span><span class="s1">&quot;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">roachip</span><span class="p">,</span> <span class="n">offset_blocks</span><span class="p">,</span> <span class="n">datafile</span><span class="p">,</span> <span class="n">dram_file</span><span class="p">)),</span> <span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="k">print</span> <span class="n">result</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_unpause_dram</span><span class="p">()</span>
+
+    <span class="c1"># TODO: call from the functions that require it so we can stop calling it externally.</span>
+    <span class="k">def</span> <span class="nf">_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">loopback</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">loopback</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;loopback parameter to _sync is deprecated, use set_loopback method&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_loopback</span><span class="p">(</span><span class="n">loopback</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loopback</span><span class="p">:</span>
+            <span class="n">base_value</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">base_value</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;sync&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="o">+</span><span class="n">base_value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;sync&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="o">+</span><span class="n">base_value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;sync&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="o">+</span><span class="n">base_value</span><span class="p">)</span>
+
+    <span class="c1">### Other hardware functions (attenuator, valon)</span>
+<div class="viewcode-block" id="RoachInterface.set_attenuator"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.set_attenuator">[docs]</a>    <span class="k">def</span> <span class="nf">set_attenuator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attendb</span><span class="p">,</span> <span class="n">gpio_reg</span><span class="o">=</span><span class="s1">&#39;gpioa&#39;</span><span class="p">,</span> <span class="n">data_bit</span><span class="o">=</span><span class="mh">0x08</span><span class="p">,</span> <span class="n">clk_bit</span><span class="o">=</span><span class="mh">0x04</span><span class="p">,</span> <span class="n">le_bit</span><span class="o">=</span><span class="mh">0x02</span><span class="p">):</span>
+        <span class="n">atten</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attendb</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="n">gpio_reg</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s2">&quot;ROACH not programmed, cannot set attenuators&quot;</span>
+            <span class="k">return</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="mh">0x20</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">atten</span> <span class="o">&amp;</span> <span class="n">mask</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">data_bit</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="mh">0x00</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span> <span class="o">&gt;&gt;</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="n">gpio_reg</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="n">gpio_reg</span><span class="p">,</span> <span class="n">data</span> <span class="o">|</span> <span class="n">clk_bit</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="n">gpio_reg</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="n">gpio_reg</span><span class="p">,</span> <span class="n">le_bit</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="n">gpio_reg</span><span class="p">,</span> <span class="mh">0x00</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RoachInterface.set_adc_attenuator"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.set_adc_attenuator">[docs]</a>    <span class="k">def</span> <span class="nf">set_adc_attenuator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attendb</span><span class="p">):</span>
+        <span class="k">print</span> <span class="s2">&quot;Warning! ADC attenuator is no longer adjustable. Value will be fixed at 31.5 dB&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adc_atten</span> <span class="o">=</span> <span class="mf">31.5</span></div>
+
+    <span class="c1">#        if attendb &lt;0 or attendb &gt; 31.5:</span>
+    <span class="c1">#            raise ValueError(&quot;ADC Attenuator must be between 0 and 31.5 dB. Value given was: %s&quot; % str(attendb))</span>
+    <span class="c1">#        self.set_attenuator(attendb,le_bit=0x02)</span>
+    <span class="c1">#        self.adc_atten = int(attendb*2)/2.0</span>
+
+<div class="viewcode-block" id="RoachInterface.set_dac_attenuator"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.set_dac_attenuator">[docs]</a>    <span class="k">def</span> <span class="nf">set_dac_attenuator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attendb</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">attendb</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">attendb</span> <span class="o">&gt;</span> <span class="mi">63</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;DAC Attenuator must be between 0 and 63 dB. Value given was: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">attendb</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">attendb</span> <span class="o">&gt;</span> <span class="mf">31.5</span><span class="p">:</span>
+            <span class="n">attena</span> <span class="o">=</span> <span class="mf">31.5</span>
+            <span class="n">attenb</span> <span class="o">=</span> <span class="n">attendb</span> <span class="o">-</span> <span class="n">attena</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">attena</span> <span class="o">=</span> <span class="n">attendb</span>
+            <span class="n">attenb</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_attenuator</span><span class="p">(</span><span class="n">attena</span><span class="p">,</span> <span class="n">le_bit</span><span class="o">=</span><span class="mh">0x01</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_attenuator</span><span class="p">(</span><span class="n">attenb</span><span class="p">,</span> <span class="n">le_bit</span><span class="o">=</span><span class="mh">0x02</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dac_atten</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attendb</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_state</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="RoachInterface.set_dac_atten"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.set_dac_atten">[docs]</a>    <span class="k">def</span> <span class="nf">set_dac_atten</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attendb</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Alias for set_dac_attenuator &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_dac_attenuator</span><span class="p">(</span><span class="n">attendb</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_set_fs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set sampling frequency in MHz</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_window_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fr</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fr</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">7</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">7</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_window_mag</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">res</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+<div class="viewcode-block" id="RoachInterface.set_debug"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.set_debug">[docs]</a>    <span class="k">def</span> <span class="nf">set_debug</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">write_int</span><span class="p">(</span><span class="s1">&#39;debug&#39;</span><span class="p">,</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">debug_register</span> <span class="o">=</span> <span class="n">value</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">blocks_per_second</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;blocks_per_second needs to be implemented for this subclass&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RoachInterface.get_measurement"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.get_measurement">[docs]</a>    <span class="k">def</span> <span class="nf">get_measurement</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_seconds</span><span class="p">,</span> <span class="n">power_of_two</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">demod</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">num_blocks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocks_per_second</span><span class="o">*</span><span class="n">num_seconds</span>
+        <span class="k">if</span> <span class="n">power_of_two</span><span class="p">:</span>
+            <span class="n">log2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">num_blocks</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">log2</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">log2</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">num_blocks</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="n">log2</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_measurement_blocks</span><span class="p">(</span><span class="n">num_blocks</span><span class="p">,</span><span class="n">demod</span><span class="o">=</span><span class="n">demod</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RoachInterface.get_measurement_blocks"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.get_measurement_blocks">[docs]</a>    <span class="k">def</span> <span class="nf">get_measurement_blocks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">num_blocks</span><span class="p">,</span> <span class="n">demod</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">epoch</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="c1"># This will be improved</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">seqnos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="n">num_blocks</span><span class="p">,</span><span class="n">demod</span><span class="o">=</span><span class="n">demod</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">amps</span><span class="p">):</span>
+            <span class="n">tone_amplitude</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">amps</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tone_bins</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tone_amplitude</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">amps</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">measurement</span> <span class="o">=</span> <span class="n">StreamArray</span><span class="p">(</span><span class="n">filterbank_bin</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fft_bins</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">bank</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">readout_selection</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+                                  <span class="n">tone_bin</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tone_bins</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">bank</span><span class="p">,:]</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+                                  <span class="n">tone_amplitude</span><span class="o">=</span><span class="n">tone_amplitude</span><span class="p">,</span>  <span class="c1"># already copied</span>
+                                  <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span>
+                                  <span class="n">s21_raw</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>  <span class="c1"># transpose for now, because measurements are organized channel,time</span>
+                                  <span class="n">tone_phase</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phases</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+                                  <span class="n">tone_index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">readout_selection</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+                                  <span class="n">data_demodulated</span><span class="o">=</span><span class="n">demod</span><span class="p">,</span>
+                                  <span class="n">roach_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_state</span><span class="p">(),</span>
+                                  <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">measurement</span></div>
+
+<div class="viewcode-block" id="RoachInterface.get_data_udp"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachInterface.get_data_udp">[docs]</a>    <span class="k">def</span> <span class="nf">get_data_udp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nread</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">demod</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="n">chan_offset</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">nch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fpga_fft_readout_indexes</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">seqnos</span> <span class="o">=</span> <span class="n">udp_catcher</span><span class="o">.</span><span class="n">get_udp_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">npkts</span><span class="o">=</span><span class="n">nread</span> <span class="o">*</span> <span class="mi">16</span> <span class="o">*</span> <span class="n">nch</span><span class="p">,</span> <span class="n">streamid</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="o">**</span><span class="mi">15</span><span class="p">),</span>
+                                                <span class="n">chans</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fpga_fft_readout_indexes</span> <span class="o">+</span> <span class="n">chan_offset</span><span class="p">,</span>
+                                                <span class="n">nfft</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nfft</span><span class="p">,</span> <span class="n">addr</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host_ip</span><span class="p">,</span> <span class="mi">12345</span><span class="p">))</span>  <span class="c1"># , stream_reg, addr)</span>
+        <span class="k">if</span> <span class="n">demod</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">demodulate_data</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">seqnos</span></div>
+
+    <span class="c1">### Tried and true readout function</span>
+    <span class="k">def</span> <span class="nf">_read_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nread</span><span class="p">,</span> <span class="n">bufname</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Low level data reading loop, common to both readouts</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">regname</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_addr&#39;</span> <span class="o">%</span> <span class="n">bufname</span>
+        <span class="n">chanreg</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_chan&#39;</span> <span class="o">%</span> <span class="n">bufname</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read_uint</span><span class="p">(</span><span class="n">regname</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x1000</span>
+        <span class="n">addr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read_uint</span><span class="p">(</span><span class="n">regname</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">addr</span> <span class="o">&amp;</span> <span class="mh">0x1000</span>
+        <span class="k">while</span> <span class="n">a</span> <span class="o">==</span> <span class="n">b</span><span class="p">:</span>
+            <span class="n">addr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read_uint</span><span class="p">(</span><span class="n">regname</span><span class="p">)</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">addr</span> <span class="o">&amp;</span> <span class="mh">0x1000</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">addrs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">chans</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">tic</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">idle</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nread</span><span class="p">):</span>
+                <span class="n">a</span> <span class="o">=</span> <span class="n">b</span>
+                <span class="k">if</span> <span class="n">a</span><span class="p">:</span>
+                    <span class="n">bram</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_a&#39;</span> <span class="o">%</span> <span class="n">bufname</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">bram</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_b&#39;</span> <span class="o">%</span> <span class="n">bufname</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">bram</span><span class="p">,</span> <span class="mi">4</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">12</span><span class="p">))</span>
+                <span class="n">addrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+                <span class="n">chans</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read_int</span><span class="p">(</span><span class="n">chanreg</span><span class="p">))</span>
+
+                <span class="n">addr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read_uint</span><span class="p">(</span><span class="n">regname</span><span class="p">)</span>
+                <span class="n">b</span> <span class="o">=</span> <span class="n">addr</span> <span class="o">&amp;</span> <span class="mh">0x1000</span>
+                <span class="k">while</span> <span class="n">a</span> <span class="o">==</span> <span class="n">b</span><span class="p">:</span>
+                    <span class="n">addr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read_uint</span><span class="p">(</span><span class="n">regname</span><span class="p">)</span>
+                    <span class="n">b</span> <span class="o">=</span> <span class="n">addr</span> <span class="o">&amp;</span> <span class="mh">0x1000</span>
+                    <span class="n">idle</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="k">print</span> <span class="p">(</span><span class="s2">&quot;</span><span class="se">\r</span><span class="s2"> got </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">n</span><span class="p">),</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s2">&quot;read only partway because of error:&quot;</span>
+            <span class="k">print</span> <span class="n">e</span>
+            <span class="k">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">tot</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">tic</span>
+        <span class="k">print</span> <span class="s2">&quot;</span><span class="se">\r</span><span class="s2">read </span><span class="si">%d</span><span class="s2"> in </span><span class="si">%.1f</span><span class="s2"> seconds, </span><span class="si">%.2f</span><span class="s2"> samples per second, idle </span><span class="si">%.2f</span><span class="s2"> per read&quot;</span> <span class="o">%</span> <span class="p">(</span>
+        <span class="n">nread</span><span class="p">,</span> <span class="n">tot</span><span class="p">,</span> <span class="p">(</span><span class="n">nread</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">12</span> <span class="o">/</span> <span class="n">tot</span><span class="p">),</span> <span class="n">idle</span> <span class="o">/</span> <span class="p">(</span><span class="n">nread</span> <span class="o">*</span> <span class="mf">1.0</span><span class="p">))</span>
+        <span class="n">dout</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(([</span><span class="n">np</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;i2&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;float&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="s1">&#39;complex&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]))</span>
+        <span class="n">addrs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">addrs</span><span class="p">)</span>
+        <span class="n">chans</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">chans</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dout</span><span class="p">,</span> <span class="n">addrs</span><span class="p">,</span> <span class="n">chans</span>
+
+    <span class="k">def</span> <span class="nf">_cont_read_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">bufname</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Low level data reading continuous loop, common to both readouts</span>
+<span class="sd">        calls &quot;callback&quot; each time a chunk of data is ready</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">regname</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_addr&#39;</span> <span class="o">%</span> <span class="n">bufname</span>
+        <span class="n">chanreg</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_chan&#39;</span> <span class="o">%</span> <span class="n">bufname</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read_uint</span><span class="p">(</span><span class="n">regname</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x1000</span>
+        <span class="n">addr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read_uint</span><span class="p">(</span><span class="n">regname</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">addr</span> <span class="o">&amp;</span> <span class="mh">0x1000</span>
+        <span class="k">while</span> <span class="n">a</span> <span class="o">==</span> <span class="n">b</span><span class="p">:</span>
+            <span class="n">addr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read_uint</span><span class="p">(</span><span class="n">regname</span><span class="p">)</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">addr</span> <span class="o">&amp;</span> <span class="mh">0x1000</span>
+        <span class="n">tic</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">idle</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">a</span> <span class="o">=</span> <span class="n">b</span>
+                    <span class="k">if</span> <span class="n">a</span><span class="p">:</span>
+                        <span class="n">bram</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_a&#39;</span> <span class="o">%</span> <span class="n">bufname</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">bram</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">_b&#39;</span> <span class="o">%</span> <span class="n">bufname</span>
+                    <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">bram</span><span class="p">,</span> <span class="mi">4</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">12</span><span class="p">)</span>
+                    <span class="n">addrs</span> <span class="o">=</span> <span class="n">addr</span>
+                    <span class="n">chans</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read_int</span><span class="p">(</span><span class="n">chanreg</span><span class="p">)</span>
+                    <span class="n">res</span> <span class="o">=</span> <span class="n">callback</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">addrs</span><span class="p">,</span> <span class="n">chans</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">print</span> <span class="s2">&quot;read only partway because of error:&quot;</span>
+                    <span class="k">print</span> <span class="n">e</span>
+                    <span class="k">print</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="n">res</span> <span class="o">=</span> <span class="bp">False</span>
+                <span class="n">n</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">res</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="n">addr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read_uint</span><span class="p">(</span><span class="n">regname</span><span class="p">)</span>
+                <span class="n">b</span> <span class="o">=</span> <span class="n">addr</span> <span class="o">&amp;</span> <span class="mh">0x1000</span>
+                <span class="k">while</span> <span class="n">a</span> <span class="o">==</span> <span class="n">b</span><span class="p">:</span>
+                    <span class="n">addr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">read_uint</span><span class="p">(</span><span class="n">regname</span><span class="p">)</span>
+                    <span class="n">b</span> <span class="o">=</span> <span class="n">addr</span> <span class="o">&amp;</span> <span class="mh">0x1000</span>
+                    <span class="n">idle</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="k">print</span> <span class="p">(</span><span class="s2">&quot;</span><span class="se">\r</span><span class="s2"> got </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">n</span><span class="p">),</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="n">tot</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">tic</span>
+        <span class="k">print</span> <span class="s2">&quot;</span><span class="se">\r</span><span class="s2">read </span><span class="si">%d</span><span class="s2"> in </span><span class="si">%.1f</span><span class="s2"> seconds, </span><span class="si">%.2f</span><span class="s2"> samples per second, idle </span><span class="si">%.2f</span><span class="s2"> per read&quot;</span> <span class="o">%</span> <span class="p">(</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">tot</span><span class="p">,</span> <span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">12</span> <span class="o">/</span> <span class="n">tot</span><span class="p">),</span> <span class="n">idle</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="mf">1.0</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="RoachError"><a class="viewcode-back" href="../../../kid_readout.roach.html#kid_readout.roach.interface.RoachError">[docs]</a><span class="k">class</span> <span class="nc">RoachError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This class is raised on Roach-specific errors.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

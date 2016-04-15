@@ -1,0 +1,222 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.measurement.test.test_core &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../../index.html" />
+    <link rel="up" title="Module code" href="../../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for kid_readout.measurement.test.test_core</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">kid_readout.measurement</span> <span class="kn">import</span> <span class="n">core</span><span class="p">,</span> <span class="n">basic</span>
+<span class="kn">from</span> <span class="nn">kid_readout.measurement.io</span> <span class="kn">import</span> <span class="n">memory</span>
+<span class="kn">from</span> <span class="nn">kid_readout.measurement.test.utilities</span> <span class="kn">import</span> <span class="n">CornerMeasurement</span>
+
+
+<div class="viewcode-block" id="test_measurement_instantiation_blank"><a class="viewcode-back" href="../../../../kid_readout.measurement.test.html#kid_readout.measurement.test.test_core.test_measurement_instantiation_blank">[docs]</a><span class="k">def</span> <span class="nf">test_measurement_instantiation_blank</span><span class="p">():</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">Measurement</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">state</span> <span class="ow">is</span> <span class="bp">None</span>
+    <span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">description</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">_parent</span> <span class="ow">is</span> <span class="bp">None</span>
+    <span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">_io_class</span> <span class="ow">is</span> <span class="bp">None</span>
+    <span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">_root_path</span> <span class="ow">is</span> <span class="bp">None</span>
+    <span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">_node_path</span> <span class="ow">is</span> <span class="bp">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">analyze</span><span class="p">()</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="bp">False</span></div>
+
+
+<div class="viewcode-block" id="test_measurement_to_dataframe"><a class="viewcode-back" href="../../../../kid_readout.measurement.test.html#kid_readout.measurement.test.test_core.test_measurement_to_dataframe">[docs]</a><span class="k">def</span> <span class="nf">test_measurement_to_dataframe</span><span class="p">():</span>
+    <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">core</span><span class="o">.</span><span class="n">Measurement</span><span class="p">()</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span> <span class="o">==</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="test_measurement_add_origin"><a class="viewcode-back" href="../../../../kid_readout.measurement.test.html#kid_readout.measurement.test.test_core.test_measurement_add_origin">[docs]</a><span class="k">def</span> <span class="nf">test_measurement_add_origin</span><span class="p">():</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">Measurement</span><span class="p">()</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">df</span> <span class="ow">is</span> <span class="bp">None</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># This creates a DataFrame with shape (1, 1).</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">add_origin</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">df</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">s</span><span class="o">.</span><span class="n">io_class</span> <span class="ow">is</span> <span class="bp">None</span>
+    <span class="k">assert</span> <span class="n">s</span><span class="o">.</span><span class="n">root_path</span> <span class="ow">is</span> <span class="bp">None</span>
+    <span class="k">assert</span> <span class="n">s</span><span class="o">.</span><span class="n">node_path</span> <span class="ow">is</span> <span class="bp">None</span></div>
+
+
+<div class="viewcode-block" id="test_measurement_add_legacy_origin"><a class="viewcode-back" href="../../../../kid_readout.measurement.test.html#kid_readout.measurement.test.test_core.test_measurement_add_legacy_origin">[docs]</a><span class="k">def</span> <span class="nf">test_measurement_add_legacy_origin</span><span class="p">():</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">Measurement</span><span class="p">()</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">df</span> <span class="ow">is</span> <span class="bp">None</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># This creates a DataFrame with shape (1, 1).</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">add_legacy_origin</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">df</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">s</span><span class="o">.</span><span class="n">io_module</span> <span class="o">==</span> <span class="s1">&#39;kid_readout.measurement.legacy&#39;</span>
+    <span class="k">assert</span> <span class="n">s</span><span class="o">.</span><span class="n">root_path</span> <span class="ow">is</span> <span class="bp">None</span></div>
+
+
+<div class="viewcode-block" id="test_measurement_list"><a class="viewcode-back" href="../../../../kid_readout.measurement.test.html#kid_readout.measurement.test.test_core.test_measurement_list">[docs]</a><span class="k">def</span> <span class="nf">test_measurement_list</span><span class="p">():</span>
+    <span class="n">length</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">contents</span> <span class="o">=</span> <span class="p">[</span><span class="n">CornerMeasurement</span><span class="p">()</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">length</span><span class="p">)]</span>
+    <span class="n">ml</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">instantiate_sequence</span><span class="p">(</span><span class="s1">&#39;kid_readout.measurement.core.MeasurementList&#39;</span><span class="p">,</span> <span class="n">contents</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">ml</span> <span class="o">==</span> <span class="n">contents</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">core</span><span class="o">.</span><span class="n">is_sequence</span><span class="p">(</span><span class="n">ml</span><span class="o">.</span><span class="n">__module__</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">ml</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">ml</span><span class="p">)</span> <span class="o">==</span> <span class="n">length</span></div>
+
+
+<div class="viewcode-block" id="test_io_list"><a class="viewcode-back" href="../../../../kid_readout.measurement.test.html#kid_readout.measurement.test.test_core.test_io_list">[docs]</a><span class="k">def</span> <span class="nf">test_io_list</span><span class="p">():</span>
+    <span class="n">num_streams</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">streams</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">MeasurementList</span><span class="p">([</span><span class="n">CornerMeasurement</span><span class="p">()</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_streams</span><span class="p">)])</span>
+    <span class="n">io</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="n">Dictionary</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+    <span class="n">sweep</span> <span class="o">=</span> <span class="n">basic</span><span class="o">.</span><span class="n">SingleSweep</span><span class="p">(</span><span class="n">core</span><span class="o">.</span><span class="n">IOList</span><span class="p">())</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">sweep</span><span class="p">)</span>
+    <span class="n">sweep</span><span class="o">.</span><span class="n">streams</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">streams</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">io</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">measurement_names</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">basic</span><span class="o">.</span><span class="n">SingleSweep</span><span class="p">(</span><span class="n">streams</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="test_read_write"><a class="viewcode-back" href="../../../../kid_readout.measurement.test.html#kid_readout.measurement.test.test_core.test_read_write">[docs]</a><span class="k">def</span> <span class="nf">test_read_write</span><span class="p">():</span>
+    <span class="n">io</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="n">Dictionary</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+    <span class="n">original</span> <span class="o">=</span> <span class="n">CornerMeasurement</span><span class="p">()</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;test&#39;</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">original</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">original</span> <span class="o">==</span> <span class="n">io</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="test_comparison_code_state"><a class="viewcode-back" href="../../../../kid_readout.measurement.test.html#kid_readout.measurement.test.test_core.test_comparison_code_state">[docs]</a><span class="k">def</span> <span class="nf">test_comparison_code_state</span><span class="p">():</span>
+    <span class="n">m1</span> <span class="o">=</span> <span class="n">CornerMeasurement</span><span class="p">()</span>
+    <span class="n">m2</span> <span class="o">=</span> <span class="n">CornerMeasurement</span><span class="p">()</span>
+    <span class="n">m1</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="s1">&#39;test&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">m2</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="s1">&#39;test&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="k">assert</span> <span class="n">m1</span> <span class="o">!=</span> <span class="n">m2</span></div>
+
+
+<div class="viewcode-block" id="test_comparison_code_attribute"><a class="viewcode-back" href="../../../../kid_readout.measurement.test.html#kid_readout.measurement.test.test_core.test_comparison_code_attribute">[docs]</a><span class="k">def</span> <span class="nf">test_comparison_code_attribute</span><span class="p">():</span>
+    <span class="n">m1</span> <span class="o">=</span> <span class="n">CornerMeasurement</span><span class="p">()</span>
+    <span class="n">m2</span> <span class="o">=</span> <span class="n">CornerMeasurement</span><span class="p">()</span>
+    <span class="n">m1</span><span class="o">.</span><span class="n">attribute</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">m2</span><span class="o">.</span><span class="n">attribute</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="k">assert</span> <span class="n">m1</span> <span class="o">!=</span> <span class="n">m2</span></div>
+
+
+<div class="viewcode-block" id="test_instantiate"><a class="viewcode-back" href="../../../../kid_readout.measurement.test.html#kid_readout.measurement.test.test_core.test_instantiate">[docs]</a><span class="k">def</span> <span class="nf">test_instantiate</span><span class="p">():</span>
+    <span class="n">full_class_name</span> <span class="o">=</span> <span class="s1">&#39;kid_readout.measurement.core.Measurement&#39;</span>
+    <span class="n">variables</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;state&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="s1">&#39;value&#39;</span><span class="p">},</span>
+                 <span class="s1">&#39;description&#39;</span><span class="p">:</span> <span class="s1">&#39;instantiated Measurement&#39;</span><span class="p">}</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">core</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="n">full_class_name</span><span class="p">,</span> <span class="n">variables</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">core</span><span class="o">.</span><span class="n">StateDict</span><span class="p">(</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;state&#39;</span><span class="p">])</span>
+    <span class="k">assert</span> <span class="n">m</span><span class="o">.</span><span class="n">description</span> <span class="o">==</span> <span class="n">variables</span><span class="p">[</span><span class="s1">&#39;description&#39;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="test_join"><a class="viewcode-back" href="../../../../kid_readout.measurement.test.html#kid_readout.measurement.test.test_core.test_join">[docs]</a><span class="k">def</span> <span class="nf">test_join</span><span class="p">():</span>
+    <span class="n">nodes</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;one&#39;</span><span class="p">,</span> <span class="s1">&#39;two&#39;</span><span class="p">,</span> <span class="s1">&#39;three&#39;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">core</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="s1">&#39;one&#39;</span>
+    <span class="k">assert</span> <span class="n">core</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="o">*</span><span class="n">nodes</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;one:two:three&#39;</span></div>
+
+
+<div class="viewcode-block" id="test_split"><a class="viewcode-back" href="../../../../kid_readout.measurement.test.html#kid_readout.measurement.test.test_core.test_split">[docs]</a><span class="k">def</span> <span class="nf">test_split</span><span class="p">():</span>
+    <span class="k">assert</span> <span class="n">core</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">assert</span> <span class="n">core</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;one&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;one&#39;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">core</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;one:two:three&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="s1">&#39;one:two&#39;</span><span class="p">,</span> <span class="s1">&#39;three&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="test_explode"><a class="viewcode-back" href="../../../../kid_readout.measurement.test.html#kid_readout.measurement.test.test_core.test_explode">[docs]</a><span class="k">def</span> <span class="nf">test_explode</span><span class="p">():</span>
+    <span class="k">assert</span> <span class="n">core</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="s1">&#39;boom&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="p">[</span><span class="s1">&#39;boom&#39;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">core</span><span class="o">.</span><span class="n">explode</span><span class="p">(</span><span class="s1">&#39;boom:kaboom&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="p">[</span><span class="s1">&#39;boom&#39;</span><span class="p">,</span> <span class="s1">&#39;kaboom&#39;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="test_validate_node_path"><a class="viewcode-back" href="../../../../kid_readout.measurement.test.html#kid_readout.measurement.test.test_core.test_validate_node_path">[docs]</a><span class="k">def</span> <span class="nf">test_validate_node_path</span><span class="p">():</span>
+    <span class="n">bad_node_paths</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;?&#39;</span><span class="p">,</span> <span class="s1">&#39;node:&#39;</span><span class="p">,</span> <span class="s1">&#39;:node&#39;</span><span class="p">,</span> <span class="s1">&#39;node:path:&#39;</span><span class="p">,</span> <span class="s1">&#39;bad-hyphen&#39;</span><span class="p">,</span> <span class="s1">&#39;exclamation!&#39;</span><span class="p">]</span>
+    <span class="n">good_node_paths</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;good&#39;</span><span class="p">,</span> <span class="s1">&#39;very:good&#39;</span><span class="p">,</span> <span class="s1">&#39;EXTREMELY:GOOD&#39;</span><span class="p">,</span> <span class="s1">&#39;underscore_is_fine:_:__really__&#39;</span><span class="p">,</span> <span class="s1">&#39;0:12:345&#39;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">bad</span> <span class="ow">in</span> <span class="n">bad_node_paths</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">core</span><span class="o">.</span><span class="n">validate_node_path</span><span class="p">(</span><span class="n">bad</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="bp">False</span>
+        <span class="k">except</span> <span class="n">core</span><span class="o">.</span><span class="n">MeasurementError</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="k">for</span> <span class="n">good</span> <span class="ow">in</span> <span class="n">good_node_paths</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">core</span><span class="o">.</span><span class="n">validate_node_path</span><span class="p">(</span><span class="n">good</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">core</span><span class="o">.</span><span class="n">MeasurementError</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">False</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

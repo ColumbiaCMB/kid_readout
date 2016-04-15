@@ -1,0 +1,335 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.measurement.io.readoutnc &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="../../../../index.html" />
+    <link rel="up" title="Module code" href="../../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for kid_readout.measurement.io.readoutnc</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">netCDF4</span>
+<span class="kn">import</span> <span class="nn">bisect</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">kid_readout.roach.tools</span> <span class="kn">import</span> <span class="n">ntone_power_correction</span>
+<span class="kn">import</span> <span class="nn">kid_readout.analysis.timedomain.fftfilt</span>
+<span class="kn">from</span> <span class="nn">kid_readout.measurement.io.data_block</span> <span class="kn">import</span> <span class="n">lpf</span>
+<span class="kn">import</span> <span class="nn">kid_readout.roach.tools</span>
+
+
+<div class="viewcode-block" id="TimestreamGroup"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.readoutnc.TimestreamGroup">[docs]</a><span class="k">class</span> <span class="nc">TimestreamGroup</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">ncgroup</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">ncgroup</span><span class="o">.</span><span class="n">variables</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="n">keys</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">)</span>
+        <span class="n">keys</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;dt&#39;</span><span class="p">)</span>
+        <span class="n">keys</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;fs&#39;</span><span class="p">)</span>
+        <span class="n">keys</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;tone&#39;</span><span class="p">)</span>
+        <span class="n">keys</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;nsamp&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">key</span><span class="p">,</span><span class="n">ncgroup</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">key</span><span class="p">][:])</span>
+        <span class="n">required_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;wavenorm&#39;</span><span class="p">,</span> <span class="s1">&#39;sweep_index&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">required_keys</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">key</span><span class="p">,</span><span class="bp">None</span><span class="p">)</span>
+<span class="c1">#        self.epoch = ncgroup.variables[&#39;epoch&#39;][:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tonebin</span> <span class="o">=</span> <span class="n">ncgroup</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;tone&#39;</span><span class="p">][:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tone_nsamp</span> <span class="o">=</span> <span class="n">ncgroup</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;nsamp&#39;</span><span class="p">][:]</span>
+<span class="c1">#        self.fftbin = ncgroup.variables[&#39;fftbin&#39;][:]</span>
+<span class="c1">#        self.nfft = ncgroup.variables[&#39;nfft&#39;][:]</span>
+<span class="c1">#        self.dt = ncgroup.variables[&#39;dt&#39;][:] # the dt property is actually misleading at this point, so leaving it out</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adc_sampling_freq</span> <span class="o">=</span> <span class="n">ncgroup</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;fs&#39;</span><span class="p">][:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseband_measurement_freq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">adc_sampling_freq</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">tonebin</span><span class="o">/</span><span class="p">(</span><span class="mf">1.0</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">tone_nsamp</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">heterodyne</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">baseband_measurement_freq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">baseband_measurement_freq</span><span class="o">&gt;=</span><span class="bp">self</span><span class="o">.</span><span class="n">adc_sampling_freq</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span>
+                                                      <span class="bp">self</span><span class="o">.</span><span class="n">baseband_measurement_freq</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">adc_sampling_freq</span><span class="p">,</span>
+                                                      <span class="bp">self</span><span class="o">.</span><span class="n">baseband_measurement_freq</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">measurement_freq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lo</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">baseband_measurement_freq</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">adc_sampling_freq</span><span class="o">*</span><span class="mf">1e6</span><span class="o">/</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nfft</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">measurement_freq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">baseband_measurement_freq</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">adc_sampling_freq</span><span class="o">*</span><span class="mf">1e6</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">nfft</span><span class="p">)</span>
+<span class="c1">#        if ncgroup.variables.has_key(&#39;wavenorm&#39;):</span>
+<span class="c1">#            self.wavenorm = ncgroup.variables[&#39;wavenorm&#39;][:]</span>
+<span class="c1">#        else:</span>
+<span class="c1">#            self.wavenorm = None</span>
+<span class="c1">#        if ncgroup.variables.has_key(&#39;sweep_index&#39;):</span>
+<span class="c1">#            self.sweep_index = ncgroup.variables[&#39;sweep_index&#39;][:]</span>
+<span class="c1">#        else:</span>
+<span class="c1">#            self.sweep_index = None</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modulation_duty_cycle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epoch</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modulation_phase</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epoch</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modulation_freq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epoch</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modulation_period_samples</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epoch</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epoch</span><span class="p">)):</span>
+                <span class="n">out</span><span class="p">,</span> <span class="n">rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">get_modulation_state_at</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epoch</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">out</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">modulation_duty_cycle</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">modulation_freq</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">/</span><span class="mf">2.</span><span class="o">**</span><span class="n">rate</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">modulation_period_samples</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.</span><span class="o">**</span><span class="n">rate</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">modulation_duty_cycle</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">modulation_freq</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">modulation_period_samples</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">ncgroup</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_data_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_len_seconds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_data_samples</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_datacache</span> <span class="o">=</span> <span class="bp">None</span>
+        
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datacache</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavenorm</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">wavenorm</span> <span class="o">=</span> <span class="mf">1.0</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;wave normalization not found, time series will not match sweep&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">wavenorm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavenorm</span><span class="p">[:,</span><span class="bp">None</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_datacache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[:]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">datatype</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">*</span><span class="n">wavenorm</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datacache</span>
+    
+<div class="viewcode-block" id="TimestreamGroup.get_data_index"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.readoutnc.TimestreamGroup.get_data_index">[docs]</a>    <span class="k">def</span> <span class="nf">get_data_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">index</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datacache</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavenorm</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">wavenorm</span> <span class="o">=</span> <span class="mf">1.0</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;wave normalization not found, time series will not match sweep&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">wavenorm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavenorm</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>            
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">datatype</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">*</span><span class="n">wavenorm</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datacache</span><span class="p">[</span><span class="n">index</span><span class="p">]</span></div></div>
+        
+<div class="viewcode-block" id="SweepGroup"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.readoutnc.SweepGroup">[docs]</a><span class="k">class</span> <span class="nc">SweepGroup</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">ncgroup</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span> <span class="o">=</span> <span class="n">ncgroup</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;frequency&#39;</span><span class="p">][:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s21</span> <span class="o">=</span> <span class="n">ncgroup</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;s21&#39;</span><span class="p">][:]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">ncgroup</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;s21&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">datatype</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">ncgroup</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">][:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestream_group</span> <span class="o">=</span> <span class="n">TimestreamGroup</span><span class="p">(</span><span class="n">ncgroup</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="s1">&#39;datablocks&#39;</span><span class="p">],</span> <span class="n">parent</span><span class="o">=</span><span class="n">parent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_epoch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestream_group</span><span class="o">.</span><span class="n">epoch</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">end_epoch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestream_group</span><span class="o">.</span><span class="n">epoch</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">errors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_errors</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_get_errors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">mask</span> <span class="o">=</span> <span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestream_group</span><span class="o">.</span><span class="n">wavenorm</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">wavenorm</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">wavenorm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestream_group</span><span class="o">.</span><span class="n">wavenorm</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">indexes_to_calculate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timestream_group</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">indexes_to_calculate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">indexes_to_calculate</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;complex&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">output_index</span><span class="p">,</span><span class="n">input_index</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">indexes_to_calculate</span><span class="p">):</span>
+            <span class="n">filtered</span> <span class="o">=</span> <span class="n">kid_readout</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">timedomain</span><span class="o">.</span><span class="n">fftfilt</span><span class="o">.</span><span class="n">fftfilt</span><span class="p">(</span><span class="n">lpf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestream_group</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">input_index</span><span class="p">,</span>
+                                                                    <span class="p">:])[</span><span class="nb">len</span><span class="p">(</span><span class="n">lpf</span><span class="p">):]</span>
+            <span class="c1"># the standard deviation is scaled by the number of independent samples</span>
+            <span class="c1"># to compute the error on the mean.</span>
+            <span class="n">error_scaling</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">filtered</span><span class="p">))</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">lpf</span><span class="p">))</span>
+            <span class="n">real_error</span> <span class="o">=</span> <span class="n">filtered</span><span class="o">.</span><span class="n">real</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="o">/</span><span class="n">error_scaling</span>
+            <span class="n">imag_error</span> <span class="o">=</span> <span class="n">filtered</span><span class="o">.</span><span class="n">imag</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="o">/</span><span class="n">error_scaling</span>
+            <span class="n">errors</span><span class="p">[</span><span class="n">output_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">real_error</span> <span class="o">+</span> <span class="mi">1j</span><span class="o">*</span><span class="n">imag_error</span>
+
+        <span class="k">return</span> <span class="n">errors</span>
+
+<div class="viewcode-block" id="SweepGroup.select_by_index"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.readoutnc.SweepGroup.select_by_index">[docs]</a>    <span class="k">def</span> <span class="nf">select_by_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">index</span><span class="p">):</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="n">index</span>
+        <span class="n">freq</span><span class="p">,</span><span class="n">s21</span><span class="p">,</span><span class="n">errors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">s21</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_errors</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="n">freq</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">freq</span><span class="p">[</span><span class="n">order</span><span class="p">],</span> <span class="n">s21</span><span class="p">[</span><span class="n">order</span><span class="p">],</span> <span class="n">errors</span><span class="p">[</span><span class="n">order</span><span class="p">]</span></div>
+    
+<div class="viewcode-block" id="SweepGroup.select_by_frequency"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.readoutnc.SweepGroup.select_by_frequency">[docs]</a>    <span class="k">def</span> <span class="nf">select_by_frequency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">freq</span><span class="p">):</span>
+        <span class="n">findex</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frequency</span> <span class="o">-</span> <span class="n">freq</span><span class="p">))</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">findex</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">select_by_index</span><span class="p">(</span><span class="n">index</span><span class="p">)</span></div></div>
+    
+<div class="viewcode-block" id="ReadoutNetCDF"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.readoutnc.ReadoutNetCDF">[docs]</a><span class="k">class</span> <span class="nc">ReadoutNetCDF</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">filename</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ncroot</span> <span class="o">=</span> <span class="n">netCDF4</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+        <span class="n">hwgroup</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncroot</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="s1">&#39;hw_state&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hardware_state_epoch</span> <span class="o">=</span> <span class="n">hwgroup</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;epoch&#39;</span><span class="p">][:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adc_atten</span> <span class="o">=</span> <span class="n">hwgroup</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;adc_atten&#39;</span><span class="p">][:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dac_atten</span> <span class="o">=</span> <span class="n">hwgroup</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;dac_atten&#39;</span><span class="p">][:]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">heterodyne</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ncroot</span><span class="o">.</span><span class="n">heterodyne</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">heterodyne</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="k">if</span> <span class="s1">&#39;ntones&#39;</span> <span class="ow">in</span> <span class="n">hwgroup</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_tones</span> <span class="o">=</span> <span class="n">hwgroup</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;ntones&#39;</span><span class="p">][:]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_tones</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;modulation_rate&#39;</span><span class="p">,</span> <span class="s1">&#39;modulation_output&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">hwgroup</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__setattr__</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">hwgroup</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">key</span><span class="p">][:])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__setattr__</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="bp">None</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gitinfo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncroot</span><span class="o">.</span><span class="n">gitinfo</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gitinfo</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">boffile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncroot</span><span class="o">.</span><span class="n">boffile</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">boffile</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mmw_atten_turns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncroot</span><span class="o">.</span><span class="n">mmw_atten_turns</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mmw_atten_turns</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">sweeps_dict</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestreams_dict</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span><span class="n">group</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncroot</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="s1">&#39;sweeps&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sweeps_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">SweepGroup</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__setattr__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">sweeps_dict</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sweeps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sweeps_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span><span class="n">group</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncroot</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="s1">&#39;timestreams&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">timestreams_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">TimestreamGroup</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__setattr__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">timestreams_dict</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestreams</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestreams_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+<div class="viewcode-block" id="ReadoutNetCDF.close"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.readoutnc.ReadoutNetCDF.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ncroot</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ReadoutNetCDF.get_delay_estimate"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.readoutnc.ReadoutNetCDF.get_delay_estimate">[docs]</a>    <span class="k">def</span> <span class="nf">get_delay_estimate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">boffile</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">nfft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sweeps</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">timestream_group</span><span class="o">.</span><span class="n">nfft</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;could not find any means to estimate the delay for </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">kid_readout</span><span class="o">.</span><span class="n">roach</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">get_delay_estimate_for_nfft</span><span class="p">(</span><span class="n">nfft</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">kid_readout</span><span class="o">.</span><span class="n">roach</span><span class="o">.</span><span class="n">tools</span><span class="o">.</span><span class="n">get_delay_estimate_for_boffile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boffile</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_hwstate_index_at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">epoch</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find the index of the hardware state arrays corresponding to the hardware state at a given epoch</span>
+<span class="sd">        :param epoch: unix timestamp</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">bisect</span><span class="o">.</span><span class="n">bisect_left</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hardware_state_epoch</span><span class="p">,</span> <span class="n">epoch</span><span class="p">)</span> <span class="c1"># find the index of the epoch immediately preceding the desired epoch</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">index</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">index</span>
+
+<div class="viewcode-block" id="ReadoutNetCDF.get_effective_dac_atten_at"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.readoutnc.ReadoutNetCDF.get_effective_dac_atten_at">[docs]</a>    <span class="k">def</span> <span class="nf">get_effective_dac_atten_at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">epoch</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the dac attenuator value and total signal attenuation at a given time</span>
+<span class="sd">        :param epoch: unix timestamp</span>
+<span class="sd">        :return: dac attenuator in dB, total attenuation in dB</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_hwstate_index_at</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+        <span class="n">dac_atten</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dac_atten</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_tones</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">ntones</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_tones</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ntones</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;ntones parameter not found in data file </span><span class="si">%s</span><span class="s2">, assuming 1. The effective power level may be wrong&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="n">dac_atten</span> <span class="o">+</span> <span class="n">ntone_power_correction</span><span class="p">(</span><span class="n">ntones</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dac_atten</span><span class="p">,</span> <span class="n">total</span></div>
+
+<div class="viewcode-block" id="ReadoutNetCDF.get_modulation_state_at"><a class="viewcode-back" href="../../../../kid_readout.measurement.io.html#kid_readout.measurement.io.readoutnc.ReadoutNetCDF.get_modulation_state_at">[docs]</a>    <span class="k">def</span> <span class="nf">get_modulation_state_at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">epoch</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the source modulation TTL output state at a given time</span>
+<span class="sd">        :param epoch: unix timestamp</span>
+<span class="sd">        :return: modulation output state: 0 -&gt; low, 1 -&gt; high, 2 -&gt; modulated</span>
+<span class="sd">         modulation rate parameter: FIXME</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">modulation_rate</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span><span class="p">,</span><span class="mi">0</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_hwstate_index_at</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+        <span class="n">modulation_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modulation_rate</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">modulation_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modulation_output</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">modulation_output</span><span class="p">,</span> <span class="n">modulation_rate</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,446 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>kid_readout.analysis.timedomain package &mdash; KID Readout  documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="KID Readout  documentation" href="index.html" />
+    <link rel="up" title="kid_readout.analysis package" href="kid_readout.analysis.html" />
+    <link rel="next" title="kid_readout.equipment package" href="kid_readout.equipment.html" />
+    <link rel="prev" title="kid_readout.analysis.tests package" href="kid_readout.analysis.tests.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="kid_readout.equipment.html" title="kid_readout.equipment package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="kid_readout.analysis.tests.html" title="kid_readout.analysis.tests package"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="kid_readout.html" >kid_readout package</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="kid_readout.analysis.html" accesskey="U">kid_readout.analysis package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="kid-readout-analysis-timedomain-package">
+<h1>kid_readout.analysis.timedomain package<a class="headerlink" href="#kid-readout-analysis-timedomain-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-kid_readout.analysis.timedomain.cross_spectrum">
+<span id="kid-readout-analysis-timedomain-cross-spectrum-module"></span><h2>kid_readout.analysis.timedomain.cross_spectrum module<a class="headerlink" href="#module-kid_readout.analysis.timedomain.cross_spectrum" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="kid_readout.analysis.timedomain.cross_spectrum.CrossSpectralAnalysis">
+<em class="property">class </em><code class="descclassname">kid_readout.analysis.timedomain.cross_spectrum.</code><code class="descname">CrossSpectralAnalysis</code><span class="sig-paren">(</span><em>snm1=None</em>, <em>snm2=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/cross_spectrum.html#CrossSpectralAnalysis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.cross_spectrum.CrossSpectralAnalysis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="kid_readout.analysis.timedomain.cross_spectrum.CrossSpectralAnalysis.calculate">
+<code class="descname">calculate</code><span class="sig-paren">(</span><em>NFFT=65536</em>, <em>thresh=0.95</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/cross_spectrum.html#CrossSpectralAnalysis.calculate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.cross_spectrum.CrossSpectralAnalysis.calculate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.timedomain.cross_spectrum.CrossSpectralAnalysis.get_data_directly">
+<code class="descname">get_data_directly</code><span class="sig-paren">(</span><em>ts1</em>, <em>ts2</em>, <em>sample_rate=15625.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/cross_spectrum.html#CrossSpectralAnalysis.get_data_directly"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.cross_spectrum.CrossSpectralAnalysis.get_data_directly" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.timedomain.cross_spectrum.CrossSpectralAnalysis.get_data_from_snms">
+<code class="descname">get_data_from_snms</code><span class="sig-paren">(</span><em>snm1</em>, <em>snm2</em>, <em>deglitch_thresh=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/cross_spectrum.html#CrossSpectralAnalysis.get_data_from_snms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.cross_spectrum.CrossSpectralAnalysis.get_data_from_snms" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="kid_readout.analysis.timedomain.cross_spectrum.CrossSpectralAnalysis.plot">
+<code class="descname">plot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/cross_spectrum.html#CrossSpectralAnalysis.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.cross_spectrum.CrossSpectralAnalysis.plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.analysis.timedomain.demodulate_rtl">
+<span id="kid-readout-analysis-timedomain-demodulate-rtl-module"></span><h2>kid_readout.analysis.timedomain.demodulate_rtl module<a class="headerlink" href="#module-kid_readout.analysis.timedomain.demodulate_rtl" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.demodulate_rtl.demodulate">
+<code class="descclassname">kid_readout.analysis.timedomain.demodulate_rtl.</code><code class="descname">demodulate</code><span class="sig-paren">(</span><em>data</em>, <em>poly_degree=7</em>, <em>debug=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/demodulate_rtl.html#demodulate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.demodulate_rtl.demodulate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.demodulate_rtl.deproject_rtl">
+<code class="descclassname">kid_readout.analysis.timedomain.demodulate_rtl.</code><code class="descname">deproject_rtl</code><span class="sig-paren">(</span><em>folded</em>, <em>samples_around_peak=200</em>, <em>debug=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/demodulate_rtl.html#deproject_rtl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.demodulate_rtl.deproject_rtl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.demodulate_rtl.fft_bin_to_freq">
+<code class="descclassname">kid_readout.analysis.timedomain.demodulate_rtl.</code><code class="descname">fft_bin_to_freq</code><span class="sig-paren">(</span><em>bin</em>, <em>n</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/demodulate_rtl.html#fft_bin_to_freq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.demodulate_rtl.fft_bin_to_freq" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.demodulate_rtl.find_peak_freq">
+<code class="descclassname">kid_readout.analysis.timedomain.demodulate_rtl.</code><code class="descname">find_peak_freq</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/demodulate_rtl.html#find_peak_freq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.demodulate_rtl.find_peak_freq" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.demodulate_rtl.fold">
+<code class="descclassname">kid_readout.analysis.timedomain.demodulate_rtl.</code><code class="descname">fold</code><span class="sig-paren">(</span><em>data</em>, <em>period</em>, <em>debug=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/demodulate_rtl.html#fold"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.demodulate_rtl.fold" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.analysis.timedomain.despike">
+<span id="kid-readout-analysis-timedomain-despike-module"></span><h2>kid_readout.analysis.timedomain.despike module<a class="headerlink" href="#module-kid_readout.analysis.timedomain.despike" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.despike.deglitch_block">
+<code class="descclassname">kid_readout.analysis.timedomain.despike.</code><code class="descname">deglitch_block</code><span class="sig-paren">(</span><em>ts</em>, <em>thresh=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/despike.html#deglitch_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.despike.deglitch_block" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.despike.deglitch_mask_block_mad">
+<code class="descclassname">kid_readout.analysis.timedomain.despike.</code><code class="descname">deglitch_mask_block_mad</code><span class="sig-paren">(</span><em>ts</em>, <em>thresh=5</em>, <em>mask_extend=50</em>, <em>debug=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/despike.html#deglitch_mask_block_mad"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.despike.deglitch_mask_block_mad" title="Permalink to this definition">¶</a></dt>
+<dd><p>ts
+thresh
+mask_extend
+debug</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.despike.deglitch_mask_mad">
+<code class="descclassname">kid_readout.analysis.timedomain.despike.</code><code class="descname">deglitch_mask_mad</code><span class="sig-paren">(</span><em>ts</em>, <em>thresh=5</em>, <em>mask_extend=50</em>, <em>window_length=256</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/despike.html#deglitch_mask_mad"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.despike.deglitch_mask_mad" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.despike.deglitch_new">
+<code class="descclassname">kid_readout.analysis.timedomain.despike.</code><code class="descname">deglitch_new</code><span class="sig-paren">(</span><em>ts</em>, <em>thresh=6</em>, <em>mask_extend=50</em>, <em>window_length=65536</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/despike.html#deglitch_new"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.despike.deglitch_new" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.despike.deglitch_window">
+<code class="descclassname">kid_readout.analysis.timedomain.despike.</code><code class="descname">deglitch_window</code><span class="sig-paren">(</span><em>data</em>, <em>window_length</em>, <em>thresh=6</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/despike.html#deglitch_window"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.despike.deglitch_window" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.despike.despike_full">
+<code class="descclassname">kid_readout.analysis.timedomain.despike.</code><code class="descname">despike_full</code><span class="sig-paren">(</span><em>data</em>, <em>window_length</em>, <em>rejection_threshold=7</em>, <em>preprocess_function=&lt;function lpf256&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/despike.html#despike_full"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.despike.despike_full" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.despike.lpf256">
+<code class="descclassname">kid_readout.analysis.timedomain.despike.</code><code class="descname">lpf256</code><span class="sig-paren">(</span><em>ts</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/despike.html#lpf256"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.despike.lpf256" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.despike.medmadmask">
+<code class="descclassname">kid_readout.analysis.timedomain.despike.</code><code class="descname">medmadmask</code><span class="sig-paren">(</span><em>ts</em>, <em>thresh=8</em>, <em>axis=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/despike.html#medmadmask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.despike.medmadmask" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.analysis.timedomain.fftfilt">
+<span id="kid-readout-analysis-timedomain-fftfilt-module"></span><h2>kid_readout.analysis.timedomain.fftfilt module<a class="headerlink" href="#module-kid_readout.analysis.timedomain.fftfilt" title="Permalink to this headline">¶</a></h2>
+<p>Filter data with an FIR filter using the overlap-add method.</p>
+<blockquote>
+<div>This code is originally from here:
+<a class="reference external" href="https://github.com/scipy/scipy/issues/1364">https://github.com/scipy/scipy/issues/1364</a></div></blockquote>
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.fftfilt.fftfilt">
+<code class="descclassname">kid_readout.analysis.timedomain.fftfilt.</code><code class="descname">fftfilt</code><span class="sig-paren">(</span><em>b</em>, <em>x</em>, <em>*n</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/fftfilt.html#fftfilt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.fftfilt.fftfilt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter the signal x with the FIR filter described by the
+coefficients in b using the overlap-add method. If the FFT
+length n is not specified, it and the overlap-add block length
+are selected so as to minimize the computational cost of
+the filtering operation.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.fftfilt.nextpow2">
+<code class="descclassname">kid_readout.analysis.timedomain.fftfilt.</code><code class="descname">nextpow2</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/fftfilt.html#nextpow2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.fftfilt.nextpow2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the first integer N such that 2**N &gt;= abs(x)</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.analysis.timedomain.filters">
+<span id="kid-readout-analysis-timedomain-filters-module"></span><h2>kid_readout.analysis.timedomain.filters module<a class="headerlink" href="#module-kid_readout.analysis.timedomain.filters" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.filters.low_pass_fir">
+<code class="descclassname">kid_readout.analysis.timedomain.filters.</code><code class="descname">low_pass_fir</code><span class="sig-paren">(</span><em>data</em>, <em>num_taps=256</em>, <em>cutoff=0.00390625</em>, <em>nyquist_freq=1.0</em>, <em>decimate_by=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/filters.html#low_pass_fir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.filters.low_pass_fir" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.filters.lpf">
+<code class="descclassname">kid_readout.analysis.timedomain.filters.</code><code class="descname">lpf</code><span class="sig-paren">(</span><em>data</em>, <em>num_taps=256</em>, <em>cutoff=0.00390625</em>, <em>nyquist_freq=1.0</em>, <em>decimate_by=1</em><span class="sig-paren">)</span><a class="headerlink" href="#kid_readout.analysis.timedomain.filters.lpf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.analysis.timedomain.fit_pulses">
+<span id="kid-readout-analysis-timedomain-fit-pulses-module"></span><h2>kid_readout.analysis.timedomain.fit_pulses module<a class="headerlink" href="#module-kid_readout.analysis.timedomain.fit_pulses" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.fit_pulses.exponential">
+<code class="descclassname">kid_readout.analysis.timedomain.fit_pulses.</code><code class="descname">exponential</code><span class="sig-paren">(</span><em>t</em>, <em>tau</em>, <em>amp</em>, <em>offset</em>, <em>t0=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/fit_pulses.html#exponential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.fit_pulses.exponential" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.fit_pulses.exponential_guess">
+<code class="descclassname">kid_readout.analysis.timedomain.fit_pulses.</code><code class="descname">exponential_guess</code><span class="sig-paren">(</span><em>x</em>, <em>y</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/fit_pulses.html#exponential_guess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.fit_pulses.exponential_guess" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.fit_pulses.exponential_model">
+<code class="descclassname">kid_readout.analysis.timedomain.fit_pulses.</code><code class="descname">exponential_model</code><span class="sig-paren">(</span><em>params</em>, <em>x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/fit_pulses.html#exponential_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.fit_pulses.exponential_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.fit_pulses.find_high_low">
+<code class="descclassname">kid_readout.analysis.timedomain.fit_pulses.</code><code class="descname">find_high_low</code><span class="sig-paren">(</span><em>x</em>, <em>use_fraction=0.25</em>, <em>debug=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/fit_pulses.html#find_high_low"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.fit_pulses.find_high_low" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.fit_pulses.find_rising_edge">
+<code class="descclassname">kid_readout.analysis.timedomain.fit_pulses.</code><code class="descname">find_rising_edge</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/fit_pulses.html#find_rising_edge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.fit_pulses.find_rising_edge" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.fit_pulses.fit_complex_square_wave">
+<code class="descclassname">kid_readout.analysis.timedomain.fit_pulses.</code><code class="descname">fit_complex_square_wave</code><span class="sig-paren">(</span><em>y</em>, <em>period=125</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/fit_pulses.html#fit_complex_square_wave"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.fit_pulses.fit_complex_square_wave" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.fit_pulses.fred">
+<code class="descclassname">kid_readout.analysis.timedomain.fit_pulses.</code><code class="descname">fred</code><span class="sig-paren">(</span><em>t</em>, <em>tau</em>, <em>amp</em>, <em>offset</em>, <em>t_on</em>, <em>t_rise</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/fit_pulses.html#fred"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.fit_pulses.fred" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.fit_pulses.fred_guess">
+<code class="descclassname">kid_readout.analysis.timedomain.fit_pulses.</code><code class="descname">fred_guess</code><span class="sig-paren">(</span><em>x</em>, <em>y</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/fit_pulses.html#fred_guess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.fit_pulses.fred_guess" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.fit_pulses.fred_hat">
+<code class="descclassname">kid_readout.analysis.timedomain.fit_pulses.</code><code class="descname">fred_hat</code><span class="sig-paren">(</span><em>t</em>, <em>tau</em>, <em>amp</em>, <em>offset</em>, <em>t_on</em>, <em>t_rise</em>, <em>t_top</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/fit_pulses.html#fred_hat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.fit_pulses.fred_hat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.fit_pulses.fred_hat_guess">
+<code class="descclassname">kid_readout.analysis.timedomain.fit_pulses.</code><code class="descname">fred_hat_guess</code><span class="sig-paren">(</span><em>x</em>, <em>y</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/fit_pulses.html#fred_hat_guess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.fit_pulses.fred_hat_guess" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.fit_pulses.fred_hat_model">
+<code class="descclassname">kid_readout.analysis.timedomain.fit_pulses.</code><code class="descname">fred_hat_model</code><span class="sig-paren">(</span><em>params</em>, <em>x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/fit_pulses.html#fred_hat_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.fit_pulses.fred_hat_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.fit_pulses.fred_model">
+<code class="descclassname">kid_readout.analysis.timedomain.fit_pulses.</code><code class="descname">fred_model</code><span class="sig-paren">(</span><em>params</em>, <em>x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/fit_pulses.html#fred_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.fit_pulses.fred_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.fit_pulses.square_wave">
+<code class="descclassname">kid_readout.analysis.timedomain.fit_pulses.</code><code class="descname">square_wave</code><span class="sig-paren">(</span><em>num_points</em>, <em>period</em>, <em>low_level</em>, <em>high_level</em>, <em>phase</em>, <em>dtype='float'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/fit_pulses.html#square_wave"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.fit_pulses.square_wave" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.fit_pulses.square_wave_guess">
+<code class="descclassname">kid_readout.analysis.timedomain.fit_pulses.</code><code class="descname">square_wave_guess</code><span class="sig-paren">(</span><em>x</em>, <em>y</em>, <em>period</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/fit_pulses.html#square_wave_guess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.fit_pulses.square_wave_guess" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.fit_pulses.square_wave_model">
+<code class="descclassname">kid_readout.analysis.timedomain.fit_pulses.</code><code class="descname">square_wave_model</code><span class="sig-paren">(</span><em>params</em>, <em>x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/fit_pulses.html#square_wave_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.fit_pulses.square_wave_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.fit_pulses.wrap_period">
+<code class="descclassname">kid_readout.analysis.timedomain.fit_pulses.</code><code class="descname">wrap_period</code><span class="sig-paren">(</span><em>val</em>, <em>period</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/fit_pulses.html#wrap_period"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.fit_pulses.wrap_period" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.analysis.timedomain.iqnoise">
+<span id="kid-readout-analysis-timedomain-iqnoise-module"></span><h2>kid_readout.analysis.timedomain.iqnoise module<a class="headerlink" href="#module-kid_readout.analysis.timedomain.iqnoise" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.iqnoise.full_spectral_helper">
+<code class="descclassname">kid_readout.analysis.timedomain.iqnoise.</code><code class="descname">full_spectral_helper</code><span class="sig-paren">(</span><em>x</em>, <em>y</em>, <em>NFFT=256</em>, <em>Fs=2</em>, <em>detrend=&lt;function detrend_none&gt;</em>, <em>window=&lt;function window_hanning&gt;</em>, <em>noverlap=0</em>, <em>pad_to=None</em>, <em>sides='default'</em>, <em>scale_by_freq=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/iqnoise.html#full_spectral_helper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.iqnoise.full_spectral_helper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute all auto and cross spectral densities of x and y at once to save time
+:param x:
+:param y:
+:param NFFT:
+:param Fs:
+:param detrend:
+:param window:
+:param noverlap:
+:param pad_to:
+:param sides:
+:param scale_by_freq:
+:return:</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.iqnoise.log_bin">
+<code class="descclassname">kid_readout.analysis.timedomain.iqnoise.</code><code class="descname">log_bin</code><span class="sig-paren">(</span><em>freqs</em>, <em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/iqnoise.html#log_bin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.iqnoise.log_bin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.iqnoise.make_freq_bins">
+<code class="descclassname">kid_readout.analysis.timedomain.iqnoise.</code><code class="descname">make_freq_bins</code><span class="sig-paren">(</span><em>fr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/iqnoise.html#make_freq_bins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.iqnoise.make_freq_bins" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.iqnoise.pca_noise">
+<code class="descclassname">kid_readout.analysis.timedomain.iqnoise.</code><code class="descname">pca_noise</code><span class="sig-paren">(</span><em>d</em>, <em>NFFT=None</em>, <em>Fs=125000.0</em>, <em>window=&lt;function window_hanning&gt;</em>, <em>detrend=&lt;function detrend_mean&gt;</em>, <em>use_log_bins=True</em>, <em>use_full_spectral_helper=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/iqnoise.html#pca_noise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.iqnoise.pca_noise" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.analysis.timedomain.noise_fit">
+<span id="kid-readout-analysis-timedomain-noise-fit-module"></span><h2>kid_readout.analysis.timedomain.noise_fit module<a class="headerlink" href="#module-kid_readout.analysis.timedomain.noise_fit" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="kid_readout.analysis.timedomain.noise_fit.SinglePoleLogNoiseModel">
+<em class="property">class </em><code class="descclassname">kid_readout.analysis.timedomain.noise_fit.</code><code class="descname">SinglePoleLogNoiseModel</code><span class="sig-paren">(</span><em>f</em>, <em>data</em>, <em>functions={}</em>, <em>mask=None</em>, <em>errors=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/noise_fit.html#SinglePoleLogNoiseModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.noise_fit.SinglePoleLogNoiseModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="kid_readout.analysis.html#kid_readout.analysis.fitter.Fitter" title="kid_readout.analysis.fitter.Fitter"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.analysis.fitter.Fitter</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="kid_readout.analysis.timedomain.noise_fit.SinglePoleNoiseModel">
+<em class="property">class </em><code class="descclassname">kid_readout.analysis.timedomain.noise_fit.</code><code class="descname">SinglePoleNoiseModel</code><span class="sig-paren">(</span><em>f</em>, <em>data</em>, <em>functions={}</em>, <em>mask=None</em>, <em>errors=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/noise_fit.html#SinglePoleNoiseModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.noise_fit.SinglePoleNoiseModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="kid_readout.analysis.html#kid_readout.analysis.fitter.Fitter" title="kid_readout.analysis.fitter.Fitter"><code class="xref py py-class docutils literal"><span class="pre">kid_readout.analysis.fitter.Fitter</span></code></a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.noise_fit.fit_single_pole_noise">
+<code class="descclassname">kid_readout.analysis.timedomain.noise_fit.</code><code class="descname">fit_single_pole_noise</code><span class="sig-paren">(</span><em>fr</em>, <em>sxx</em>, <em>errors=None</em>, <em>max_num_masked=None</em>, <em>debug=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/noise_fit.html#fit_single_pole_noise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.noise_fit.fit_single_pole_noise" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.noise_fit.single_pole">
+<code class="descclassname">kid_readout.analysis.timedomain.noise_fit.</code><code class="descname">single_pole</code><span class="sig-paren">(</span><em>f</em>, <em>fc</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/noise_fit.html#single_pole"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.noise_fit.single_pole" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.noise_fit.single_pole_log_parameters_noise_guess">
+<code class="descclassname">kid_readout.analysis.timedomain.noise_fit.</code><code class="descname">single_pole_log_parameters_noise_guess</code><span class="sig-paren">(</span><em>f</em>, <em>S</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/noise_fit.html#single_pole_log_parameters_noise_guess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.noise_fit.single_pole_log_parameters_noise_guess" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.noise_fit.single_pole_log_parameters_noise_model">
+<code class="descclassname">kid_readout.analysis.timedomain.noise_fit.</code><code class="descname">single_pole_log_parameters_noise_model</code><span class="sig-paren">(</span><em>params</em>, <em>f</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/noise_fit.html#single_pole_log_parameters_noise_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.noise_fit.single_pole_log_parameters_noise_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.noise_fit.single_pole_noise_guess">
+<code class="descclassname">kid_readout.analysis.timedomain.noise_fit.</code><code class="descname">single_pole_noise_guess</code><span class="sig-paren">(</span><em>f</em>, <em>S</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/noise_fit.html#single_pole_noise_guess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.noise_fit.single_pole_noise_guess" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="kid_readout.analysis.timedomain.noise_fit.single_pole_noise_model">
+<code class="descclassname">kid_readout.analysis.timedomain.noise_fit.</code><code class="descname">single_pole_noise_model</code><span class="sig-paren">(</span><em>params</em>, <em>f</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/kid_readout/analysis/timedomain/noise_fit.html#single_pole_noise_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#kid_readout.analysis.timedomain.noise_fit.single_pole_noise_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-kid_readout.analysis.timedomain">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-kid_readout.analysis.timedomain" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">kid_readout.analysis.timedomain package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.timedomain.cross_spectrum">kid_readout.analysis.timedomain.cross_spectrum module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.timedomain.demodulate_rtl">kid_readout.analysis.timedomain.demodulate_rtl module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.timedomain.despike">kid_readout.analysis.timedomain.despike module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.timedomain.fftfilt">kid_readout.analysis.timedomain.fftfilt module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.timedomain.filters">kid_readout.analysis.timedomain.filters module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.timedomain.fit_pulses">kid_readout.analysis.timedomain.fit_pulses module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.timedomain.iqnoise">kid_readout.analysis.timedomain.iqnoise module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.timedomain.noise_fit">kid_readout.analysis.timedomain.noise_fit module</a></li>
+<li><a class="reference internal" href="#module-kid_readout.analysis.timedomain">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="kid_readout.analysis.tests.html"
+                        title="previous chapter">kid_readout.analysis.tests package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="kid_readout.equipment.html"
+                        title="next chapter">kid_readout.equipment package</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/kid_readout.analysis.timedomain.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="kid_readout.equipment.html" title="kid_readout.equipment package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="kid_readout.analysis.tests.html" title="kid_readout.analysis.tests package"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">KID Readout  documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="kid_readout.html" >kid_readout package</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="kid_readout.analysis.html" >kid_readout.analysis package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2013, Author.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>
