@@ -288,7 +288,7 @@ class CachedSingleStream(basic.SingleStream):
     #              's21_raw': ('sample_time',)}
 
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
-                 data_demodulated, roach_state, state=None, analyze=False, description='Stream'):
+                 data_demodulated, roach_state, state=None, description='Stream'):
         """
         Return a new CachedSingleStream instance. This class stores the netCDF4 Variable containing the s21_raw data
         instead of a numpy array so that the data is not read from disk unless requested. The Variable is stored using
@@ -306,7 +306,6 @@ class CachedSingleStream(basic.SingleStream):
         :param data_demodulated: True if the s21_raw data are demodulated.
         :param roach_state: a dict containing state information for the roach.
         :param state: a dict containing all non-roach state information.
-        :param analyze: if True, call the analyze() method at the end of instantiation.
         :param description: a string describing this measurement.
         :return: a new CachedSingleStream instance.
         """
@@ -325,7 +324,7 @@ class CachedSingleStream(basic.SingleStream):
         self._baseband_frequency = None
         self._s21_raw_mean = None
         self._s21_raw_mean_error = None
-        super(basic.RoachStream, self).__init__(state=state, analyze=analyze, description=description)
+        super(basic.RoachStream, self).__init__(state=state, description=description)
 
     @property
     def s21_raw(self):
@@ -348,7 +347,7 @@ class CachedStreamArray(basic.StreamArray):
     #                  's21_raw': ('tone_index', 'sample_time')}
 
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
-                 data_demodulated, roach_state, state=None, analyze=False, description='Stream'):
+                 data_demodulated, roach_state, state=None, description='Stream'):
         """
         Return a new CachedStreamArray instance. This class stores the netCDF4 Variable containing the s21_raw data
         instead of a numpy array so that the data is not read from disk unless requested. The Variable is stored using
@@ -367,7 +366,6 @@ class CachedStreamArray(basic.StreamArray):
         :param data_demodulated: True if the s21_raw data are demodulated.
         :param roach_state: a dict containing state information for the roach.
         :param state: a dict containing all non-roach state information.
-        :param analyze: if True, call the analyze() method at the end of instantiation.
         :param description: a string describing this measurement.
         :return: a new CachedStreamArray instance.
         """
@@ -386,7 +384,7 @@ class CachedStreamArray(basic.StreamArray):
         self._baseband_frequency = None
         self._s21_raw_mean = None
         self._s21_raw_mean_error = None
-        super(basic.RoachStream, self).__init__(state=state, analyze=analyze, description=description)
+        super(basic.RoachStream, self).__init__(state=state, description=description)
 
     @property
     def s21_raw(self):
