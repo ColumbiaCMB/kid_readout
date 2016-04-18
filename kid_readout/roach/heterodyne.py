@@ -112,12 +112,12 @@ class RoachHeterodyne(RoachInterface):
         data[3::4] = q_wave[1::2]
         self._load_dram(data, fast=fast, start_offset=start_offset*data.shape[0])
 
-    def set_tone_freqs(self, freqs, nsamp, amps=None):
+    def set_tone_freqs(self, freqs, nsamp, amps=None,**kwargs):
         baseband_freqs = freqs-self.lo_frequency
-        actual_baseband_freqs = self.set_tone_baseband_freqs(baseband_freqs,nsamp,amps=amps)
+        actual_baseband_freqs = self.set_tone_baseband_freqs(baseband_freqs,nsamp,amps=amps, **kwargs)
         return actual_baseband_freqs + self.lo_frequency
 
-    def set_tone_baseband_freqs(self, freqs, nsamp, amps=None):
+    def set_tone_baseband_freqs(self, freqs, nsamp, amps=None, **kwargs):
         """
         Set the stimulus tones to generate
 
@@ -137,7 +137,7 @@ class RoachHeterodyne(RoachInterface):
         actual_freqs = self.fs * bins / float(nsamp)
         bins[bins < 0] = nsamp + bins[bins < 0]
         #use the same phases to avoid strange phase issue which we are still tracking down
-        self.set_tone_bins(bins, nsamp, amps=amps, phases=self.phases)
+        self.set_tone_bins(bins, nsamp, amps=amps, phases=self.phases, **kwargs)
         self.fft_bins = self.calc_fft_bins(bins, nsamp)
         if self.fft_bins.shape[1] > 4:
             readout_selection = range(4)
@@ -514,7 +514,7 @@ class Demodulator(object):
         foffs = tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft)
         wc = self.compute_pfb_response(foffs)
         t = np.arange(data.shape[0])
-        demod = wc*np.exp(-1j * (2 * np.pi * foffs * t + phi0)) * data
+        demod = wc*np.exp(-1j * (2 * np.pi * foffs * t + phi0)) * (data.astype('complex'))
         if type(seq_nos) is np.ndarray:
             pphase = packet_phase(seq_nos,foffs,nchan,nfft,ns) 
             demod *= pphase
