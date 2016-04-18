@@ -644,7 +644,11 @@ def instantiate(full_class_name, variables):
     for arg, default in zip(reversed(args), reversed(defaults)):
         arg_values.append(variables.get(arg, default))
     for arg in reversed(args[1:-len(defaults)]):  # The first arg is 'self'
-        arg_values.append(variables[arg])
+        try:
+            arg_values.append(variables[arg])
+        except KeyError:
+            raise MeasurementError("Could not find argument %s needed to make this measurement. Available variables "
+                                   "are: %s" % (arg,', '.join(variables.keys())))
     instance = class_(*reversed(arg_values))
     return instance
 
