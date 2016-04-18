@@ -6,15 +6,30 @@ import numpy as np
 from kid_readout.roach import heterodyne
 from kid_readout import *
 from kid_readout.measurement.acquire import acquire
-from kid_readout.equipment import hittite_controller, lockin_controller
-from kid_readout.measurement import mmw_source, core
+from equipment.hittite import signal_generator
+from equipment.custom import mmwave_source
+from equipment.srs import lockin
+from kid_readout.measurement.acquire import hardware
+from kid_readout.measurement import mmw_source_sweep, core
 
 # fg = FunctionGenerator()
-hittite = hittite_controller.hittiteController(addr='192.168.0.200')
+hittite = signal_generator.Hittite(ipaddr='192.168.0.200')
 hittite.set_power(0)
 hittite.on()
-lockin = lockin_controller.lockinController()
-print lockin.get_idn()
+lockin = lockin.Lockin('/dev/ttyUSB2')
+tic = time.time()
+print lockin.identification
+print time.time()-tic
+print lockin.state()
+print time.time()-tic
+source = mmwave_source.MMWaveSource()
+source.set_attenuator_turns(7.0,7.0)
+source.multiplier_input = 'hittite'
+source.waveguide_twist_angle = 45
+source.ttl_modulation_source = 'roach'
+
+setup = hardware.Hardware(hittite,source,lockin)
+
 ri = heterodyne.RoachHeterodyne(adc_valon='/dev/ttyUSB0')
 ri.initialize()
 #ri.initialize(use_config=False)
@@ -54,7 +69,6 @@ mmw_freqs = np.linspace(140e9, 165e9, 500)
 
 ri.set_dac_atten(10)
 
-state = dict(mmw_atten_turns=(7,7), hittite_power_dBm=0.0,)
 
 for (lo,f0s) in [(low_group_lo,low_group),
                  (high_group_lo, high_group)]:
@@ -63,10 +77,10 @@ for (lo,f0s) in [(low_group_lo,low_group),
     ri.set_lo(lo)
     measured_frequencies = acquire.load_heterodyne_sweep_tones(ri,np.add.outer(offsets,f0s),num_tone_samples=nsamp)
     print "waveforms loaded", (time.time()-tic)/60.
-    hittite.off()
-    swpa = acquire.run_loaded_sweep(ri,length_seconds=0,state=state)
+    setup.hittite.off()
+    swpa = acquire.run_loaded_sweep(ri,length_seconds=0,state=setup.state())
     print "resonance sweep done", (time.time()-tic)/60.
-    sweepstream = mmw_source.MMWSweepList(swpa,core.IOList(),state=state)
+    sweepstream = mmw_source_sweep.MMWSweepList(swpa, core.IOList(), state=setup.state())
     ncf.write(sweepstream)
     print "sweep written", (time.time()-tic)/60.
     current_f0s = []
@@ -81,15 +95,14 @@ for (lo,f0s) in [(low_group_lo,low_group),
     ri.add_tone_freqs(current_f0s)
     ri.select_bank(ri.tone_bins.shape[0]-1)
     ri.select_fft_bins(range(32))
-    hittite.on()
+    setup.hittite.on()
     for n, freq in enumerate(mmw_freqs):
-        hittite.set_freq(freq/12.)
+        setup.hittite.set_freq(freq/12.)
         time.sleep(0.5)
-        x, y, r, theta = lockin.get_data()
-        state['lockin_voltage'] = r
-        state['hittite_frequency'] = freq/12.0
         tic2= time.time()
-        meas = ri.get_measurement(num_seconds=2., state=state)
+        state=setup.state()
+        print time.time()-tic2
+        meas = ri.get_measurement(num_seconds=1., state=state)
         print freq,(time.time()-tic2)
         sweepstream.stream_list.append(meas)
 
