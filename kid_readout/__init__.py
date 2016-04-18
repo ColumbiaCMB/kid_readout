@@ -1,3 +1,7 @@
+"""
+Top level documentation test
+"""
+
 from kid_readout.roach import heterodyne,baseband,r2heterodyne,r2baseband
 from kid_readout.roach.heterodyne import RoachHeterodyne
 from kid_readout.roach.baseband import RoachBaseband
