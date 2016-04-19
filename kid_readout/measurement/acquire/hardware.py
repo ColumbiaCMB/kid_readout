@@ -10,3 +10,6 @@ class Hardware(object):
     def state(self):
         return core.StateDict([(obj.name, obj.state()) for obj in self.__dict__.values()])
 
+    def __repr__(self):
+        return '{}({})'.format(self.__class__.__name__, ', '.join(self.__dict__.keys()))
+
