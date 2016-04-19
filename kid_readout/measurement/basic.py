@@ -292,12 +292,6 @@ class SingleSweep(core.Measurement):
     def frequency_MHz_stack(self):
         return 1e-6 * self.frequency_stack
 
-
-class SingleResonatorSweep(SingleSweep):
-    def __init__(self, streams, state=None, description=''):
-        super(SingleResonatorSweep, self).__init__(streams=streams, state=state,
-                                                   description=description)
-
     @memoized_property
     def s21_normalized(self):
          return np.array([self.resonator.normalize(f, s21)
@@ -385,24 +379,6 @@ class SweepArray(core.Measurement):
         return 1e-6 * self.frequency_stack
 
 
-class ResonatorSweepArray(SweepArray):
-    """
-    This class represents a set of groups of streams.
-    """
-
-    def __init__(self, stream_arrays, state=None, description=''):
-        super(ResonatorSweepArray, self).__init__(stream_arrays=stream_arrays, state=state,
-                                                  description=description)
-
-    def sweep(self, index):
-        if isinstance(index, int):
-            return SingleResonatorSweep(core.MeasurementList(sa.stream(index) for sa in self.stream_arrays),
-                                        state=self.state)
-        else:
-            raise ValueError("Invalid index: {}".format(index))
-
-
-# TODO: implement memoized_property here
 class SingleSweepStream(core.Measurement):
     def __init__(self, sweep, stream, state=None, description=''):
         self.sweep = sweep
@@ -591,3 +567,16 @@ class SingleSweepStreamList(core.Measurement):
         self.stream_list = stream_list
         self.stream_list._parent = self
         super(SingleSweepStreamList, self).__init__(state=state, description=description)
+
+    def state_vector(self,*keys):
+        vector = []
+        for stream in self.stream_list:
+            state = stream.state
+            for key in keys:
+                if state is np.nan:
+                    break
+                state = state.get(key,np.nan)
+            vector.append(state)
+        return np.array(vector)
+
+

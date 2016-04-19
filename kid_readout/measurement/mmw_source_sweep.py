@@ -15,8 +15,6 @@ class MMWResponse(basic.SingleSweepStreamList):
     def __init__(self, single_sweep, stream_list, state, description=''):
         super(MMWResponse,self).__init__(single_sweep=single_sweep,stream_list=stream_list,state=state,description=description)
 
-    def state_vector(self,key,missing=None):
-        return [stream.state.get(key,missing) for stream in self.stream_list]
 
     @property
     def lockin_voltage(self):
