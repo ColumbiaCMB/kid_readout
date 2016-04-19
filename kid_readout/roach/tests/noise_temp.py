@@ -131,7 +131,7 @@ class NoiseMeasurements(object):
         return 
 
     def take_psd(self, x, y, db=True, NFFT=None):
-        if NFFT=None:
+        if NFFT is None:
             NFFT=self.NFFT
         ps, f = mlab.psd(x+1j*y, NFFT=NFFT, Fs=self.Fs)
         if db:
