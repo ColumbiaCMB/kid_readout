@@ -514,7 +514,7 @@ class Demodulator(object):
         foffs = tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft)
         wc = self.compute_pfb_response(foffs)
         t = np.arange(data.shape[0])
-        demod = wc*np.exp(-1j * (2 * np.pi * foffs * t + phi0)) * (data.astype('complex'))
+        demod = wc*np.exp(-1j * (2 * np.pi * foffs * t + phi0)) * data
         if type(seq_nos) is np.ndarray:
             pphase = packet_phase(seq_nos,foffs,nchan,nfft,ns) 
             demod *= pphase
