@@ -301,8 +301,8 @@ class MeasurementList(list, Node):
     """
 
     def __init__(self, *args):
-        self._parent = None
         super(MeasurementList, self).__init__(*args)
+        Node.__init__(self)
         for item in self:
             item._parent = self
 

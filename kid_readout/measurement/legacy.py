@@ -185,39 +185,36 @@ def common(sequence):
 # TODO: change description functionality to add_legacy_origin
 
 
-def stream_from_rnc(rnc, timestream_group_index, tone_index, description=None):
+def stream_from_rnc(rnc, timestream_group_index, tone_index, description=''):
     roach_state = timestream_roach_state_from_rnc(rnc, timestream_group_index)
     state = timestream_state_from_rnc(rnc, timestream_group_index)
-    if description is None:
-        description = 'ReadoutNetCDF(\"{}\").timestreams[{}]'.format(rnc.filename, timestream_group_index)
     tg = rnc.timestreams[timestream_group_index]
     # A TimestreamGroup has arrays in roach FPGA order.
     increasing_order = tg.tonebin.argsort()
     tone_bin = tg.tonebin[increasing_order]
-    amplitude = np.ones(tone_bin.size, dtype=np.float)
-    phase = np.zeros(tone_bin.size, dtype=np.float)
+    tone_amplitude = np.ones(tone_bin.size, dtype=np.float)
+    tone_phase = np.zeros(tone_bin.size, dtype=np.float)
     # TODO: decide what to do about these values: invert to RoachInterface values or ignore them?
     fpga_fft_bin_plus_one = int(tg.fftbin[increasing_order][tone_index])
     # All the epoch and data_len_seconds values are the same. Assume regular sampling.
     epoch = int(common(tg.epoch))
     s21_raw = tg.data[increasing_order, :][tone_index]
     data_demodulated = True  # Modify this if possible to determine from the rnc.
-    return SingleStream(tone_bin=tone_bin, tone_amplitude=amplitude, tone_phase=phase, tone_index=tone_index,
-                        filterbank_bin=fpga_fft_bin_plus_one, epoch=epoch, s21_raw=s21_raw, data_demodulated=data_demodulated,
-                        roach_state=roach_state, state=state, description=description)
+    return SingleStream(tone_bin=tone_bin, tone_amplitude=tone_amplitude, tone_phase=tone_phase, tone_index=tone_index,
+                        filterbank_bin=fpga_fft_bin_plus_one, epoch=epoch, s21_raw=s21_raw,
+                        data_demodulated=data_demodulated, roach_state=roach_state, state=state,
+                        description=description)
 
 
-def streamarray_from_rnc(rnc, timestream_group_index, description=None):
+def streamarray_from_rnc(rnc, timestream_group_index, description=''):
     roach_state = timestream_roach_state_from_rnc(rnc, timestream_group_index)
     state = timestream_state_from_rnc(rnc, timestream_group_index)
-    if description is None:
-        description = 'ReadoutNetCDF(\"{}\").timestreams[{}]'.format(rnc.filename, timestream_group_index)
     tg = rnc.timestreams[timestream_group_index]
     # A TimestreamGroup has arrays in roach FPGA order.
     increasing_order = tg.tonebin.argsort()
     tone_bin = tg.tonebin[increasing_order]
-    amplitude = np.ones(tone_bin.size, dtype=np.float)
-    phase = np.zeros(tone_bin.size, dtype=np.float)
+    tone_amplitude = np.ones(tone_bin.size, dtype=np.float)
+    tone_phase = np.zeros(tone_bin.size, dtype=np.float)
     tone_index = np.arange(tone_bin.size)
     # TODO: decide what to do about these values: invert to RoachInterface values or ignore them?
     fpga_fft_bin_plus_one = tg.fftbin[increasing_order].astype(np.int)
@@ -225,16 +222,14 @@ def streamarray_from_rnc(rnc, timestream_group_index, description=None):
     epoch = int(common(tg.epoch))
     s21_raw = tg.data[increasing_order, :]
     data_demodulated = True  # Modify this if possible to determine from the rnc.
-    return StreamArray(tone_bin=tone_bin, tone_amplitude=amplitude, tone_phase=phase, tone_index=tone_index,
+    return StreamArray(tone_bin=tone_bin, tone_amplitude=tone_amplitude, tone_phase=tone_phase, tone_index=tone_index,
                        filterbank_bin=fpga_fft_bin_plus_one, epoch=epoch, s21_raw=s21_raw,
                        data_demodulated=data_demodulated, roach_state=roach_state, state=state, description=description)
 
 
-def sweep_from_rnc(rnc, sweep_group_index, tone_index, resonator=True, description=None):
+def sweep_from_rnc(rnc, sweep_group_index, tone_index, description=''):
     roach_state = sweep_roach_state_from_rnc(rnc, sweep_group_index)
     state = sweep_state_from_rnc(rnc, sweep_group_index)
-    if description is None:
-        description = 'ReadoutNetCDF(\"{}\").sweeps[{}]'.format(rnc.filename, sweep_group_index)
     sg = rnc.sweeps[sweep_group_index]
     tg = sg.timestream_group
     sweep_indices = np.unique(tg.sweep_index)
@@ -248,27 +243,22 @@ def sweep_from_rnc(rnc, sweep_group_index, tone_index, resonator=True, descripti
         unordered_tone_bin = tg.tonebin[simultaneous]
         increasing_order = unordered_tone_bin.argsort()
         tone_bin = unordered_tone_bin[increasing_order]  # Assume monotonic frequencies at each epoch:
-        amplitude = np.ones(tone_bin.size, dtype=np.float)
-        phase = np.zeros(tone_bin.size, dtype=np.float)
+        tone_amplitude = np.ones(tone_bin.size, dtype=np.float)
+        tone_phase = np.zeros(tone_bin.size, dtype=np.float)
         fpga_fft_bin_plus_one = int(tg.fftbin[simultaneous][increasing_order][tone_index])
         # All of the epochs are the same
         epoch = int(common(tg.epoch[simultaneous]))
         s21_raw = tg.data[simultaneous, :][increasing_order][tone_index]
         data_demodulated = True  # Modify this if possible to determine from the rnc.
-        streams.append(SingleStream(tone_bin=tone_bin, tone_amplitude=amplitude, tone_phase=phase, tone_index=tone_index,
-                                    filterbank_bin=fpga_fft_bin_plus_one, epoch=epoch, s21_raw=s21_raw,
-                                    data_demodulated=data_demodulated, roach_state=roach_state))
-    if resonator:
-        return SingleSweep(streams=streams, state=state, description=description)
-    else:
-        return SingleSweep(streams=streams, state=state, description=description)
+        streams.append(SingleStream(tone_bin=tone_bin, tone_amplitude=tone_amplitude, tone_phase=tone_phase,
+                                    tone_index=tone_index, filterbank_bin=fpga_fft_bin_plus_one, epoch=epoch,
+                                    s21_raw=s21_raw, data_demodulated=data_demodulated, roach_state=roach_state))
+    return SingleSweep(streams=streams, state=state, description=description)
 
 
-def sweeparray_from_rnc(rnc, sweep_group_index, resonator=True, description=None):
+def sweeparray_from_rnc(rnc, sweep_group_index, description=''):
     roach_state = sweep_roach_state_from_rnc(rnc, sweep_group_index)
     state = sweep_state_from_rnc(rnc, sweep_group_index)
-    if description is None:
-        description = 'ReadoutNetCDF(\"{}\").sweeps[{}]'.format(rnc.filename, sweep_group_index)
     sg = rnc.sweeps[sweep_group_index]
     tg = sg.timestream_group
     sweep_indices = np.unique(tg.sweep_index)
@@ -293,10 +283,7 @@ def sweeparray_from_rnc(rnc, sweep_group_index, resonator=True, description=None
         stream_arrays.append(StreamArray(tone_bin=tone_bin, tone_amplitude=amplitude, tone_phase=phase,
                                          tone_index=tone_index, filterbank_bin=fpga_fft_bin_plus_one, epoch=epoch,
                                          s21_raw=s21_raw, data_demodulated=data_demodulated, roach_state=roach_state))
-    if resonator:
-        return SweepArray(stream_arrays=stream_arrays, state=state, description=description)
-    else:
-        return SweepArray(stream_arrays=stream_arrays, state=state, description=description)
+    return SweepArray(stream_arrays=stream_arrays, state=state, description=description)
 
 
 def sweepstream_from_rnc(rnc, sweep_group_index, timestream_group_index, tone_index):
