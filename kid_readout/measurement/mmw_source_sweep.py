@@ -11,6 +11,7 @@ class MMWSweepList(basic.SweepStreamList):
                                      core.MeasurementList(sa.stream(index) for sa in self.stream_list),
                                      state=self.state, description=self.description)
 
+
 class MMWResponse(basic.SingleSweepStreamList):
     def __init__(self, single_sweep, stream_list, state, description=''):
         super(MMWResponse,self).__init__(single_sweep=single_sweep,stream_list=stream_list,state=state,description=description)
@@ -48,3 +49,12 @@ class MMWResponse(basic.SingleSweepStreamList):
         folded = self.folded_x()
         period = folded.shape[-1]
         return np.abs(folded[...,period//8:3*period//8].mean(-1) - folded[...,5*period//8:7*period//8].mean(-1))
+
+
+class MMWSweepOnMod(core.Measurement):
+
+    def __init__(self, sweep, on_stream, mod_stream, state=None, description=''):
+        self.sweep = sweep
+        self.on_stream = on_stream
+        self.mod_stream = mod_stream
+        super(MMWSweepOnMod, self).__init__(state=state, description=description)
