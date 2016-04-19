@@ -114,7 +114,7 @@ def test_explode():
 
 
 def test_validate_node_path():
-    bad_node_paths = ['', ' ', '"', ':', '/', '\\', '?', 'node:', ':node', 'node:path:', 'bad-hyphen', 'exclamation!']
+    bad_node_paths = ['', ' ', '"', ':', '/', '\\', '?', '!', 'node:', ':node', 'node:path:', 'bad-hyphen', '0number']
     good_node_paths = ['good', 'very:good', 'EXTREMELY:GOOD', 'underscore_is_fine:_:__really__', '0:12:345']
     for bad in bad_node_paths:
         try:

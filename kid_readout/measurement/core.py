@@ -48,6 +48,7 @@ format-independent way in order to save new data in specific locations or to loa
 """
 import re
 import inspect
+import keyword
 import warnings
 import importlib
 import numpy as np
@@ -202,12 +203,45 @@ class Measurement(Node):
         return class_(**self.__dict__)
 
     def add_measurement(self, measurement):
+        """
+        Validate an input measurement and correctly set its private state with minimal boilerplate. Example:
+        SomeMeasurement.__init__(self, a_measurement):
+            self.a_measurement = self.add_measurement(a_measurement)
+        Note that this function modifies the input but does not set it as an attribute. The attribute should be
+        identical to the __init__() argument, as above, to ensure that saving and loading work automatically.
+
+        Parameters
+        ----------
+        measurement : Measurement
+            The measurement that is being added as an attribute to this one.
+
+        Returns
+        -------
+        The same measurement, with private internal state updated.
+        """
         if not isinstance(measurement, Measurement):
             raise MeasurementError('{} is not an instance of Measurement'.format(repr(measurement)))
         measurement._parent = self
         return measurement
 
     def add_measurement_list(self, measurement_list):
+        """
+        Validate an input measurement list and correctly set its private state with minimal boilerplate. Example:
+        SomeMeasurement.__init__(self, list_of_measurements):
+            self.list_of_measurements = self.add_measurement(list_of_measurements)
+        Note that this function modifies the input but does not set it as an attribute. The attribute should be
+        identical to the __init__() argument, as above, to ensure that saving and loading work automatically.
+
+        Parameters
+        ----------
+        measurement_list : MeasurementList
+            The measurement_list that is being added as an attribute to this one.
+
+        Returns
+        -------
+        The same measurement list, with private internal state updated.
+        """
+
         if not isinstance(measurement_list, MeasurementList):
             raise MeasurementError('{} is not an instance of MeasurementList'.format(repr(measurement_list)))
         measurement_list._parent = self
@@ -420,6 +454,8 @@ class StateDict(dict):
         for k, v in self.items():
             if not isinstance(k, (str, unicode)):
                 raise MeasurementError("Dictionary keys must be strings.")
+            elif re.match(r'[a-zA-Z_][a-zA-Z0-9_]*$', k) is None or keyword.iskeyword(k) or k in __builtins__:
+                raise MeasurementError("Invalid variable name: {}".format(k))
             if isinstance(v, dict):
                 self[k] = StateDict(v)
             else:
@@ -726,6 +762,7 @@ def explode(node_path):
     return node_path.split(NODE_PATH_SEPARATOR)
 
 
+# TODO: sharpen definition
 def validate_node_path(node_path):
     """
     Raise a MeasurementError if the given non-empty node path is not valid; a valid node path is a string consisting of
@@ -738,6 +775,5 @@ def validate_node_path(node_path):
     for node in explode(node_path):
         if not node:
             raise MeasurementError("Empty node in {}".format(node_path))
-    allowed = r'[^\_\:A-Za-z0-9]'
-    if re.search(allowed, node_path):
-        raise MeasurementError("Invalid character in {}".format(node_path))
+        elif re.match(r'[0-9]*$|[_a-zA-Z][_a-zA-Z0-9]*$', node) is None:
+            raise MeasurementError("Invalid node in {}".format(node_path))
