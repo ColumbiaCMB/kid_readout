@@ -106,7 +106,7 @@ class Roach2Heterodyne(RoachHeterodyne):
         data, seqnos = kid_readout.roach.r2_udp_catcher.get_udp_data(self, npkts=nread,
                                                                      nchans=self.readout_selection.shape[0],
                                                                      addr=(self.host_ip, 55555))  # , stream_reg, addr)
-        if self.phase0 == None:
+        if self.phase0 is None:
             self.phase0 = seqnos[0]
         if demod:
             seqnos -= self.phase0

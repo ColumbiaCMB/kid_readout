@@ -318,7 +318,7 @@ class CachedSingleStream(basic.SingleStream):
         self._s21_raw_variable = NCVariable(s21_raw)
         self._s21_raw = None
         self.data_demodulated = data_demodulated
-        self.roach_state = core.to_state_dict(roach_state)
+        self.roach_state = core.StateDict(roach_state)
         self._frequency = None
         self._sample_time = None
         self._baseband_frequency = None
@@ -378,7 +378,7 @@ class CachedStreamArray(basic.StreamArray):
         self.s21_raw_variable = NCVariable(s21_raw)
         self._s21_raw = None
         self.data_demodulated = data_demodulated
-        self.roach_state = core.to_state_dict(roach_state)
+        self.roach_state = core.StateDict(roach_state)
         self._frequency = None
         self._sample_time = None
         self._baseband_frequency = None
