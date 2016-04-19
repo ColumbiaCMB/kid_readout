@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
-from kid_readout.measurement.basic import (SingleStream, SingleSweep, SingleResonatorSweep, SingleSweepStream,
-                                           StreamArray, SweepArray, ResonatorSweepArray, SweepStreamArray)
+from kid_readout.measurement.basic import (SingleStream, SingleSweep, SingleSweepStream,
+                                           StreamArray, SweepArray, SweepStreamArray)
 
 # High-level functions that extract state information for all the hardware.
 
@@ -259,7 +259,7 @@ def sweep_from_rnc(rnc, sweep_group_index, tone_index, resonator=True, descripti
                                     filterbank_bin=fpga_fft_bin_plus_one, epoch=epoch, s21_raw=s21_raw,
                                     data_demodulated=data_demodulated, roach_state=roach_state))
     if resonator:
-        return SingleResonatorSweep(streams=streams, state=state, description=description)
+        return SingleSweep(streams=streams, state=state, description=description)
     else:
         return SingleSweep(streams=streams, state=state, description=description)
 
@@ -294,7 +294,7 @@ def sweeparray_from_rnc(rnc, sweep_group_index, resonator=True, description=None
                                          tone_index=tone_index, filterbank_bin=fpga_fft_bin_plus_one, epoch=epoch,
                                          s21_raw=s21_raw, data_demodulated=data_demodulated, roach_state=roach_state))
     if resonator:
-        return ResonatorSweepArray(stream_arrays=stream_arrays, state=state, description=description)
+        return SweepArray(stream_arrays=stream_arrays, state=state, description=description)
     else:
         return SweepArray(stream_arrays=stream_arrays, state=state, description=description)
 
