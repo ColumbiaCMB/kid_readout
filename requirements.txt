@@ -10,3 +10,4 @@ emcee
 corner
 lmfit
 testfixtures
+memoized-property

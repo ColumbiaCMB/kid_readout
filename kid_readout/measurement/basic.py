@@ -5,6 +5,7 @@ from __future__ import division
 import numpy as np
 import pandas as pd
 from matplotlib.pyplot import mlab  # TODO: replace with a scipy PSD estimator
+from memoized_property import memoized_property
 
 from kid_readout.measurement import core
 from kid_readout.analysis.resonator import legacy_resonator
@@ -42,35 +43,24 @@ class RoachStream(core.Measurement):
         self.s21_raw = s21_raw
         self.data_demodulated = data_demodulated
         self.roach_state = core.to_state_dict(roach_state)
-        self._frequency = None
-        self._sample_time = None
-        self._baseband_frequency = None
-        self._s21_raw_mean = None
-        self._s21_raw_mean_error = None
         super(RoachStream, self).__init__(state=state, description=description)
 
-    @property
+    @memoized_property
     def sample_time(self):
-        if self._sample_time is None:
-            self._sample_time = (np.arange(self.s21_raw.shape[-1], dtype='float') /
-                                 self.stream_sample_rate)
-        return self._sample_time
+        return (np.arange(self.s21_raw.shape[-1], dtype='float') /
+                self.stream_sample_rate)
 
-    @property
+    @memoized_property
     def frequency(self):
-        if self._frequency is None:
-            self._frequency = calculate.frequency(self.roach_state, self.tone_bin[self.tone_index])
-        return self._frequency
+        return calculate.frequency(self.roach_state, self.tone_bin[self.tone_index])
 
     @property
     def frequency_MHz(self):
         return 1e-6 * self.frequency
 
-    @property
+    @memoized_property
     def baseband_frequency(self):
-        if self._baseband_frequency is None:
-            self._baseband_frequency = calculate.baseband_frequency(self.roach_state, self.tone_bin[self.tone_index])
-        return self._baseband_frequency
+        return calculate.baseband_frequency(self.roach_state, self.tone_bin[self.tone_index])
 
     @property
     def baseband_frequency_MHz(self):
@@ -80,18 +70,14 @@ class RoachStream(core.Measurement):
     def stream_sample_rate(self):
         return calculate.stream_sample_rate(self.roach_state)
 
-    @property
+    @memoized_property
     def s21_raw_mean(self):
-        if self._s21_raw_mean is None:
-            self._s21_raw_mean = self.s21_raw.mean(axis=-1)
-        return self._s21_raw_mean
+        return self.s21_raw.mean(axis=-1)
 
-    @property
+    @memoized_property
     def s21_raw_mean_error(self):
-        if self._s21_raw_mean_error is None:
-            self._s21_raw_mean_error = ((self.s21_raw.real.std(axis=-1) + 1j * self.s21_raw.imag.std(axis=-1)) /
-                                        self.s21_raw.shape[-1] ** (1 / 2))
-        return self._s21_raw_mean_error
+        return ((self.s21_raw.real.std(axis=-1) + 1j * self.s21_raw.imag.std(axis=-1)) /
+                self.s21_raw.shape[-1] ** (1 / 2))
 
     def folded_shape(self, array, period_samples=None):
         if period_samples is None:
@@ -263,75 +249,44 @@ class SingleSweep(core.Measurement):
         """
         self.streams = streams
         self.streams._parent = self
-        self._frequency = None
-        self._s21_points = None
-        self._s21_points_error = None
-        self._tone_bin_stack = None
-        self._tone_amplitude_stack = None
-        self._tone_phase_stack = None
-        self._filterbank_bin_stack = None
-        self._s21_raw_stack = None
-        self._frequency_stack = None
         super(SingleSweep, self).__init__(state=state, description=description)
 
-    @property
+    @memoized_property
     def frequency(self):
-        if self._frequency is None:
-            self._frequency = np.array([stream.frequency for stream in self.streams])
-        return self._frequency
+        return np.array([stream.frequency for stream in self.streams])
 
-    @property
+    @memoized_property
     def s21_points(self):
-        if self._s21_points is None:
-            self._s21_points = np.array([stream.s21_point for stream in self.streams])
-        return self._s21_points
+        return np.array([stream.s21_point for stream in self.streams])
 
-    @property
+    @memoized_property
     def s21_points_error(self):
-        if self._s21_points_error is None:
-            self._s21_points_error = np.array([stream.s21_point_error for stream in self.streams])
-        return self._s21_points_error
+        return np.array([stream.s21_point_error for stream in self.streams])
 
-    @property
+    @memoized_property
     def tone_bin_stack(self):
-        if self._tone_bin_stack is None:
-            self._tone_bin_stack = np.array([stream.tone_bin[stream.tone_index]
-                                             for stream in self.streams])
-        return self._tone_bin_stack
+        return np.array([stream.tone_bin[stream.tone_index] for stream in self.streams])
 
-    @property
+    @memoized_property
     def tone_amplitude_stack(self):
-        if self._tone_amplitude_stack is None:
-            self._tone_amplitude_stack = np.array([stream.tone_amplitude[stream.tone_index]
-                                                   for stream in self.streams])
-        return self._tone_amplitude_stack
+        return np.array([stream.tone_amplitude[stream.tone_index] for stream in self.streams])
 
-    @property
+    @memoized_property
     def tone_phase_stack(self):
-        if self._tone_phase_stack is None:
-            self._tone_phase_stack = np.array([stream.tone_phase[stream.tone_index]
-                                              for stream in self.streams])
-        return self._tone_phase_stack
+        return np.array([stream.tone_phase[stream.tone_index] for stream in self.streams])
 
-    @property
+    @memoized_property
     def filterbank_bin_stack(self):
-        if self._filterbank_bin_stack is None:
-            self._filterbank_bin_stack = np.array([stream.filterbank_bin for stream in self.streams])
-        return self._filterbank_bin_stack
+        return np.array([stream.filterbank_bin for stream in self.streams])
 
-    @property
+    @memoized_property
     def s21_raw_stack(self):
-        if self._s21_raw_stack is None:
-            self._s21_raw_stack = np.vstack([stream.s21_raw for stream in self.streams])
-        return self._s21_raw_stack
+        return np.vstack([stream.s21_raw for stream in self.streams])
 
-    @property
+    @memoized_property
     def frequency_stack(self):
-        if self._frequency_stack is None:
-            self._frequency_stack = np.array([calculate.frequency(stream.roach_state,
-                                                                  stream.tone_bin[stream.tone_index])
-                                              for stream in self.streams])
-        return self._frequency_stack
+        return np.array([calculate.frequency(stream.roach_state, stream.tone_bin[stream.tone_index])
+                         for stream in self.streams])
 
     @property
     def frequency_MHz_stack(self):
@@ -340,42 +295,32 @@ class SingleSweep(core.Measurement):
 
 class SingleResonatorSweep(SingleSweep):
     def __init__(self, streams, state=None, description=''):
-        self._resonator = None
-        self._s21_normalized = None
-        self._s21_normalized_error = None
         super(SingleResonatorSweep, self).__init__(streams=streams, state=state,
                                                    description=description)
 
-    @property
+    @memoized_property
     def s21_normalized(self):
-        if self._s21_normalized is None:
-            self._set_s21_normalized()
-        return self._s21_normalized
+         return np.array([self.resonator.normalize(f, s21)
+                          for f, s21 in zip(self.frequency, self.s21_points)])
 
-    def _set_s21_normalized(self):
-        self._s21_normalized = np.array([self.resonator.normalize(f, s21)
-                                         for f, s21 in zip(self.frequency, self.s21_points)])
-
-    @property
+    @memoized_property
     def s21_normalized_error(self):
-        if self._s21_normalized_error is None:
-            self._set_s21_normalized_error()
-        return self._s21_normalized_error
+        return np.array([self.resonator.normalize(f, s21_error)
+                         for f, s21_error in zip(self.frequency, self.s21_points_error)])
 
-    def _set_s21_normalized_error(self):
-        self._s21_normalized_error = np.array([self.resonator.normalize(f, s21_error)
-                                               for f, s21_error in zip(self.frequency, self.s21_points_error)])
-
-    @property
+    @memoized_property
     def resonator(self):
-        if self._resonator is None:
-            self.fit_resonator()
-        return self._resonator
+        return self.fit_resonator()
 
+    # TODO: add arguments to specify model, etc.
     def fit_resonator(self, delay_estimate=None, nonlinear_a_threshold=0.08):
-        self._resonator = legacy_resonator.fit_best_resonator(self.frequency, self.s21_points,
-                                                           errors=self.s21_points_error,
-                                                       delay_estimate=delay_estimate, min_a=nonlinear_a_threshold)
+        # Reset the memoized properties that depend on the resonator fit.
+        for attr in ('_s21_normalized', '_s21_normalized_error'):
+            if hasattr(self, attr):
+                delattr(self, attr)
+        self._resonator = legacy_resonator.fit_best_resonator(self.frequency, self.s21_points, errors=self.s21_points_error,
+                                                        delay_estimate=delay_estimate, min_a=nonlinear_a_threshold)
+        return self._resonator
 
 
 class SweepArray(core.Measurement):
@@ -386,12 +331,6 @@ class SweepArray(core.Measurement):
     def __init__(self, stream_arrays, state=None, description=''):
         self.stream_arrays = stream_arrays
         self.stream_arrays._parent = self
-        self._tone_bin_stack = None
-        self._tone_amplitude_stack = None
-        self._tone_phase_stack = None
-        self._filterbank_bin_stack = None
-        self._s21_raw_stack = None
-        self._frequency_stack = None
         super(SweepArray, self).__init__(state=state, description=description)
 
     def sweep(self, index):
@@ -411,47 +350,35 @@ class SweepArray(core.Measurement):
         except IndexError:
             return 0
 
-    @property
+    @memoized_property
     def tone_bin_stack(self):
-        if self._tone_bin_stack is None:
-            self._tone_bin_stack = np.concatenate([stream_array.tone_bin[stream_array.tone_index]
-                                                   for stream_array in self.stream_arrays])
-        return self._tone_bin_stack
+        return np.concatenate([stream_array.tone_bin[stream_array.tone_index]
+                               for stream_array in self.stream_arrays])
 
-    @property
+    @memoized_property
     def tone_amplitude_stack(self):
-        if self._tone_amplitude_stack is None:
-            self._tone_amplitude_stack = np.concatenate([stream_array.tone_amplitude[stream_array.tone_index]
-                                                         for stream_array in self.stream_arrays])
-        return self._tone_amplitude_stack
+        return np.concatenate([stream_array.tone_amplitude[stream_array.tone_index]
+                               for stream_array in self.stream_arrays])
 
-    @property
+    @memoized_property
     def tone_phase_stack(self):
-        if self._tone_phase_stack is None:
-            self._tone_phase_stack = np.concatenate([stream_array.tone_phase[stream_array.tone_index]
-                                                     for stream_array in self.stream_arrays])
-        return self._tone_phase_stack
+        return np.concatenate([stream_array.tone_phase[stream_array.tone_index]
+                               for stream_array in self.stream_arrays])
 
-    @property
+    @memoized_property
     def filterbank_bin_stack(self):
-        if self._filterbank_bin_stack is None:
-            self._filterbank_bin_stack = np.concatenate([stream_array.filterbank_bin
-                                                         for stream_array in self.stream_arrays])
-        return self._filterbank_bin_stack
+        return np.concatenate([stream_array.filterbank_bin
+                               for stream_array in self.stream_arrays])
 
-    @property
+    @memoized_property
     def s21_raw_stack(self):
-        if self._s21_raw_stack is None:
-            self._s21_raw_stack = np.vstack([stream_array.s21_raw for stream_array in self.stream_arrays])
-        return self._s21_raw_stack
+        return np.vstack([stream_array.s21_raw for stream_array in self.stream_arrays])
 
-    @property
+    @memoized_property
     def frequency_stack(self):
-        if self._frequency_stack is None:
-            self._frequency_stack = np.concatenate([calculate.frequency(stream_array.roach_state,
-                                                                        stream_array.tone_bin[stream_array.tone_index])
-                                                    for stream_array in self.stream_arrays])
-        return self._frequency_stack
+        return np.concatenate([calculate.frequency(stream_array.roach_state,
+                                                   stream_array.tone_bin[stream_array.tone_index])
+                               for stream_array in self.stream_arrays])
 
     @property
     def frequency_MHz_stack(self):
@@ -475,6 +402,7 @@ class ResonatorSweepArray(SweepArray):
             raise ValueError("Invalid index: {}".format(index))
 
 
+# TODO: implement memoized_property here
 class SingleSweepStream(core.Measurement):
     def __init__(self, sweep, stream, state=None, description=''):
         self.sweep = sweep
@@ -483,26 +411,15 @@ class SingleSweepStream(core.Measurement):
         self.stream._parent = self
         self.fold = stream.fold
         self.folded_shape = stream.folded_shape
-        self._stream_s21_normalized = None
-        self._stream_s21_normalized_deglitched = None
-        self._q = None
-        self._x = None
-        self._S_frequency = None
-        self._S_qq = None
-        self._S_xx = None
         super(SingleSweepStream, self).__init__(state=state, description=description)
 
-    @property
+    @memoized_property
     def stream_s21_normalized(self):
-        if self._stream_s21_normalized is None:
-            self._stream_s21_normalized = self.sweep.resonator.normalize(self.stream.frequency, self.stream.s21_raw)
-        return self._stream_s21_normalized
+        return self.sweep.resonator.normalize(self.stream.frequency, self.stream.s21_raw)
 
-    @property
+    @memoized_property
     def stream_s21_normalized_deglitched(self):
-        if self._stream_s21_normalized_deglitched is None:
-            self._set_stream_s21_normalized_deglitched()
-        return self._stream_s21_normalized_deglitched
+        return self._set_stream_s21_normalized_deglitched()
 
     def _set_stream_s21_normalized_deglitched(self, window_in_seconds=1, deglitch_threshold=5):
         window = int(2 ** np.ceil(np.log2(window_in_seconds * self.stream.stream_sample_rate)))
@@ -515,7 +432,7 @@ class SingleSweepStream(core.Measurement):
         Return the inverse internal quality factor q = 1 / Q_i calculated by inverting the resonator model.
         :return: an array of q values from self.stream corresponding to self.stream.epoch.
         """
-        if self._q is None:
+        if not hasattr(self, '_q'):
             self._set_q_and_x()
         return self._q
 
@@ -534,7 +451,7 @@ class SingleSweepStream(core.Measurement):
         Return the fractional frequency shift x = f / f_r - 1 calculated by inverting the resonator model.
         :return: an array of x values from self.stream corresponding to self.stream.epoch.
         """
-        if self._x is None:
+        if not hasattr(self, '_x'):
             self._set_q_and_x()
         return self._x
 
@@ -554,8 +471,8 @@ class SingleSweepStream(core.Measurement):
         Return the frequencies used in calculating the single-sided spectral densities.
         :return: an array of frequencies ranging from 0 through the Nyquist frequency.
         """
-        if self._S_frequency is None:
-            self._set_S_qq_and_S_xx()
+        if not hasattr(self, '_S_frequency'):
+            self._set_S()
         return self._S_frequency
 
     @property
@@ -564,8 +481,8 @@ class SingleSweepStream(core.Measurement):
         The single-sided spectral density of q(t), S_qq(f), where f is self.S_frequency.
         :return: an array of complex values representing the spectral density of q(t)
         """
-        if self._S_qq is None:
-            self._set_S_qq_and_S_xx()
+        if not hasattr(self, '_S_qq'):
+            self._set_S()
         return self._S_qq
 
     @property
@@ -582,12 +499,12 @@ class SingleSweepStream(core.Measurement):
         The single-sided spectral density of x(t), S_xx(f), where f is self.S_frequency.
         :return: an array of complex values representing the spectral density of x(t)
         """
-        if self._S_xx is None:
-            self._set_S_qq_and_S_xx()
+        if not hasattr(self, '_S_xx'):
+            self._set_S()
         return self._S_xx
 
     # TODO: calculate errors in PSDs
-    def _set_S_qq_and_S_xx(self, NFFT=None, window=mlab.window_none, **kwargs):
+    def _set_S(self, NFFT=None, window=mlab.window_none, **kwargs):
         # Use the same length calculation as SweepNoiseMeasurement
         if NFFT is None:
             NFFT = int(2**(np.floor(np.log2(self.stream.s21_raw.size)) - 3))
