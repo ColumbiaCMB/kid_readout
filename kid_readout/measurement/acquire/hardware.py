@@ -1,10 +1,12 @@
-from collections import namedtuple
 from kid_readout.measurement import core
 
 
-def Hardware(*args):
-    return namedtuple('Hardware', [arg.name for arg in args])(*args)
+class Hardware(object):
 
+    def __init__(self, *args):
+        for arg in args:
+            setattr(self, arg.name, arg)
 
-def state(hardware):
-    return core.StateDict([(hw.name, hw.state()) for hw in hardware])
+    def state(self):
+        return core.StateDict([(obj.name, obj.state()) for obj in self.__dict__.values()])
+
