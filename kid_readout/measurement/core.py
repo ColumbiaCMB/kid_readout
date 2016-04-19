@@ -201,6 +201,18 @@ class Measurement(Node):
     def as_class(self, class_):
         return class_(**self.__dict__)
 
+    def add_measurement(self, measurement):
+        if not isinstance(measurement, Measurement):
+            raise MeasurementError('{} is not an instance of Measurement'.format(repr(measurement)))
+        measurement._parent = self
+        return measurement
+
+    def add_measurement_list(self, measurement_list):
+        if not isinstance(measurement_list, MeasurementList):
+            raise MeasurementError('{} is not an instance of MeasurementList'.format(repr(measurement_list)))
+        measurement_list._parent = self
+        return measurement_list
+
     def to_dataframe(self):
         """
         Return a pandas DataFrame containing data from this Measurement.

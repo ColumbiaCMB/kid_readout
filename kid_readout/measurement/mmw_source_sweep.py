@@ -54,7 +54,7 @@ class MMWResponse(basic.SingleSweepStreamList):
 class MMWSweepOnMod(core.Measurement):
 
     def __init__(self, sweep, on_stream, mod_stream, state=None, description=''):
-        self.sweep = sweep
-        self.on_stream = on_stream
-        self.mod_stream = mod_stream
+        self.sweep = self.add_measurement(sweep)
+        self.on_stream = self.add_measurement(on_stream)
+        self.mod_stream = self.add_measurement(mod_stream)
         super(MMWSweepOnMod, self).__init__(state=state, description=description)
