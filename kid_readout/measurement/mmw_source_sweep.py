@@ -97,7 +97,7 @@ class MMWSweepOnMod(core.Measurement):
         
         
 def lockin_rms_to_zbd_voltage(lockin_rms_voltage, linearize=False):
-    zbd_voltage = np.pi / np.sqrt(2) * lockin_rms_voltage
+    zbd_voltage = (np.pi / np.sqrt(2)) * lockin_rms_voltage
     if linearize:
         zbd_voltage /= zbd.linearity(zbd_voltage)
     return zbd_voltage
