@@ -13,6 +13,7 @@ from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
 from kid_readout.roach import tools
 from kid_readout.measurement.core import StateDict
 from kid_readout.measurement.basic import StreamArray
+from kid_readout.measurement.misc import ADCSnap
 
 
 CONFIG_FILE_NAME_TEMPLATE = os.path.join(BASE_DATA_DIR,'%s_config.npz')
@@ -248,6 +249,11 @@ class RoachInterface(object):
         s0 = (np.fromstring(self.r.read('i0_bram', self.raw_adc_ns * 2), dtype='>i2')) / 16.0
         s1 = (np.fromstring(self.r.read('q0_bram', self.raw_adc_ns * 2), dtype='>i2')) / 16.0
         return s0, s1
+
+    def get_adc_measurement(self):
+        epoch = time.time()
+        s0, s1 = self.get_raw_adc()
+        return ADCSnap(epoch=epoch,x=s0,y=s1,state=self.get_state())
 
     def auto_level_adc(self, goal=-2.0, max_tries=3):
         if self.adc_atten < 0:
