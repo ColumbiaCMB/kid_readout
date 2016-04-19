@@ -247,8 +247,7 @@ class SingleSweep(core.Measurement):
         :param description: a string description of this measurement.
         :return: a new SingleSweep object.
         """
-        self.streams = streams
-        self.streams._parent = self
+        self.streams = self.add_measurement_list(streams)
         super(SingleSweep, self).__init__(state=state, description=description)
 
     @memoized_property
@@ -323,8 +322,7 @@ class SweepArray(core.Measurement):
     """
 
     def __init__(self, stream_arrays, state=None, description=''):
-        self.stream_arrays = stream_arrays
-        self.stream_arrays._parent = self
+        self.stream_arrays = self.add_measurement_list(stream_arrays)
         super(SweepArray, self).__init__(state=state, description=description)
 
     def sweep(self, index):
@@ -381,10 +379,8 @@ class SweepArray(core.Measurement):
 
 class SingleSweepStream(core.Measurement):
     def __init__(self, sweep, stream, state=None, description=''):
-        self.sweep = sweep
-        self.sweep._parent = self
-        self.stream = stream
-        self.stream._parent = self
+        self.sweep = self.add_measurement(sweep)
+        self.stream = self.add_measurement(stream)
         self.fold = stream.fold
         self.folded_shape = stream.folded_shape
         super(SingleSweepStream, self).__init__(state=state, description=description)
@@ -517,10 +513,8 @@ class SweepStreamArray(core.Measurement):
     def __init__(self, sweep_array, stream_array, state=None, description=''):
         if sweep_array.num_channels != stream_array.tone_index.size:
             raise core.MeasurementError("The number of SweepArray channels does not match the StreamArray number.")
-        self.sweep_array = sweep_array
-        self.sweep_array._parent = self
-        self.stream_array = stream_array
-        self.stream_array._parent = self
+        self.sweep_array = self.add_measurement(sweep_array)
+        self.stream_array = self.add_measurement(stream_array)
         super(SweepStreamArray, self).__init__(state=state, description=description)
 
     @property
@@ -547,10 +541,8 @@ class SweepStreamArray(core.Measurement):
 class SweepStreamList(core.Measurement):
 
     def __init__(self, sweep, stream_list, state=None, description=''):
-        self.sweep = sweep
-        self.sweep._parent = self
-        self.stream_list = stream_list
-        self.stream_list._parent = self
+        self.sweep = self.add_measurement(sweep)
+        self.stream_list = self.add_measurement_list(stream_list)
         super(SweepStreamList, self).__init__(state=state, description=description)
 
     def single_sweep_stream_list(self, index):
@@ -562,10 +554,8 @@ class SweepStreamList(core.Measurement):
 class SingleSweepStreamList(core.Measurement):
 
     def __init__(self, single_sweep, stream_list, state=None, description=''):
-        self.sweep = single_sweep
-        self.sweep._parent = self
-        self.stream_list = stream_list
-        self.stream_list._parent = self
+        self.sweep = self.add_measurement(single_sweep)
+        self.stream_list = self.add_measurement_list(stream_list)
         super(SingleSweepStreamList, self).__init__(state=state, description=description)
 
     def state_vector(self,*keys):
