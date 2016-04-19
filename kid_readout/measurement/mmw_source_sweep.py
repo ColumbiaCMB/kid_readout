@@ -1,5 +1,6 @@
 from kid_readout.measurement import core,basic
 import numpy as np
+from memoized_property import memoized_property
 
 
 class MMWSweepList(basic.SweepStreamList):
@@ -18,17 +19,28 @@ class MMWResponse(basic.SingleSweepStreamList):
 
 
     @property
-    def lockin_voltage(self):
-        return np.array(self.state_vector('lockin_voltage'),dtype='float')
+    def lockin_rms_voltage(self):
+        return np.array(self.state_vector('lockin','rms_voltage'),dtype='float')
+
+    def zbd_power(self, linearize=False):
+        return zbd_voltage_to_power(self.zbd_voltage(linearize=linearize), mmw_frequency=self.mmw_frequency)
+
+    def zbd_voltage(self, linearize=False):
+        return lockin_rms_to_zbd_voltage(self.lockin_rms_voltage,linearize=linearize)
+
     @property
     def hittite_frequency(self):
-        return np.array(self.state_vector('hittite_frequency'),dtype='float')
+        return np.array(self.state_vector('hittite','frequency'),dtype='float')
 
     @property
     def mmw_frequency(self):
         return 12.*self.hittite_frequency
 
-    def sweep_stream_list(self,deglitch=False):
+    @memoized_property
+    def sweep_stream_list(self):
+        return self.get_sweep_stream_list()
+
+    def get_sweep_stream_list(self,deglitch=False):
         result = []
         for stream in self.stream_list:
             sss = basic.SingleSweepStream(sweep=self.sweep,stream=stream,state=stream.state,
@@ -37,16 +49,30 @@ class MMWResponse(basic.SingleSweepStreamList):
             result.append(sss)
         return result
 
+    @memoized_property
     def folded_x(self):
-        sweep_stream_list = self.sweep_stream_list()
+        sweep_stream_list = self.sweep_stream_list
         result = []
         for sss in sweep_stream_list:
             fx = sss.fold(sss.x)
             result.append(fx)
         return np.array(result)
 
+    @memoized_property
+    def folded_normalized_s21(self):
+        sweep_stream_list = self.sweep_stream_list
+        result = []
+        for sss in sweep_stream_list:
+            fs21 = sss.fold(sss.normalized_s21)
+            result.append(fs21)
+        return np.array(result)
+
+    @memoized_property
     def fractional_frequency_response(self):
-        folded = self.folded_x()
+        return self.get_fractional_frequency_response()
+
+    def get_fractional_frequency_response(self):
+        folded = self.folded_x
         period = folded.shape[-1]
         return np.abs(folded[...,period//8:3*period//8].mean(-1) - folded[...,5*period//8:7*period//8].mean(-1))
 
@@ -58,3 +84,19 @@ class MMWSweepOnMod(core.Measurement):
         self.on_stream = self.add_measurement(on_stream)
         self.mod_stream = self.add_measurement(mod_stream)
         super(MMWSweepOnMod, self).__init__(state=state, description=description)
+        
+        
+def lockin_rms_to_zbd_voltage(lockin_rms_voltage, linearize=False):
+    zbd_voltage = np.sqrt(2)*np.pi*lockin_rms_voltage
+    if linearize:
+        from equipment.vdi.zbd import ZBD
+        zbd_voltage = zbd_voltage / ZBD().linearity(zbd_voltage)
+    return zbd_voltage
+
+def zbd_voltage_to_power(zbd_voltage, mmw_frequency=None):
+    if mmw_frequency is None:
+        volts_per_watt = 2200.  # 2200 V/W is the approximate responsivity
+    else:
+        from equipment.vdi.zbd import ZBD
+        volts_per_watt = ZBD().responsivity(mmw_frequency)
+    return zbd_voltage/volts_per_watt
