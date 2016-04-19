@@ -247,6 +247,20 @@ class Measurement(Node):
         measurement_list._parent = self
         return measurement_list
 
+    def start_epoch(self):
+        try:
+            return self.epoch
+        except AttributeError:
+            pass
+        possible_epochs = []
+        for key,value in self.__dict__.items():
+            if isinstance(value,Measurement) or isinstance(value,MeasurementList):
+                possible_epochs.append(value.start_epoch())
+        if possible_epochs:
+            return np.min(possible_epochs)
+        else:
+            return np.nan
+
     def to_dataframe(self):
         """
         Return a pandas DataFrame containing data from this Measurement.
@@ -365,6 +379,9 @@ class MeasurementList(list, Node):
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__, super(MeasurementList, self).__repr__())
 
+    def start_epoch(self):
+        possible_epochs = [x.start_epoch() for x in self]
+        return np.min(possible_epochs)
 
 class IOList(MeasurementList):
 
