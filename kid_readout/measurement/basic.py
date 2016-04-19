@@ -397,6 +397,7 @@ class SingleSweepStream(core.Measurement):
         window = int(2 ** np.ceil(np.log2(window_in_seconds * self.stream.stream_sample_rate)))
         self._stream_s21_normalized_deglitched = deglitch_window(self.stream_s21_normalized, window,
                                                                  thresh=deglitch_threshold)
+        return self._stream_s21_normalized_deglitched
 
     @property
     def q(self):
