@@ -42,7 +42,7 @@ class RoachStream(core.Measurement):
         self.epoch = epoch
         self.s21_raw = s21_raw
         self.data_demodulated = data_demodulated
-        self.roach_state = core.to_state_dict(roach_state)
+        self.roach_state = core.StateDict(roach_state)
         super(RoachStream, self).__init__(state=state, description=description)
 
     @memoized_property

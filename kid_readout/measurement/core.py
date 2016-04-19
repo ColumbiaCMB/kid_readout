@@ -189,9 +189,9 @@ class Measurement(Node):
         :return: a new Measurement instance.
         """
         super(Measurement, self).__init__()
-        if state is not None:
-            state = to_state_dict(state)
-        self.state = state
+        if state is None:
+            state = {}
+        self.state = StateDict(state)
         self.description = description
         self._io_class = None
         self._root_path = None
@@ -415,15 +415,19 @@ class StateDict(dict):
     __getstate__ = lambda: None
     __slots__ = ()
 
+    def __init__(self, *args, **kwargs):
+        super(StateDict, self).__init__(*args, **kwargs)
+        for k, v in self.items():
+            if not isinstance(k, (str, unicode)):
+                raise MeasurementError("Dictionary keys must be strings.")
+            if isinstance(v, dict):
+                self[k] = StateDict(v)
+            else:
+                # TODO: implement value validation here.
+                pass
 
-# TODO: incorporate restrictions into __init__().
-# TODO: implement more error checking.
-def to_state_dict(dictionary):
-    if not all([isinstance(k, (str, unicode)) for k in dictionary]):
-        raise MeasurementError("Dictionary keys must be strings.")
-    dicts = [(k, to_state_dict(v)) for k, v in dictionary.items() if isinstance(v, dict)]
-    others = [(k, v) for k, v in dictionary.items() if not isinstance(v, dict)]
-    return StateDict(dicts + others)
+    def __repr__(self):
+        return '{}({})'.format(self.__class__.__name__, super(StateDict, self).__repr__())
 
 
 class IO(Node):

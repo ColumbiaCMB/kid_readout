@@ -7,7 +7,7 @@ from kid_readout.measurement.test.utilities import CornerMeasurement
 
 def test_measurement_instantiation_blank():
     m = core.Measurement()
-    assert m.state is None
+    assert m.state == core.StateDict()
     assert m.description == ''
     assert m._parent is None
     assert m._io_class is None
