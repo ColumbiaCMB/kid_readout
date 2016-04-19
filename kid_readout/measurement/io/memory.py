@@ -7,11 +7,12 @@ class Dictionary(core.IO):
     """
 
     _array = '_array'
+    # TODO: rename to _node
     _measurement = '_measurement'
 
     def __init__(self, root_path=None):
         """
-        Return a new diskless Dictionary object.
+        Return a new diskless Dictionary IO object.
 
         :param root_path: the path to the root directory or file; not used.
         :return: a new Dictionary object that can read from and write to the root object at the given path.
@@ -69,7 +70,10 @@ class Dictionary(core.IO):
         Read non-array object with name key from node_path.
         """
         node = self._get_node(node_path)
-        return node[key]
+        try:
+            return node[key]
+        except KeyError:
+            raise ValueError("Name not found: {}".format(key))
 
     def measurement_names(self, node_path='/'):
         """
@@ -90,7 +94,7 @@ class Dictionary(core.IO):
         Return the names of all other variables contained in the measurement at node_path.
         """
         node = self._get_node(node_path)
-        return [k for k in node if k not in core.RESERVED_NAMES and not k.startswith('_')]
+        return [k for k in node if not k.startswith('_')]
 
     # Private methods.
 

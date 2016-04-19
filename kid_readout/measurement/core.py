@@ -101,7 +101,11 @@ import importlib
 from collections import OrderedDict
 import numpy as np
 
+from kid_readout.measurement import classes
+
 CLASS_NAME = '_class'  # This is the string used by IO objects to save class names.
+VERSION = '_version'  # This is the string used by IO objects to save class versions.
+
 
 # TODO: decide which names really need to be reserved, and clean this up after add_legacy_origin is refactored.
 # These names cannot be used for attributes because they are used as part of the public DataFrame interface.
@@ -119,6 +123,8 @@ class Node(object):
     """
     This is an abstract class that represents a node in the tree data structure used to save data.
     """
+
+    _version = 0
 
     def __init__(self):
         """
@@ -294,6 +300,8 @@ class Measurement(Node):
     fail: float('NaN') == float('NaN') is always False. See Measurement.__eq__() for more.
     """
 
+    _version = 0
+
     dimensions = OrderedDict()
 
     def __init__(self, state=None, description=''):
@@ -420,6 +428,8 @@ class MeasurementList(list, Node):
     Measurements containing lists of Measurements must use instances of this class so that loading and saving are
     handled correctly.
     """
+
+    _version = 0
 
     def __init__(self, iterable=()):
         super(MeasurementList, self).__init__(iterable)
@@ -688,6 +698,7 @@ class IO(object):
         return self._read_node(absolute_node_path, translate)
 
     # The remaining public methods should be implemented by subclasses.
+    # TODO: update comments, especially with exceptions raised and handling of private variables.
 
     def create_node(self, node_path):
         """
@@ -719,6 +730,7 @@ class IO(object):
         """
         pass
 
+    # TODO: rename to nodes()
     def measurement_names(self, node_path='/'):
         """
         Return the names of all measurements contained in the measurement at node_path.
@@ -736,6 +748,8 @@ class IO(object):
         Return the names of all other variables contained in the measurement at node_path.
         """
         pass
+
+    # Private methods
 
     def __getattr__(self, item):
         if item in self.measurement_names():
@@ -762,8 +776,12 @@ class IO(object):
             The path of the new node into which the instance will be written.
         """
         self.create_node(node_path)
-        this_class_name = '{}.{}'.format(node.__module__, node.class_name())
-        self.write_other(node_path, CLASS_NAME, this_class_name)
+        #this_class_name = '{}.{}'.format(node.__module__, node.class_name())
+        self.write_other(node_path, CLASS_NAME, node.class_name())
+        if hasattr(node, '_version'):
+            self.write_other(node_path, VERSION, getattr(node, '_version'))
+        else:
+            self.write_other(node_path, VERSION, None)
         for key, value in node.__dict__.items():
             if not key.startswith('_'):
                 if isinstance(value, Node):
@@ -785,13 +803,19 @@ class IO(object):
 
     def _read_node(self, node_path, translate):
         original_class_name = self.read_other(node_path, CLASS_NAME)
-        class_name = translate.get(original_class_name, original_class_name)
+        try:
+            version_ = self.read_other(node_path, VERSION)
+        except ValueError:
+            version_ = None
+        default_class_name = classes.full_name(original_class_name, version_)
+        full_class_name = translate.get(default_class_name, default_class_name)
+        class_ = get_class(full_class_name)
         measurement_names = self.measurement_names(node_path)
-        if is_sequence(class_name):
+        if issubclass(class_, MeasurementList):
             # Use the name of each measurement, which is an int, to restore the order in the sequence.
             contents = [self._read_node(join(node_path, measurement_name), translate)
                         for measurement_name in sorted(measurement_names, key=int)]
-            current = instantiate_sequence(class_name, contents)
+            node = class_(contents)
         else:
             variables = {}
             for measurement_name in measurement_names:
@@ -799,14 +823,14 @@ class IO(object):
             array_names = self.array_names(node_path)
             for array_name in array_names:
                 variables[array_name] = self.read_array(node_path, array_name)
-            other_names = [vn for vn in self.other_names(node_path)]
-            for other_name in other_names:
+            for other_name in self.other_names(node_path):
                 variables[other_name] = self.read_other(node_path, other_name)
-            current = instantiate(class_name, variables)
+            # TODO: decide whether we need to use instantiate() here.
+            node = class_(**variables)
         # Update the node with information about how it was loaded.
-        current._io = self
-        current._io_node_path = node_path
-        return current
+        node._io = self
+        node._io_node_path = node_path
+        return node
 
 
 # Class-related functions

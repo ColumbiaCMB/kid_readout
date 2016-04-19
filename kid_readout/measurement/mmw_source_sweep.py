@@ -162,6 +162,8 @@ class MMWResponse(basic.SingleSweepStreamList):
 
 class MMWSweepOnMod(core.Measurement):
 
+    _version = 0
+
     def __init__(self, sweep, off_stream, on_stream, mod_stream, state=None, description=''):
         self.sweep = self.add_measurement(sweep)
         self.on_stream = self.add_measurement(on_stream)

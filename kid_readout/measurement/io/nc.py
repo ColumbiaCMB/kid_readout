@@ -135,9 +135,11 @@ class NCFile(core.IO):
             return self._read_dict(node.groups[name + self.is_dict])
         elif name + self.is_list in node.variables:
             return self._read_sequence(node, name + self.is_list)
-        else:
+        elif name in node.__dict__:
             value = node.__dict__[name]
             return self.on_read.get(value, value)
+        else:
+            raise ValueError("Name not found: {}".format(name))
 
     def measurement_names(self, node_path='/'):
         node = self._get_node(node_path)
@@ -149,9 +151,10 @@ class NCFile(core.IO):
 
     def other_names(self, node_path):
         node = self._get_node(node_path)
+        ncattrs = [ncattr for ncattr in node.ncattrs() if not ncattr.startswith('_')]
         dicts = [name.replace(self.is_dict, '') for name in node.groups if name.endswith(self.is_dict)]
         lists = [name.replace(self.is_list, '') for name in node.variables if name.endswith(self.is_list)]
-        return node.ncattrs() + lists + dicts
+        return ncattrs + lists + dicts
 
     # Private methods.
 
@@ -289,7 +292,7 @@ class NCSingleStream(basic.SingleStream):
     #              's21_raw': ('sample_time',)
 
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
-                 data_demodulated, roach_state, state=None, description='Stream'):
+                 data_demodulated, roach_state, number=0, state=None, description='Stream'):
         """
         Return a new NCSingleStream instance. This class stores the netCDF4 Variable containing the s21_raw data
         instead of a numpy array so that the data is not read from disk unless requested. The Variable is stored using
@@ -318,6 +321,7 @@ class NCSingleStream(basic.SingleStream):
         self.epoch = epoch
         self.s21_raw_variable = NCVariable(s21_raw)
         self.data_demodulated = data_demodulated
+        self.number = number
         self.roach_state = core.StateDict(roach_state)
         super(basic.RoachStream, self).__init__(state=state, description=description)
 

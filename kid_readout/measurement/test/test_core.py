@@ -55,10 +55,11 @@ def test_measurement_add_legacy_origin():
 def test_measurement_list():
     length = 3
     contents = [utilities.CornerCases() for n in range(length)]
-    ml = core.instantiate_sequence('kid_readout.measurement.core.MeasurementList', contents)
-    assert np.all(ml == contents)
-    assert core.is_sequence(ml.__module__ + '.' + ml.__class__.__name__)
+    ml = core.MeasurementList(contents)
     assert len(ml) == length
+    assert np.all(ml == contents)
+    assert np.all(m._parent is ml for m in ml)
+    assert core.is_sequence(ml.__module__ + '.' + ml.__class__.__name__)
 
 
 def test_io_list():

@@ -38,6 +38,8 @@ corners = {'zero_int': 0,
 
 class CornerCases(core.Measurement):
 
+    _version = 0
+
     def __init__(self,
                  zero_int=0,
                  zero_float=0.,

@@ -19,6 +19,8 @@ from kid_readout.roach import calculate
 
 class RoachStream(core.Measurement):
 
+    _version = 0
+
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
                  data_demodulated, roach_state, state=None, description=''):
         """
@@ -142,6 +144,8 @@ class StreamArray(RoachStream):
     This class represents simultaneously-sampled data from multiple channels.
     """
 
+    _version = 0
+
     dimensions = OrderedDict([('tone_bin', ('tone_bin',)),
                               ('tone_amplitude', ('tone_bin',)),
                               ('tone_phase', ('tone_bin',)),
@@ -198,6 +202,8 @@ class SingleStream(RoachStream):
     This class contains time-ordered data from a single channel.
     """
 
+    _version = 0
+
     dimensions = OrderedDict([('tone_bin', ('tone_bin',)),
                               ('tone_amplitude', ('tone_bin',)),
                               ('tone_phase', ('tone_bin',)),
@@ -244,6 +250,8 @@ class SweepArray(core.Measurement):
     """
     This class contains a list of stream arrays.
     """
+
+    _version = 0
 
     def __init__(self, stream_arrays, state=None, description=''):
         self.stream_arrays = stream_arrays
@@ -305,6 +313,8 @@ class SingleSweep(core.Measurement):
     """
     This class represents a group of streams with different frequencies.
     """
+
+    _version = 0
 
     def __init__(self, streams, number=0, state=None, description=''):
         """
@@ -387,6 +397,8 @@ class SingleSweep(core.Measurement):
 
 class SweepStreamArray(core.Measurement):
 
+    _version = 0
+
     def __init__(self, sweep_array, stream_array, state=None, description=''):
         if sweep_array.num_channels != stream_array.tone_index.size:
             raise core.MeasurementError("The number of SweepArray channels does not match the StreamArray number.")
@@ -416,6 +428,9 @@ class SweepStreamArray(core.Measurement):
 
 
 class SingleSweepStream(core.Measurement):
+
+    _version = 0
+
     def __init__(self, sweep, stream, number=0, state=None, description=''):
         self.sweep = sweep
         self.stream = stream
@@ -585,6 +600,8 @@ class SingleSweepStream(core.Measurement):
 
 class SweepStreamList(core.Measurement):
 
+    _version = 0
+
     def __init__(self, sweep, stream_list, state=None, description=''):
         self.sweep = sweep
         self.stream_list = stream_list
@@ -597,6 +614,8 @@ class SweepStreamList(core.Measurement):
 
 
 class SingleSweepStreamList(core.Measurement):
+
+    _version = 0
 
     def __init__(self, single_sweep, stream_list, number=0, state=None, description=''):
         self.sweep = single_sweep

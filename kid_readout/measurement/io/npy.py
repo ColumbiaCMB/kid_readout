@@ -68,13 +68,16 @@ class NumpyDirectory(core.IO):
         return np.load(full, mmap_mode=self._mmap_mode)
 
     def read_other(self, node_path, name):
-        with open(os.path.join(self._get_node(node_path), name)) as f:
+        full_name = os.path.join(self._get_node(node_path), name)
+        if not os.path.isfile(full_name):
+            raise ValueError("Name not found: {}".format(name))
+        with open(full_name) as f:
             return json.load(f)
 
     def measurement_names(self, node_path='/'):
         node = self._get_node(node_path)
         # TODO: this should actually check that the class contained in the group is a Measurement
-        return [f for f in os.listdir(node)if os.path.isdir(os.path.join(node, f))]
+        return [f for f in os.listdir(node) if os.path.isdir(os.path.join(node, f))]
 
     def array_names(self, node_path):
         node = self._get_node(node_path)
@@ -83,8 +86,10 @@ class NumpyDirectory(core.IO):
 
     def other_names(self, node_path):
         node = self._get_node(node_path)
-        return [f for f in os.listdir(node) if os.path.isfile(os.path.join(node, f))
-                and not f in core.RESERVED_NAMES and os.path.splitext(f)[1] != '.npy']
+        return [f for f in os.listdir(node)
+                if os.path.isfile(os.path.join(node, f)) and
+                not f.startswith('_') and
+                os.path.splitext(f)[1] != '.npy']
 
     def _get_node(self, node_path):
         if self.closed:

@@ -36,6 +36,16 @@ def test_read_write_streamarray():
         assert original == io.read(name)
 
 
+def test_read_write_sweeparray():
+    with TempDirectory() as directory:
+        filename = 'test.nc'
+        io = nc.NCFile(os.path.join(directory.path, filename))
+        original = utilities.fake_sweep_array()
+        name = 'sweep_array'
+        io.write(original, name)
+        assert original == io.read(name)
+
+
 def test_read_write_sweepstreamarray():
     with TempDirectory() as directory:
         filename = 'test.nc'

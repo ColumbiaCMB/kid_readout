@@ -30,6 +30,15 @@ def test_read_write_streamarray():
         assert original == io.read(name)
 
 
+def test_read_write_sweeparray():
+    with TempDirectory() as directory:
+        io = npy.NumpyDirectory(directory.path)
+        original = utilities.fake_sweep_array()
+        name = 'sweep_array'
+        io.write(original, name)
+        assert original == io.read(name)
+
+
 def test_read_write_sweepstreamarray():
     with TempDirectory() as directory:
         io = npy.NumpyDirectory(directory.path)
