@@ -9,6 +9,7 @@ from memoized_property import memoized_property
 
 from kid_readout.measurement import core
 from kid_readout.analysis.resonator import legacy_resonator
+from kid_readout.analysis.resonator import lmfit_resonator
 from kid_readout.analysis.timedomain.despike import deglitch_window
 from kid_readout.roach import calculate
 
@@ -293,12 +294,12 @@ class SingleSweep(core.Measurement):
 
     @memoized_property
     def s21_normalized(self):
-         return np.array([self.resonator.normalize(f, s21)
+         return np.array([self.resonator.remove_background(f, s21)
                           for f, s21 in zip(self.frequency, self.s21_points)])
 
     @memoized_property
     def s21_normalized_error(self):
-        return np.array([self.resonator.normalize(f, s21_error)
+        return np.array([self.resonator.remove_background(f, s21_error)
                          for f, s21_error in zip(self.frequency, self.s21_points_error)])
 
     @memoized_property
@@ -306,13 +307,13 @@ class SingleSweep(core.Measurement):
         return self.fit_resonator()
 
     # TODO: add arguments to specify model, etc.
-    def fit_resonator(self, delay_estimate=None, nonlinear_a_threshold=0.08):
+    def fit_resonator(self, model=lmfit_resonator.LinearResonatorWithCable):
         # Reset the memoized properties that depend on the resonator fit.
         for attr in ('_s21_normalized', '_s21_normalized_error'):
             if hasattr(self, attr):
                 delattr(self, attr)
-        self._resonator = legacy_resonator.fit_best_resonator(self.frequency, self.s21_points, errors=self.s21_points_error,
-                                                        delay_estimate=delay_estimate, min_a=nonlinear_a_threshold)
+        order = self.frequency.argsort()
+        self._resonator = model(frequency=self.frequency[order], s21=self.s21_points[order], errors=self.s21_points_error[order])
         return self._resonator
 
 
@@ -387,7 +388,7 @@ class SingleSweepStream(core.Measurement):
 
     @memoized_property
     def stream_s21_normalized(self):
-        return self.sweep.resonator.normalize(self.stream.frequency, self.stream.s21_raw)
+        return self.sweep.resonator.remove_background(self.stream.frequency, self.stream.s21_raw)
 
     @memoized_property
     def stream_s21_normalized_deglitched(self):
@@ -500,10 +501,10 @@ class SingleSweepStream(core.Measurement):
                 data['roach_{}'.format(key)] = value
         except KeyError:
             pass
-        for param in self.sweep.resonator.result.params.values():
+        for param in self.sweep.resonator.current_result.params.values():
             data['resonator_{}'.format(param.name)] = param.value
             data['resonator_{}_error'.format(param.name)] = param.stderr
-        data['resonator_redchi'] = self.sweep.resonator.result.redchi
+        data['resonator_redchi'] = self.sweep.resonator.current_result.redchi
         dataframe = pd.DataFrame(data, index=[0])
         self.add_origin(dataframe)
         return dataframe
