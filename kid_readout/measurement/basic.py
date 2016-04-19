@@ -386,6 +386,10 @@ class SingleSweepStream(core.Measurement):
         self.folded_shape = stream.folded_shape
         super(SingleSweepStream, self).__init__(state=state, description=description)
 
+    @property
+    def resonator(self):
+        return self.sweep.resonator
+
     @memoized_property
     def stream_s21_normalized(self):
         return self.sweep.resonator.remove_background(self.stream.frequency, self.stream.s21_raw)
@@ -496,15 +500,16 @@ class SingleSweepStream(core.Measurement):
         except KeyError:
             pass
         try:
-            # TODO: need to flatten sub-dicts, if any.
             for key, value in self.stream.roach_state.items():
                 data['roach_{}'.format(key)] = value
         except KeyError:
             pass
         for param in self.sweep.resonator.current_result.params.values():
-            data['resonator_{}'.format(param.name)] = param.value
-            data['resonator_{}_error'.format(param.name)] = param.stderr
-        data['resonator_redchi'] = self.sweep.resonator.current_result.redchi
+            data['res_{}'.format(param.name)] = param.value
+            data['res_{}_error'.format(param.name)] = param.stderr
+        data['res_redchi'] = self.sweep.resonator.current_result.redchi
+        data['res_Q_i'] = self.sweep.resonator.Q_i
+        data['res_Q_e'] = self.sweep.resonator.Q_e
         dataframe = pd.DataFrame(data, index=[0])
         self.add_origin(dataframe)
         return dataframe
