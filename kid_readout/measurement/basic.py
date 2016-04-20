@@ -495,7 +495,9 @@ class SingleSweepStream(core.Measurement):
         self._S_qq = S_qq
         self._S_xx = S_xx
 
-    def to_dataframe(self):
+    def to_dataframe(self, deglitch=True):
+        if not deglitch:
+            self._set_q_and_x(deglitch=False)
         data = {}
         try:
             for thermometer, temperature in self.state['temperature'].items():
@@ -551,10 +553,10 @@ class SweepStreamArray(core.Measurement):
         else:
             raise ValueError("Invalid index: {}".format(index))
 
-    def to_dataframe(self):
+    def to_dataframe(self, deglitch=True):
         dataframes = []
         for n in range(self.num_channels):
-            dataframes.append(self.sweep_stream(n).to_dataframe())
+            dataframes.append(self.sweep_stream(n).to_dataframe(deglitch=deglitch))
         return pd.concat(dataframes, ignore_index=True)
 
 

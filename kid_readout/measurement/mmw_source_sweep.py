@@ -1,6 +1,7 @@
 from __future__ import division
 from kid_readout.measurement import core, basic
 import numpy as np
+import pandas as pd
 from memoized_property import memoized_property
 # The ZBD object loads a few data files from disk. If this import fails then the functions that use it below will still
 # work, but only with default arguments.
@@ -94,6 +95,21 @@ class MMWSweepOnMod(core.Measurement):
         self.on_stream = self.add_measurement(on_stream)
         self.mod_stream = self.add_measurement(mod_stream)
         super(MMWSweepOnMod, self).__init__(state=state, description=description)
+
+    @property
+    def on_sweep_stream_array(self):
+        return basic.SweepStreamArray(sweep_array=self.sweep, stream_array=self.on_stream,state=self.state,
+                                      description=self.description)
+    @property
+    def mod_sweep_stream_array(self):
+        return basic.SweepStreamArray(sweep_array=self.sweep, stream_array=self.mod_stream,state=self.state,
+                                      description=self.description)
+
+    def to_dataframe(self):
+        df_on = self.on_sweep_stream_array.to_dataframe()
+        df_mod = self.mod_sweep_stream_array.to_dataframe(deglitch=False)
+        df_on['lockin_rms_voltage'] = df_mod['lockin_rms_voltage']
+        return pd.concat((df_on,df_mod),ignore_index=True)
         
         
 def lockin_rms_to_zbd_voltage(lockin_rms_voltage, linearize=False):
