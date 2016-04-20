@@ -482,6 +482,18 @@ class StateDict(dict):
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__, super(StateDict, self).__repr__())
 
+    def flatten(self, prefix=''):
+        results = StateDict()
+        for k, v in self.items():
+            this_label = k
+            if prefix:
+                this_label = prefix+'_' + this_label
+            if isinstance(v, StateDict):
+                results.update(v.flatten(prefix=this_label))
+            else:
+                results[this_label] = v
+        return results
+
 
 class IO(Node):
     """
