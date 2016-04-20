@@ -28,3 +28,12 @@ def test_read_write_streamarray():
         name = 'stream_array'
         io.write(original, name)
         assert original == io.read(name)
+
+
+def test_memmap():
+    with TempDirectory() as directory:
+        io = npy.NumpyDirectory(directory.path, memmap=True)
+        original = utilities.make_stream()
+        name = 'stream'
+        io.write(original, name)
+        assert original == io.read(name)

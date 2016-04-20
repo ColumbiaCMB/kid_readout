@@ -23,6 +23,8 @@ This is a little bit gross but probably safe in practice.
 import os
 import netCDF4
 import numpy as np
+from memoized_property import memoized_property
+
 from kid_readout.measurement import core, basic
 
 
@@ -53,7 +55,7 @@ class NCFile(core.IO):
         super(NCFile, self).__init__(root_path=os.path.expanduser(root_path))
         self.cache_s21_raw = cache_s21_raw
         try:
-            self.root = netCDF4.Dataset(self.root_path, mode='r',keepweakref=True)
+            self.root = netCDF4.Dataset(self.root_path, mode='r', keepweakref=True)
         except RuntimeError:
             self.root = netCDF4.Dataset(root_path, mode='w', clobber=False)
 
@@ -62,13 +64,11 @@ class NCFile(core.IO):
             self.root.close()
         except RuntimeError:
             pass
+        self.root = None
 
     @property
     def closed(self):
-        try:
-            return ~self.root.isopen
-        except AttributeError:
-            raise NotImplementedError("Upgrade netCDF4!")
+        return self.root is not None and not self.root.isopen()
 
     def read(self, node_path, translate=None):
         if translate is None:
@@ -315,22 +315,14 @@ class CachedSingleStream(basic.SingleStream):
         self.tone_index = tone_index
         self.filterbank_bin = filterbank_bin
         self.epoch = epoch
-        self._s21_raw_variable = NCVariable(s21_raw)
-        self._s21_raw = None
+        self.s21_raw_variable = NCVariable(s21_raw)
         self.data_demodulated = data_demodulated
         self.roach_state = core.StateDict(roach_state)
-        self._frequency = None
-        self._sample_time = None
-        self._baseband_frequency = None
-        self._s21_raw_mean = None
-        self._s21_raw_mean_error = None
         super(basic.RoachStream, self).__init__(state=state, description=description)
 
-    @property
+    @memoized_property
     def s21_raw(self):
-        if self._s21_raw is None:
-            self._s21_raw = self._s21_raw_variable[:]
-        return self._s21_raw
+        return self.s21_raw_variable[:]
 
 
 class CachedStreamArray(basic.StreamArray):
@@ -376,21 +368,13 @@ class CachedStreamArray(basic.StreamArray):
         self.filterbank_bin = filterbank_bin
         self.epoch = epoch
         self.s21_raw_variable = NCVariable(s21_raw)
-        self._s21_raw = None
         self.data_demodulated = data_demodulated
         self.roach_state = core.StateDict(roach_state)
-        self._frequency = None
-        self._sample_time = None
-        self._baseband_frequency = None
-        self._s21_raw_mean = None
-        self._s21_raw_mean_error = None
         super(basic.RoachStream, self).__init__(state=state, description=description)
 
-    @property
+    @memoized_property
     def s21_raw(self):
-        if self._s21_raw is None:
-            self._s21_raw = self.s21_raw_variable[:]
-        return self._s21_raw
+        return self.s21_raw_variable[:]
 
     def _validate_dimensions(self):
         super(CachedStreamArray, self)._validate_dimensions()

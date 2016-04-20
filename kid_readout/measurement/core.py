@@ -330,13 +330,15 @@ class Measurement(Node):
                     assert len(value_s) == len(value_o)
                     for meas_s, meas_o in zip(value_s, value_o):
                         assert meas_s.__eq__(meas_o)
-                elif isinstance(value_s, np.ndarray):  # This allows declared arrays to contain NaN and be equal.
+                # This allows arrays to contain NaN and be equal.
+                elif isinstance(value_s, np.ndarray) or isinstance(value_o, np.ndarray):
                     assert np.all(np.isnan(value_s) == np.isnan(value_o))
                     assert np.all(value_s[~np.isnan(value_s)] == value_o[~np.isnan(value_o)])
                 else:  # This will fail for NaN or sequences that contain any NaN values.
-                    assert value_s == value_o
                     if isinstance(value_s, bool) or isinstance(value_o, bool):
                         assert value_s is value_o
+                    else:
+                        assert value_s == value_o
         except AssertionError:
             return False
         return True
