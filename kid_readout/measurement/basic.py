@@ -11,6 +11,7 @@ from kid_readout.measurement import core
 from kid_readout.analysis.resonator import legacy_resonator
 from kid_readout.analysis.resonator import lmfit_resonator
 from kid_readout.analysis.timedomain.despike import deglitch_window
+from kid_readout.analysis.timedomain import iqnoise
 from kid_readout.roach import calculate
 
 
@@ -482,12 +483,14 @@ class SingleSweepStream(core.Measurement):
         return self._S_xx
 
     # TODO: calculate errors in PSDs
-    def _set_S(self, NFFT=None, window=mlab.window_none, **kwargs):
+    def _set_S(self, NFFT=None, window=mlab.window_none, binned=True, **kwargs):
         # Use the same length calculation as SweepNoiseMeasurement
         if NFFT is None:
             NFFT = int(2**(np.floor(np.log2(self.stream.s21_raw.size)) - 3))
         S_qq, f = mlab.psd(self.q, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, **kwargs)
         S_xx, f = mlab.psd(self.x, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, **kwargs)
+        if binned:
+            f, (S_xx, S_qq) = iqnoise.log_bin(f,[S_xx, S_qq])
         self._S_frequency = f
         self._S_qq = S_qq
         self._S_xx = S_xx
@@ -504,12 +507,22 @@ class SingleSweepStream(core.Measurement):
                 data['roach_{}'.format(key)] = value
         except KeyError:
             pass
+
+        flat_state = self.stream.state.flatten(wrap_lists=True)
+        data.update(flat_state)
+
         for param in self.sweep.resonator.current_result.params.values():
             data['res_{}'.format(param.name)] = param.value
             data['res_{}_error'.format(param.name)] = param.stderr
         data['res_redchi'] = self.sweep.resonator.current_result.redchi
         data['res_Q_i'] = self.sweep.resonator.Q_i
         data['res_Q_e'] = self.sweep.resonator.Q_e
+
+        data['S_xx'] = [self.S_xx]
+        data['S_yy'] = [self.S_yy]
+        data['S_qq'] = [self.S_qq]
+        data['S_frequency'] = [self.S_frequency]
+
         dataframe = pd.DataFrame(data, index=[0])
         self.add_origin(dataframe)
         return dataframe
