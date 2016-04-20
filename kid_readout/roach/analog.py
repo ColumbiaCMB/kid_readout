@@ -5,8 +5,7 @@ class SignalConditioner(object):
     name = 'signal_conditioner'
 
     def state(self):
-        return StateDict(name=self.name,
-                         description=self.description,
+        return StateDict(description=self.description,
                          adc_chain_gain=self.adc_chain_gain,
                          dac_chain_gain=self.dac_chain_gain)
 
