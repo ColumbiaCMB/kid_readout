@@ -161,7 +161,7 @@ class RoachBaseband(RoachInterface):
             spec[k, bins[k, :]] = amps * np.exp(1j * phases)
         wave = np.fft.irfft(spec, axis=1)
         if preset_norm:
-            self.wavenorm = calc_wavenorm(bins.shape[1], nsamp)
+            self.wavenorm = tools.calc_wavenorm(bins.shape[1], nsamp)
         else:
             self.wavenorm = np.abs(wave).max()
         if normfact is not None:
@@ -187,7 +187,7 @@ class RoachBaseband(RoachInterface):
         spec[bins] = amps * np.exp(1j * phases)
         wave = np.fft.irfft(spec)
         if preset_norm:
-            self.wavenorm = calc_wavenorm(self.tone_bins.shape[1], nsamp)
+            self.wavenorm = tools.calc_wavenorm(self.tone_bins.shape[1], nsamp)
         else:
             self.wavenorm = np.abs(wave).max()
         qwave = np.round((wave / self.wavenorm) * (2 ** 15 - 1024)).astype('>i2')
