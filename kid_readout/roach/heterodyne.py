@@ -137,7 +137,7 @@ class RoachHeterodyne(RoachInterface):
         actual_freqs = self.fs * bins / float(nsamp)
         bins[bins < 0] = nsamp + bins[bins < 0]
         #self.set_tone_bins(bins, nsamp, amps=amps, phases=self.phases, **kwargs)
-        self.set_tone_bins(bins, nsamp, amps=amps, preset_norm, **kwargs)
+        self.set_tone_bins(bins, nsamp, amps=amps, preset_norm=preset_norm, **kwargs)
         self.fft_bins = self.calc_fft_bins(bins, nsamp)
         if self.fft_bins.shape[1] > 4:
             readout_selection = range(4)
