@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from kid_readout.measurement import core, basic
 from kid_readout.measurement.io import memory
-from kid_readout.measurement.test.utilities import CornerMeasurement, make_stream
+from kid_readout.measurement.test.utilities import CornerCases, fake_single_stream
 
 
 def test_measurement_instantiation_blank():
@@ -47,7 +47,7 @@ def test_measurement_add_legacy_origin():
 
 def test_measurement_list():
     length = 3
-    contents = [CornerMeasurement() for n in range(length)]
+    contents = [CornerCases() for n in range(length)]
     ml = core.instantiate_sequence('kid_readout.measurement.core.MeasurementList', contents)
     assert np.all(ml == contents)
     assert core.is_sequence(ml.__module__ + '.' + ml.__class__.__name__)
@@ -56,7 +56,7 @@ def test_measurement_list():
 
 def test_io_list():
     num_streams = 3
-    streams = core.MeasurementList([CornerMeasurement() for n in range(num_streams)])
+    streams = core.MeasurementList([CornerCases() for n in range(num_streams)])
     io = memory.Dictionary(None)
     sweep = basic.SingleSweep(core.IOList())
     io.write(sweep)
@@ -66,15 +66,15 @@ def test_io_list():
 
 def test_read_write():
     io = memory.Dictionary(None)
-    original = CornerMeasurement()
+    original = CornerCases()
     name = 'test'
     io.write(original, name)
     assert original == io.read(name)
 
 
 def test_eq_state():
-    m1 = CornerMeasurement()
-    m2 = CornerMeasurement()
+    m1 = CornerCases()
+    m2 = CornerCases()
     assert m1 == m2
     m1.state['test'] = 1
     m2.state['test'] = 2
@@ -82,7 +82,7 @@ def test_eq_state():
 
 
 def test_eq_array():
-    m1 = make_stream()
+    m1 = fake_single_stream()
     m2 = basic.SingleStream(**dict([(k, copy.copy(v)) for k, v in m1.__dict__.items() if not k.startswith('_')]))
     assert m1 == m2
     index = np.random.random_integers(0, m1.s21_raw.size)
@@ -93,8 +93,8 @@ def test_eq_array():
 
 
 def test_comparison_code_attribute():
-    m1 = CornerMeasurement()
-    m2 = CornerMeasurement()
+    m1 = CornerCases()
+    m2 = CornerCases()
     m1.attribute = 1
     m2.attribute = 2
     assert m1 != m2

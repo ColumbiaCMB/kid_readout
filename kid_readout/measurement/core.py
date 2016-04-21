@@ -253,8 +253,8 @@ class Measurement(Node):
         except AttributeError:
             pass
         possible_epochs = []
-        for key,value in self.__dict__.items():
-            if isinstance(value,Measurement) or isinstance(value,MeasurementList):
+        for key, value in self.__dict__.items():
+            if isinstance(value, Measurement) or isinstance(value, MeasurementList):
                 possible_epochs.append(value.start_epoch())
         if possible_epochs:
             return np.min(possible_epochs)
@@ -385,6 +385,7 @@ class MeasurementList(list, Node):
         possible_epochs = [x.start_epoch() for x in self]
         return np.min(possible_epochs)
 
+
 class IOList(MeasurementList):
 
     @classmethod
@@ -489,7 +490,7 @@ class StateDict(dict):
         for k, v in self.items():
             this_label = k
             if prefix:
-                this_label = prefix+'_' + this_label
+                this_label = prefix + '_' + this_label
             if isinstance(v, StateDict):
                 results.update(v.flatten(prefix=this_label, wrap_lists=wrap_lists))
             elif wrap_lists and isinstance(v, list):
@@ -733,7 +734,7 @@ def instantiate(full_class_name, variables):
             arg_values.append(variables[arg])
         except KeyError:
             raise MeasurementError("Could not find argument %s needed to make this measurement. Available variables "
-                                   "are: %s" % (arg,', '.join(variables.keys())))
+                                   "are: %s" % (arg, ', '.join(variables.keys())))
     instance = class_(*reversed(arg_values))
     return instance
 

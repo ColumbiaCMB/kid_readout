@@ -408,8 +408,8 @@ class SweepStreamArray(core.Measurement):
 
     def to_dataframe(self, deglitch=True):
         dataframes = []
-        for n in range(self.num_channels):
-            dataframes.append(self.sweep_stream(n).to_dataframe(deglitch=deglitch))
+        for number in range(self.num_channels):
+            dataframes.append(self.sweep_stream(number).to_dataframe(deglitch=deglitch))
         return pd.concat(dataframes, ignore_index=True)
 
 
@@ -533,7 +533,7 @@ class SingleSweepStream(core.Measurement):
     def to_dataframe(self, deglitch=True, add_origin=True):
         if not deglitch:
             self._set_q_and_x(deglitch=False)
-        data = {}
+        data = {'number': self.number}
         try:
             for thermometer, temperature in self.state['temperature'].items():
                 data['temperature_{}'.format(thermometer)] = temperature
