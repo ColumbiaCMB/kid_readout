@@ -530,7 +530,7 @@ class SingleSweepStream(core.Measurement):
         self._S_qq = S_qq
         self._S_xx = S_xx
 
-    def to_dataframe(self, deglitch=True):
+    def to_dataframe(self, deglitch=True, add_origin=True):
         if not deglitch:
             self._set_q_and_x(deglitch=False)
         data = {}
@@ -561,7 +561,8 @@ class SingleSweepStream(core.Measurement):
         data['S_frequency'] = [self.S_frequency]
 
         dataframe = pd.DataFrame(data, index=[0])
-        self.add_origin(dataframe)
+        if add_origin:
+            self.add_origin(dataframe)
         return dataframe
 
 

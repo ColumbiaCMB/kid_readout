@@ -105,9 +105,35 @@ class MMWSweepOnMod(core.Measurement):
         return basic.SweepStreamArray(sweep_array=self.sweep, stream_array=self.mod_stream,state=self.state,
                                       description=self.description)
 
-    def to_dataframe(self):
-        df_on = self.on_sweep_stream_array.to_dataframe()
-        df_mod = self.mod_sweep_stream_array.to_dataframe(deglitch=False)
+    def sweep_stream_pair(self,number):
+        sweep = self.sweep.sweep(number)
+        on_sweep_stream = self.on_stream.stream(number)
+        mod_sweep_stream = self.mod_stream.stream(number)
+        return (basic.SingleSweepStream(sweep,on_sweep_stream,number=number,state=self.state,
+                                        description=self.description),
+                basic.SingleSweepStream(sweep,mod_sweep_stream,number=number,state=self.state,
+                                        description=self.description),
+                )
+
+
+    def to_dataframe(self, add_origin=True):
+        on_rows = []
+        mod_rows = []
+        for n in range(self.sweep.num_channels):
+            on_ss, mod_ss = self.sweep_stream_pair(n)
+            on_rows.append(on_ss.to_dataframe(add_origin=False))
+            mod_rows.append(mod_ss.to_dataframe(deglitch=False,add_origin=False))
+        df_on = pd.concat(on_rows,ignore_index=True)
+        df_mod = pd.concat(mod_rows,ignore_index=True)
+        if add_origin:
+            if self._io_class is None:
+                self.sweep.add_origin(df_on,prefix='sweep_')
+                self.on_stream.add_origin(df_on,prefix='stream_')
+                self.sweep.add_origin(df_mod,prefix='sweep_')
+                self.mod_stream.add_origin(df_mod,prefix='stream_')
+            else:
+                self.add_origin(df_on)
+                self.add_origin(df_mod)
         df_on['lockin_rms_voltage'] = df_mod['lockin_rms_voltage']
         return pd.concat((df_on,df_mod),ignore_index=True)
         

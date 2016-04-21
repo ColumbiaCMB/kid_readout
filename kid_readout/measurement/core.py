@@ -272,7 +272,7 @@ class Measurement(Node):
         """
         pass
 
-    def add_origin(self, dataframe):
+    def add_origin(self, dataframe, prefix=''):
         """
         Add to the given dataframe enough information to load the data from which it was created. Using this
         information, the from_series() function in this module will return the original data.
@@ -280,9 +280,9 @@ class Measurement(Node):
         This method adds the IO class, the path to the root file or directory, and the node path corresponding to this
         measurement, which will all be None unless the Measurement was created from files on disk.
         """
-        dataframe['io_class'] = self._io_class
-        dataframe['root_path'] = self._root_path
-        dataframe['node_path'] = self._node_path
+        dataframe[prefix + 'io_class'] = self._io_class
+        dataframe[prefix + 'root_path'] = self._root_path
+        dataframe[prefix + 'node_path'] = self._node_path
 
     # TODO: add timestream or sweep indices?
     def add_legacy_origin(self, dataframe):
