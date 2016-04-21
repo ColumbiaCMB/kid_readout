@@ -11,10 +11,10 @@ a standard tree. This structure allows measurements that follow the specified fo
 re-created later without any additional metadata.
 
 To create a new measurement, simply write a subclass of Measurement. Public attributes of the class will
-automatically be saved to disk by the write() function and re-instantiated by the read() function. If a class
+automatically be saved to disk by the IO.write() function and re-instantiated by the IO.read() function. If a class
 contains attributes that are either measurements or sequences of measurements (that use the provided MeasurementList
-and MeasurementTuple containers), these will also be saved and restored correctly. Each Measurement should be
-self-contained, meaning that it should contain all data and metadata necessary to analyze and understand it.
+container), these will also be saved and restored correctly. Each Measurement should be self-contained, meaning that it
+should contain all data and metadata necessary to analyze and understand it.
 
 A measurement will typically contain arrays that contain most of the data and a state dictionary that holds metadata.
 Because of restrictions imposed by the libraries used to store data on disk, the dictionary cannot hold arbitrary
@@ -43,8 +43,12 @@ sweepstream
       etc.
 
 so the node path to the main SweepStream would be just "sweepstream" while the node path to one of the streams in the
-sweep could be "sweepstream:sweep:stream:1" and so on. The node paths can be used to address the data structure in a
-format-independent way in order to save new data in specific locations or to load subsets of the measurement tree.
+sweep could be "sweepstream:sweep:stream:1" and so on. A valid node path is a string that consists of valid node names
+separated by colons. A valid node name is either a valid Python variable or a string representing a nonnegative integer.
+Nodes that are Python variables correspond to attributes of a Measurement instance or the measurements saved at the root
+level, while nodes that are integers correspond to an index in a MeasurementList.
+
+The IO class uses the node paths to save and load the data structure without knowledge of the underlying format.
 """
 import re
 import inspect
@@ -254,7 +258,7 @@ class Measurement(Node):
             pass
         possible_epochs = []
         for key, value in self.__dict__.items():
-            if isinstance(value, Measurement) or isinstance(value, MeasurementList):
+            if not key.startswith('_') and isinstance(value, (Measurement, MeasurementList)):
                 possible_epochs.append(value.start_epoch())
         if possible_epochs:
             return np.min(possible_epochs)
