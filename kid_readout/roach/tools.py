@@ -84,3 +84,17 @@ def compute_window(npfb=2 ** 15, taps=2, wfunc=scipy.signal.flattop):
     mag = np.abs(np.fft.fft(coeff, npfb * taps * 2 ** 5)[:2 ** 7])
     mag = mag / mag.max()
     return mag
+
+
+def calc_wavenorm(ntones, nsamp):
+    # these are the max of the max(abs(waveform)) for various ntones
+    # found empirically
+    numtones = 2**np.arange(9)
+    maxvals = np.array([1., 2., 4., 8., 14., 24., 36., 52., 70.])
+    lookupdict = dict(zip(numtones, maxvals))
+    if ntones not in numtones:
+        z = np.interp(np.log2(ntones), np.log2(numtones), np.log2(maxvals))
+        return 2**z / nsamp
+    else:
+        return lookupdict[ntones] / nsamp
+    

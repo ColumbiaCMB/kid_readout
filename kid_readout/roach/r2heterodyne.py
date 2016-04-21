@@ -59,8 +59,8 @@ class Roach2Heterodyne(RoachHeterodyne):
             q = qdr.Qdr(self.r,'qdr0')
             q.qdr_cal(verbosity=1)
 
-    def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None,phases=None):
-        super(Roach2Heterodyne,self).set_tone_bins(bins=bins, nsamp=nsamp, amps=amps, load=load, normfact=normfact, phases=phases)
+    def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None, phases=None, preset_norm=True):
+        super(Roach2Heterodyne,self).set_tone_bins(bins=bins, nsamp=nsamp, amps=amps, load=load, normfact=normfact, phases=phases, preset_norm=preset_norm)
 
     def load_waveforms(self, i_wave, q_wave, fast=True, start_offset=0):
         """

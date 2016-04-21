@@ -86,7 +86,7 @@ class RoachBaseband(RoachInterface):
         self._load_dram(data, start_offset=start_offset, fast=fast)
 
     def set_tone_freqs(self, freqs, nsamp, amps=None, load=True, normfact=None, readout_selection=None,
-                       phases=None):
+                       phases=None, preset_norm=True):
         """
         Set the stimulus tones to generate
         
@@ -105,7 +105,7 @@ class RoachBaseband(RoachInterface):
         """
         bins = np.round((freqs / self.fs) * nsamp).astype('int')
         actual_freqs = self.fs * bins / float(nsamp)
-        self.set_tone_bins(bins, nsamp, amps=amps, load=load, normfact=normfact,phases=phases)
+        self.set_tone_bins(bins, nsamp, amps=amps, load=load, normfact=normfact,phases=phases, preset_norm=preset_norm)
         self.fft_bins = self.calc_fft_bins(bins, nsamp)
         self.select_bank(0)
         if readout_selection is not None:
@@ -115,7 +115,7 @@ class RoachBaseband(RoachInterface):
 
     set_tone_baseband_freqs = set_tone_freqs
 
-    def add_tone_freqs(self, freqs, amps=None, overwrite_last=False):
+    def add_tone_freqs(self, freqs, amps=None, overwrite_last=False, preset_norm=True):
         if freqs.shape[0] != self.tone_bins.shape[1]:
             raise ValueError("freqs array must contain same number of tones as original waveforms")
         # This is a hack that doesn't handle bank selection at all and may have additional problems.
@@ -125,12 +125,12 @@ class RoachBaseband(RoachInterface):
         nsamp = self.tone_nsamp
         bins = np.round((freqs / self.fs) * nsamp).astype('int')
         actual_freqs = self.fs * bins / float(nsamp)
-        self.add_tone_bins(bins, amps=amps)
+        self.add_tone_bins(bins, amps=amps, preset_norm=preset_norm)
         self.fft_bins = np.vstack((self.fft_bins, self.calc_fft_bins(bins, nsamp)))
         self.save_state()
         return actual_freqs
 
-    def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None,phases=None):
+    def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None, phases=None, preset_norm=True):
         """
         Set the stimulus tones by specific integer bins
         
@@ -160,7 +160,10 @@ class RoachBaseband(RoachInterface):
         for k in range(nwaves):
             spec[k, bins[k, :]] = amps * np.exp(1j * phases)
         wave = np.fft.irfft(spec, axis=1)
-        self.wavenorm = np.abs(wave).max()
+        if preset_norm:
+            self.wavenorm = calc_wavenorm(bins.shape[1], nsamp)
+        else:
+            self.wavenorm = np.abs(wave).max()
         if normfact is not None:
             wn = (2.0 / normfact) * len(bins) / float(nsamp)
             print "ratio of current wavenorm to optimal:", self.wavenorm / wn
@@ -172,7 +175,7 @@ class RoachBaseband(RoachInterface):
             self.load_waveform(qwave)
         self.save_state()
 
-    def add_tone_bins(self, bins, amps=None):
+    def add_tone_bins(self, bins, amps=None, preset_norm=True):
         nsamp = self.tone_nsamp
         spec = np.zeros((nsamp / 2 + 1,), dtype='complex')
         self.tone_bins = np.vstack((self.tone_bins, bins))
@@ -183,6 +186,10 @@ class RoachBaseband(RoachInterface):
 
         spec[bins] = amps * np.exp(1j * phases)
         wave = np.fft.irfft(spec)
+        if preset_norm:
+            self.wavenorm = calc_wavenorm(self.tone_bins.shape[1], nsamp)
+        else:
+            self.wavenorm = np.abs(wave).max()
         qwave = np.round((wave / self.wavenorm) * (2 ** 15 - 1024)).astype('>i2')
         # self.qwave = qwave  # TODO: Deal with this, if we ever use it
         start_offset = self.tone_bins.shape[0] - 1

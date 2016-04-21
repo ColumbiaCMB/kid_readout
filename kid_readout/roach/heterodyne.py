@@ -4,7 +4,7 @@ import time
 import numpy as np
 import scipy.signal
 from kid_readout.roach.interface import RoachInterface
-from kid_readout.roach.tools import compute_window
+from kid_readout.roach.tools import compute_window, calc_wavenorm
 import kid_readout.roach.udp_catcher
 
 
@@ -112,12 +112,12 @@ class RoachHeterodyne(RoachInterface):
         data[3::4] = q_wave[1::2]
         self._load_dram(data, fast=fast, start_offset=start_offset*data.shape[0])
 
-    def set_tone_freqs(self, freqs, nsamp, amps=None,**kwargs):
+    def set_tone_freqs(self, freqs, nsamp, amps=None, preset_norm=True, **kwargs):
         baseband_freqs = freqs-self.lo_frequency
-        actual_baseband_freqs = self.set_tone_baseband_freqs(baseband_freqs,nsamp,amps=amps, **kwargs)
+        actual_baseband_freqs = self.set_tone_baseband_freqs(baseband_freqs,nsamp,amps=amps,preset_norm=preset_norm, **kwargs)
         return actual_baseband_freqs + self.lo_frequency
 
-    def set_tone_baseband_freqs(self, freqs, nsamp, amps=None, **kwargs):
+    def set_tone_baseband_freqs(self, freqs, nsamp, amps=None, preset_norm=True, **kwargs):
         """
         Set the stimulus tones to generate
 
@@ -136,8 +136,8 @@ class RoachHeterodyne(RoachInterface):
         bins = np.round((freqs / self.fs) * nsamp).astype('int')
         actual_freqs = self.fs * bins / float(nsamp)
         bins[bins < 0] = nsamp + bins[bins < 0]
-        #use the same phases to avoid strange phase issue which we are still tracking down
-        self.set_tone_bins(bins, nsamp, amps=amps, phases=self.phases, **kwargs)
+        #self.set_tone_bins(bins, nsamp, amps=amps, phases=self.phases, **kwargs)
+        self.set_tone_bins(bins, nsamp, amps=amps, preset_norm, **kwargs)
         self.fft_bins = self.calc_fft_bins(bins, nsamp)
         if self.fft_bins.shape[1] > 4:
             readout_selection = range(4)
@@ -170,7 +170,7 @@ class RoachHeterodyne(RoachInterface):
         return actual_freqs
 
 
-    def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None,phases=None):
+    def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None, phases=None, preset_norm=True):
         """
         Set the stimulus tones by specific integer bins
 
@@ -201,7 +201,10 @@ class RoachHeterodyne(RoachInterface):
         for k in range(nwaves):
             spec[k, bins[k, :]] = amps * np.exp(1j * phases)
         wave = np.fft.ifft(spec, axis=1)
-        self.wavenorm = np.abs(wave).max()
+        if preset_norm:
+            self.wavenorm = calc_wavenorm(bins.shape[1], nsamp)
+        else:
+            self.wavenorm = np.abs(wave).max()
         if normfact is not None:
             wn = (2.0 / normfact) * len(bins) / float(nsamp)
             print "ratio of current wavenorm to optimal:", self.wavenorm / wn
@@ -217,7 +220,7 @@ class RoachHeterodyne(RoachInterface):
             self.load_waveforms(q_rwave,q_iwave)
         self.save_state()
 
-    def add_tone_bins(self, bins, amps=None):
+    def add_tone_bins(self, bins, amps=None, preset_norm=True):
         nsamp = self.tone_nsamp
         spec = np.zeros((nsamp,), dtype='complex')
         self.tone_bins = np.vstack((self.tone_bins, bins))
@@ -228,6 +231,10 @@ class RoachHeterodyne(RoachInterface):
 
         spec[bins] = amps * np.exp(1j * phases)
         wave = np.fft.ifft(spec)
+        if preset_norm:
+            self.wavenorm = calc_wavenorm(self.tone_bins.shape[1], nsamp)
+        else:
+            self.wavenorm = np.abs(wave).max()
         q_rwave = np.round((wave.real / self.wavenorm) * (2 ** 15 - 1024)).astype('>i2')
         q_iwave = np.round((wave.imag / self.wavenorm) * (2 ** 15 - 1024)).astype('>i2')
         q_iwave = np.roll(q_iwave, self.iq_delay, axis=0)
