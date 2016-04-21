@@ -69,18 +69,18 @@ offsets = offset_bins * 512.0 / nsamp
 
 mmw_freqs = np.linspace(140e9, 165e9, 500)
 
-ri.set_dac_atten(10)
+ri.set_dac_atten(2)
 
 
 for (lo,f0s) in [(low_group_lo,low_group),
                  (high_group_lo, high_group)]:
     ri.set_lo(lo)
-    for hittite_power in np.arange(-3.4,1.1,0.2):
+    tic = time.time()
+    measured_frequencies = acquire.load_heterodyne_sweep_tones(ri,np.add.outer(offsets,f0s),num_tone_samples=nsamp)
+    print "waveforms loaded", (time.time()-tic)/60.
+    for hittite_power in np.arange(-3.4,1.1,0.5):
         hittite.set_power(hittite_power)
-        tic = time.time()
         ncf = new_nc_file(suffix='cw_noise')
-        measured_frequencies = acquire.load_heterodyne_sweep_tones(ri,np.add.outer(offsets,f0s),num_tone_samples=nsamp)
-        print "waveforms loaded", (time.time()-tic)/60.
         setup.hittite.on()
         ri.set_modulation_output('low')
         swpa = acquire.run_loaded_sweep(ri,length_seconds=0,state=setup.state(),description='source on sweep')
@@ -92,7 +92,11 @@ for (lo,f0s) in [(low_group_lo,low_group),
             swp = swpa.sweep(sidx)
             res = lmfit_resonator.LinearResonatorWithCable(swp.frequency,swp.s21_points,swp.s21_points_error)
             print res.f_0, res.Q, res.current_result.redchi, (f0s[sidx]*1e6-res.f_0)
-            current_f0s.append(res.f_0)
+            if sidx not in [15,17] and np.abs(res.f_0 - f0s[sidx]*1e6) > 200e3:
+                current_f0s.append(f0s[sidx]*1e6)
+                print "using original frequency for ",f0s[sidx]
+            else:
+                current_f0s.append(res.f_0)
         print "fits complete", (time.time()-tic)/60.
         current_f0s = np.array(current_f0s)/1e6
         current_f0s.sort()

@@ -18,9 +18,11 @@ hittite.set_power(0)
 hittite.on()
 lockin = lockin.Lockin('/dev/ttyUSB2')
 tic = time.time()
+lockin.sensitivity = 17
 print lockin.identification
 print time.time()-tic
-print lockin.state()
+tic = time.time()
+print lockin.state(measurement_only=True)
 print time.time()-tic
 source = mmwave_source.MMWaveSource()
 source.set_attenuator_turns(7.0,7.0)
@@ -100,7 +102,7 @@ for (lo,f0s) in [(low_group_lo,low_group),
         setup.hittite.set_freq(freq/12.)
         time.sleep(0.5)
         tic2= time.time()
-        state=setup.state()
+        state=setup.state(fast=True)
         print time.time()-tic2
         meas = ri.get_measurement(num_seconds=1., state=state)
         print freq,(time.time()-tic2)

@@ -1,6 +1,7 @@
 from __future__ import division
 from kid_readout.measurement import core, basic
 import numpy as np
+import pandas as pd
 from memoized_property import memoized_property
 # The ZBD object loads a few data files from disk. If this import fails then the functions that use it below will still
 # work, but only with default arguments.
@@ -94,6 +95,47 @@ class MMWSweepOnMod(core.Measurement):
         self.on_stream = self.add_measurement(on_stream)
         self.mod_stream = self.add_measurement(mod_stream)
         super(MMWSweepOnMod, self).__init__(state=state, description=description)
+
+    @property
+    def on_sweep_stream_array(self):
+        return basic.SweepStreamArray(sweep_array=self.sweep, stream_array=self.on_stream,state=self.state,
+                                      description=self.description)
+    @property
+    def mod_sweep_stream_array(self):
+        return basic.SweepStreamArray(sweep_array=self.sweep, stream_array=self.mod_stream,state=self.state,
+                                      description=self.description)
+
+    def sweep_stream_pair(self,number):
+        sweep = self.sweep.sweep(number)
+        on_sweep_stream = self.on_stream.stream(number)
+        mod_sweep_stream = self.mod_stream.stream(number)
+        return (basic.SingleSweepStream(sweep,on_sweep_stream,number=number,state=self.state,
+                                        description=self.description),
+                basic.SingleSweepStream(sweep,mod_sweep_stream,number=number,state=self.state,
+                                        description=self.description),
+                )
+
+
+    def to_dataframe(self, add_origin=True):
+        on_rows = []
+        mod_rows = []
+        for n in range(self.sweep.num_channels):
+            on_ss, mod_ss = self.sweep_stream_pair(n)
+            on_rows.append(on_ss.to_dataframe(add_origin=False))
+            mod_rows.append(mod_ss.to_dataframe(deglitch=False,add_origin=False))
+        df_on = pd.concat(on_rows,ignore_index=True)
+        df_mod = pd.concat(mod_rows,ignore_index=True)
+        if add_origin:
+            if self._io_class is None:
+                self.sweep.add_origin(df_on,prefix='sweep_')
+                self.on_stream.add_origin(df_on,prefix='stream_')
+                self.sweep.add_origin(df_mod,prefix='sweep_')
+                self.mod_stream.add_origin(df_mod,prefix='stream_')
+            else:
+                self.add_origin(df_on)
+                self.add_origin(df_mod)
+        df_on['lockin_rms_voltage'] = df_mod['lockin_rms_voltage']
+        return pd.concat((df_on,df_mod),ignore_index=True)
         
         
 def lockin_rms_to_zbd_voltage(lockin_rms_voltage, linearize=False):

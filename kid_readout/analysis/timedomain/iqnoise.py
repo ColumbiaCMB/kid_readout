@@ -1,3 +1,4 @@
+from __future__ import division
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -17,7 +18,7 @@ def make_freq_bins(fr):
     if fstart < 1:
         fstart = 1
         fstep = fdiff * 2
-    print fstart
+    #print fstart
     fout.append(fr[fr < fstart])
     ftop = scale * fstart
     # fstep = int(10**int(np.round(np.log10(fstart))-1))
@@ -37,6 +38,7 @@ def make_freq_bins(fr):
     return np.concatenate(fout)
 
 
+# TODO: this currently throws away the data in the last bin, which has index len(freq_bins + 1)
 def log_bin(freqs, data):
     freq_bins = make_freq_bins(freqs)
     bin_idxs = np.digitize(freqs, freq_bins)
@@ -51,9 +53,54 @@ def log_bin(freqs, data):
     return binned_freqs, binned_data
 
 
+def log_bin_with_errors(f, data, variance):
+    """
+    Propagate errors assuming that the errors in each bin can be added in quadrature.
+
+    :param f: The frequency array, assumed to be equally spaced and starting at 0 (?)
+    :param data: The data array.
+    :param variance: The variance of each point in data.
+    :return:
+    """
+    left_bin_edges = make_freq_bins(f)
+    bin_indices = np.digitize(f, left_bin_edges)
+    # skip the zeroth bin since it has nothing in it
+    # since make_freq_bins stops below the maximum frequency, there is data in the rightmost bin
+    binned_f = []
+    binned_data = []
+    bin_counts = []
+    binned_variance = []
+    for k in range(1, len(left_bin_edges) + 1):
+        binned_f.append(f[bin_indices == k].mean())
+        binned_data.append(data[bin_indices == k].mean())
+        bin_counts.append(np.sum(bin_indices == k))
+        binned_variance.append(np.sum(variance[bin_indices == k]) / bin_counts[-1]**2)
+    return np.array(binned_f), np.array(binned_data), np.array(bin_counts), np.array(binned_variance)
+
+
+# TODO: trim bins at Nyquist frequency before log binning?
+def pca_noise_with_errors(d, NFFT, Fs, window=mlab.window_hanning, detrend=mlab.detrend_mean,
+                          use_log_bins=True):
+    # Assume the rotation is small so that the variance can be approximated using the values in the pre-PCA spectra.
+    # Take the variance to be the square of the power in each bin, divided by the number of averaged spectra.
+    n_averaged = d.size / NFFT
+    pii, pf = mlab.psd(d.real, NFFT=NFFT, Fs=Fs, window=window, detrend=detrend)
+    pqq, pf = mlab.psd(d.imag, NFFT=NFFT, Fs=Fs, window=window, detrend=detrend)
+    piq, pf = mlab.csd(d.real, d.imag, NFFT=NFFT, Fs=Fs, window=window, detrend=detrend)
+    if use_log_bins:
+        bf, bp_ii, bc_ii, bvar_ii = log_bin_with_errors(pf, pii, pii**2 / n_averaged)
+        bf, bp_qq, bc_qq, bvar_qq = log_bin_with_errors(pf, pqq, pqq**2 / n_averaged)
+        bf, bp_iq, bc_iq, bvar_iq = log_bin_with_errors(pf, piq, np.abs(piq)**2 / n_averaged)  # probably not right
+        S, evals, evects, angles = calculate_pca_noise(bp_ii, bp_qq, bp_iq)
+        return bf, S, evals, evects, angles, (bp_ii, bp_qq, bp_iq), bc_ii, np.vstack((bvar_qq, bvar_ii))
+    else:
+        S, evals, evects, angles = calculate_pca_noise(pii, pqq, piq)
+        return (pf, S, evals, evects, angles, (pii, piq, piq), np.ones_like(pf),
+                np.vstack((pqq**2 / n_averaged, pii**2 / n_averaged)))
+
+
 def pca_noise(d, NFFT=None, Fs=256e6/2.**11, window=mlab.window_hanning, detrend=mlab.detrend_mean,
-              use_log_bins=True,
-              use_full_spectral_helper=True):
+              use_log_bins=True, use_full_spectral_helper=True):
     if NFFT is None:
         NFFT = int(2 ** (np.floor(np.log2(d.shape[0])) - 3))
         print "using NFFT: 2**", np.log2(NFFT)
@@ -68,15 +115,20 @@ def pca_noise(d, NFFT=None, Fs=256e6/2.**11, window=mlab.window_hanning, detrend
         pqq, fr = mlab.psd(d.imag, NFFT=NFFT, Fs=Fs, window=window, detrend=detrend)
         piq, fr = mlab.csd(d.real, d.imag, NFFT=NFFT, Fs=Fs, window=window, detrend=detrend)
     if use_log_bins:
-        fr, data = log_bin(fr_orig, [pii, pqq, piq])
-        pii, pqq, piq = data
+        fr, (pii, pqq, piq) = log_bin(fr_orig, [pii, pqq, piq])
     else:
         fr = fr_orig
+    S, evals, evects, angles = calculate_pca_noise(pii, pqq, piq)
+    return fr, S, evals, evects, angles, piq
+
+
+def calculate_pca_noise(pii, pqq, piq):
     nf = pii.shape[0]
     evals = np.zeros((2, nf))  # since the matrix is hermetian, eigvals are real
     evects = np.zeros((2, 2, nf), dtype='complex')
     for k in range(nf):
-        m = np.array([[pii[k], np.real(piq[k])], [np.conj(np.real(piq[k])), pqq[k]]])
+        m = np.array([[pii[k], np.real(piq[k])],
+                      [np.conj(np.real(piq[k])), pqq[k]]])
         w, v = np.linalg.eigh(m)
         evals[:, k] = w
         evects[:, :, k] = v
@@ -87,11 +139,12 @@ def pca_noise(d, NFFT=None, Fs=256e6/2.**11, window=mlab.window_hanning, detrend
     v = evects[:, :, 0]
     invv = np.linalg.inv(v)
     for k in range(nf):
-        m = np.array([[pii[k], piq[k]], [np.conj(piq[k]), pqq[k]]])
+        m = np.array([[pii[k], piq[k]],
+                      [np.conj(piq[k]), pqq[k]]])
         ss = np.dot(np.dot(invv, m), v)
         S[0, k] = ss[0, 0]
         S[1, k] = ss[1, 1]
-    return fr, S, evals, evects, angles, piq
+    return S, evals, evects, angles
 
 
 # the following based on matplotlib mlab module, and avoids duplicated computation when auto and cross densities are
@@ -215,7 +268,3 @@ def full_spectral_helper(x, y, NFFT=256, Fs=2, detrend=mlab.detrend_none,
         Pyy = np.concatenate((Pyy[numFreqs // 2:, :], Pyy[:numFreqs // 2, :]), 0)
 
     return Pxx, Pyy, Pxy, freqs, t
-
-
-
-

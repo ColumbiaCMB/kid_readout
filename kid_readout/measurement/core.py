@@ -11,10 +11,10 @@ a standard tree. This structure allows measurements that follow the specified fo
 re-created later without any additional metadata.
 
 To create a new measurement, simply write a subclass of Measurement. Public attributes of the class will
-automatically be saved to disk by the write() function and re-instantiated by the read() function. If a class
+automatically be saved to disk by the IO.write() function and re-instantiated by the IO.read() function. If a class
 contains attributes that are either measurements or sequences of measurements (that use the provided MeasurementList
-and MeasurementTuple containers), these will also be saved and restored correctly. Each Measurement should be
-self-contained, meaning that it should contain all data and metadata necessary to analyze and understand it.
+container), these will also be saved and restored correctly. Each Measurement should be self-contained, meaning that it
+should contain all data and metadata necessary to analyze and understand it.
 
 A measurement will typically contain arrays that contain most of the data and a state dictionary that holds metadata.
 Because of restrictions imposed by the libraries used to store data on disk, the dictionary cannot hold arbitrary
@@ -43,8 +43,12 @@ sweepstream
       etc.
 
 so the node path to the main SweepStream would be just "sweepstream" while the node path to one of the streams in the
-sweep could be "sweepstream:sweep:stream:1" and so on. The node paths can be used to address the data structure in a
-format-independent way in order to save new data in specific locations or to load subsets of the measurement tree.
+sweep could be "sweepstream:sweep:stream:1" and so on. A valid node path is a string that consists of valid node names
+separated by colons. A valid node name is either a valid Python variable or a string representing a nonnegative integer.
+Nodes that are Python variables correspond to attributes of a Measurement instance or the measurements saved at the root
+level, while nodes that are integers correspond to an index in a MeasurementList.
+
+The IO class uses the node paths to save and load the data structure without knowledge of the underlying format.
 """
 import re
 import inspect
@@ -253,8 +257,8 @@ class Measurement(Node):
         except AttributeError:
             pass
         possible_epochs = []
-        for key,value in self.__dict__.items():
-            if isinstance(value,Measurement) or isinstance(value,MeasurementList):
+        for key, value in self.__dict__.items():
+            if not key.startswith('_') and isinstance(value, (Measurement, MeasurementList)):
                 possible_epochs.append(value.start_epoch())
         if possible_epochs:
             return np.min(possible_epochs)
@@ -272,7 +276,7 @@ class Measurement(Node):
         """
         pass
 
-    def add_origin(self, dataframe):
+    def add_origin(self, dataframe, prefix=''):
         """
         Add to the given dataframe enough information to load the data from which it was created. Using this
         information, the from_series() function in this module will return the original data.
@@ -280,9 +284,9 @@ class Measurement(Node):
         This method adds the IO class, the path to the root file or directory, and the node path corresponding to this
         measurement, which will all be None unless the Measurement was created from files on disk.
         """
-        dataframe['io_class'] = self._io_class
-        dataframe['root_path'] = self._root_path
-        dataframe['node_path'] = self._node_path
+        dataframe[prefix + 'io_class'] = self._io_class
+        dataframe[prefix + 'root_path'] = self._root_path
+        dataframe[prefix + 'node_path'] = self._node_path
 
     # TODO: add timestream or sweep indices?
     def add_legacy_origin(self, dataframe):
@@ -330,13 +334,15 @@ class Measurement(Node):
                     assert len(value_s) == len(value_o)
                     for meas_s, meas_o in zip(value_s, value_o):
                         assert meas_s.__eq__(meas_o)
-                elif isinstance(value_s, np.ndarray):  # This allows declared arrays to contain NaN and be equal.
+                # This allows arrays to contain NaN and be equal.
+                elif isinstance(value_s, np.ndarray) or isinstance(value_o, np.ndarray):
                     assert np.all(np.isnan(value_s) == np.isnan(value_o))
                     assert np.all(value_s[~np.isnan(value_s)] == value_o[~np.isnan(value_o)])
                 else:  # This will fail for NaN or sequences that contain any NaN values.
-                    assert value_s == value_o
                     if isinstance(value_s, bool) or isinstance(value_o, bool):
                         assert value_s is value_o
+                    else:
+                        assert value_s == value_o
         except AssertionError:
             return False
         return True
@@ -382,6 +388,7 @@ class MeasurementList(list, Node):
     def start_epoch(self):
         possible_epochs = [x.start_epoch() for x in self]
         return np.min(possible_epochs)
+
 
 class IOList(MeasurementList):
 
@@ -481,6 +488,20 @@ class StateDict(dict):
 
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__, super(StateDict, self).__repr__())
+
+    def flatten(self, prefix='', wrap_lists=False):
+        results = StateDict()
+        for k, v in self.items():
+            this_label = k
+            if prefix:
+                this_label = prefix + '_' + this_label
+            if isinstance(v, StateDict):
+                results.update(v.flatten(prefix=this_label, wrap_lists=wrap_lists))
+            elif wrap_lists and isinstance(v, list):
+                results[this_label] = [v]
+            else:
+                results[this_label] = v
+        return results
 
 
 class IO(Node):
@@ -717,7 +738,7 @@ def instantiate(full_class_name, variables):
             arg_values.append(variables[arg])
         except KeyError:
             raise MeasurementError("Could not find argument %s needed to make this measurement. Available variables "
-                                   "are: %s" % (arg,', '.join(variables.keys())))
+                                   "are: %s" % (arg, ', '.join(variables.keys())))
     instance = class_(*reversed(arg_values))
     return instance
 

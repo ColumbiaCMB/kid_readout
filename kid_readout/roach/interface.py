@@ -29,7 +29,7 @@ class RoachInterface(object):
     def __init__(self, roach=None, roachip='roach', adc_valon=None, host_ip=None,
                  nfs_root='/srv/roach_boot/etch', lo_valon=None):
         """
-        Class to represent the baseband readout system (low-frequency (150 MHz), no mixers)
+        Abstract class to represent readout system
 
         roach: an FpgaClient instance for communicating with the ROACH.
                 If not specified, will try to instantiate one connected to *roachip*
