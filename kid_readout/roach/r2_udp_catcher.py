@@ -17,7 +17,7 @@ def get_udp_packets(ri,npkts,addr=('10.0.0.1',55555)):
                 nstale +=1
             if nstale:
                 print "flushed",nstale,"packets"
-        except:
+        except Exception as e:
             pass
         s.settimeout(1)
         

@@ -26,7 +26,8 @@ writing the sub-measurements as they are acquired.
 from __future__ import division
 import numpy as np
 from kid_readout.measurement import core, basic
-
+import sys
+import time
 
 def load_baseband_sweep_tones(ri, tone_banks, num_tone_samples):
     return ri.set_tone_freqs(freqs=np.vstack(tone_banks), nsamp=num_tone_samples)
@@ -50,11 +51,14 @@ def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=1, state=None, de
     :return: a SweepArray instance.
     """
     stream_arrays = core.MeasurementList()
+    print "measuring bank: "
     for n, tone_bank in enumerate(tone_banks):
+        print n,
+        sys.stdout.flush()
         ri.set_tone_freqs(tone_bank, nsamp=num_tone_samples)
         ri.select_fft_bins(np.arange(tone_bank.size))
-        ri._sync()
-        
+        # we wait a bit here to let the roach2 sync catch up.  figuring this out still
+        time.sleep(0.1)
         stream_arrays.append(ri.get_measurement(num_seconds=length_seconds, **kwargs))
     return basic.SweepArray(stream_arrays, state=state, description=description)
 
