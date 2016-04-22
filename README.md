@@ -114,6 +114,12 @@ netcdf4 1.0.7
 valon
 
     copy from ~readout/lib and remove .pyc files
+    or git clone https://github.com/gitj/ValonSynth.git
+    and python setup.py install
+
+qdr
+
+    copy qdr.py from gjones/qdr.py to conda environment sitepackages
 
 pyserial 2.7
 
