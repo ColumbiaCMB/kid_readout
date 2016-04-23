@@ -3,7 +3,7 @@ import sys
 
 import numpy as np
 
-from kid_readout.roach import heterodyne
+from kid_readout.roach import analog
 from kid_readout import *
 from kid_readout.measurement.acquire import acquire
 from equipment.hittite import signal_generator
@@ -13,9 +13,9 @@ from kid_readout.measurement.acquire import hardware
 from kid_readout.measurement import mmw_source_sweep, core, basic
 
 # fg = FunctionGenerator()
-hittite = signal_generator.Hittite(ipaddr='192.168.0.200')
-hittite.set_power(0)
-hittite.on()
+#hittite = signal_generator.Hittite(ipaddr='192.168.0.200')
+#hittite.set_power(0)
+#hittite.on()
 lockin = lockin.Lockin('/dev/ttyUSB2')
 tic = time.time()
 print lockin.identification
@@ -23,13 +23,15 @@ print time.time()-tic
 print lockin.state()
 print time.time()-tic
 source = mmwave_source.MMWaveSource()
-source.set_attenuator_turns(7.0,7.0)
-source.multiplier_input = 'hittite'
+source.set_attenuator_turns(5.0,5.0)
+source.multiplier_input = 'thermal'
 source.waveguide_twist_angle = 45
 source.ttl_modulation_source = 'roach'
 
-setup = hardware.Hardware(hittite,source,lockin)
-setup.hittite.set_freq(148e9/12.)
+ifboard = analog.HeterodyneMarkI()
+
+setup = hardware.Hardware(source,lockin,ifboard)
+#setup.hittite.set_freq(148e9/12.)
 
 
 ri = heterodyne.RoachHeterodyne(adc_valon='/dev/ttyUSB0')
@@ -79,8 +81,7 @@ for (lo,f0s) in [(low_group_lo,low_group),
     measured_frequencies = acquire.load_heterodyne_sweep_tones(ri,np.add.outer(offsets,f0s),num_tone_samples=nsamp)
     print "waveforms loaded", (time.time()-tic)/60.
     for dac_atten in [20,10,6,2]:
-        ncf = new_nc_file(suffix='off_on_modulated_%d_dB_dac' % dac_atten)
-        setup.hittite.on()
+        ncf = new_nc_file(suffix='off_on_modulated_broadband_%d_dB_dac' % dac_atten)
         ri.set_modulation_output('high')
         swpa = acquire.run_loaded_sweep(ri,length_seconds=0,state=setup.state(),description='source off sweep')
         print "resonance sweep done", (time.time()-tic)/60.

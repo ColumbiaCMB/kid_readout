@@ -8,7 +8,8 @@ class Hardware(object):
         if not kwargs.get('quiet'):
             names = {arg.name for arg in args}
             for required_name in ['signal_conditioner']:
-                warnings.warn("You have not specified a '%s'; this will complicate later analysis." % required_name)
+                if required_name not in names:
+                    warnings.warn("You have not specified a '%s'; this will complicate later analysis." % required_name)
         for arg in args:
             setattr(self, arg.name, arg)
 
