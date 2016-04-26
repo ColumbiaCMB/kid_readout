@@ -523,13 +523,14 @@ class Demodulator(object):
         t = np.arange(data.shape[0])
         demod = wc*np.exp(-1j * (2 * np.pi * foffs * t + phi0)) * data
         if type(seq_nos) is np.ndarray:
-            pphase = packet_phase(seq_nos,foffs,nchan,nfft,ns) 
+            pphase = packet_phase(seq_nos[0],foffs,nchan,nfft,ns)
             demod *= pphase
         if self.hardware_delay_samples != 0:
             demod *= np.exp(2j*np.pi*self.hardware_delay_samples*tone_bin/tone_num_samples)
         return demod
 
-def packet_phase(seq_nos,foffs,nchan,nfft,ns):
+def packet_phase(seq_no,foffs,nchan,nfft,ns):
+    #need to generalize for non consecutive packets (eg use all seqnos in case of dropped pkts)
     packet_bins = 256    #this is hardcoded for now.. number of fft bins that fit in 1 udp packet
     packet_counts = nfft * packet_bins    
     chan_counts = packet_counts / nchan
@@ -538,10 +539,9 @@ def packet_phase(seq_nos,foffs,nchan,nfft,ns):
     if modn == 0:
         modn = 1
     multy = ns / nfft
-    seq_nos = seq_nos >> shift
-    seq_nos %= modn
-    #need to generalize for non consecutive packets (eg use all seqnos in case of dropped pkts)
-    return np.exp(-1j * 2. * np.pi * seq_nos[0] * foffs * multy / modn)
+    seq_no = seq_no >> shift
+    seq_no %= modn
+    return np.exp(-1j * 2. * np.pi * seq_no * foffs * multy / modn)
         
 
 def tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft):

@@ -46,7 +46,7 @@ def decode_packets(plist,nchans):
         try: 
             all_data = np.fromstring(pkt,'<u4')
         except ValueError:
-            #could put some code to avoid crashes here. ie just append zeros(257)
+            # length not a multiple of 4
             print "got bad packet"
             continue 
         if all_data.shape[0] != 257:
