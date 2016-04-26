@@ -86,7 +86,7 @@ def get_temperatures_at(t,get_load_temp=False):
 
     load_temperature = np.interp(t,times,load)
     package_temperature = np.interp(t,times,temps)
-    return package_temperature,None,load_temperature,None
+    return package_temperature,np.nan,load_temperature,np.nan
 
 def get_temperature_at(t,get_load_temp=False):
     global epochs
