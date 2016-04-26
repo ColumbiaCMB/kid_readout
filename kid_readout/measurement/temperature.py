@@ -5,16 +5,15 @@ from kid_readout.analysis.resources import experiments
 
 
 def add_temperature(measurement, cryostat, recursive=True, overwrite=False):
+    start_epoch = measurement.start_epoch()
     if cryostat.lower() == 'hpd':
         from kid_readout.equipment import hpd_temps as temps
-        #from kid_readout.analysis.resources import hpd_experiments as experiments
+        thermometry = None
     elif cryostat.lower() == 'starcryo':
         from kid_readout.equipment import starcryo_temps as temps
-        #from kid_readout.analysis.resources import starcryo_experiments as experiments
+        thermometry = experiments.get_experiment_info_at(start_epoch, cryostat)['thermometry_config']
     else:
         raise ValueError("Invalid cryostat: {}".format(cryostat))
-    start_epoch = measurement.start_epoch()
-    thermometry = experiments.get_experiment_info_at(start_epoch, cryostat)['thermometry_config']
     _add_temperature(measurement, temps, thermometry, recursive=recursive, overwrite=overwrite)
 
 
@@ -40,6 +39,6 @@ def _add_temperature(measurement, temps, thermometry, recursive, overwrite):
 def valid_temperatures(epoch, temps, thermometry):
     # We could use thermometry to get the names that are used there, but it's not clear to me if we want to do this.
     names = ('primary_package', 'secondary_package', 'primary_load', 'secondary_load')
-    return dict([(name, temp) for name, temp in zip(names, temps.get_temperatures_at(epoch))
-                 if not np.isnan(temp)])
+    return core.StateDict([(name, temp) for name, temp in zip(names, temps.get_temperatures_at(epoch))
+                           if not np.isnan(temp)])
 

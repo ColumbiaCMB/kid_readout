@@ -1,7 +1,22 @@
 from kid_readout.utils.time_tools import date_to_unix_time
 
-
 by_unix_time_table = [
+    dict(date='2016-04-20',
+         description='Stanford Demo05AlMn-0506 v1 CPW coupling chip in holder H1 and lid L1, not taped.',
+         optical_state='dark',
+         chip_id='Demo05AlMn-0506'
+         ),
+    dict(date='2016-04-08',
+         description='Stanford Demo02AlMn-0506 v1 CPW coupling chip in holder H1 and lid L1, not taped.',
+         optical_state='dark',
+         chip_id='Demo02AlMn-0506'
+         ),
+    dict(date='2016-03-04',
+         description='STAR Cryo 160105 v1 (almost) CPW coupling chip in holder H3 and lid L3.',
+         optical_state='dark',
+         chip_id='160105 v1 (almost) CPW coupling chip'
+         ),
+    # Lots of missing cooldowns here.
     dict(date='2015-07-09',
          description='STAR Cryo 150509 2015-04 nevins dual pol test chip Al horn package, AR chip, aluminum tape over '
                      'horns. 1550 nm LED illumination via fiber.',
