@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from kid_readout.measurement import core, basic
 from kid_readout.measurement.io import memory
-from kid_readout.measurement.test.utilities import CornerCases, fake_single_stream
+from kid_readout.measurement.test import utilities
 
 
 def test_measurement_instantiation_blank():
@@ -47,7 +47,7 @@ def test_measurement_add_legacy_origin():
 
 def test_measurement_list():
     length = 3
-    contents = [CornerCases() for n in range(length)]
+    contents = [utilities.CornerCases() for n in range(length)]
     ml = core.instantiate_sequence('kid_readout.measurement.core.MeasurementList', contents)
     assert np.all(ml == contents)
     assert core.is_sequence(ml.__module__ + '.' + ml.__class__.__name__)
@@ -56,8 +56,8 @@ def test_measurement_list():
 
 def test_io_list():
     num_streams = 3
-    streams = core.MeasurementList([CornerCases() for n in range(num_streams)])
-    io = memory.Dictionary(None)
+    streams = core.MeasurementList([utilities.CornerCases() for n in range(num_streams)])
+    io = memory.Dictionary()
     sweep = basic.SingleSweep(core.IOList())
     io.write(sweep)
     sweep.streams.extend(streams)
@@ -65,16 +65,16 @@ def test_io_list():
 
 
 def test_read_write():
-    io = memory.Dictionary(None)
-    original = CornerCases()
+    io = memory.Dictionary()
+    original = utilities.CornerCases()
     name = 'test'
     io.write(original, name)
     assert original == io.read(name)
 
 
 def test_eq_state():
-    m1 = CornerCases()
-    m2 = CornerCases()
+    m1 = utilities.CornerCases()
+    m2 = utilities.CornerCases()
     assert m1 == m2
     m1.state['test'] = 1
     m2.state['test'] = 2
@@ -82,7 +82,7 @@ def test_eq_state():
 
 
 def test_eq_array():
-    m1 = fake_single_stream()
+    m1 = utilities.fake_single_stream()
     m2 = basic.SingleStream(**dict([(k, copy.copy(v)) for k, v in m1.__dict__.items() if not k.startswith('_')]))
     assert m1 == m2
     index = np.random.random_integers(0, m1.s21_raw.size)
@@ -93,8 +93,8 @@ def test_eq_array():
 
 
 def test_comparison_code_attribute():
-    m1 = CornerCases()
-    m2 = CornerCases()
+    m1 = utilities.CornerCases()
+    m2 = utilities.CornerCases()
     m1.attribute = 1
     m2.attribute = 2
     assert m1 != m2
@@ -140,3 +140,19 @@ def test_validate_node_path():
             core.validate_node_path(good)
         except core.MeasurementError:
             assert False
+
+
+def test_sweep_stream_array_node_path():
+    ssa = utilities.fake_sweep_stream_array()
+    assert ssa.node_path == ''
+    assert ssa.sweep_array.node_path == 'sweep_array'
+    assert ssa.sweep_array.stream_arrays.node_path == 'sweep_array:stream_arrays'
+    assert ssa.sweep_array.stream_arrays[0].node_path == 'sweep_array:stream_arrays:0'
+    io = memory.Dictionary()
+    name = 'ssa'
+    io.write(ssa, name)
+    assert ssa.node_path == 'ssa'
+    assert ssa.sweep_array.node_path == 'ssa:sweep_array'
+    assert ssa.sweep_array.stream_arrays.node_path == 'ssa:sweep_array:stream_arrays'
+    assert ssa.sweep_array.stream_arrays[0].node_path == 'ssa:sweep_array:stream_arrays:0'
+

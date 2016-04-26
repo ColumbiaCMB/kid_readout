@@ -9,7 +9,7 @@ class Dictionary(core.IO):
     _array = '_array'
     _measurement = '_measurement'
 
-    def __init__(self, root_path):
+    def __init__(self, root_path=None):
         """
         Return a new diskless Dictionary object.
 

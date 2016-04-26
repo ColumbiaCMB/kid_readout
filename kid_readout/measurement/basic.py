@@ -2,6 +2,7 @@
 This module contains basic measurement classes for data acquired with the roach.
 """
 from __future__ import division
+from collections import OrderedDict
 import numpy as np
 import pandas as pd
 import time
@@ -141,12 +142,12 @@ class StreamArray(RoachStream):
     This class represents simultaneously-sampled data from multiple channels.
     """
 
-    dimensions = {'tone_bin': ('tone_bin',),
-                  'tone_amplitude': ('tone_bin',),
-                  'tone_phase': ('tone_bin',),
-                  'tone_index': ('tone_index',),
-                  'filterbank_bin': ('tone_index',),
-                  's21_raw': ('tone_index', 'sample_time')}
+    dimensions = OrderedDict([('tone_bin', ('tone_bin',)),
+                              ('tone_amplitude', ('tone_bin',)),
+                              ('tone_phase', ('tone_bin',)),
+                              ('tone_index', ('tone_index',)),
+                              ('filterbank_bin', ('tone_index',)),
+                              ('s21_raw', ('tone_index', 'sample_time'))])
 
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
                  data_demodulated, roach_state, state=None, description=''):
@@ -197,10 +198,10 @@ class SingleStream(RoachStream):
     This class contains time-ordered data from a single channel.
     """
 
-    dimensions = {'tone_bin': ('tone_bin',),
-                  'tone_amplitude': ('tone_bin',),
-                  'tone_phase': ('tone_bin',),
-                  's21_raw': ('sample_time',)}
+    dimensions = OrderedDict([('tone_bin', ('tone_bin',)),
+                              ('tone_amplitude', ('tone_bin',)),
+                              ('tone_phase', ('tone_bin',)),
+                              ('s21_raw', ('sample_time',))])
 
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
                  data_demodulated, roach_state, number=0, state=None, description=''):
@@ -245,7 +246,7 @@ class SweepArray(core.Measurement):
     """
 
     def __init__(self, stream_arrays, state=None, description=''):
-        self.stream_arrays = self.add_measurement_list(stream_arrays)
+        self.stream_arrays = stream_arrays
         super(SweepArray, self).__init__(state=state, description=description)
 
     def sweep(self, number):
@@ -314,7 +315,7 @@ class SingleSweep(core.Measurement):
         :param description: a string description of this measurement.
         :return: a new SingleSweep object.
         """
-        self.streams = self.add_measurement_list(streams)
+        self.streams = streams
         self.number = number
         super(SingleSweep, self).__init__(state=state, description=description)
 
@@ -389,8 +390,8 @@ class SweepStreamArray(core.Measurement):
     def __init__(self, sweep_array, stream_array, state=None, description=''):
         if sweep_array.num_channels != stream_array.tone_index.size:
             raise core.MeasurementError("The number of SweepArray channels does not match the StreamArray number.")
-        self.sweep_array = self.add_measurement(sweep_array)
-        self.stream_array = self.add_measurement(stream_array)
+        self.sweep_array = sweep_array
+        self.stream_array = stream_array
         super(SweepStreamArray, self).__init__(state=state, description=description)
 
     @property
@@ -416,8 +417,8 @@ class SweepStreamArray(core.Measurement):
 
 class SingleSweepStream(core.Measurement):
     def __init__(self, sweep, stream, number=0, state=None, description=''):
-        self.sweep = self.add_measurement(sweep)
-        self.stream = self.add_measurement(stream)
+        self.sweep = sweep
+        self.stream = stream
         self.number = number
         self.fold = stream.fold
         self.folded_shape = stream.folded_shape
@@ -585,8 +586,8 @@ class SingleSweepStream(core.Measurement):
 class SweepStreamList(core.Measurement):
 
     def __init__(self, sweep, stream_list, state=None, description=''):
-        self.sweep = self.add_measurement(sweep)
-        self.stream_list = self.add_measurement_list(stream_list)
+        self.sweep = sweep
+        self.stream_list = stream_list
         super(SweepStreamList, self).__init__(state=state, description=description)
 
     def single_sweep_stream_list(self, number):
@@ -598,8 +599,8 @@ class SweepStreamList(core.Measurement):
 class SingleSweepStreamList(core.Measurement):
 
     def __init__(self, single_sweep, stream_list, number=0, state=None, description=''):
-        self.sweep = self.add_measurement(single_sweep)
-        self.stream_list = self.add_measurement_list(stream_list)
+        self.sweep = single_sweep
+        self.stream_list = stream_list
         self.number = number
         super(SingleSweepStreamList, self).__init__(state=state, description=description)
 
