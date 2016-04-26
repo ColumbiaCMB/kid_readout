@@ -4,6 +4,7 @@ This module contains basic measurement classes for data acquired with the roach.
 from __future__ import division
 import numpy as np
 import pandas as pd
+import time
 from matplotlib.pyplot import mlab  # TODO: replace with a scipy PSD estimator
 from memoized_property import memoized_property
 
@@ -533,7 +534,7 @@ class SingleSweepStream(core.Measurement):
     def to_dataframe(self, deglitch=True, add_origin=True):
         if not deglitch:
             self._set_q_and_x(deglitch=False)
-        data = {'number': self.number}
+        data = {'number': self.number, 'analysis_epoch':time.time(), 'start_epoch':self.start_epoch()}
         try:
             for thermometer, temperature in self.state['temperature'].items():
                 data['temperature_{}'.format(thermometer)] = temperature
@@ -559,6 +560,21 @@ class SingleSweepStream(core.Measurement):
         data['S_yy'] = [self.S_yy]
         data['S_qq'] = [self.S_qq]
         data['S_frequency'] = [self.S_frequency]
+
+        data['res_s21_data'] = [self.sweep.resonator.data]
+        data['res_frequency_data'] = [self.sweep.resonator.frequency]
+        data['res_s21_errors'] = [self.sweep.resonator.errors]
+        modelf = np.linspace(self.sweep.resonator.frequency.min(),self.sweep.resonator.frequency.max(),1000)
+        models21 = self.sweep.resonator.model.eval(params=self.sweep.resonator.current_params,f=modelf)
+        data['res_model_frequency'] = [modelf]
+        data['res_model_s21'] = [models21]
+
+        try:
+            data['folded_x'] = [self.stream.fold(self.x)]
+            data['folded_q'] = [self.stream.fold(self.q)]
+            data['folded_normalized_s21'] = [self.stream.fold(self.stream_s21_normalized)]
+        except ValueError:
+            pass
 
         dataframe = pd.DataFrame(data, index=[0])
         if add_origin:
