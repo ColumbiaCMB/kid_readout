@@ -71,7 +71,7 @@ class NumpyDirectory(core.IO):
         with open(os.path.join(self._get_node(node_path), name)) as f:
             return json.load(f)
 
-    def measurement_names(self, node_path=''):
+    def measurement_names(self, node_path='/'):
         node = self._get_node(node_path)
         # TODO: this should actually check that the class contained in the group is a Measurement
         return [f for f in os.listdir(node)if os.path.isdir(os.path.join(node, f))]

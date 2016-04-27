@@ -71,7 +71,7 @@ class Dictionary(core.IO):
         node = self._get_node(node_path)
         return node[key]
 
-    def measurement_names(self, node_path=''):
+    def measurement_names(self, node_path='/'):
         """
         Return the names of all measurements contained in the measurement at node_path.
         """
@@ -95,9 +95,10 @@ class Dictionary(core.IO):
     # Private methods.
 
     def _get_node(self, node_path):
+        core.validate_node_path(node_path)
+        if node_path.startswith(core.NODE_PATH_SEPARATOR):
+            node_path = node_path[1:]
         node = self.root
-        if node_path != '':
-            core.validate_node_path(node_path)
-            for name in core.explode(node_path):
-                node = node[self._measurement][name]
+        for name in core.explode(node_path):
+            node = node[self._measurement][name]
         return node

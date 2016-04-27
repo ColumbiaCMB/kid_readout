@@ -8,6 +8,9 @@ from kid_readout.measurement.acquire import acquire
 from kid_readout.roach import baseband
 from kid_readout.roach.tests import mock_roach, mock_valon
 
+bad_node_paths = ['', ' ', '"', ':', '\\', '?', '!', 'bad-hyphen', '0number', '//', '/bad/end/']
+good_node_paths = ['/', 'relative', '/absolute', '/2/good', 'underscore_is_fine/_/__really__', '0/12/345']
+
 corners = {'zero_int': 0,
            'zero_float': 0.,
            'one_int': 1,
