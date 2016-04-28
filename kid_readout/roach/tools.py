@@ -86,15 +86,17 @@ def compute_window(npfb=2 ** 15, taps=2, wfunc=scipy.signal.flattop):
     return mag
 
 
-def calc_wavenorm(ntones, nsamp):
+def calc_wavenorm(ntones, nsamp, baseband=False):
     # these are the max of the max(abs(waveform)) for various ntones
-    # found empirically
+    # found empirically for heterodyne.  Need to divide by 2 for baseband
     numtones = 2**np.arange(9)
     maxvals = np.array([1., 2., 4., 8., 14., 24., 36., 52., 70.])
     lookupdict = dict(zip(numtones, maxvals))
     if ntones not in numtones:
         z = np.interp(np.log2(ntones), np.log2(numtones), np.log2(maxvals))
-        return 2**z / nsamp
+        wavenorm = 2**z / nsamp
     else:
-        return lookupdict[ntones] / nsamp
-    
+        wavenorm = lookupdict[ntones] / nsamp
+    if baseband:
+        wavenorm *= 2.
+    return wavenorm
