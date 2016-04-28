@@ -7,7 +7,7 @@ from attenuator import Attenuator
 
 mark2_valon = "/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A101FK1H-if00-port0"
 roach2_valon = "/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A101FK1K-if00-port0"
-
+roach1_valon = "/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AM01H05A-if00-port0"
 
 def r2_with_mk2(lo_freq=1000, atten=None):
     attenuator = Attenuator(attenuation=atten)

@@ -6,7 +6,7 @@ import sys
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
+from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
 import numpy as np
@@ -14,8 +14,14 @@ import numpy as np
 from basic_sweep_ui import Ui_SweepDialog
 import kid_readout.roach.baseband
 import kid_readout.utils.sweeps
+import kid_readout.roach.hardware_tools
 from kid_readout.measurement.io.data_block import SweepData
 from kid_readout.measurement.io import data_file
+
+import logging
+
+logger = logging.getLogger('kid_readout')
+logger.addHandler(logging.StreamHandler())
 
 #from kid_readout.utils.PeakFind01 import peakdetect
 
@@ -24,7 +30,7 @@ import socket
 if socket.gethostname() == 'detectors':
     at_a_time = 16
 else:
-    at_a_time = 64
+    at_a_time = 32
 
 class SweepDialog(QDialog,Ui_SweepDialog):
     def __init__(self,  qApp, parent=None):
@@ -80,9 +86,7 @@ class SweepDialog(QDialog,Ui_SweepDialog):
         
         self.line_dac_gain.setText("-2.0")
         
-        self.ri = kid_readout.roach.baseband.RoachBaseband(initialize=False)
-        self.ri.boffile = 'bb2xpfb14mcr17b_2015_Apr_21_1159.bof'
-        self.ri.initialize()
+        self.ri = kid_readout.roach.baseband.RoachBaseband(adc_valon=kid_readout.roach.hardware_tools.roach1_valon)
         #self.ri.set_adc_attenuator(31)
         self.ri.set_dac_attenuator(36)
         

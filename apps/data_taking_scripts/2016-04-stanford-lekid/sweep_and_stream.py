@@ -12,7 +12,7 @@ from kid_readout.measurement import mmw_source_sweep, core, basic
 import logging
 logger = logging.getLogger('kid_readout')
 handler = logging.StreamHandler()
-handler.setFormatter(logging.Formatter('%(levelname)s: %(asctime)s - %(pathname)s.%(funcName)s:%(lineno)d  %('
+handler.setFormatter(logging.Formatter('%(levelname)s: %(asctime)s - %(name)s.%(funcName)s:%(lineno)d  %('
                                        'message)s'))
 logger.addHandler(handler)
 handler.setLevel(logging.DEBUG)
@@ -45,7 +45,9 @@ ri.set_dac_atten(36)
 tic = time.time()
 measured_frequencies = acquire.load_baseband_sweep_tones(ri,np.add.outer(offsets,f0s),num_tone_samples=nsamp)
 logger.info("waveforms loaded in %.1f minutes", (time.time()-tic)/60.)
-for dac_atten in [40,36,32,28]:
+#for dac_atten in [40,36,32,28]:
+while True:
+    dac_atten = 28
     ncf = new_nc_file(suffix='dark_%d_dB_dac' % dac_atten)
     ri.set_modulation_output('high')
     swpa = acquire.run_loaded_sweep(ri,length_seconds=0,state=setup.state(),description='dark sweep')
@@ -70,9 +72,11 @@ for dac_atten in [40,36,32,28]:
         logger.info("deltas: %s", np.diff(current_f0s))
     ri.add_tone_freqs(current_f0s,overwrite_last=True)
     ri.select_bank(ri.tone_bins.shape[0]-1)
-    ri.select_fft_bins(range(32))
+    ri.select_fft_bins(range(8))
     meas = ri.get_measurement(num_seconds=30., state=setup.state(),description='source off stream')
     ncf.write(meas)
 
     logger.info("dac_atten %f done in %.1f minutes" % (dac_atten, (time.time()-tic)/60.))
     ncf.close()
+    logger.info("waiting 5 minutes")
+    time.sleep(300)

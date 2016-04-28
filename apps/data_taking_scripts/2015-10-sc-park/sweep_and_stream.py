@@ -114,6 +114,7 @@ for (lo,f0s) in [(low_group_lo,low_group),
         ncf.write(meas)
 
         ri.set_modulation_output(7)
+        time.sleep(1) # wait for source modulation to stabilize
         meas = ri.get_measurement(num_seconds=4., state=setup.state(),description='source modulated stream')
         ncf.write(meas)
         print "dac_atten %f done in %.1f minutes" % (dac_atten, (time.time()-tic)/60.)

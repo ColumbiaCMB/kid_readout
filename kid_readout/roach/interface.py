@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 import time
@@ -17,6 +18,8 @@ from kid_readout.measurement.misc import ADCSnap
 
 
 CONFIG_FILE_NAME_TEMPLATE = os.path.join(BASE_DATA_DIR,'%s_config.npz')
+
+logger = logging.getLogger(__name__)
 
 class RoachInterface(object):
     """
@@ -70,7 +73,7 @@ class RoachInterface(object):
             if len(ports) == 0:
                 self.adc_valon_port = None
                 self.adc_valon = None
-                print "Warning: No valon found!"
+                logger.warn("Warning: No valon found! You will not be able to change or verify the sampling frequency")
             else:
                 for port in ports:
                     try:
@@ -146,7 +149,7 @@ class RoachInterface(object):
         try:
             self.fs = self.adc_valon.get_frequency_a()
         except:
-            print "warning couldn't get valon frequency, assuming 512 MHz"
+            logger.warn("Couldn't get valon frequency, assuming 512 MHz")
             self.fs = 512.0
         self.bank = self.get_current_bank()
 
@@ -384,9 +387,9 @@ class RoachInterface(object):
         if use_config:
             try:
                 state = np.load(self._config_file_name)
-                print "Loaded ROACH state from", self._config_file_name
+                logger.info("Loaded ROACH state from %s", self._config_file_name)
             except IOError:
-                print "Could not load previous state"
+                logger.info("Could not load previous roach state")
                 state = None
         else:
             state = None
@@ -396,17 +399,17 @@ class RoachInterface(object):
             except Exception:
                 self.bof_pid = None
             if self.bof_pid is None or self.bof_pid != state['bof_pid']:
-                print "ROACH configuration does not match saved state"
+                logger.debug("ROACH configuration does not match saved state")
                 state = None
         if state is None or state['boffile'] != self.boffile:
-            print "Reinitializing system"
-            print "Deprogramming"
+            logger.info("Reinitializing system")
+            logger.debug("Deprogramming")
             self._set_fs(fs)
             try:
                 self.r.progdev('')
             except RuntimeError, e:
                 pass
-            print "Programming", self.boffile
+            logger.info("Programming %s", self.boffile)
             self.r.progdev(self.boffile)
             self.bof_pid = None
             self._update_bof_pid()
@@ -415,10 +418,10 @@ class RoachInterface(object):
             self.r.write_int('dacctrl', 1)
             estfs = self.measure_fs()
             if np.abs(fs - estfs) > 2.0:
-                print "Warning! FPGA clock may not be locked to sampling clock!"
-            print "Requested sampling rate %.1f MHz. Estimated sampling rate %.1f MHz" % (fs, estfs)
+                logger.error("FPGA clock may not be locked to sampling clock!")
+            logger.info("Requested sampling rate %.1f MHz. Estimated sampling rate %.1f MHz" % (fs, estfs))
             if start_udp and not self._using_mock_roach:
-                print "starting udp server process on PPC"
+                logger.debug("starting udp server process on PPC")
                 borph_utils.start_server(self.bof_pid, self.roachip)
 
             self.set_loopback(False)
@@ -465,6 +468,7 @@ class RoachInterface(object):
         else:
             load_dram = self._load_dram_katcp
         nbytes = data.nbytes
+        logger.info("Writing %.1f kB to DRAM/QDR", (nbytes/2.**10))
         # PPC can only access 64MB at a time, so need to break the data into chunks of this size
         bank_size = (64 * 2 ** 20)
         nbanks, rem = divmod(nbytes, bank_size)
@@ -477,9 +481,10 @@ class RoachInterface(object):
         start_offset_bytes = start_offset * data.itemsize
         bank_offset = start_offset_bytes // bank_size
         start_offset_bytes = start_offset_bytes - bank_size * bank_offset
-        print "bank_offset=", bank_offset, "start_offset=", start_offset, "start_offset_bytes=", start_offset_bytes
+        logger.debug("bank_offset= %d  start_offset=%d  start_offset_bytes=%d", bank_offset , start_offset,
+                    start_offset_bytes)
         for bank in range(nbanks):
-            print "writing DRAM bank", (bank + bank_offset)
+            logger.debug("writing DRAM bank %d", (bank + bank_offset))
             self.r.write_int('dram_controller', bank + bank_offset)
             load_dram(data[bank * bank_size_units:(bank + 1) * bank_size_units], offset_bytes=start_offset_bytes)
 
@@ -491,8 +496,7 @@ class RoachInterface(object):
                 self._unpause_dram()
                 return
             except Exception, e:
-                print "failure writing to dram, trying again"
-            #                print e
+                logger.debug("failure writing to dram, trying again", exc_info=True)
             tries = tries - 1
         raise Exception("Writing to dram failed!")
 
@@ -508,7 +512,7 @@ class RoachInterface(object):
             datafile = '/' + datafile
             result = borph_utils.check_output(
                 ('ssh root@%s "dd seek=%d if=%s of=%s"' % (self.roachip, offset_blocks, datafile, dram_file)), shell=True)
-            print result
+            logger.debug(result)
         self._unpause_dram()
 
     # TODO: call from the functions that require it so we can stop calling it externally.
@@ -530,8 +534,7 @@ class RoachInterface(object):
         try:
             self.r.write_int(gpio_reg, 0x00)
         except RuntimeError:
-            print "ROACH not programmed, cannot set attenuators"
-            return
+            raise RuntimeError("ROACH not programmed, cannot set attenuators")
         mask = 0x20
         for j in range(6):
             if atten & mask:
@@ -546,13 +549,7 @@ class RoachInterface(object):
         self.r.write_int(gpio_reg, 0x00)
 
     def set_adc_attenuator(self, attendb):
-        print "Warning! ADC attenuator is no longer adjustable. Value will be fixed at 31.5 dB"
-        self.adc_atten = 31.5
-
-    #        if attendb <0 or attendb > 31.5:
-    #            raise ValueError("ADC Attenuator must be between 0 and 31.5 dB. Value given was: %s" % str(attendb))
-    #        self.set_attenuator(attendb,le_bit=0x02)
-    #        self.adc_atten = int(attendb*2)/2.0
+        raise NotImplementedError("ADC attenuator is no longer adjustable.")
 
     def set_dac_attenuator(self, attendb):
         if attendb < 0 or attendb > 63:
@@ -669,12 +666,10 @@ class RoachInterface(object):
                     print ("\r got %d" % n),
                 sys.stdout.flush()
         except Exception, e:
-            print "read only partway because of error:"
-            print e
-            print "\n"
+            logger.error("read only partway because of error:", exc_info=True)
         tot = time.time() - tic
-        print "\rread %d in %.1f seconds, %.2f samples per second, idle %.2f per read" % (
-        nread, tot, (nread * 2 ** 12 / tot), idle / (nread * 1.0))
+        logger.debug("read %d in %.1f seconds, %.2f samples per second, idle %.2f per read" % (
+                        nread, tot, (nread * 2 ** 12 / tot), idle / (nread * 1.0)))
         dout = np.concatenate(([np.fromstring(x, dtype='>i2').astype('float').view('complex') for x in data]))
         addrs = np.array(addrs)
         chans = np.array(chans)
@@ -709,9 +704,7 @@ class RoachInterface(object):
                     chans = self.r.read_int(chanreg)
                     res = callback(data, addrs, chans)
                 except Exception, e:
-                    print "read only partway because of error:"
-                    print e
-                    print "\n"
+                    logger.error("read only partway because of error:", exc_info=True)
                     res = False
                 n += 1
                 if res:
@@ -728,8 +721,8 @@ class RoachInterface(object):
         except KeyboardInterrupt:
             pass
         tot = time.time() - tic
-        print "\rread %d in %.1f seconds, %.2f samples per second, idle %.2f per read" % (
-        n, tot, (n * 2 ** 12 / tot), idle / (n * 1.0))
+        logger.debug("read %d in %.1f seconds, %.2f samples per second, idle %.2f per read" % (
+                        n, tot, (n * 2 ** 12 / tot), idle / (n * 1.0)))
 
 
 class RoachError(Exception):
