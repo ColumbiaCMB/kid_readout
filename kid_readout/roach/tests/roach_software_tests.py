@@ -64,3 +64,15 @@ def test_get_measurement():
 def test_calculate_modulation_period():
     roach_state = StateDict(modulation_rate=7, modulation_output=2)
     assert(kid_readout.roach.calculate.modulation_period_samples(roach_state)==256)
+
+def test_precomputed_wavenorm():
+    mr = kid_readout.roach.tests.mock_roach.MockRoach('roach')
+    mv = kid_readout.roach.tests.mock_valon.MockValon()
+    for class_ in [kid_readout.roach.heterodyne.RoachHeterodyne,
+                   kid_readout.roach.baseband.RoachBaseband]:
+        ri = class_(roach=mr,adc_valon=mv,initialize=False)
+        for k in range(9):
+            ri.set_tone_baseband_freqs(np.linspace(100,120,2**k),nsamp=2**16, preset_norm=False)
+            actual_wavenorm = ri.wavenorm
+            ri.set_tone_baseband_freqs(np.linspace(100,120,2**k),nsamp=2**16, phases=ri.phases, preset_norm=True)
+            assert(ri.wavenorm >= 0.99*actual_wavenorm)   #guarantees the wave won't overflow
