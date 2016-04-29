@@ -165,11 +165,11 @@ class MMWSweepOnMod(core.Measurement):
     _version = 0
 
     def __init__(self, sweep, off_stream, on_stream, mod_stream, state=None, description=''):
-        self.sweep = self.add_measurement(sweep)
-        self.on_stream = self.add_measurement(on_stream)
-        self.mod_stream = self.add_measurement(mod_stream)
+        self.sweep = sweep
+        self.on_stream = on_stream
+        self.mod_stream = mod_stream
         if off_stream:
-            self.off_stream = self.add_measurement(off_stream)
+            self.off_stream = off_stream
         else:
             self.off_stream = None
         super(MMWSweepOnMod, self).__init__(state=state, description=description)
@@ -233,7 +233,7 @@ class MMWSweepOnMod(core.Measurement):
         else:
             df_off = None
         if add_origin:
-            if self._io_class is None:
+            if self._io is None:
                 self.sweep.add_origin(df_on,prefix='sweep_')
                 self.on_stream.add_origin(df_on,prefix='stream_')
                 self.sweep.add_origin(df_mod,prefix='sweep_')

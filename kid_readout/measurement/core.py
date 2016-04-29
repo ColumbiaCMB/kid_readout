@@ -206,8 +206,7 @@ class Node(object):
         prefix : str
             This prefix is prepended to the names of the columns that contain origin information.
         """
-        # TODO: move to class name only when version code is incorporated.
-        dataframe[prefix + 'io_class'] = self._io.__module__ + '.' + self._io.__class__.__name__
+        dataframe[prefix + 'io_class'] =  self._io.__class__.__name__
         dataframe[prefix + 'root_path'] = self._io.root_path
         dataframe[prefix + 'node_path'] = self.io_node_path
 
@@ -841,49 +840,9 @@ def get_class(full_class_name):
     return getattr(module, class_name)
 
 
-# TODO: replace with one-liner if possible; see as_class().
-def instantiate(full_class_name, variables):
-    """
-    Import and instantiate a class using the data in the given dictionary, which must include entries for all
-    non-keyword arguments to the __init__() method of the class.
-
-    Parameters
-    ----------
-    full_class_name : str
-        The fully-qualified class name, e.g. 'kid_readout.measurement.core.Measurement'.
-    variables : dict
-        The keys are the names of the variables available for instantiation and values are their values.
-
-    Returns
-    -------
-    Node
-        An instance of full_class_name instantiated using the given variables.
-    """
-    class_ = get_class(full_class_name)
-    args, varargs, keywords, defaults = inspect.getargspec(class_.__init__)
-    arg_values = []
-    for arg, default in zip(reversed(args), reversed(defaults)):
-        arg_values.append(variables.get(arg, default))
-    for arg in reversed(args[1:-len(defaults)]):  # The first arg is 'self'
-        try:
-            arg_values.append(variables[arg])
-        except KeyError:
-            raise MeasurementError("Could not find argument %s needed to make this measurement. Available variables "
-                                   "are: %s" % (arg, ', '.join(variables.keys())))
-    instance = class_(*reversed(arg_values))
-    return instance
-
-
-def instantiate_sequence(full_class_name, contents):
-    return get_class(full_class_name)(contents)
-
-
-def is_sequence(full_class_name):
-    return issubclass(get_class(full_class_name), MeasurementList)
-
-
 def from_series(series):
-    io = get_class(series.io_class)(series.root_path)
+    io_class = get_class(classes.full_name(series.io_class, None))
+    io = io_class(series.root_path)
     return io.read(series.io_node_path)
 
 

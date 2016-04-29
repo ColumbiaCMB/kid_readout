@@ -2,6 +2,7 @@ import os
 import numpy as np
 from testfixtures import TempDirectory
 
+from kid_readout.measurement import core
 from kid_readout.measurement.test import utilities
 from kid_readout.measurement.io import nc
 
@@ -76,4 +77,18 @@ def test_cached_stream_array():
         assert np.all(original.s21_raw == io.read(name).s21_raw)
 
 
+# TODO: implement me!
 
+"""
+def test_from_series():
+    with TempDirectory() as directory:
+        filename = 'test.nc'
+        io = nc.NCFile(os.path.join(directory.path, filename))
+        original = utilities.CornerCases()
+        name = 'corner_cases'
+        io.write(original, name)
+        io.close()
+        df = original.to_dataframe()
+        original.add_origin(df)
+        assert original == core.from_series(df.iloc[0])
+"""

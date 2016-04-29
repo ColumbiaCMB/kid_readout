@@ -21,7 +21,7 @@ def test_measurement_to_dataframe():
     assert all(core.Measurement().to_dataframe() == pd.DataFrame())
 
 
-def test_measurement_add_origin():
+def test_node_add_origin():
     m = core.Measurement()
     assert m._io is None
     df = m.to_dataframe()
@@ -32,7 +32,7 @@ def test_measurement_add_origin():
     m.add_origin(df)
     assert df.shape == (1, 1 + 3)
     s = df.iloc[0]
-    assert s.io_class == 'kid_readout.measurement.io.memory.Dictionary'
+    assert s.io_class == 'Dictionary'
     assert s.root_path is None  # The Dictionary IO class doesn't use disk.
     assert s.node_path == '/Measurement0'
 
@@ -59,7 +59,6 @@ def test_measurement_list():
     assert len(ml) == length
     assert np.all(ml == contents)
     assert np.all(m._parent is ml for m in ml)
-    assert core.is_sequence(ml.__module__ + '.' + ml.__class__.__name__)
 
 
 def test_io_list():
@@ -106,15 +105,6 @@ def test_comparison_code_attribute():
     m1.attribute = 1
     m2.attribute = 2
     assert m1 != m2
-
-
-def test_instantiate():
-    full_class_name = 'kid_readout.measurement.core.Measurement'
-    variables = {'state': {'key': 'value'},
-                 'description': 'instantiated Measurement'}
-    m = core.instantiate(full_class_name, variables)
-    assert m.state == core.StateDict(variables['state'])
-    assert m.description == variables['description']
 
 
 def test_join():
