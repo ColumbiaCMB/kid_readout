@@ -17,24 +17,29 @@ def test_measurement_instantiation_blank():
     assert m._io_node_path is None
 
 
-def test_measurement_to_dataframe():
-    assert all(core.Measurement().to_dataframe() == pd.DataFrame())
-
-
-def test_node_add_origin():
-    m = core.Measurement()
-    assert m._io is None
-    df = m.to_dataframe()
-    assert df is None
-    df = pd.DataFrame([0])  # This creates a DataFrame with shape (1, 1).
+def test_node_composite_add_origin():
+    original = utilities.fake_single_sweep_stream()
     io = memory.Dictionary()
-    io.write(m)  # This sets io as m._io
-    m.add_origin(df)
-    assert df.shape == (1, 1 + 3)
-    s = df.iloc[0]
-    assert s.io_class == 'Dictionary'
-    assert s.root_path is None  # The Dictionary IO class doesn't use disk.
-    assert s.node_path == '/Measurement0'
+    name = 'sweep_stream'
+    io.write(original, name)
+    ss = io.read(name)
+    ss_df = ss.to_dataframe()
+    assert ss_df.io_class == 'Dictionary'
+    assert ss_df.root_path is None
+    assert ss_df.node_path == core.join('/', name)
+    sweep = io.read(core.join(name, 'sweep'))
+    stream = io.read(core.join(name, 'stream'))
+    composite = basic.SingleSweepStream(sweep=sweep, stream=stream)
+    composite_df = composite.to_dataframe()
+    assert composite_df.io_class is None
+    assert composite_df.root_path is None
+    assert composite_df.node_path is None
+    assert composite_df['sweep.io_class'] == 'Dictionary'
+    assert composite_df['sweep.root_path'] is None
+    assert composite_df['sweep_node_path'] == core.join('/', name, 'sweep')
+    assert composite_df['stream.io_class'] == 'Dictionary'
+    assert composite_df['stream.root_path'] is None
+    assert composite_df['stream'] == core.join('/', name, 'stream')
 
 
 # TODO: implement after add_legacy_origin is fixed.

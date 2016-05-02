@@ -100,6 +100,7 @@ import keyword
 import importlib
 from collections import OrderedDict
 import numpy as np
+import pandas as pd
 
 from kid_readout.measurement import classes
 
@@ -191,24 +192,46 @@ class Node(object):
         else:
             return join(self._parent.current_node_path, self._parent._locate(self))
 
-    def add_origin(self, dataframe, prefix=''):
+    def add_origin(self, dataframe):
         """
-        Add to the given dataframe enough information to load the data from which it was created. Using this
-        information, the from_series() function in this module will return the original data.
+        Add to the given dataframe enough information to load the data from which it was created.
 
-        This method adds the IO class, the path to the root file or directory, and the node path corresponding to this
-        node, which will all be None unless the Node has been read from or written to disk.
+        This method adds columns named for the IO_CLASS_NAME, ROOT_PATH, and NODE_PATH variables in this module; the
+        columns contain the IO class, the path to the root file or directory, and the node path to this node. The
+        from_series() function in this module can use this information to load the original data.
+
+        If this node was not loaded from disk then it has no origin information and the values of the above will all be
+        None. If this is the case, this method will attempt to add origin information for each child node, using the
+        attribute name as a prefix. For example, if a measurement has an attribute `child`, then this function will
+        create columns
+        `io_class_name`: None
+        etc., because the top-level node has no origin information, and will also create columns
+        `child.io_class_name`: NCFile
+        and so on. The from_series() function will be able to load the child measurements once the prefix is stripped.
 
         Parameters
         ----------
         dataframe : pandas.DataFrame
             The dataframe to which this method will add origin information.
-        prefix : str
-            This prefix is prepended to the names of the columns that contain origin information.
         """
-        dataframe[prefix + 'io_class'] =  self._io.__class__.__name__
-        dataframe[prefix + 'root_path'] = self._io.root_path
-        dataframe[prefix + 'node_path'] = self.io_node_path
+        try:
+            dataframe[IO_CLASS_NAME] = self._io.__class__.__name__
+            dataframe[ROOT_PATH] = self._io.root_path
+            dataframe[NODE_PATH] = self.io_node_path
+        except AttributeError:  # This node has not been read from or written to disk, so try its children.
+            dataframe[IO_CLASS_NAME] = None
+            dataframe[ROOT_PATH] = None
+            dataframe[NODE_PATH] = None
+            for key, value in self.__dict__.items():
+                if not key.startswith('_') and isinstance(value, Node):
+                    try:
+                        dataframe['.'.join((key, IO_CLASS_NAME))] = value._io.__class__.__name__
+                        dataframe['.'.join((key, ROOT_PATH))] = value._io.root_path
+                        dataframe['.'.join((key, NODE_PATH))] = value.io_node_path
+                    except AttributeError:
+                        dataframe['.'.join((key, IO_CLASS_NAME))] = None
+                        dataframe['.'.join((key, ROOT_PATH))] = None
+                        dataframe['.'.join((key, NODE_PATH))] = None
 
     def _locate(self, node):
         """
@@ -353,7 +376,7 @@ class Measurement(Node):
         pandas.DataFrame
             A DataFrame containing data from this measurement.
         """
-        pass
+        return pd.DataFrame({'description': self.description}, index=[0])
 
     # TODO: decide how to implement this, if at all.
     """
@@ -841,9 +864,9 @@ def get_class(full_class_name):
 
 
 def from_series(series):
-    io_class = get_class(classes.full_name(series.io_class, None))
-    io = io_class(series.root_path)
-    return io.read(series.io_node_path)
+    io_class = get_class(classes.full_name(class_name=series[IO_CLASS_NAME], version=None))
+    io = io_class(series[ROOT_PATH])
+    return io.read(series[NODE_PATH])
 
 
 # Node-related functions

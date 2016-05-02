@@ -96,9 +96,9 @@ class RoachStream(core.Measurement):
         return tuple(shape)
 
     def fold(self, array, period_samples=None, reduce=np.mean):
-        reshaped = array.reshape(self.folded_shape(array,period_samples=period_samples))
+        reshaped = array.reshape(self.folded_shape(array, period_samples=period_samples))
         if reduce:
-            return reduce(reshaped,axis=reshaped.ndim-2)
+            return reduce(reshaped, axis=reshaped.ndim-2)
         else:
             return reshaped
 
@@ -435,8 +435,6 @@ class SingleSweepStream(core.Measurement):
         self.sweep = sweep
         self.stream = stream
         self.number = number
-        self.fold = stream.fold
-        self.folded_shape = stream.folded_shape
         super(SingleSweepStream, self).__init__(state=state, description=description)
 
     @property
@@ -596,6 +594,24 @@ class SingleSweepStream(core.Measurement):
         if add_origin:
             self.add_origin(dataframe)
         return dataframe
+
+    # TODO: think about how to avoid code reuse here; monkey-patching in __init__ causes read/write problems.
+    def folded_shape(self, array, period_samples=None):
+        if period_samples is None:
+            period_samples = calculate.modulation_period_samples(self.stream.roach_state)
+        if period_samples == 0:
+            raise ValueError("Cannot fold unmodulated data or with period=0")
+        shape = list(array.shape)
+        shape[-1] = -1
+        shape.append(period_samples)
+        return tuple(shape)
+
+    def fold(self, array, period_samples=None, reduce=np.mean):
+        reshaped = array.reshape(self.folded_shape(array, period_samples=period_samples))
+        if reduce:
+            return reduce(reshaped, axis=reshaped.ndim - 2)
+        else:
+            return reshaped
 
 
 class SweepStreamList(core.Measurement):
