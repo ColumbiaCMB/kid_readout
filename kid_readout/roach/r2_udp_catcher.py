@@ -35,32 +35,56 @@ def get_udp_packets(ri,npkts,addr=('10.0.0.1',55555)):
     
 def get_udp_data(ri,npkts,nchans,addr=('10.0.0.1',55555)):
     pkts = get_udp_packets(ri, npkts, addr=addr)
-    darray,seqnos = decode_packets(pkts,nchans)
+    darray, seqnos, num_bad_pkts, num_dropped_pkts = decode_packets(pkts,nchans)
     return darray,seqnos
 
 
 def decode_packets(plist,nchans):
-    packet_counter = []
-    raw_data = []
+    nfft2 = 2**14 / 2
+    chns_per_pkt = 256
+    pkt_counter_step = nfft2 * chns_per_pkt / nchans
+
+    start_ind = get_first_packet_index(plist)
+    end_ind = len(plist) - get_first_packet_index(plist[::-1])
+    num_lost = start_ind + len(plist) - end_ind
+    plist = plist[start_ind:end_ind]
+    start = np.fromstring(plist[0],'<u4')[-1]
+    stop = np.fromstring(plist[-1],'<u4')[-1]
+
+    num_expected_pkts = (stop - start) / pkt_counter_step + 1
+    packet_counter = np.empty(num_expected_pkts)
+    packet_counter.fill(np.nan)
+    data = np.empty(num_expected_pkts*chns_per_pkt, dtype='complex64')
+    data.fill(np.nan)
+
+    num_bad_pkts = 0
     for pkt in plist:
-        try: 
-            all_data = np.fromstring(pkt,'<u4')
-        except ValueError:
-            # length not a multiple of 4
-            print "got bad packet"
-            continue 
-        if all_data.shape[0] != 257:
-            print "got weird packet",all_data.shape
-            continue 
-        raw_data.append(all_data[:-1])
-        packet_counter.append(all_data[-1])
-    data = np.hstack(raw_data)
-    data = data.view('<i2').astype('float32').view('complex64')
-    #we think the real and imaginary parts are switched in the packet so we undo that here
-    data = np.conj(data)*1j
+        if len(pkt) != 1028:
+            num_bad_pkts += 1
+            continue
+        all_data = np.fromstring(pkt,'<u4')
+        pkt_addr = all_data[-1]
+        k = (pkt_addr - start) / pkt_counter_step
+        si = k * chns_per_pkt
+        sf = (k + 1) * chns_per_pkt
+        data[si:sf] = 1j*np.conj(all_data[:-1].view('<i2').astype('float32').view('complex64'))
+        packet_counter[k] = pkt_addr
+
+    num_bad_pkts += num_lost
     data = data.reshape((-1,nchans))
-    packet_counter = np.array(packet_counter)
-    return data,packet_counter
+    num_dropped_pkts = np.sum(np.isnan(packet_counter)) - (num_bad_pkts - num_lost)
+    return data, np.array([start]), num_bad_pkts, num_dropped_pkts
+
+def get_first_packet_index(plist):
+    start = 0
+    for pkt in plist:
+        if len(pkt) != 1028:
+            start += 1
+            continue
+        return start
+    return len(plist)
+
+
 
 ptype = np.dtype([('idle','>i2'),
                   ('idx', '>i2'),
