@@ -33,7 +33,7 @@ ri.set_lo(1250.)
 state = dict(field_canceling_magnet=True,cryostat='hpd')
 
 tic = time.time()
-for lo in 2010.+190*np.arange(0,10):
+for lo in 2010.+190*np.arange(0,2):
     print "lo:",lo
     df = new_nc_file(suffix='scan_lo_%.1f_MHz' % lo)
     ri.set_lo(lo)
