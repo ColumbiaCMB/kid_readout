@@ -10,7 +10,7 @@ import scipy
 import borph_utils
 from kid_readout.roach.tests.mock_roach import MockRoach
 import udp_catcher
-from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
+from kid_readout.settings import BASE_DATA_DIR
 from kid_readout.roach import tools
 from kid_readout.measurement.core import StateDict
 from kid_readout.measurement.basic import StreamArray
@@ -47,7 +47,7 @@ class RoachInterface(object):
                 Finally, for test suites, you can directly pass a Valon class or a class with the same
                 interface.
         host_ip: Override IP address to which the ROACH should send it's data. If left as None,
-                the host_ip will be set appropriately based on the hostname.
+                the host_ip will be set appropriately based on the HOSTNAME.
         """
         self._using_mock_roach = False
         if roach:

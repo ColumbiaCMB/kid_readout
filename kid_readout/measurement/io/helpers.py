@@ -1,10 +1,11 @@
-__author__ = 'gjones'
-
 import os
 import time
-from kid_readout.measurement.io.nc import NCFile as NCFile
 
-from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
+from kid_readout.measurement.io.nc import NCFile
+from kid_readout.settings import BASE_DATA_DIR
+
+__author__ = 'gjones'
+
 
 def new_nc_file(suffix='',directory=BASE_DATA_DIR):
     if not suffix.startswith('_'):

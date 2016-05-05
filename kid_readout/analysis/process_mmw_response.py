@@ -11,7 +11,7 @@ import kid_readout.analysis.resonator
 from kid_readout.analysis.resonator.legacy_resonator import normalized_s21_to_detuning
 import kid_readout.measurement.io.readoutnc
 import kid_readout.analysis.resources.skip5x4
-from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
+from kid_readout.settings import BASE_DATA_DIR
 
 file_id_to_res_id = [0,1,2,3,4,5,6,7,8,17,16,15,14,13,10,9]
 
