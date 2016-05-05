@@ -44,7 +44,7 @@ def decode_packets(plist,nchans):
     nfft2 = 2**14 / 2
     chns_per_pkt = 256
     pkt_counter_step = nfft2 * chns_per_pkt / nchans
-    packet_total = cntr_total / pkt_counter_step
+    max_num_pkts = cntr_total / pkt_counter_step
     npkts = len(plist)
 
     start_ind = get_first_packet_index(plist)
@@ -58,22 +58,31 @@ def decode_packets(plist,nchans):
         num_bad_pkts = npkts
         num_dropped_pkts = 0
     else:
-        start = np.fromstring(plist[0],'<u4')[-1]
-        stop = np.fromstring(plist[-1],'<u4')[-1]
-        num_expected_pkts = (stop - start) / pkt_counter_step + 1
+        start_addr = np.fromstring(plist[0],'<u4')[-1]
+        stop_addr = np.fromstring(plist[-1],'<u4')[-1]
+        num_expected_pkts = (stop_addr - start_addr) / pkt_counter_step + 1
+        if npkts > max_num_pkts:
+            num_expected_pkts += int(npkts / max_num_pkts) * max_num_pkts
         packet_counter = np.empty(num_expected_pkts)
         packet_counter.fill(np.nan)
         data = np.empty(num_expected_pkts*chns_per_pkt, dtype='complex64')
         data.fill(np.nan)
 
         num_bad_pkts = 0
+        n = 0
+        was_below = False
         for pkt in plist:
             if len(pkt) != 1028:
                 num_bad_pkts += 1
                 continue
             all_data = np.fromstring(pkt,'<u4')
             pkt_addr = all_data[-1]
-            k = (pkt_addr - start) / pkt_counter_step
+            if was_below and (pkt_addr >= start_addr):
+                n += 1
+                was_below = False
+            if pkt_addr < start_addr:
+                was_below = True
+            k = (pkt_addr - start_addr) / pkt_counter_step + n*max_num_pkts
             si = k * chns_per_pkt
             sf = (k + 1) * chns_per_pkt
             data[si:sf] = 1j*np.conj(all_data[:-1].view('<i2').astype('float32').view('complex64'))
@@ -82,7 +91,7 @@ def decode_packets(plist,nchans):
         num_bad_pkts += num_lost
         data = data.reshape((-1,nchans))
         num_dropped_pkts = np.sum(np.isnan(packet_counter)) - (num_bad_pkts - num_lost)
-    return data, np.array([start]), num_bad_pkts, num_dropped_pkts
+    return data, np.array([start_addr]), num_bad_pkts, num_dropped_pkts
 
 def get_first_packet_index(plist):
     start = 0
