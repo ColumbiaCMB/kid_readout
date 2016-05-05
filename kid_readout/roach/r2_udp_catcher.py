@@ -49,8 +49,6 @@ def decode_packets(plist,nchans):
 
     start_ind = get_first_packet_index(plist)
     end_ind = npkts - get_first_packet_index(plist[::-1])
-    if npkts > packet_total:
-        end_ind += np.floor(npkts / packet_total)*packet_total
     num_lost = start_ind + npkts - end_ind
     plist = plist[start_ind:end_ind]
     if len(plist) == 0:
