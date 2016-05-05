@@ -50,7 +50,7 @@ class RoachBaseband(RoachInterface):
                 Finally, for test suites, you can directly pass a Valon class or a class with the same
                 interface.
         host_ip: Override IP address to which the ROACH should send it's data. If left as None,
-                the host_ip will be set appropriately based on the hostname.
+                the host_ip will be set appropriately based on the HOSTNAME.
         initialize: Default True, will call self.initialize() which will try to load state from saved config
                 Set to False if you don't want this to happen.
         """

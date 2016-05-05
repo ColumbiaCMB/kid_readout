@@ -6,7 +6,7 @@ import numpy as np
 from subprocess import check_output
 from kid_readout.measurement.io import data_block
 
-from kid_readout.analysis.resources.local_settings import BASE_DATA_DIR
+from kid_readout.settings import BASE_DATA_DIR
 
 class DataFile():
     def __init__(self, base_dir=BASE_DATA_DIR, suffix=''):
