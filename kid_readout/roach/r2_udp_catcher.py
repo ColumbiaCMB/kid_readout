@@ -40,6 +40,7 @@ def get_udp_data(ri,npkts,nchans,addr=('10.0.0.1',55555)):
 
 
 def decode_packets(plist,nchans):
+    assert(nchans>0)
     cntr_total = 2**32
     nfft2 = 2**14 / 2
     chns_per_pkt = 256
@@ -54,7 +55,7 @@ def decode_packets(plist,nchans):
     if len(plist) == 0:
         data = np.empty(npkts*chns_per_pkt, dtype='complex64')
         data.fill(np.nan)
-        start = np.nan
+        start_addr = np.nan
         num_bad_pkts = npkts
         num_dropped_pkts = 0
     else:
