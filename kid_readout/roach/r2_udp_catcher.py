@@ -22,7 +22,6 @@ def get_udp_packets(ri,npkts,addr=('10.0.0.1',55555)):
         s.settimeout(1)
         
         ri.r.write_int('txrst',0)
-        time.sleep(0.1)
         pkts = []
         while len(pkts) < npkts:
             pkt = s.recv(2000)
