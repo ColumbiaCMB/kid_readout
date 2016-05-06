@@ -32,7 +32,17 @@ if StrictVersion(lmfit.__version__) < StrictVersion('0.9.3'):
             retval = np.asarray(diff_as_ri).ravel()
             return retval
 else:
-    ComplexModel = lmfit.model.Model
+    class ComplexModel(lmfit.model.Model):
+        def eval(self, params=None, **kwargs):
+            ind_var = kwargs[self.independent_vars[0]]
+            is_scalar = np.isscalar(ind_var)
+            kwargs[self.independent_vars[0]] = np.atleast_1d(ind_var)
+            result = super(ComplexModel,self).eval(params=params,**kwargs)
+            if is_scalar:
+                return result[0]
+            else:
+                return result
+#    ComplexModel = lmfit.model.Model
 
 class GeneralCableModel(ComplexModel):
     def __init__(self, *args, **kwargs):
