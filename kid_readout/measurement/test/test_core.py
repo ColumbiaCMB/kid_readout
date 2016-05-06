@@ -24,22 +24,24 @@ def test_node_composite_add_origin():
     io.write(original, name)
     ss = io.read(name)
     ss_df = ss.to_dataframe()
-    assert ss_df.io_class == 'Dictionary'
-    assert ss_df.root_path is None
-    assert ss_df.node_path == core.join('/', name)
+    for k,row in ss_df.iterrows():
+        assert row.io_class == 'Dictionary'
+        assert row.root_path is None
+        assert row.node_path == core.join('/', name)
     sweep = io.read(core.join(name, 'sweep'))
     stream = io.read(core.join(name, 'stream'))
     composite = basic.SingleSweepStream(sweep=sweep, stream=stream)
     composite_df = composite.to_dataframe()
-    assert composite_df.io_class is None
-    assert composite_df.root_path is None
-    assert composite_df.node_path is None
-    assert composite_df['sweep.io_class'] == 'Dictionary'
-    assert composite_df['sweep.root_path'] is None
-    assert composite_df['sweep_node_path'] == core.join('/', name, 'sweep')
-    assert composite_df['stream.io_class'] == 'Dictionary'
-    assert composite_df['stream.root_path'] is None
-    assert composite_df['stream'] == core.join('/', name, 'stream')
+    for k,row in composite_df.iterrows():
+        assert row.io_class is None
+        assert row.root_path is None
+        assert row.node_path is None
+        assert row['sweep.io_class'] == 'Dictionary'
+        assert row['sweep.root_path'] is None
+        assert row['sweep.node_path'] == core.join('/', name, 'sweep')
+        assert row['stream.io_class'] == 'Dictionary'
+        assert row['stream.root_path'] is None
+        assert row['stream.node_path'] == core.join('/', name, 'stream')
 
 
 # TODO: implement after add_legacy_origin is fixed.
