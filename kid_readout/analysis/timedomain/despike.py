@@ -36,6 +36,8 @@ def deglitch_window(data, window_length, thresh=6):
     out = np.empty_like(data)
     step = window_length//2
     nstep = data.shape[0]//step
+    if nstep == 0:
+        nstep = 1
     for k in xrange(nstep):
         start = k-1
         if start < 0:
