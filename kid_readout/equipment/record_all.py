@@ -1,16 +1,15 @@
-import os
 import time
+
 from kid_readout.equipment import sim
+from kid_readout.settings import LOCKIN_SERIAL
+
 
 def main():
 
     # Time between temperature requests, in seconds.
     delay = 3
 
-    basepath = '/dev/serial/by-id'
-    serial_id = 'usb-FTDI_USB_to_Serial_Cable_FTGQM0GY-if00-port0'
-    serial_port = os.path.realpath(os.path.join(basepath, serial_id))
-    sim900 = sim.SIM900(serial_port, baudrate=115200)
+    sim900 = sim.SIM900(serial_port=LOCKIN_SERIAL, baudrate=115200)
     print("Connected to {}".format(sim900.identification))
     print("Port: Connected device:")
     for port, device in sim900.ports.items():
@@ -98,7 +97,7 @@ def main():
             print(all_values)
             time.sleep(delay)
 
-    except KeyboardInterrupt:
+    finally:
         f.close()
         sim900.disconnect()
         sim900.serial.close()
