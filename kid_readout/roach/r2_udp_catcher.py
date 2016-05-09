@@ -36,6 +36,8 @@ def get_udp_packets(ri,npkts,addr=('10.0.0.1',55555)):
 def get_udp_data(ri,npkts,nchans,addr=('10.0.0.1',55555)):
     pkts = get_udp_packets(ri, npkts, addr=addr)
     darray, seqnos, num_bad_pkts, num_dropped_pkts = decode_packets(pkts,nchans)
+    print "bad ", num_bad_pkts
+    print "dropped ", num_dropped_pkts
     return darray,seqnos
 
 
@@ -56,6 +58,7 @@ def decode_packets(plist,nchans):
         data = np.empty(npkts*chns_per_pkt, dtype='complex64')
         data.fill(np.nan)
         start_addr = np.nan
+        packet_counter = np.array([start_addr])
         num_bad_pkts = npkts
         num_dropped_pkts = 0
     else:
@@ -92,7 +95,7 @@ def decode_packets(plist,nchans):
         num_bad_pkts += num_lost
         data = data.reshape((-1,nchans))
         num_dropped_pkts = np.sum(np.isnan(packet_counter)) - (num_bad_pkts - num_lost)
-    return data, np.array([start_addr]), num_bad_pkts, num_dropped_pkts
+    return data, packet_counter, num_bad_pkts, num_dropped_pkts
 
 def get_first_packet_index(plist):
     start = 0
