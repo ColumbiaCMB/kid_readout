@@ -350,7 +350,8 @@ class Measurement(Node):
         self._validate_dimensions()
 
     def as_class(self, class_):
-        return class_(**self.__dict__)
+        public = dict([(k, v) for k, v in self.__dict__.items() if not k.startswith('_')])
+        return class_(**public)
 
     def start_epoch(self):
         try:
