@@ -592,7 +592,7 @@ class RoachInterface(object):
     def get_measurement(self, num_seconds, power_of_two=True, demod=True, **kwargs):
         num_blocks = self.blocks_per_second*num_seconds
         if power_of_two:
-            log2 = np.round(np.log2(num_blocks))
+            log2 = np.int(np.round(np.log2(num_blocks)))  # Changed to int so that num_blocks is an int
             if log2 < 0:
                 log2 = 0
             num_blocks = 2 ** log2

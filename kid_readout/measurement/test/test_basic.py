@@ -32,10 +32,10 @@ def test_s21_raw_mean():
 
 
 def test_s21_raw_mean_error():
-    """Using np.nan * (1 + 1j) is crucial here because the error calculation takes real and imag parts of s21_raw."""
     num_tones = 4
     num_samples = 128
     s21 = np.empty((num_tones, num_samples), dtype=np.complex)
+    # Using np.nan * (1 + 1j) is crucial here because the error calculation takes real and imag parts of s21_raw.
     s21[0, :] = np.nan * (1 + 1j)
     s21[1, ::2] = 1 + 2j
     s21[1, 1::2] = np.nan * (1 + 1j)

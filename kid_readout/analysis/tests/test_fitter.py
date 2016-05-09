@@ -1,8 +1,10 @@
-import kid_readout.analysis.fitter
-
 import numpy as np
 #import nose.tools
 import lmfit
+import warnings
+
+import kid_readout.analysis.fitter
+
 
 def complex_dummy_guess(x, y):
     offset_guess = np.real(y[abs(x).argmin()])
@@ -11,6 +13,7 @@ def complex_dummy_guess(x, y):
     params.add('offset', value=offset_guess)
     params.add('slope', value=slope_guess)
     return params
+
 
 def complex_dummy_model(params, x):
     slope = params['slope'].value
@@ -25,8 +28,10 @@ def test_dtype_agreement():
             print dtype1,dtype2
             y_data = np.random.randn(10)+1j*np.random.randn(10)
             errors = np.random.randn(10)+1j*np.random.randn(10)
-            y_data = y_data.astype(dtype1)
-            errors = errors.astype(dtype2)
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', np.ComplexWarning)
+                y_data = y_data.astype(dtype1)
+                errors = errors.astype(dtype2)
             x_data = np.linspace(100,110,10)
             if np.iscomplexobj(y_data) and np.iscomplexobj(errors):
                 kid_readout.analysis.fitter.Fitter(x_data=x_data,y_data=y_data,errors=errors,

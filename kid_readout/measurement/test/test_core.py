@@ -24,7 +24,7 @@ def test_node_composite_add_origin():
     io.write(original, name)
     ss = io.read(name)
     ss_df = ss.to_dataframe()
-    for k,row in ss_df.iterrows():
+    for k, row in ss_df.iterrows():
         assert row.io_class == 'Dictionary'
         assert row.root_path is None
         assert row.node_path == core.join('/', name)
@@ -32,7 +32,7 @@ def test_node_composite_add_origin():
     stream = io.read(core.join(name, 'stream'))
     composite = basic.SingleSweepStream(sweep=sweep, stream=stream)
     composite_df = composite.to_dataframe()
-    for k,row in composite_df.iterrows():
+    for k, row in composite_df.iterrows():
         assert row.io_class is None
         assert row.root_path is None
         assert row.node_path is None

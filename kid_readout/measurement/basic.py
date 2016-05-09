@@ -582,7 +582,7 @@ class SingleSweepStream(core.Measurement):
     def to_dataframe(self, deglitch=True, add_origin=True):
         if not deglitch:
             self._set_q_and_x(deglitch=False)
-        data = {'number': self.number, 'analysis_epoch':time.time(), 'start_epoch':self.start_epoch()}
+        data = {'number': self.number, 'analysis_epoch': time.time(), 'start_epoch': self.start_epoch()}
         try:
             for thermometer, temperature in self.state['temperature'].items():
                 data['temperature_{}'.format(thermometer)] = temperature
@@ -612,8 +612,8 @@ class SingleSweepStream(core.Measurement):
         data['res_s21_data'] = [self.sweep.resonator.data]
         data['res_frequency_data'] = [self.sweep.resonator.frequency]
         data['res_s21_errors'] = [self.sweep.resonator.errors]
-        modelf = np.linspace(self.sweep.resonator.frequency.min(),self.sweep.resonator.frequency.max(),1000)
-        models21 = self.sweep.resonator.model.eval(params=self.sweep.resonator.current_params,f=modelf)
+        modelf = np.linspace(self.sweep.resonator.frequency.min(), self.sweep.resonator.frequency.max(), 1000)
+        models21 = self.sweep.resonator.model.eval(params=self.sweep.resonator.current_params, f=modelf)
         data['res_model_frequency'] = [modelf]
         data['res_model_s21'] = [models21]
 
