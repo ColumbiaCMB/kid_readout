@@ -78,7 +78,8 @@ _versioned = {'Measurement': {0: 'kid_readout.measurement.core.Measurement'},
               'SingleSweepStream': {0: 'kid_readout.measurement.basic.SingleSweepStream'},
               'SweepStreamArray': {0: 'kid_readout.measurement.basic.SweepStreamArray'},
               'SweepStreamList': {0: 'kid_readout.measurement.basic.SweepStreamList'},
-              'SingleSweepStreamList': {0: 'kid_readout.measurement.basic.SingleSweepStreamList'}
+              'SingleSweepStreamList': {0: 'kid_readout.measurement.basic.SingleSweepStreamList'},
+              'Scan': {0: 'kid_readout.measurement.basic.Scan'}
               }
 
 # This dict includes the IO implementations, which have no version numbers, as well as any classes that have no version

@@ -650,3 +650,22 @@ class SingleSweepStreamList(core.Measurement):
             vector.append(state)
         return np.array(vector)
 
+
+class Scan(core.Measurement):
+
+    def __init__(self, stream_arrays, state=None, description=''):
+        self.stream_arrays = stream_arrays
+        super(Scan, self).__init__(state=state, description=description)
+
+    @memoized_property
+    def ascending_order(self):
+        tone_bins = np.concatenate([sa.tone_bin for sa in self.stream_arrays])
+        return tone_bins.argsort()
+
+    @memoized_property
+    def frequency(self):
+        return np.concatenate([sa.frequency for sa in self.stream_arrays])[self.ascending_order]
+
+    @memoized_property
+    def s21_raw_mean(self):
+        return np.concatenate([sa.s21_raw_mean for sa in self.stream_arrays])[self.ascending_order]
