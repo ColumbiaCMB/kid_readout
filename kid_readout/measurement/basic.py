@@ -78,12 +78,46 @@ class RoachStream(core.Measurement):
 
     @memoized_property
     def s21_raw_mean(self):
-        return self.s21_raw.mean(axis=-1)
+        """
+        Return the mean of s21_raw for each channel with NaN samples excluded.
+
+        Raises
+        ------
+        RuntimeWarning
+            If all of the samples for a channel are NaN; in this case the return value for that channel will be NaN.
+
+        Returns
+        -------
+        numpy.ndarray(complex)
+           The mean of s21_raw for each channel.
+        """
+        return np.nanmean(self.s21_raw, axis=-1)
 
     @memoized_property
     def s21_raw_mean_error(self):
-        return ((self.s21_raw.real.std(axis=-1) + 1j * self.s21_raw.imag.std(axis=-1)) /
-                self.s21_raw.shape[-1] ** (1 / 2))
+        """
+        Return an estimate of the complex standard error of the mean in s21_raw_mean.
+
+        The calculation assumes that the samples are independent, which is probably not true.
+
+        Raises
+        ------
+        RuntimeWarning
+            If all of the samples for a channel are NaN; in this case the return value for that channel will be NaN.
+
+        Returns
+        -------
+        numpy.ndarray(complex)
+            An estimate of the complex RMS error.
+        """
+        #assert np.all(np.isnan(self.s21_raw.real) == np.isnan(self.s21_raw.imag))
+        num_good_samples = np.sum(~np.isnan(self.s21_raw), axis=-1).astype(np.float)  # Allow conversion to np.nan.
+        try:
+            num_good_samples[num_good_samples == 0] = np.nan  # Avoid zero-division.
+        except TypeError:  # num_good_samples is not an array
+            num_good_samples = np.nan
+        return ((np.nanstd(self.s21_raw.real, axis=-1) + 1j * np.nanstd(self.s21_raw.imag, axis=-1)) /
+                np.sqrt(num_good_samples))
 
     def folded_shape(self, array, period_samples=None):
         if period_samples is None:
@@ -653,14 +687,15 @@ class SingleSweepStreamList(core.Measurement):
 
 class Scan(core.Measurement):
 
+    _version = 0
+
     def __init__(self, stream_arrays, state=None, description=''):
         self.stream_arrays = stream_arrays
         super(Scan, self).__init__(state=state, description=description)
 
     @memoized_property
     def ascending_order(self):
-        tone_bins = np.concatenate([sa.tone_bin for sa in self.stream_arrays])
-        return tone_bins.argsort()
+        return np.concatenate([sa.frequency for sa in self.stream_arrays]).argsort()
 
     @memoized_property
     def frequency(self):

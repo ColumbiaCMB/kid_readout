@@ -1,12 +1,65 @@
 import numpy as np
+import warnings
 
+from kid_readout.measurement import basic
+from kid_readout.measurement.test import utilities
 from kid_readout.roach.tests.mock_roach import MockRoach
 from kid_readout.roach.tests.mock_valon import MockValon
 from kid_readout.roach.baseband import RoachBaseband
 from kid_readout.measurement.acquire import acquire
 
 
-class Test(object):
+def test_s21_raw_mean():
+    num_tones = 4
+    num_samples = 128
+    s21 = np.empty((num_tones, num_samples), dtype=np.complex)
+    s21[0, :] = np.nan * (1 + 1j)
+    s21[1, :num_samples/2] = 1 + 2j
+    s21[1, num_samples/2:] = np.nan * (1 + 1j)
+    s21[2, :] = np.linspace(-1, 1, num_samples) + 1j * np.linspace(-2, 0, num_samples)
+    s21[3, :] = np.linspace(-100, 0, num_samples) + 1j * np.linspace(-100, 100, num_samples)
+    sa = utilities.fake_stream_array(num_tones=num_tones)
+    sa.s21_raw = s21
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        s21_raw_mean = sa.s21_raw_mean
+        assert len(w) == 1
+        assert issubclass(w[0].category, RuntimeWarning)
+    assert np.isnan(s21_raw_mean[0])
+    np.testing.assert_allclose(s21_raw_mean[1], 1 + 2j)
+    np.testing.assert_allclose(s21_raw_mean[2], 0 - 1j)
+    np.testing.assert_allclose(s21_raw_mean[3], -50 + 0j)
+
+
+def test_s21_raw_mean_error():
+    """Using np.nan * (1 + 1j) is crucial here because the error calculation takes real and imag parts of s21_raw."""
+    num_tones = 4
+    num_samples = 128
+    s21 = np.empty((num_tones, num_samples), dtype=np.complex)
+    s21[0, :] = np.nan * (1 + 1j)
+    s21[1, ::2] = 1 + 2j
+    s21[1, 1::2] = np.nan * (1 + 1j)
+    s21[2, ::2] = 1 + 0j
+    s21[2, 1::2] = 0 + 1j
+    s21[3, ::4] = -1 + 0j
+    s21[3, 2::4] = 0 - 1j
+    s21[3, 1::2] = np.nan * (1 + 1j)
+    sa = utilities.fake_stream_array(num_tones=num_tones)
+    sa.s21_raw = s21
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        s21_raw_mean_error = sa.s21_raw_mean_error
+        print(w)
+        assert len(w) == 2
+        assert issubclass(w[0].category, RuntimeWarning)
+        assert issubclass(w[1].category, RuntimeWarning)
+    assert np.isnan(s21_raw_mean_error[0])
+    np.testing.assert_allclose(s21_raw_mean_error[1], 0)
+    np.testing.assert_allclose(s21_raw_mean_error[2], (0.5 + 0.5j) / np.sqrt(num_samples))
+    np.testing.assert_allclose(s21_raw_mean_error[3], (0.5 + 0.5j) / np.sqrt(num_samples/ 2))
+
+
+class TestStack(object):
 
     @classmethod
     def setup(cls):
@@ -21,6 +74,7 @@ class Test(object):
         state = {'something': 'something state'}
         cls.sweep_array = acquire.run_sweep(ri=ri, tone_banks=tone_banks, num_tone_samples=num_tone_samples,
                                             length_seconds=length_seconds, state=state, description="description")
+
 
     def test_tone_bin_stack(self):
         assert self.sweep_array.tone_bin_stack.shape == (np.sum([stream_array.tone_bin.size
