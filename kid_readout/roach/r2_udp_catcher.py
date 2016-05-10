@@ -92,8 +92,8 @@ def decode_packets(plist,nchans):
             packet_counter[k] = pkt_addr
 
         num_bad_pkts += num_lost
+        num_dropped_pkts = np.sum(np.isnan(data))/nchans - (num_bad_pkts - num_lost)
         data = data.reshape((-1,nchans))
-        num_dropped_pkts = np.sum(np.isnan(packet_counter)) - (num_bad_pkts - num_lost)
     return data, packet_counter, num_bad_pkts, num_dropped_pkts
 
 def get_first_packet_index(plist):
