@@ -23,7 +23,7 @@ def get_udp_packets(ri,npkts,addr=('10.0.0.1',55555)):
         
         ri.r.write_int('txrst',0)
         pkts = []
-        while len(pkts) < npkts:
+        while len(pkts) < (npkts + 1):
             pkt = s.recv(2000)
             if pkt:
                 pkts.append(pkt)
@@ -43,6 +43,7 @@ def get_udp_data(ri,npkts,nchans,addr=('10.0.0.1',55555)):
 
 def decode_packets(plist,nchans):
     assert(nchans>0)
+    plist = plist[1:]
     cntr_total = 2**32
     nfft2 = 2**14 / 2
     chns_per_pkt = 256
@@ -54,24 +55,21 @@ def decode_packets(plist,nchans):
     end_ind = npkts - get_first_packet_index(plist[::-1])
     num_lost = start_ind + npkts - end_ind
     plist = plist[start_ind:end_ind]
+
+    packet_counter = np.empty(npkts)
+    packet_counter.fill(np.nan)
+    data = np.empty(npkts*chns_per_pkt, dtype='complex64')
+    data.fill(np.nan)
+
     if len(plist) == 0:
-        data = np.empty(npkts*chns_per_pkt, dtype='complex64')
-        data.fill(np.nan)
-        start_addr = np.nan
-        packet_counter = np.array([start_addr])
         num_bad_pkts = npkts
         num_dropped_pkts = 0
     else:
         start_addr = np.fromstring(plist[0],'<u4')[-1]
-        stop_addr = np.fromstring(plist[-1],'<u4')[-1]
-        num_expected_pkts = (stop_addr - start_addr) / pkt_counter_step + 1
-        if npkts > max_num_pkts:
-            num_expected_pkts += int(npkts / max_num_pkts) * max_num_pkts
-        packet_counter = np.empty(num_expected_pkts)
-        packet_counter.fill(np.nan)
-        data = np.empty(num_expected_pkts*chns_per_pkt, dtype='complex64')
-        data.fill(np.nan)
-
+        #stop_addr = np.fromstring(plist[-1],'<u4')[-1]
+        #num_expected_pkts = (stop_addr - start_addr) / pkt_counter_step + 1
+        #if npkts > max_num_pkts:
+        #    num_expected_pkts += int(npkts / max_num_pkts) * max_num_pkts
         num_bad_pkts = 0
         n = 0
         was_below = False
@@ -87,6 +85,8 @@ def decode_packets(plist,nchans):
             if pkt_addr < start_addr:
                 was_below = True
             k = (pkt_addr - start_addr) / pkt_counter_step + n*max_num_pkts
+            if k >= npkts:
+                break
             si = k * chns_per_pkt
             sf = (k + 1) * chns_per_pkt
             data[si:sf] = 1j*np.conj(all_data[:-1].view('<i2').astype('float32').view('complex64'))
