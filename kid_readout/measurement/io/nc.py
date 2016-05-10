@@ -292,7 +292,7 @@ class NCSingleStream(basic.SingleStream):
     #              's21_raw': ('sample_time',)
 
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
-                 data_demodulated, roach_state, number=0, state=None, description='Stream'):
+                 data_demodulated, roach_state, sequence_start_number=np.nan, number=0, state=None, description=''):
         """
         Return a new NCSingleStream instance. This class stores the netCDF4 Variable containing the s21_raw data
         instead of a numpy array so that the data is not read from disk unless requested. The Variable is stored using
@@ -319,6 +319,7 @@ class NCSingleStream(basic.SingleStream):
         self.tone_index = tone_index
         self.filterbank_bin = filterbank_bin
         self.epoch = epoch
+        self.sequence_start_number = sequence_start_number
         self.s21_raw_variable = NCVariable(s21_raw)
         self.data_demodulated = data_demodulated
         self.number = number
@@ -345,7 +346,7 @@ class NCStreamArray(basic.StreamArray):
     #                  's21_raw': ('tone_index', 'sample_time')
 
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
-                 data_demodulated, roach_state, state=None, description='Stream'):
+                 data_demodulated, roach_state, sequence_start_number=np.nan, state=None, description=''):
         """
         Return a new NCStreamArray instance. This class stores the netCDF4 Variable containing the s21_raw data
         instead of a numpy array so that the data is not read from disk unless requested. The Variable is stored using
@@ -373,6 +374,7 @@ class NCStreamArray(basic.StreamArray):
         self.tone_index = tone_index
         self.filterbank_bin = filterbank_bin
         self.epoch = epoch
+        self.sequence_start_number = sequence_start_number
         self.s21_raw_variable = NCVariable(s21_raw)
         self.data_demodulated = data_demodulated
         self.roach_state = core.StateDict(roach_state)

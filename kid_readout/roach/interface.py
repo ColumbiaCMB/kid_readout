@@ -596,22 +596,24 @@ class RoachInterface(object):
             if log2 < 0:
                 log2 = 0
             num_blocks = 2 ** log2
-        return self.get_measurement_blocks(num_blocks,demod=demod,**kwargs)
+        return self.get_measurement_blocks(num_blocks, demod=demod, **kwargs)
 
-    def get_measurement_blocks(self,num_blocks, demod=True,**kwargs):
-        epoch = time.time() # This will be improved
-        data, seqnos = self.get_data(num_blocks,demod=demod)
+    def get_measurement_blocks(self, num_blocks, demod=True, **kwargs):
+        epoch = time.time()  # This will be improved
+        data, seqnos = self.get_data(num_blocks, demod=demod)
+        sequence_start_number = seqnos[0]
         if np.isscalar(self.amps):
-            tone_amplitude = self.amps*np.ones(self.tone_bins.shape[1],dtype='float')
+            tone_amplitude = self.amps * np.ones(self.tone_bins.shape[1], dtype='float')
         else:
             tone_amplitude = self.amps.copy()
-        measurement = StreamArray(filterbank_bin=self.fft_bins[self.bank,self.readout_selection].copy(),
-                                  tone_bin=self.tone_bins[self.bank,:].copy(),
+        measurement = StreamArray(tone_bin=self.tone_bins[self.bank, :].copy(),
                                   tone_amplitude=tone_amplitude,  # already copied
-                                  epoch=epoch,
-                                  s21_raw=data.T,  # transpose for now, because measurements are organized channel,time
                                   tone_phase=self.phases.copy(),
                                   tone_index=self.readout_selection.copy(),
+                                  filterbank_bin=self.fft_bins[self.bank, self.readout_selection].copy(),
+                                  epoch=epoch,
+                                  sequence_start_number=sequence_start_number,
+                                  s21_raw=data.T,  # transpose for now, because measurements are organized channel,time
                                   data_demodulated=demod,
                                   roach_state=self.get_state(),
                                   **kwargs)

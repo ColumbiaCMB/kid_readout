@@ -1,16 +1,16 @@
 """
-This module contains basic measurement classes for data acquired with the roach.
+This module contains basic measurement classes for data acquired with the ROACH.
 """
 from __future__ import division
+import time
 from collections import OrderedDict
+
 import numpy as np
 import pandas as pd
-import time
 from matplotlib.pyplot import mlab  # TODO: replace with a scipy PSD estimator
 from memoized_property import memoized_property
 
 from kid_readout.measurement import core
-from kid_readout.analysis.resonator import legacy_resonator
 from kid_readout.analysis.resonator import lmfit_resonator
 from kid_readout.analysis.timedomain.despike import deglitch_window
 from kid_readout.analysis.timedomain import iqnoise
@@ -19,26 +19,55 @@ from kid_readout.roach import calculate
 
 class RoachStream(core.Measurement):
 
-    _version = 0
+    _version = 1
 
-    def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
-                 data_demodulated, roach_state, state=None, description=''):
+    def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, sequence_start_number,
+                 s21_raw, data_demodulated, roach_state, state=None, description=''):
         """
-        Return a new RoachStream instance. The integer tone_index is the common index of tone_bin, tone_amplitude,
-        and tone_phase for the single tone used to produce the time-ordered s21_raw data.
+        Return a new RoachStream instance. This class has no dimensions and is intended to be subclassed.
 
-        :param tone_bin: an array of integers representing the frequencies of the tones played during the measurement.
-        :param tone_amplitude: an array of floats representing the amplitudes of the tones played during the
-          measurement.
-        :param tone_phase: an array of floats representing the radian phases of the tones played during the measurement.
-        :param tone_index: an int for which tone_bin[tone_index] corresponds to the frequency used to produce s21_raw.
-        :param filterbank_bin: an int that is the filter bank bin in which the tone lies.
-        :param epoch: float, unix timestamp of first sample of the time stream.
-        :param s21_raw: an 1-D array of complex floats containing the data, demodulated or not.
-        :param roach_state: a dict containing state information for the roach.
-        :param state: a dict containing all non-roach state information.
-        :param description: a string describing this measurement.
-        :return: a new RoachStream instance.
+        Parameters
+        ----------
+        tone_bin : numpy.ndarray(int)
+            An array of integers representing the frequencies of the tones played during the measurement.
+
+        tone_amplitude : numpy.ndarray(float)
+            An array of floats representing the amplitudes of the tones played during the measurement.
+
+        tone_phase : numpy.ndarray(float)
+            An array of floats representing the radian phases of the tones played during the measurement.
+
+        tone_index : int or numpy.ndarray(int)
+            tone_bin[tone_index] corresponds to the frequency used to produce s21_raw.
+
+        filterbank_bin : int or numpy.ndarray(int)
+            The filter bank bin(s) containing the tone(s).
+
+        epoch : float
+            The unix timestamp of the first sample of the time-ordered data.
+
+        sequence_start_number : int
+            The ROACH sequence number for the first sample of the time-ordered data.
+
+        s21_raw : numpy.ndarray(complex)
+            The data, demodulated or not.
+
+        data_demodulated : bool
+            True if the data is demodulated.
+
+        roach_state : dict
+            State information for the roach; the result of roach.state.
+
+        state : dict
+            All non-roach state information.
+
+        description : str
+            A human-readable description of this measurement.
+
+        Returns
+        -------
+        RoachStream
+             A new instance.
         """
         self.tone_bin = tone_bin
         self.tone_amplitude = tone_amplitude
@@ -46,6 +75,7 @@ class RoachStream(core.Measurement):
         self.tone_index = tone_index
         self.filterbank_bin = filterbank_bin
         self.epoch = epoch
+        self.sequence_start_number = sequence_start_number
         self.s21_raw = s21_raw
         self.data_demodulated = data_demodulated
         self.roach_state = core.StateDict(roach_state)
@@ -173,12 +203,18 @@ class RoachStream(core.Measurement):
             raise ValueError("Invalid slice: {}".format(key))
 
 
+class RoachStream0(core.Measurement):
+    def __new__(cls, *args, **kwargs):
+        kwargs['sequence_start_number'] = np.nan
+        return RoachStream(*args, **kwargs)
+
+
 class StreamArray(RoachStream):
     """
     This class represents simultaneously-sampled data from multiple channels.
     """
 
-    _version = 0
+    _version = 1
 
     dimensions = OrderedDict([('tone_bin', ('tone_bin',)),
                               ('tone_amplitude', ('tone_bin',)),
@@ -187,8 +223,8 @@ class StreamArray(RoachStream):
                               ('filterbank_bin', ('tone_index',)),
                               ('s21_raw', ('tone_index', 'sample_time'))])
 
-    def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
-                 data_demodulated, roach_state, state=None, description=''):
+    def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, sequence_start_number,
+                 s21_raw, data_demodulated, roach_state, state=None, description=''):
         """
         Return a new StreamArray instance. The integer array tone_index contains the indices of tone_bin,
         tone_amplitude, and tone_phase for the tones demodulated to produce the time-ordered s21_raw data.
@@ -197,25 +233,54 @@ class StreamArray(RoachStream):
         2-D with
         s21_raw.shape == (tone_index.size, sample_time.size)
 
-        :param tone_bin: an array of integers representing the frequencies of the tones played during the measurement.
-        :param tone_amplitude: an array of floats representing the amplitudes of the tones played during the
-          measurement.
-        :param tone_phase: an array of floats representing the radian phases of the tones played during the measurement.
-        :param tone_index: an int array for which tone_bin[tone_index] gives the integer frequencies of the tones read
-          out in this measurement.
-        :param filterbank_bin: an int array of filter bank bins in which the read out tones lie.
-        :param epoch: a float that is the unix timestamp of first sample of the time stream.
-        :param s21_raw: a 2-D array of complex floats containing the data, demodulated or not.
-        :param data_demodulated: True if the s21_raw data are demodulated.
-        :param roach_state: a dict containing state information for the roach.
-        :param state: a dict containing all non-roach state information.
-        :param description: a string describing this measurement.
-        :return: a new StreamArray instance.
+        Parameters
+        ----------
+        tone_bin : numpy.ndarray(int)
+            An array of integers representing the frequencies of the tones played during the measurement.
+
+        tone_amplitude : numpy.ndarray(float)
+            An array of floats representing the amplitudes of the tones played during the measurement.
+
+        tone_phase : numpy.ndarray(float)
+            An array of floats representing the radian phases of the tones played during the measurement.
+
+        tone_index : numpy.ndarray(int)
+            tone_bin[tone_index] corresponds to the frequency used to produce s21_raw.
+
+        filterbank_bin : numpy.ndarray(int)
+            The filter bank bins in which the tones lie.
+
+        epoch : float
+            The unix timestamp of the first sample of the time-ordered data.
+
+        sequence_start_number : int
+            The ROACH sequence number for the first sample of the time-ordered data.
+
+        s21_raw : numpy.ndarray(complex)
+            The data, demodulated or not.
+
+        data_demodulated : bool
+            True if the data is demodulated.
+
+        roach_state : dict
+            State information for the roach; the result of roach.state.
+
+        state : dict
+            All non-roach state information.
+
+        description : str
+            A human-readable description of this measurement.
+
+        Returns
+        -------
+        StreamArray
+             A new instance.
         """
         super(StreamArray, self).__init__(tone_bin=tone_bin, tone_amplitude=tone_amplitude, tone_phase=tone_phase,
                                           tone_index=tone_index, filterbank_bin=filterbank_bin, epoch=epoch,
-                                          s21_raw=s21_raw, data_demodulated=data_demodulated, roach_state=roach_state,
-                                          state=state, description=description)
+                                          sequence_start_number=sequence_start_number, s21_raw=s21_raw,
+                                          data_demodulated=data_demodulated, roach_state=roach_state, state=state,
+                                          description=description)
 
     def stream(self, number):
         """
@@ -224,11 +289,18 @@ class StreamArray(RoachStream):
         if isinstance(number, int):
             return SingleStream(tone_bin=self.tone_bin, tone_amplitude=self.tone_amplitude, tone_phase=self.tone_phase,
                                 tone_index=self.tone_index[number], filterbank_bin=self.filterbank_bin[number],
-                                epoch=self.epoch, s21_raw=self.s21_raw[number, :],
-                                data_demodulated=self.data_demodulated, roach_state=self.roach_state, number=number,
-                                state=self.state, description=self.description)
+                                epoch=self.epoch, sequence_start_number=self.sequence_start_number,
+                                s21_raw=self.s21_raw[number, :], data_demodulated=self.data_demodulated,
+                                roach_state=self.roach_state, number=number, state=self.state,
+                                description=self.description)
         else:
             raise ValueError("Invalid tone index: {}".format(number))
+
+
+class StreamArray0(RoachStream):
+    def __new__(cls, *args, **kwargs):
+        kwargs['sequence_start_number'] = np.nan
+        return StreamArray(*args, **kwargs)
 
 
 class SingleStream(RoachStream):
@@ -236,40 +308,73 @@ class SingleStream(RoachStream):
     This class contains time-ordered data from a single channel.
     """
 
-    _version = 0
+    _version = 1
 
     dimensions = OrderedDict([('tone_bin', ('tone_bin',)),
                               ('tone_amplitude', ('tone_bin',)),
                               ('tone_phase', ('tone_bin',)),
                               ('s21_raw', ('sample_time',))])
 
-    def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
-                 data_demodulated, roach_state, number=0, state=None, description=''):
+    def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, sequence_start_number,
+                 s21_raw, data_demodulated, roach_state, number=0, state=None, description=''):
         """
-        Return a new SingleStream instance. The integer tone_index is the common index of tone_bin, tone_amplitude,
-        and tone_phase for the single tone used to produce the time-ordered s21_raw data.
+        Return a new SingleStream instance. The single integer tone_index is the common index of tone_bin,
+        tone_amplitude, and tone_phase for the tone used to produce the time-ordered s21_raw data.
 
-        :param tone_bin: an array of integers representing the frequencies of the tones played during the measurement.
-        :param tone_amplitude: an array of floats representing the amplitudes of the tones played during the
-          measurement.
-        :param tone_phase: an array of floats representing the radian phases of the tones played during the measurement.
-        :param tone_index: an int for which tone_bin[tone_index] corresponds to the frequency used to produce s21_raw.
-        :param filterbank_bin: an int that is the filter bank bin in which the tone lies.
-        :param epoch: a float that is the unix timestamp of first sample of the time stream.
-        :param s21_raw: an 1-D array of complex floats containing the data, demodulated or not.
-        :param data_demodulated: True if the s21_raw data are demodulated.
-        :param roach_state: a dict containing state information for the roach.
-        :param number: an int that is the number of this single stream in some larger structure, such as its index in
-          a StreamArray from which it was created.
-        :param state: a dict containing all non-roach state information.
-        :param description: a string describing this measurement.
-        :return: a new SingleStream instance.
+        The tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, and s21_raw arrays are all 1-D.
+
+        Parameters
+        ----------
+        tone_bin : numpy.ndarray(int)
+            An array of integers representing the frequencies of the tones played during the measurement.
+
+        tone_amplitude : numpy.ndarray(float)
+            An array of floats representing the amplitudes of the tones played during the measurement.
+
+        tone_phase : numpy.ndarray(float)
+            An array of floats representing the radian phases of the tones played during the measurement.
+
+        tone_index : int
+            tone_bin[tone_index] corresponds to the frequency used to produce s21_raw.
+
+        filterbank_bin : int
+            An int that is the filter bank bin in which the tone lies.
+
+        epoch : float
+            The unix timestamp of the first sample of the time-ordered data.
+
+        sequence_start_number : int
+            The ROACH sequence number for the first sample of the time-ordered data.
+
+        s21_raw : numpy.ndarray(complex)
+            The data, demodulated or not.
+
+        data_demodulated : bool
+            True if the data is demodulated.
+
+        roach_state : dict
+            State information for the roach; the result of roach.state.
+
+        number : int
+            The number of this instance in some larger structure, such as a StreamArray.
+
+        state : dict
+            All non-roach state information.
+
+        description : str
+            A human-readable description of this measurement.
+
+        Returns
+        -------
+        SingleStream
+             A new instance.
         """
         self.number = number
         super(SingleStream, self).__init__(tone_bin=tone_bin, tone_amplitude=tone_amplitude, tone_phase=tone_phase,
                                            tone_index=tone_index, filterbank_bin=filterbank_bin, epoch=epoch,
-                                           s21_raw=s21_raw, data_demodulated=data_demodulated, roach_state=roach_state,
-                                           state=state, description=description)
+                                           sequence_start_number=sequence_start_number, s21_raw=s21_raw,
+                                           data_demodulated=data_demodulated, roach_state=roach_state, state=state,
+                                           description=description)
 
     @property
     def s21_point(self):
@@ -278,6 +383,12 @@ class SingleStream(RoachStream):
     @property
     def s21_point_error(self):
         return self.s21_raw_mean_error
+
+
+class SingleStream0(RoachStream):
+    def __new__(cls, *args, **kwargs):
+        kwargs['sequence_start_number'] = np.nan
+        return SingleStream(*args, **kwargs)
 
 
 class SweepArray(core.Measurement):
