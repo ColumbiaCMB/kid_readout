@@ -56,10 +56,9 @@ def decode_packets(plist,nchans):
     num_lost = start_ind + npkts - end_ind
     plist = plist[start_ind:end_ind]
 
-    packet_counter = np.empty(npkts)
-    packet_counter.fill(np.nan)
+    packet_counter = np.zeros(npkts, dtype='uint32')
     data = np.empty(npkts*chns_per_pkt, dtype='complex64')
-    data.fill(np.nan)
+    data.fill(np.nan+1j*np.nan)
 
     if len(plist) == 0:
         num_bad_pkts = npkts
