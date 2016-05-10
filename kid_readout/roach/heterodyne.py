@@ -523,7 +523,7 @@ class Demodulator(object):
         t = np.arange(data.shape[0])
         demod = wc*np.exp(-1j * (2 * np.pi * foffs * t + phi0)) * data
         if type(seq_nos) is np.ndarray:
-            pphase = packet_phase(np.uint32(seq_nos[0]) ,foffs,nchan,nfft,ns)
+            pphase = packet_phase(seq_nos[0] ,foffs,nchan,nfft,ns)
             demod *= pphase
         if self.hardware_delay_samples != 0:
             demod *= np.exp(2j*np.pi*self.hardware_delay_samples*tone_bin/tone_num_samples)
