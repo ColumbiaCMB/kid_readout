@@ -6,7 +6,6 @@ Classes to interface to ROACH hardware for KID readout systems
 # TODO: give more explicit access to the tone banks
 # TODO: raise RoachError for Roach-specific violations
 
-# TODO: add explicit integer division and use from __future__ import division
 import time
 import socket
 
@@ -16,6 +15,7 @@ import scipy.signal
 import udp_catcher
 import tools
 from interface import RoachInterface
+
 
 
 try:
@@ -103,6 +103,7 @@ class RoachBaseband(RoachInterface):
         returns:
         actual_freqs : array of the actual frequencies after quantization based on nsamp
         """
+        freqs = np.atleast_1d(freqs).astype('float')
         bins = np.round((freqs / self.fs) * nsamp).astype('int')
         actual_freqs = self.fs * bins / float(nsamp)
         self.set_tone_bins(bins, nsamp, amps=amps, load=load, normfact=normfact,phases=phases, preset_norm=preset_norm)
@@ -116,6 +117,7 @@ class RoachBaseband(RoachInterface):
     set_tone_baseband_freqs = set_tone_freqs
 
     def add_tone_freqs(self, freqs, amps=None, overwrite_last=False, preset_norm=True):
+        freqs = np.atleast_1d(freqs).astype('float')
         if freqs.shape[0] != self.tone_bins.shape[1]:
             raise ValueError("freqs array must contain same number of tones as original waveforms")
         # This is a hack that doesn't handle bank selection at all and may have additional problems.
@@ -148,7 +150,7 @@ class RoachBaseband(RoachInterface):
         if bins.ndim == 1:
             bins.shape = (1, bins.shape[0])
         nwaves = bins.shape[0]
-        spec = np.zeros((nwaves, nsamp / 2 + 1), dtype='complex')
+        spec = np.zeros((nwaves, nsamp // 2 + 1), dtype='complex')
         self.tone_bins = bins.copy()
         self.tone_nsamp = nsamp
         if phases is None:
@@ -177,7 +179,7 @@ class RoachBaseband(RoachInterface):
 
     def add_tone_bins(self, bins, amps=None, preset_norm=True):
         nsamp = self.tone_nsamp
-        spec = np.zeros((nsamp / 2 + 1,), dtype='complex')
+        spec = np.zeros((nsamp // 2 + 1,), dtype='complex')
         self.tone_bins = np.vstack((self.tone_bins, bins))
         phases = self.phases
         if amps is None:
@@ -207,7 +209,7 @@ class RoachBaseband(RoachInterface):
         
         returns : fft_bins, array of integers. 
         """
-        tone_bins_per_fft_bin = nsamp / (2. * self.nfft)  # factor of 2 because real signal
+        tone_bins_per_fft_bin = nsamp // (2. * self.nfft)  # factor of 2 because real signal
         fft_bins = np.round(tone_bins / float(tone_bins_per_fft_bin)).astype('int')
         return fft_bins
 
@@ -215,9 +217,9 @@ class RoachBaseband(RoachInterface):
         """
         Convert FFT bins to FPGA indexes
         """
-        top_half = bins > self.nfft / 2
+        top_half = bins > self.nfft // 2
         idx = bins.copy()
-        idx[top_half] = self.nfft - bins[top_half] + self.nfft / 2
+        idx[top_half] = self.nfft - bins[top_half] + self.nfft // 2
         return idx
 
     def select_fft_bins(self, readout_selection, sync=True):
@@ -268,7 +270,7 @@ class RoachBaseband(RoachInterface):
             phi0 = self.phases[ich]
             k = self.tone_bins[bank, ich]
             m = self.fft_bins[bank, ich]
-            if m >= self.nfft / 2:
+            if m >= self.nfft // 2:
                 sign = 1.0
             else:
                 sign = -1.0
@@ -280,7 +282,7 @@ class RoachBaseband(RoachInterface):
             demod[:, n] = (wc * np.exp(sign * 1j * (2 * np.pi * foffs * t + phi0) - sign *
                                        2j*np.pi*f_tone*hardware_delay)
                            * data[:, n])
-            if m >= self.nfft / 2:
+            if m >= self.nfft // 2:
                 demod[:, n] = np.conjugate(demod[:, n])
         return demod
 
@@ -509,7 +511,7 @@ class RoachBasebandWide(RoachBaseband):
             phi0 = self.phases[ich]
             k = self.tone_bins[bank, ich]
             m = self.fft_bins[bank, ich]
-            if m >= self.nfft / 2:
+            if m >= self.nfft // 2:
                 sign = 1.0
             else:
                 sign = -1.0
@@ -521,11 +523,11 @@ class RoachBasebandWide(RoachBaseband):
                 pi = np.pi
                 this_data = data[:, n]
                 demod[:, n] = numexpr.evaluate('wc*exp(sign*1j*(2*pi*foffs*t + phi0)) * this_data')
-                if m >= self.nfft / 2:
+                if m >= self.nfft // 2:
                     np.conj(demod[:, n], out=demod[:, n])
             else:
                 demod[:, n] = wc * np.exp(sign * 1j * (2 * np.pi * foffs * t + phi0)) * data[:, n]
-                if m >= self.nfft / 2:
+                if m >= self.nfft // 2:
                     demod[:, n] = np.conjugate(demod[:, n])
         return demod
 
@@ -621,7 +623,7 @@ class RoachBasebandWide10(RoachBasebandWide):
             phi0 = self.phases[ich]
             k = self.tone_bins[ich]
             m = self.fft_bins[ich]
-            if m >= self.nfft / 2:
+            if m >= self.nfft // 2:
                 sign = 1.0
             else:
                 sign = -1.0
@@ -630,28 +632,9 @@ class RoachBasebandWide10(RoachBasebandWide):
             foffs = (2 * k * nfft - m * ns) / float(ns)
             wc = self._window_response(foffs / 2) * (self.tone_nsamp / 2.0 ** 18)
             demod[:, n] = wc * np.exp(sign * 1j * (2 * np.pi * foffs * t + phi0)) * data[:, n]
-            if m >= self.nfft / 2:
+            if m >= self.nfft // 2:
                 demod[:, n] = np.conjugate(demod[:, n])
         return demod
 
 
 
-
-def test_sweep(ri):
-    data = []
-    tones = []
-    ri.r.write_int('sync', 0)
-    ri.r.write_int('sync', 1)
-    ri.r.write_int('sync', 0)
-    for k in range(ri.fft_bins.shape[0] / 4):
-        ri.select_fft_bins(range(k * 4, (k + 1) * 4))
-        time.sleep(0.1)
-        d, addr = ri.get_data(2)
-        data.append(d)
-        tones.append(ri.tone_bins[ri.readout_selection])
-    tones = np.concatenate(tones)
-    order = tones.argsort()
-    davg = np.concatenate([x.mean(0) for x in data])
-    davg = davg[order]
-    tones = tones[order]
-    return tones, davg, data
