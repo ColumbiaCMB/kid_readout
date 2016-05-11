@@ -15,10 +15,30 @@ Note that importing * from local.py will cause its namespace to be imported here
 from kid_readout.roach.columbia import ROACH1_VALON, ROACH_IS_HETERODYNE
 will import only the desired variables into the namespace, and not the module name.
 """
+
+import logging
+logger = logging.getLogger(__name__)
+
 from kid_readout.settings.default import *
 
 try:
     from kid_readout.settings.local import *
 except ImportError:
-    pass
+    import os
+    import shutil
+    settings_dir = os.path.split(os.path.abspath(__file__))[0]
+    local_settings_filename = os.path.join(settings_dir,'local.py')
+    print local_settings_filename,
+    if not os.path.exists(local_settings_filename):
+        logger.warning("No kid_readout/settings/local.py file found, trying to create a useful default")
+        try:
+            shutil.copy(os.path.join(settings_dir,'default_local_settings.py'),local_settings_filename)
+            logger.info("Successfully created local.py file")
+        except Exception:
+            logger.exception("Could not create local.py")
 
+
+try:
+    from kid_readout.settings.local import *
+except ImportError:
+    logger.exception("Could not find local settings")
