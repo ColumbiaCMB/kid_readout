@@ -47,8 +47,8 @@ def decode_packets(plist,nchans):
     cntr_total = 2**32
     nfft2 = 2**14 / 2
     chns_per_pkt = 256
-    pkt_counter_step = nfft2 * chns_per_pkt / nchans
-    max_num_pkts = cntr_total / pkt_counter_step
+    pkt_counter_step = nfft2 * chns_per_pkt // nchans
+    max_num_pkts = cntr_total // pkt_counter_step
     npkts = len(plist)
 
     start_ind = get_first_packet_index(plist)
@@ -83,7 +83,7 @@ def decode_packets(plist,nchans):
                 was_below = False
             if pkt_addr < start_addr:
                 was_below = True
-            k = (pkt_addr - start_addr) / pkt_counter_step + n*max_num_pkts
+            k = (pkt_addr - start_addr) // pkt_counter_step + n*max_num_pkts
             if k >= npkts:
                 break
             si = k * chns_per_pkt
