@@ -18,6 +18,7 @@ The package can use these values to automatically connect to the ROACH.
 
 # ROACH
 ROACH_HOST_IP = '192.168.1.1'
+ROACH2_HOST_IP = '10.0.0.1'
 ROACH1_VALON = '/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AM01H05A-if00-port0'
 ROACH1_IP = 'roach'
 ROACH2_VALON = '/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A101FK1K-if00-port0'
