@@ -1,3 +1,6 @@
+"""
+This file tries to use sensible settings depending on the HOSTNAME
+"""
 import socket
 
 HOSTNAME = socket.gethostname()
