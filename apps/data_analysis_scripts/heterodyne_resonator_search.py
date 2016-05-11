@@ -69,7 +69,7 @@ for fn in fns[1:]:
     data = []
     for k in range(32):
         swp = swa.sweep(k)
-        data.append((swp.frequency,swp.s21_points,swp.s21_points_error))
+        data.append((swp.frequency, swp.s21_point, swp.s21_point_error))
     print "starting parallel jobs..."
     pp = joblib.Parallel(n_jobs=16,verbose=5)
     results = pp([joblib.delayed(process_sweep)(*args) for args in data])
@@ -83,12 +83,12 @@ for fn in fns[1:]:
     fig,ax = plt.subplots()
     for k in range(32):
         swp = swa.sweep(k)
-        ax.plot(swp.frequency,20*np.log10(np.abs(swp.s21_points)))
+        ax.plot(swp.frequency, 20 * np.log10(np.abs(swp.s21_point)))
         for params in results:
             f0 = params['f_0'].value
             if f0 > swp.frequency.min() and f0 < swp.frequency.max():
                 idx = np.abs(swp.frequency - f0).argmin()
-                ax.plot(swp.frequency[idx],20*np.log10(np.abs(swp.s21_points[idx])),'o')
+                ax.plot(swp.frequency[idx], 20 * np.log10(np.abs(swp.s21_point[idx])), 'o')
 
 
     fig.savefig(('/home/gjones/%s_resonators_plot.pdf' % ncname),bbox_inches='tight')

@@ -24,10 +24,16 @@ If instead we want to save data as it is collected, we can do that by writing a 
 writing the sub-measurements as they are acquired.
 """
 from __future__ import division
-import numpy as np
-from kid_readout.measurement import core, basic
+import os
 import sys
 import time
+import inspect
+import subprocess
+
+import numpy as np
+
+from kid_readout.measurement import core, basic
+
 
 def load_baseband_sweep_tones(ri, tone_banks, num_tone_samples):
     return ri.set_tone_freqs(freqs=np.vstack(tone_banks), nsamp=num_tone_samples)
@@ -105,3 +111,29 @@ def run_multipart_sweep(ri, length_seconds=1, state=None, description='', num_to
         stream_arrays.extend(list(part.stream_arrays))
     return basic.SweepArray(stream_arrays,state=state,description=description)
 
+
+def source_code():
+    """
+    Return the source code of a module running as '__main__'. Acquisition scripts can use this to save their code.
+
+    If attempting to load the source code raises an exception, return a string representation of the exception.
+
+    Returns
+    -------
+    str
+        The code, with lines separated by newline characters.
+    """
+    try:
+        return inspect.getsource(sys.modules[__name__])
+    except Exception as e:
+        return str(e)
+
+
+def git_log():
+    import kid_readout
+    path = os.path.abspath(kid_readout.__file__)
+    dir_name = os.path.dirname(path)
+    try:
+        return subprocess.check_output(("cd {}; git log -1".format(dir_name)), shell=True)
+    except Exception as e:
+        return str(e)

@@ -5,7 +5,7 @@ import numpy as np
 
 from kid_readout.measurement import core, basic
 from kid_readout.measurement.acquire import acquire
-from kid_readout.roach import baseband
+from kid_readout.roach import baseband  # TODO: incorporate heterodyne, r2heterodyne
 from kid_readout.roach.tests import mock_roach, mock_valon
 
 bad_node_paths = ['', ' ', '"', ':', '\\', '?', '!', 'bad-hyphen', '0number', '//', '/bad/end/']
@@ -100,7 +100,7 @@ def fake_single_stream(num_tone_samples=2 ** 21, length_seconds=0.01,
                        state={'I_am_a': 'fake single stream'}, description='fake single stream'):
     stream_array = fake_stream_array(num_tones=1, num_tone_samples=num_tone_samples,
                                      length_seconds=length_seconds, state=state, description=description)
-    return stream_array.stream(0)
+    return stream_array[0]
 
 
 def fake_sweep_array(num_tones=16, num_waveforms=32, num_tone_samples=2 ** 21, length_seconds=0.01,
@@ -115,9 +115,9 @@ def fake_sweep_array(num_tones=16, num_waveforms=32, num_tone_samples=2 ** 21, l
 
 def fake_single_sweep(num_waveforms=32, num_tone_samples=2 ** 21, length_seconds=0.01,
                      state={'I_am_a': 'fake single sweep'}, description='fake single sweep'):
-    sweep = fake_sweep_array(num_tones=1, num_waveforms=num_waveforms, num_tone_samples=num_tone_samples,
-                             length_seconds=length_seconds, state=state, description=description)
-    return sweep.sweep(0)
+    sweep_array = fake_sweep_array(num_tones=1, num_waveforms=num_waveforms, num_tone_samples=num_tone_samples,
+                                   length_seconds=length_seconds, state=state, description=description)
+    return sweep_array[0]
 
 
 def fake_sweep_stream_array(num_tones=16, sweep_num_waveforms=32, sweep_num_tone_samples=2 ** 21,
@@ -139,4 +139,4 @@ def fake_single_sweep_stream(sweep_num_waveforms=32, sweep_num_tone_samples=2 **
                                   sweep_length_seconds=sweep_length_seconds,
                                   stream_num_tone_samples=stream_num_tone_samples,
                                   stream_length_seconds=stream_length_seconds, state=state, description=description)
-    return ssa.sweep_stream(0)
+    return ssa[0]

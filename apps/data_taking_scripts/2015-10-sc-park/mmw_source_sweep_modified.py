@@ -88,7 +88,7 @@ for (lo,f0s) in [(low_group_lo,low_group),
     current_f0s = []
     for sidx in range(32):
         swp = swpa.sweep(sidx)
-        res = lmfit_resonator.LinearResonatorWithCable(swp.frequency,swp.s21_points,swp.s21_points_error)
+        res = lmfit_resonator.LinearResonatorWithCable(swp.frequency, swp.s21_point, swp.s21_point_error)
         print res.f_0, res.Q, res.current_result.redchi, (f0s[sidx]*1e6-res.f_0)
         current_f0s.append(res.f_0)
     print "fits complete", (time.time()-tic)/60.

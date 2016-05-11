@@ -1,12 +1,7 @@
 import numpy as np
 import warnings
 
-from kid_readout.measurement import basic
 from kid_readout.measurement.test import utilities
-from kid_readout.roach.tests.mock_roach import MockRoach
-from kid_readout.roach.tests.mock_valon import MockValon
-from kid_readout.roach.baseband import RoachBaseband
-from kid_readout.measurement.acquire import acquire
 
 
 def test_s21_raw_mean():
@@ -59,41 +54,29 @@ def test_s21_raw_mean_error():
     np.testing.assert_allclose(s21_raw_mean_error[3], (0.5 + 0.5j) / np.sqrt(num_samples/ 2))
 
 
-class TestStack(object):
+class TestSweepArray(object):
 
     @classmethod
     def setup(cls):
-        num_tones = 16
-        num_waveforms = 2**5
-        num_tone_samples = 2**10
-        length_seconds = 0.1
-        ri = RoachBaseband(roach=MockRoach('roach'), initialize=False, adc_valon=MockValon())
-        center_frequencies = np.linspace(100, 200, num_tones)
-        offsets = np.linspace(-20e-3, 20e-3, num_waveforms)
-        tone_banks = [center_frequencies + offset for offset in offsets]
-        state = {'something': 'something state'}
-        cls.sweep_array = acquire.run_sweep(ri=ri, tone_banks=tone_banks, num_tone_samples=num_tone_samples,
-                                            length_seconds=length_seconds, state=state, description="description")
+        cls.sweep_array = utilities.fake_sweep_array()
+
+    def test_frequency(self):
+        assert np.all(np.diff(self.sweep_array.frequency))  # Note that this will fail if there are duplicate tones.
+
+    def test_s21_raw(self):
+        random_stream_index = np.random.randint(len(self.sweep_array.stream_arrays))
+        random_stream_array = self.sweep_array.stream_arrays[random_stream_index]
+        random_channel_number = np.random.randint(random_stream_array.tone_index.size)
+        random_single_stream = random_stream_array[random_channel_number]
+        random_frequency = random_single_stream.frequency
+        random_s21_raw = random_single_stream.s21_raw
+        sorted_frequencies = np.sort(np.concatenate([s.frequency for s in self.sweep_array.stream_arrays]))
+        sorted_index = np.searchsorted(sorted_frequencies, random_frequency)
+        assert random_frequency == self.sweep_array.frequency[sorted_index]
+        assert np.all(random_s21_raw == self.sweep_array.s21_raw[sorted_index])
 
 
-    def test_tone_bin_stack(self):
-        assert self.sweep_array.tone_bin_stack.shape == (np.sum([stream_array.tone_bin.size
-                                                                 for stream_array
-                                                                 in self.sweep_array.stream_arrays]),)
+    #def test_s21_point(self):
 
-    def test_tone_amplitude_stack(self):
-        assert self.sweep_array.tone_amplitude_stack.shape == (np.sum([stream_array.tone_amplitude.size
-                                                                       for stream_array
-                                                                       in self.sweep_array.stream_arrays]),)
 
-    def test_tone_phase_stack(self):
-        assert self.sweep_array.tone_phase_stack.shape == (np.sum([stream_array.tone_phase.size
-                                                                   for stream_array
-                                                                   in self.sweep_array.stream_arrays]),)
 
-    def test_s21_raw_stack(self):
-        assert self.sweep_array.s21_raw_stack.shape[0] == np.sum([stream_array.s21_raw.shape[0]
-                                                                  for stream_array
-                                                                  in self.sweep_array.stream_arrays])
-        assert all([self.sweep_array.s21_raw_stack.shape[1] == stream_array.s21_raw.shape[1]
-                    for stream_array in self.sweep_array.stream_arrays])

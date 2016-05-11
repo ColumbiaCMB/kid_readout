@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
-from matplotlib.pyplot import mlab  # TODO: replace with a scipy PSD estimator
+from matplotlib.pyplot import mlab
 from memoized_property import memoized_property
 
 from kid_readout.measurement import core
@@ -30,44 +30,28 @@ class RoachStream(core.Measurement):
         ----------
         tone_bin : numpy.ndarray(int)
             An array of integers representing the frequencies of the tones played during the measurement.
-
         tone_amplitude : numpy.ndarray(float)
             An array of floats representing the amplitudes of the tones played during the measurement.
-
         tone_phase : numpy.ndarray(float)
             An array of floats representing the radian phases of the tones played during the measurement.
-
         tone_index : int or numpy.ndarray(int)
             tone_bin[tone_index] corresponds to the frequency used to produce s21_raw.
-
         filterbank_bin : int or numpy.ndarray(int)
             The filter bank bin(s) containing the tone(s).
-
         epoch : float
             The unix timestamp of the first sample of the time-ordered data.
-
         sequence_start_number : int
             The ROACH sequence number for the first sample of the time-ordered data.
-
         s21_raw : numpy.ndarray(complex)
             The data, demodulated or not.
-
         data_demodulated : bool
             True if the data is demodulated.
-
         roach_state : dict
             State information for the roach; the result of roach.state.
-
         state : dict
             All non-roach state information.
-
         description : str
             A human-readable description of this measurement.
-
-        Returns
-        -------
-        RoachStream
-             A new instance.
         """
         self.tone_bin = tone_bin
         self.tone_amplitude = tone_amplitude
@@ -83,6 +67,7 @@ class RoachStream(core.Measurement):
 
     @memoized_property
     def sample_time(self):
+        """numpy.ndarray(float): The time of each sample relative to the first sample in the stream."""
         return (np.arange(self.s21_raw.shape[-1], dtype='float') /
                 self.stream_sample_rate)
 
@@ -109,7 +94,7 @@ class RoachStream(core.Measurement):
     @memoized_property
     def s21_raw_mean(self):
         """
-        Return the mean of s21_raw for each channel with NaN samples excluded.
+        Return the mean of s21_raw for each channel. NaN samples are excluded from the calculation.
 
         Raises
         ------
@@ -126,9 +111,9 @@ class RoachStream(core.Measurement):
     @memoized_property
     def s21_raw_mean_error(self):
         """
-        Return an estimate of the complex standard error of the mean in s21_raw_mean.
+        Estimate the error in s21_raw_mean for each channel. NaN samples are excluded from the calculation.
 
-        The calculation assumes that the samples are independent, which is probably not true.
+        The method assumes that the samples are independent, which is probably not true.
 
         Raises
         ------
@@ -138,9 +123,8 @@ class RoachStream(core.Measurement):
         Returns
         -------
         numpy.ndarray(complex)
-            An estimate of the complex RMS error.
+            An estimate of the complex standard error of the mean of s21_raw.
         """
-        #assert np.all(np.isnan(self.s21_raw.real) == np.isnan(self.s21_raw.imag))
         num_good_samples = np.sum(~np.isnan(self.s21_raw), axis=-1).astype(np.float)  # Allow conversion to np.nan.
         try:
             num_good_samples[num_good_samples == 0] = np.nan  # Avoid zero-division.
@@ -148,6 +132,24 @@ class RoachStream(core.Measurement):
             num_good_samples = np.nan
         return ((np.nanstd(self.s21_raw.real, axis=-1) + 1j * np.nanstd(self.s21_raw.imag, axis=-1)) /
                 np.sqrt(num_good_samples))
+
+    @property
+    def s21_point(self):
+        """
+        Return one s21 point per stream, calculated using the best available method.
+
+        The method used to calculate this point may change.
+        """
+        return self.s21_raw_mean
+
+    @property
+    def s21_point_error(self):
+        """
+        Return an estimate of the standard error of the mean for s21_point, calculated using the best available method.
+
+        The method used to calculate this error may change.
+        """
+        return self.s21_raw_mean_error
 
     def folded_shape(self, array, period_samples=None):
         if period_samples is None:
@@ -166,44 +168,34 @@ class RoachStream(core.Measurement):
         else:
             return reshaped
 
-    def __getitem__(self, key):
+    def epochs(self, start=-np.inf, stop=np.inf):
         """
-        Return a StreamArray containing only the data corresponding to the times given in the slice. If no start (stop)
-        time is given, the value is taken to be -inf (+inf). The returned StreamArray has the same state.
+        Return a StreamArray containing only the data between the given start and stop epochs.
+
+        The returned StreamArray has the same state.
 
         The indexing follows the Python convention that the first value is inclusive and the second is exclusive:
         start <= epoch < stop
         Thus, the two slices stream_array[t0:t1] and stream_array[t1:t2] will contain all the data occurring at or after
-        t0 and before t2, with no duplication. This means that
-        stream_array[stream_array.epoch.min():stream_array.epoch.max()]
-        will include all but the last sample.
-
-        Passing a slice with a non-unity step size is not implemented and will raise a ValueError.
+        t0 and before t2, with no duplication.
         """
-        if isinstance(key, slice):
-            if key.start is None:
-                start = -np.inf
-            else:
-                start = key.start
-            if key.stop is None:
-                stop = np.inf
-            else:
-                stop = key.stop
-            if key.step is not None:
-                raise ValueError("Step size is not supported: {}".format(key))
-            start_index = np.searchsorted(self.sample_time, (start,), side='left')
-            stop_index = np.searchsorted(self.sample_time, (stop,), side='right')  # This index is not included
-            return self.__class__(tone_bin=self.tone_bin, tone_amplitude=self.tone_amplitude,
-                                  tone_phase=self.tone_phase, tone_index=self.tone_index,
-                                  filterbank_bin=self.filterbank_bin, epoch=self.sample_time[start_index],
-                                  s21_raw=self.s21_raw[..., start_index:stop_index],
-                                  data_demodulated=self.data_demodulated, roach_state=self.roach_state,
-                                  state=self.state, description=self.description)
-        else:
-            raise ValueError("Invalid slice: {}".format(key))
+        start_index = np.searchsorted(self.epoch + self.sample_time, (start,), side='left')
+        stop_index = np.searchsorted(self.epoch + self.sample_time, (stop,), side='right')  # This index is not included
+        return self.__class__(tone_bin=self.tone_bin, tone_amplitude=self.tone_amplitude,
+                              tone_phase=self.tone_phase, tone_index=self.tone_index,
+                              filterbank_bin=self.filterbank_bin, epoch=self.epoch + self.sample_time[start_index],
+                              sequence_start_number=np.nan,  # This may no longer be valid for the sliced data.
+                              s21_raw=self.s21_raw[..., start_index:stop_index],
+                              data_demodulated=self.data_demodulated, roach_state=self.roach_state,
+                              state=self.state, description=self.description)
 
 
 class RoachStream0(core.Measurement):
+    """
+    This class is a factory for producing RoachStream version 1 instances from version 0 data.
+
+    Version 0 did not save the sequence_start_number integer.
+    """
     def __new__(cls, *args, **kwargs):
         kwargs['sequence_start_number'] = np.nan
         return RoachStream(*args, **kwargs)
@@ -228,53 +220,35 @@ class StreamArray(RoachStream):
         """
         Return a new StreamArray instance. The integer array tone_index contains the indices of tone_bin,
         tone_amplitude, and tone_phase for the tones demodulated to produce the time-ordered s21_raw data.
-
-        The tone_bin, tone_amplitude, tone_phase, tone_index, and filterbank_bin arrays are 1-D, while s21_raw is
-        2-D with
+        The tone_bin, tone_amplitude, tone_phase, tone_index, and filterbank_bin arrays are 1-D, while s21_raw is 2-D:
         s21_raw.shape == (tone_index.size, sample_time.size)
 
         Parameters
         ----------
         tone_bin : numpy.ndarray(int)
             An array of integers representing the frequencies of the tones played during the measurement.
-
         tone_amplitude : numpy.ndarray(float)
             An array of floats representing the amplitudes of the tones played during the measurement.
-
         tone_phase : numpy.ndarray(float)
             An array of floats representing the radian phases of the tones played during the measurement.
-
         tone_index : numpy.ndarray(int)
             tone_bin[tone_index] corresponds to the frequency used to produce s21_raw.
-
         filterbank_bin : numpy.ndarray(int)
             The filter bank bins in which the tones lie.
-
         epoch : float
             The unix timestamp of the first sample of the time-ordered data.
-
         sequence_start_number : int
             The ROACH sequence number for the first sample of the time-ordered data.
-
         s21_raw : numpy.ndarray(complex)
             The data, demodulated or not.
-
         data_demodulated : bool
             True if the data is demodulated.
-
         roach_state : dict
             State information for the roach; the result of roach.state.
-
         state : dict
             All non-roach state information.
-
         description : str
             A human-readable description of this measurement.
-
-        Returns
-        -------
-        StreamArray
-             A new instance.
         """
         super(StreamArray, self).__init__(tone_bin=tone_bin, tone_amplitude=tone_amplitude, tone_phase=tone_phase,
                                           tone_index=tone_index, filterbank_bin=filterbank_bin, epoch=epoch,
@@ -282,7 +256,7 @@ class StreamArray(RoachStream):
                                           data_demodulated=data_demodulated, roach_state=roach_state, state=state,
                                           description=description)
 
-    def stream(self, number):
+    def __getitem__(self, number):
         """
         Return a SingleStream object containing the data at the frequency corresponding to the given integer number.
         """
@@ -294,10 +268,19 @@ class StreamArray(RoachStream):
                                 roach_state=self.roach_state, number=number, state=self.state,
                                 description=self.description)
         else:
-            raise ValueError("Invalid tone index: {}".format(number))
+            raise ValueError("Invalid number: {}".format(number))
+
+    def stream(self, number):
+        """Deprecated: use __getitem__."""
+        return self[number]
 
 
-class StreamArray0(RoachStream):
+class StreamArray0(RoachStream0):
+    """
+    This class is a factory for producing StreamArray version 1 instances from version 0 data.
+
+    Version 0 did not save the sequence_start_number integer.
+    """
     def __new__(cls, *args, **kwargs):
         kwargs['sequence_start_number'] = np.nan
         return StreamArray(*args, **kwargs)
@@ -327,47 +310,30 @@ class SingleStream(RoachStream):
         ----------
         tone_bin : numpy.ndarray(int)
             An array of integers representing the frequencies of the tones played during the measurement.
-
         tone_amplitude : numpy.ndarray(float)
             An array of floats representing the amplitudes of the tones played during the measurement.
-
         tone_phase : numpy.ndarray(float)
             An array of floats representing the radian phases of the tones played during the measurement.
-
         tone_index : int
             tone_bin[tone_index] corresponds to the frequency used to produce s21_raw.
-
         filterbank_bin : int
             An int that is the filter bank bin in which the tone lies.
-
         epoch : float
             The unix timestamp of the first sample of the time-ordered data.
-
         sequence_start_number : int
             The ROACH sequence number for the first sample of the time-ordered data.
-
         s21_raw : numpy.ndarray(complex)
             The data, demodulated or not.
-
         data_demodulated : bool
             True if the data is demodulated.
-
         roach_state : dict
             State information for the roach; the result of roach.state.
-
         number : int
             The number of this instance in some larger structure, such as a StreamArray.
-
         state : dict
             All non-roach state information.
-
         description : str
             A human-readable description of this measurement.
-
-        Returns
-        -------
-        SingleStream
-             A new instance.
         """
         self.number = number
         super(SingleStream, self).__init__(tone_bin=tone_bin, tone_amplitude=tone_amplitude, tone_phase=tone_phase,
@@ -376,16 +342,13 @@ class SingleStream(RoachStream):
                                            data_demodulated=data_demodulated, roach_state=roach_state, state=state,
                                            description=description)
 
-    @property
-    def s21_point(self):
-        return self.s21_raw_mean
 
-    @property
-    def s21_point_error(self):
-        return self.s21_raw_mean_error
+class SingleStream0(RoachStream0):
+    """
+    This class is a factory for producing SingleStream version 1 instances from version 0 data.
 
-
-class SingleStream0(RoachStream):
+    Version 0 did not save the sequence_start_number integer.
+    """
     def __new__(cls, *args, **kwargs):
         kwargs['sequence_start_number'] = np.nan
         return SingleStream(*args, **kwargs)
@@ -393,21 +356,37 @@ class SingleStream0(RoachStream):
 
 class SweepArray(core.Measurement):
     """
-    This class contains a list of stream arrays.
+    This class contains list of streams.
+
+    The properties return values in ascending frequency order.
     """
 
     _version = 0
 
     def __init__(self, stream_arrays, state=None, description=''):
+        """
+        Parameters
+        ----------
+        stream_arrays : MeasurementList(StreamArray)
+            The streams that make up the sweep.
+        state : dict
+            All non-roach state information.
+        description : str
+            A human-readable description of this measurement.
+        """
         self.stream_arrays = stream_arrays
         super(SweepArray, self).__init__(state=state, description=description)
 
-    def sweep(self, number):
+    def __getitem__(self, number):
         if isinstance(number, int):
             return SingleSweep(streams=core.MeasurementList(sa.stream(number) for sa in self.stream_arrays),
-                               state=self.state, description=self.description)
+                               number=number, state=self.state, description=self.description)
         else:
             raise ValueError("Invalid number: {}".format(number))
+
+    def sweep(self, number):
+        """Deprecated; use __getitem__."""
+        return self[number]
 
     @property
     def num_channels(self):
@@ -420,113 +399,104 @@ class SweepArray(core.Measurement):
             return 0
 
     @memoized_property
-    def tone_bin_stack(self):
-        return np.concatenate([stream_array.tone_bin[stream_array.tone_index]
-                               for stream_array in self.stream_arrays])
+    def ascending_order(self):
+        """numpy.ndarray[int]: Re-arranges values for this SweepArray in ascending frequency order."""
+        return np.concatenate([sa.frequency for sa in self.stream_arrays]).argsort()
 
     @memoized_property
-    def tone_amplitude_stack(self):
-        return np.concatenate([stream_array.tone_amplitude[stream_array.tone_index]
-                               for stream_array in self.stream_arrays])
-
-    @memoized_property
-    def tone_phase_stack(self):
-        return np.concatenate([stream_array.tone_phase[stream_array.tone_index]
-                               for stream_array in self.stream_arrays])
-
-    @memoized_property
-    def filterbank_bin_stack(self):
-        return np.concatenate([stream_array.filterbank_bin
-                               for stream_array in self.stream_arrays])
-
-    @memoized_property
-    def s21_raw_stack(self):
-        return np.vstack([stream_array.s21_raw for stream_array in self.stream_arrays])
-
-    @memoized_property
-    def frequency_stack(self):
-        return np.concatenate([calculate.frequency(stream_array.roach_state,
-                                                   stream_array.tone_bin[stream_array.tone_index])
-                               for stream_array in self.stream_arrays])
+    def frequency(self):
+        """numpy.ndarray[float]: The frequencies of all data points in ascending order."""
+        return np.concatenate([sa.frequency for sa in self.stream_arrays])[self.ascending_order]
 
     @property
-    def frequency_MHz_stack(self):
-        return 1e-6 * self.frequency_stack
+    def frequency_MHz(self):
+        """numpy.ndarray[float]: The frequencies in MHz of all data points, in ascending order."""
+        return 1e-6 * self.frequency
+
+    @memoized_property
+    def s21_point(self):
+        """numpy.ndarray[complex]: The s21_point values of all data points, in ascending frequency order."""
+        return np.concatenate([sa.s21_point for sa in self.stream_arrays])[self.ascending_order]
+
+    @memoized_property
+    def s21_point_error(self):
+        """numpy.ndarray[complex]: The s21_point_error values of all data points, in ascending frequency order."""
+        return np.concatenate([sa.s21_point_error for sa in self.stream_arrays])[self.ascending_order]
+
+    @memoized_property
+    def s21_raw(self):
+        """numpy.ndarray[complex]: The raw s21 streams of all data points, in ascending frequency order."""
+        return np.vstack([stream_array.s21_raw for stream_array in self.stream_arrays])[self.ascending_order, :]
 
 
 class SingleSweep(core.Measurement):
     """
-    This class represents a group of streams with different frequencies.
+    This class contains list of single streams with different frequencies.
+
+    The properties return values in ascending frequency order.
     """
 
     _version = 0
 
     def __init__(self, streams, number=0, state=None, description=''):
         """
-        Return a SingleSweep object. The streams are not sorted internally.
-
-        :param streams: a MeasurementList of Streams.
-        :param state: a dictionary containing state information.
-        :param description: a string description of this measurement.
-        :return: a new SingleSweep object.
+        Parameters
+        ----------
+        streams: MeasurementList(SingleStream)
+            The streams that make up the sweep.
+        number : int
+            The number of this instance in the SweepArray from which it was created.
+        state : dict
+            All non-roach state information.
+        description : str
+            A human-readable description of this measurement.
         """
         self.streams = streams
         self.number = number
         super(SingleSweep, self).__init__(state=state, description=description)
 
     @memoized_property
+    def ascending_order(self):
+        """numpy.ndarray[int]: Re-arranges values for this SingleSweep in ascending frequency order."""
+        return np.array([s.frequency for s in self.streams]).argsort()
+
+    @memoized_property
     def frequency(self):
-        return np.array([stream.frequency for stream in self.streams])
-
-    @memoized_property
-    def s21_points(self):
-        return np.array([stream.s21_point for stream in self.streams])
-
-    @memoized_property
-    def s21_points_error(self):
-        return np.array([stream.s21_point_error for stream in self.streams])
-
-    @memoized_property
-    def tone_bin_stack(self):
-        return np.array([stream.tone_bin[stream.tone_index] for stream in self.streams])
-
-    @memoized_property
-    def tone_amplitude_stack(self):
-        return np.array([stream.tone_amplitude[stream.tone_index] for stream in self.streams])
-
-    @memoized_property
-    def tone_phase_stack(self):
-        return np.array([stream.tone_phase[stream.tone_index] for stream in self.streams])
-
-    @memoized_property
-    def filterbank_bin_stack(self):
-        return np.array([stream.filterbank_bin for stream in self.streams])
-
-    @memoized_property
-    def s21_raw_stack(self):
-        return np.vstack([stream.s21_raw for stream in self.streams])
-
-    @memoized_property
-    def frequency_stack(self):
-        return np.array([calculate.frequency(stream.roach_state, stream.tone_bin[stream.tone_index])
-                         for stream in self.streams])
+        """numpy.ndarray[float]: The frequencies of all data points in ascending order."""
+        return np.array([s.frequency for s in self.streams])[self.ascending_order]
 
     @property
-    def frequency_MHz_stack(self):
-        return 1e-6 * self.frequency_stack
+    def frequency_MHz(self):
+        """numpy.ndarray[float]: The frequencies in MHz of all data points, in ascending order."""
+        return 1e-6 * self.frequency
+
+    @memoized_property
+    def s21_point(self):
+        """numpy.ndarray[complex]: The s21_point values of all data points, in ascending frequency order."""
+        return np.array([s.s21_point for s in self.streams])[self.ascending_order]
+
+    @memoized_property
+    def s21_point_error(self):
+        """numpy.ndarray[complex]: The s21_point_error values of all data points, in ascending frequency order."""
+        return np.array([s.s21_point_error for s in self.streams])[self.ascending_order]
+
+    @memoized_property
+    def s21_raw(self):
+        """numpy.ndarray[complex]: The raw s21 streams of all data points, in ascending frequency order."""
+        return np.vstack([s.s21_raw for s in self.streams])[self.ascending_order, :]
 
     @memoized_property
     def s21_normalized(self):
-         return np.array([self.resonator.remove_background(f, s21)
-                          for f, s21 in zip(self.frequency, self.s21_points)])
+        return np.array([self.resonator.remove_background(f, s21) for f, s21 in zip(self.frequency, self.s21_point)])
 
     @memoized_property
     def s21_normalized_error(self):
         return np.array([self.resonator.remove_background(f, s21_error)
-                         for f, s21_error in zip(self.frequency, self.s21_points_error)])
+                         for f, s21_error in zip(self.frequency, self.s21_point_error)])
 
     @memoized_property
     def resonator(self):
+        """BaseResonator: the result of the last """
         return self.fit_resonator()
 
     # TODO: add arguments to specify model, etc.
@@ -535,8 +505,7 @@ class SingleSweep(core.Measurement):
         for attr in ('_s21_normalized', '_s21_normalized_error'):
             if hasattr(self, attr):
                 delattr(self, attr)
-        order = self.frequency.argsort()
-        self._resonator = model(frequency=self.frequency[order], s21=self.s21_points[order], errors=self.s21_points_error[order])
+        self._resonator = model(frequency=self.frequency, s21=self.s21_point, errors=self.s21_point_error)
         return self._resonator
 
 
@@ -555,7 +524,7 @@ class SweepStreamArray(core.Measurement):
     def num_channels(self):
         return self.sweep_array.num_channels
 
-    def sweep_stream(self, number):
+    def __getitem__(self, number):
         """
         Return a SweepStream object containing the data at the frequency corresponding to the given integer number.
         """
@@ -564,6 +533,10 @@ class SweepStreamArray(core.Measurement):
                                      number=number, state=self.state, description=self.description)
         else:
             raise ValueError("Invalid number: {}".format(number))
+
+    def sweep_stream(self, number):
+        """Deprecated: use __getitem__"""
+        return self[number]
 
     def to_dataframe(self, deglitch=True):
         dataframes = []
@@ -768,10 +741,14 @@ class SweepStreamList(core.Measurement):
         self.stream_list = stream_list
         super(SweepStreamList, self).__init__(state=state, description=description)
 
-    def single_sweep_stream_list(self, number):
-        return SingleSweepStreamList(self.sweep.sweep(number),
-                                     core.MeasurementList(sa.stream(number) for sa in self.stream_list),
+    def __getitem__(self, number):
+        return SingleSweepStreamList(self.sweep[number],
+                                     core.MeasurementList(sa[number] for sa in self.stream_list),
                                      number=number, state=self.state, description=self.description)
+
+    def single_sweep_stream_list(self, number):
+        """Deprecated: use __getitem__"""
+        return self[number]
 
 
 class SingleSweepStreamList(core.Measurement):
@@ -784,7 +761,7 @@ class SingleSweepStreamList(core.Measurement):
         self.number = number
         super(SingleSweepStreamList, self).__init__(state=state, description=description)
 
-    def state_vector(self,*keys):
+    def state_vector(self, *keys):
         vector = []
         for stream in self.stream_list:
             state = stream.state
