@@ -88,7 +88,8 @@ def decode_packets(plist,nchans):
                 break
             si = k * chns_per_pkt
             sf = (k + 1) * chns_per_pkt
-            data[si:sf] = 1j*np.conj(all_data[:-1].view('<i2').astype('float32').view('complex64'))
+            #data[si:sf] = 1j*np.conj(all_data[:-1].view('<i2').astype('float32').view('complex64'))
+            data[si:sf] = all_data[:-1].view('<i2').astype('float32').view('complex64')
             packet_counter[k] = pkt_addr
 
         num_bad_pkts += num_lost
