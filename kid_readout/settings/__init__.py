@@ -17,7 +17,8 @@ will import only the desired variables into the namespace, and not the module na
 """
 
 import logging
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__) # Important: leading underscore helps ensure that logger in files won't be
+                                        # overridden by this logger
 
 from kid_readout.settings.default import *
 
@@ -30,15 +31,17 @@ except ImportError:
     local_settings_filename = os.path.join(settings_dir,'local.py')
     print local_settings_filename,
     if not os.path.exists(local_settings_filename):
-        logger.warning("No kid_readout/settings/local.py file found, trying to create a useful default")
+        _logger.warning("No kid_readout/settings/local.py file found, trying to create a useful default")
         try:
             shutil.copy(os.path.join(settings_dir,'default_local_settings.py'),local_settings_filename)
-            logger.info("Successfully created local.py file")
+            _logger.info("Successfully created local.py file")
         except Exception:
-            logger.exception("Could not create local.py")
+            _logger.exception("Could not create local.py")
 
 
 try:
     from kid_readout.settings.local import *
 except ImportError:
-    logger.exception("Could not find local settings")
+    _logger.exception("Could not find local settings")
+
+del _logger
