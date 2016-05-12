@@ -35,6 +35,15 @@ class BaseResonator(FitterWithAttributeAccess):
             weights = None
         else:
             weights = 1/errors.real + 1j/errors.imag
+        nanmask = np.isfinite(frequency)
+        nanmask = nanmask & np.isfinite(s21)
+        if weights is not None:
+            nanmask = nanmask & np.isfinite(weights)
+            weights = weights[nanmask]
+        frequency = frequency[nanmask]
+        s21 = s21[nanmask]
+        if s21.shape[0] < 1:
+            raise ValueError("After masking NaNs, there is no data left to fit!")
         # kwargs get passed from Fitter to Model.fit directly. Signature is:
         #    def fit(self, data, params=None, weights=None, method='leastsq',
         #            iter_cb=None, scale_covar=True, verbose=False, fit_kws=None, **kwargs):

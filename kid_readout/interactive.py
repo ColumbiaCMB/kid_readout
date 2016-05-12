@@ -28,5 +28,5 @@ from kid_readout.analysis.resonator import lmfit_resonator
 from kid_readout.analysis.resonator import lmfit_models
 from kid_readout.measurement.acquire import acquire
 from kid_readout import measurement
-from kid_readout.measurement import basic
+from kid_readout.measurement import basic,temperature
 
