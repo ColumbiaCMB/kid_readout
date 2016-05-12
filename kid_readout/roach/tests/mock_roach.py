@@ -51,3 +51,6 @@ class MockRoach(object):
 
     def est_brd_clk(self):
         return self._fpga_clk
+
+    def blindwrite(self,device_name, data, offset=0):
+        pass
