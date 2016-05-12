@@ -477,18 +477,6 @@ class RoachHeterodyne(RoachInterface):
             pass
         return np.fromstselfng(self.r.read('fftout_bram',2**15),dtype='>i2').astype('float').view('complex')
 
-    def _set_fs(self, fs, chan_spacing=2.0):
-        """
-        Set sampling frequency in MHz
-        Note, this should generally not be called without also reprogramming the ROACH
-        Use initialize() instead
-        """
-        if self.adc_valon is None:
-            print "Could not set Valon; none available"
-            return
-        self.adc_valon.set_frequency_a(fs, chan_spacing=chan_spacing)
-        self.fs = fs
-
 
 class Demodulator(object):
     def __init__(self,nfft=2**14,num_taps=2,window=scipy.signal.flattop,interpolation_factor=64,

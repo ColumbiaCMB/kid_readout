@@ -389,16 +389,7 @@ class RoachBaseband(RoachInterface):
             dout = self.demodulate_data(dout)
         return dout, addr
 
-    def _set_fs(self, fs, chan_spacing=2.0):
-        """
-        Set sampling frequency in MHz
-        Note, this should generally not be called without also reprogramming the ROACH
-        Use initialize() instead        
-        """
-        if self.adc_valon is None:
-            logger.warning("Could not set Valon; none available")
-            return
-        self.adc_valon.set_frequency_a(fs, chan_spacing=chan_spacing)  # for now the baseband readout uses both valon
-        #  outputs,
-        self.fs = float(fs)
-
+    def _window_response(self, fr):
+        res = np.interp(np.abs(fr) * 2 ** 7, np.arange(2 ** 7), self._window_mag)
+        res = 1 / res
+        return res

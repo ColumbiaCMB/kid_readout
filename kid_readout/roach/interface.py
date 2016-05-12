@@ -516,7 +516,6 @@ class RoachInterface(object):
             logger.debug(result)
         self._unpause_dram()
 
-    # TODO: call from the functions that require it so we can stop calling it externally.
     def _sync(self,loopback=None):
         if loopback is not None:
             warnings.warn("loopback parameter to _sync is deprecated, use set_loopback method")
@@ -571,16 +570,21 @@ class RoachInterface(object):
         """ Alias for set_dac_attenuator """
         return self.set_dac_attenuator(attendb)
 
-    def _set_fs(self, fs):
+    def _set_fs(self, fs, chan_spacing = 2.0):
         """
         Set sampling frequency in MHz
+        Note, this should generally not be called without also reprogramming the ROACH
+        Use initialize() instead
         """
-        raise NotImplementedError()
-
-    def _window_response(self, fr):
-        res = np.interp(np.abs(fr) * 2 ** 7, np.arange(2 ** 7), self._window_mag)
-        res = 1 / res
-        return res
+        if np.mod(fs,chan_spacing) > 1e-7:
+            raise ValueError("The requested sampling frequency %f is not divisible by the channel spacing %f" % (fs,
+                                                                                                                 chan_spacing))
+        if self.adc_valon is None:
+            logger.warning("Could not set Valon; none available")
+            return
+        self.adc_valon.set_frequency_a(fs, chan_spacing=chan_spacing)  # for now the baseband readout uses both valon
+        #  outputs,
+        self.fs = float(fs)
 
     def set_debug(self,value):
         self.r.write_int('debug',value)
@@ -607,14 +611,16 @@ class RoachInterface(object):
             tone_amplitude = self.amps * np.ones(self.tone_bins.shape[1], dtype='float')
         else:
             tone_amplitude = self.amps.copy()
+        output_order = self.readout_selection.argsort()
         measurement = StreamArray(tone_bin=self.tone_bins[self.bank, :].copy(),
                                   tone_amplitude=tone_amplitude,  # already copied
                                   tone_phase=self.phases.copy(),
-                                  tone_index=self.readout_selection.copy(),
-                                  filterbank_bin=self.fft_bins[self.bank, self.readout_selection].copy(),
+                                  tone_index=self.readout_selection.copy()[output_order],
+                                  filterbank_bin=self.fft_bins[self.bank, self.readout_selection].copy()[output_order],
                                   epoch=epoch,
                                   sequence_start_number=sequence_start_number,
-                                  s21_raw=data.T,  # transpose for now, because measurements are organized channel,time
+                                  s21_raw=data[:,output_order].T,  # transpose for now, because measurements are
+                                          # organized channel,time
                                   data_demodulated=demod,
                                   roach_state=self.get_state(),
                                   **kwargs)
