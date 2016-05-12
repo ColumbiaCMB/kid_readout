@@ -592,10 +592,16 @@ class RoachInterface(object):
 
     @property
     def blocks_per_second(self):
+        return self.blocks_per_second_per_channel*len(self.readout_selection)
+
+    @property
+    def blocks_per_second_per_channel(self):
         raise NotImplementedError("blocks_per_second needs to be implemented for this subclass")
 
     def get_measurement(self, num_seconds, power_of_two=True, demod=True, **kwargs):
         num_blocks = self.blocks_per_second*num_seconds
+        if num_blocks == 0:
+            num_blocks = 1 # we have to get at least one block
         if power_of_two:
             log2 = np.int(np.round(np.log2(num_blocks)))  # Changed to int so that num_blocks is an int
             if log2 < 0:
@@ -625,16 +631,6 @@ class RoachInterface(object):
                                   roach_state=self.get_state(),
                                   **kwargs)
         return measurement
-
-    def get_data_udp(self, nread=2, demod=True):
-        chan_offset = 1
-        nch = self.fpga_fft_readout_indexes.shape[0]
-        data, seqnos = udp_catcher.get_udp_data(self, npkts=nread * 16 * nch, streamid=np.random.randint(1,2**15),
-                                                chans=self.fpga_fft_readout_indexes + chan_offset,
-                                                nfft=self.nfft, addr=(self.host_ip, 12345))  # , stream_reg, addr)
-        if demod:
-            data = self.demodulate_data(data)
-        return data, seqnos
 
     ### Tried and true readout function
     def _read_data(self, nread, bufname, verbose=False):
