@@ -428,6 +428,12 @@ class SweepArray(core.Measurement):
         """numpy.ndarray[complex]: The raw s21 streams of all data points, in ascending frequency order."""
         return np.vstack([stream_array.s21_raw for stream_array in self.stream_arrays])[self.ascending_order, :]
 
+    def to_dataframe(self, add_origin=True):
+        dataframes = []
+        for number in range(self.num_channels):
+            dataframes.append(self.sweep(number).to_dataframe(add_origin=add_origin))
+        return pd.concat(dataframes, ignore_index=True)
+
 
 class SingleSweep(core.Measurement):
     """
@@ -506,7 +512,44 @@ class SingleSweep(core.Measurement):
             if hasattr(self, attr):
                 delattr(self, attr)
         self._resonator = model(frequency=self.frequency, s21=self.s21_point, errors=self.s21_point_error)
+        self._resonator.fit()
         return self._resonator
+
+    def to_dataframe(self, add_origin=True):
+        data = {'number': self.number, 'analysis_epoch': time.time(), 'start_epoch': self.start_epoch()}
+        try:
+            for thermometer, temperature in self.state['temperature'].items():
+                data['temperature_{}'.format(thermometer)] = temperature
+        except KeyError:
+            pass
+        try:
+            for key, value in self.streams[0].roach_state.items():
+                data['roach_{}'.format(key)] = value
+        except KeyError:
+            pass
+
+        flat_state = self.state.flatten(wrap_lists=True)
+        data.update(flat_state)
+
+        for param in self.resonator.current_result.params.values():
+            data['res_{}'.format(param.name)] = param.value
+            data['res_{}_error'.format(param.name)] = param.stderr
+        data['res_redchi'] = self.resonator.current_result.redchi
+        data['res_Q_i'] = self.resonator.Q_i
+        data['res_Q_e'] = self.resonator.Q_e
+
+        data['res_s21_data'] = [self.resonator.data]
+        data['res_frequency_data'] = [self.resonator.frequency]
+        data['res_s21_errors'] = [self.resonator.errors]
+        modelf = np.linspace(self.resonator.frequency.min(), self.resonator.frequency.max(), 1000)
+        models21 = self.resonator.model.eval(params=self.resonator.current_params, f=modelf)
+        data['res_model_frequency'] = [modelf]
+        data['res_model_s21'] = [models21]
+
+        dataframe = pd.DataFrame(data, index=[0])
+        if add_origin:
+            self.add_origin(dataframe)
+        return dataframe
 
 
 class SweepStreamArray(core.Measurement):
