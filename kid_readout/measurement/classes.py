@@ -67,6 +67,8 @@ def latest_version_number(class_name):
 
 
 # This dict should include entries for all classes with version information that are saved to disk.
+# Convention: when a version number is deprecated, add the version number to the end of the name of the class that
+# should now load it.
 _versioned = {'Measurement': {0: 'kid_readout.measurement.core.Measurement'},
               'MeasurementList': {0: 'kid_readout.measurement.core.MeasurementList'},
               'CornerCases': {0: 'kid_readout.measurement.test.utilities.CornerCases'},
@@ -90,6 +92,15 @@ _versioned = {'Measurement': {0: 'kid_readout.measurement.core.Measurement'},
 _unversioned = {'Dictionary': 'kid_readout.measurement.io.memory.Dictionary',
                 'NCFile': 'kid_readout.measurement.io.nc.NCFile',
                 'NumpyDirectory': 'kid_readout.measurement.io.npy.NumpyDirectory',
+                # All of the pre-versioned data formats are identical to version 0 formats.
+                # These are the fully-qualified class names that were saved before versioning was implemented.
                 'kid_readout.measurement.basic.RoachStream': 'kid_readout.measurement.basic.RoachStream0',
                 'kid_readout.measurement.basic.SingleStream': 'kid_readout.measurement.basic.SingleStream0',
-                'kid_readout.measurement.basic.StreamArray': 'kid_readout.measurement.basic.StreamArray0'}
+                'kid_readout.measurement.basic.StreamArray': 'kid_readout.measurement.basic.StreamArray0',
+                # Add entries for these if the corresponding classes are updated past version 0.
+                #'kid_readout.measurement.basic.SingleSweep': 'kid_readout.measurement.?',
+                #'kid_readout.measurement.basic.SweepArray': 'kid_readout.measurement.?',
+                #'kid_readout.measurement.basic.SingleSweepStream': 'kid_readout.measurement.?',
+                #'kid_readout.measurement.basic.SweepStreamArray': 'kid_readout.measurement.?',
+                #
+                }

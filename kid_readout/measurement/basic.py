@@ -125,10 +125,13 @@ class RoachStream(core.Measurement):
         numpy.ndarray(complex)
             An estimate of the complex standard error of the mean of s21_raw.
         """
-        num_good_samples = np.sum(~np.isnan(self.s21_raw), axis=-1).astype(np.float)  # Allow conversion to np.nan.
-        try:
-            num_good_samples[num_good_samples == 0] = np.nan  # Avoid zero-division.
-        except TypeError:  # num_good_samples is not an array
+        #  If
+        # The float cast allows conversion to NaN.
+        num_good_samples = np.sum(~np.isnan(self.s21_raw), axis=-1).astype(np.float)
+        if isinstance(num_good_samples, np.ndarray):
+            # Avoid a ZeroDivisionError if some of the channels have no good samples.
+            num_good_samples[num_good_samples == 0] = np.nan
+        elif num_good_samples == 0:  # num_good_samples is a scalar; avoid a ZeroDivisionError.
             num_good_samples = np.nan
         return ((np.nanstd(self.s21_raw.real, axis=-1) + 1j * np.nanstd(self.s21_raw.imag, axis=-1)) /
                 np.sqrt(num_good_samples))
