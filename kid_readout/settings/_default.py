@@ -3,7 +3,7 @@ This is the default settings module.
 
 The values of any variables that might differ between deploys of the package should either be None or should be
 calculated at runtime. This file is under version control so it must work across all deploys. All of the tests should
-pass with no local settings overriding the values here.
+pass or be skipped with no local settings overriding the values here.
 
 What variables should be included in this file?
 
@@ -24,17 +24,21 @@ if os.path.exists(os.path.join('/data', socket.gethostname())):
 else:
     BASE_DATA_DIR = '/tmp'
 
-# The name of the cryostat, if any.
+# The name of the cryostat.
 CRYOSTAT = None
 
-# The path to the directory containing temperature log files.
+# The path of the directory containing temperature log files.
 TEMPERATURE_LOG_DIR = None
 
-# ROACH
-ROACH_HOST_IP = None
-ROACH_IS_HETERODYNE = None
-ROACH1_VALON = None
+# ROACH1
 ROACH1_IP = None
-ROACH2_VALON = None
+ROACH1_VALON = None
+ROACH1_HOST_IP = None
+
+# ROACH2
 ROACH2_IP = None
+ROACH2_VALON = None
+ROACH2_HOST_IP = None
+
+# Analog
 MARK2_VALON = None

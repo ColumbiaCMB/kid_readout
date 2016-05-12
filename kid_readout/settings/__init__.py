@@ -1,47 +1,46 @@
 """
 This is the settings subpackage.
 
-It imports default settings from default.py as well as local.py, if it exists, which contains site-specific settings.
+It imports default settings from _default.py as well as _local.py, if it exists, which contains site-specific settings.
 
 The defaults are imported first, so the local settings will override the defaults. The local settings module is listed
-in .gitignore and is thus not under version control.
+in .gitignore and is thus not under version control so that deploys can have different settings.
 
+If _local.py does not exist, this module will attempt to copy the file _autodetect.py -> _local.py, and if the copy
+succeeds it will import * from this new _local.py file.
 
-
-For this file only, it should be safe for modules that require these settings to use
+Ideally, it should be safe to use
 from kid_readout.settings import *
-so the variables defined here must not conflict with anything else in the package. Ideally, use ALL_CAPS for constants.
-Note that importing * from local.py will cause its namespace to be imported here too, so keep it clean. Using e.g.
-from kid_readout.roach.columbia import ROACH1_VALON, ROACH_IS_HETERODYNE
-will import only the desired variables into the namespace, and not the module name.
+so the variables defined here must not conflict with others in the package. If possible, use ALL_CAPS for constants and
+prefix temporary variables with an underscore ('_') so that they are not carried into the namespace by import *. (The
+module names for this package also have underscore prefixes for this reason.)
+
+Note that importing * from local.py will cause its namespace to be imported here too, so keep it clean. Use
+
+from kid_readout.subpackage._module import ONLY, NECESSARY, VARIABLES
+
+to import only these variables and not the module name into the namespace.
 """
-
 import logging
-_logger = logging.getLogger(__name__) # Important: leading underscore helps ensure that logger in files won't be
-                                        # overridden by this logger
+# Important: leading underscore helps ensure that logger in files won't be overridden by this logger
+_logger = logging.getLogger(__name__)
 
-from kid_readout.settings.default import *
+from kid_readout.settings._default import *
 
 try:
-    from kid_readout.settings.local import *
-except ImportError:
+    from kid_readout.settings._local import *
+except ImportError as _exception:
     import os
-    import shutil
-    settings_dir = os.path.split(os.path.abspath(__file__))[0]
-    local_settings_filename = os.path.join(settings_dir,'local.py')
-    print local_settings_filename,
-    if not os.path.exists(local_settings_filename):
-        _logger.warning("No kid_readout/settings/local.py file found, trying to create a useful default")
+    _settings_dir = os.path.split(os.path.abspath(__file__))[0]
+    _local_settings_filename = os.path.join(_settings_dir, '_local.py')
+    if os.path.exists(_local_settings_filename):
+        raise _exception  # If _local.py exists and raises an exception, we want to see it.
+    else:
+        import shutil
+        _logger.warning("No kid_readout/settings/_local.py file found, trying to create a useful default")
         try:
-            shutil.copy(os.path.join(settings_dir,'default_local_settings.py'),local_settings_filename)
-            _logger.info("Successfully created local.py file")
-        except Exception:
-            _logger.exception("Could not create local.py")
-
-
-try:
-    from kid_readout.settings.local import *
-except ImportError:
-    _logger.exception("Could not find local settings")
-
-del _logger
+            shutil.copy(os.path.join(_settings_dir, '_autodetect.py'), _local_settings_filename)
+            _logger.info("Successfully created _local.py file")
+        except:
+            _logger.exception("Could not create _local.py")
+        from kid_readout.settings._local import *  # Again, we want to see an exception here.
