@@ -11,6 +11,7 @@ import scipy.signal
 import udp_catcher
 import tools
 from interface import RoachInterface
+from kid_readout.settings import ROACH1_VALON, ROACH1_IP, ROACH1_HOST_IP
 
 import logging
 logger = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ except ImportError:
 
 class RoachBaseband(RoachInterface):
 
-    def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None, host_ip=None, initialize=True,
+    def __init__(self, roach=None, wafer=0, roachip=ROACH1_IP, adc_valon=None, host_ip=ROACH1_HOST_IP, initialize=True,
                  nfs_root='/srv/roach_boot/etch'):
         """
         Class to represent the baseband readout system (low-frequency (150 MHz), no mixers)

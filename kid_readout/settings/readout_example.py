@@ -7,5 +7,5 @@ CRYOSTAT = 'STARCryo'
 TEMPERATURE_LOG_DIR = '/data/readout/SRS'
 
 # The ROACH1 is connected in baseband mode.
-from kid_readout.roach.columbia import ROACH_HOST_IP, ROACH1_VALON, ROACH1_IP
-ROACH_IS_HETERODYNE = False
+from kid_readout.roach.columbia import ROACH1_HOST_IP, ROACH1_VALON, ROACH1_IP
+
