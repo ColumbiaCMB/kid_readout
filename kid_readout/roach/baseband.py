@@ -1,10 +1,6 @@
 """
 Classes to interface to ROACH hardware for KID readout systems
 """
-# Long-term interface changes:
-# TODO: switch to properties where possible
-# TODO: give more explicit access to the tone banks
-# TODO: raise RoachError for Roach-specific violations
 
 import time
 import socket
@@ -16,7 +12,8 @@ import udp_catcher
 import tools
 from interface import RoachInterface
 
-
+import logging
+logger = logging.getLogger(__name__)
 
 try:
     import numexpr
@@ -67,6 +64,8 @@ class RoachBaseband(RoachInterface):
         self._fpga_output_buffer = 'ppout%d' % wafer
 
         self._general_setup()
+        if initialize:
+            self.initialize()
 
     def load_waveform(self, wave, start_offset=0, fast=True):
         """
@@ -109,8 +108,7 @@ class RoachBaseband(RoachInterface):
         self.set_tone_bins(bins, nsamp, amps=amps, load=load, normfact=normfact,phases=phases, preset_norm=preset_norm)
         self.fft_bins = self.calc_fft_bins(bins, nsamp)
         self.select_bank(0)
-        if readout_selection is not None:
-            self.select_fft_bins(readout_selection)
+        self.select_fft_bins(readout_selection)
         self.save_state()
         return actual_freqs
 
@@ -120,7 +118,6 @@ class RoachBaseband(RoachInterface):
         freqs = np.atleast_1d(freqs).astype('float')
         if freqs.shape[0] != self.tone_bins.shape[1]:
             raise ValueError("freqs array must contain same number of tones as original waveforms")
-        # This is a hack that doesn't handle bank selection at all and may have additional problems.
         if overwrite_last:  # Delete the last waveform and readout selection entry.
             self.tone_bins = self.tone_bins[:-1, :]
             self.fft_bins = self.fft_bins[:-1, :]
@@ -162,14 +159,15 @@ class RoachBaseband(RoachInterface):
         for k in range(nwaves):
             spec[k, bins[k, :]] = amps * np.exp(1j * phases)
         wave = np.fft.irfft(spec, axis=1)
-        if preset_norm:
+        if preset_norm and not normfact:
             self.wavenorm = tools.calc_wavenorm(bins.shape[1], nsamp, baseband=True)
         else:
             self.wavenorm = np.abs(wave).max()
-        if normfact is not None:
-            wn = (2.0 / normfact) * len(bins) / float(nsamp)
-            print "ratio of current wavenorm to optimal:", self.wavenorm / wn
-            self.wavenorm = wn
+            if normfact is not None:
+                wn = (2.0 / normfact) * len(bins) / float(nsamp)
+                logger.debug("Using user provide waveform normalization resulting in wavenorm %f versus optimal %f. "
+                             "Ratio is %f" % (wn,self.wavenorm,self.wavenorm/wn))
+                self.wavenorm = wn
         qwave = np.round((wave / self.wavenorm) * (2 ** 15 - 1024)).astype('>i2')
         qwave.shape = (qwave.shape[0] * qwave.shape[1],)
         self.qwave = qwave
@@ -222,7 +220,7 @@ class RoachBaseband(RoachInterface):
         idx[top_half] = self.nfft - bins[top_half] + self.nfft // 2
         return idx
 
-    def select_fft_bins(self, readout_selection, sync=True):
+    def select_fft_bins(self, readout_selection=None, sync=True):
         """
         Select which subset of the available FFT bins to read out
         
@@ -236,6 +234,8 @@ class RoachBaseband(RoachInterface):
         readout_selection : array of ints
             indexes into the self.fft_bins array to specify the bins to read out
         """
+        if readout_selection is None:
+            readout_selection = np.arange(self.fft_bins.shape[1])
         bank = self.bank
         offset = 2
         idxs = self.fft_bin_to_index(self.fft_bins[bank, readout_selection])
@@ -377,10 +377,10 @@ class RoachBaseband(RoachInterface):
         chan_offset = 1
         draw, addr, ch = self._read_data(nread, bufname)
         if not np.all(ch == ch[0]):
-            print "all channel registers not the same; this case not yet supported"
+            logger.error("all channel registers not the same; this case not yet supported.")
             return draw, addr, ch
         if not np.all(np.diff(addr) < 8192):
-            print "address skip!"
+            logger.warning("address skip!")
         nch = self.readout_selection.shape[0]
         dout = draw.reshape((-1, nch))
         shift = np.flatnonzero(self.fpga_fft_readout_indexes == (ch[0] - chan_offset))[0] - (nch - 1)
@@ -396,245 +396,9 @@ class RoachBaseband(RoachInterface):
         Use initialize() instead        
         """
         if self.adc_valon is None:
-            print "Could not set Valon; none available"
+            logger.warning("Could not set Valon; none available")
             return
         self.adc_valon.set_frequency_a(fs, chan_spacing=chan_spacing)  # for now the baseband readout uses both valon
         #  outputs,
         self.fs = float(fs)
-
-
-class RoachBasebandWide(RoachBaseband):
-
-    def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None, host_ip=None):
-        """
-        Class to represent the baseband readout system (low-frequency (150 MHz), no mixers)
-        
-        roach: an FpgaClient instance for communicating with the ROACH. 
-                If not specified, will try to instantiate one connected to *roachip*
-        wafer: 0 or 1. 
-                In baseband mode, each of the two DAC and ADC connections can be used independantly to
-                readout a single wafer each. This parameter indicates which connection you want to use.
-        roachip: (optional). Network address of the ROACH if you don't want to provide an FpgaClient
-        adc_valon: a Valon class, a string, or None
-                Provide access to the Valon class which controls the Valon synthesizer which provides
-                the ADC and DAC sampling clock.
-                The default None value will use the valon.find_valon function to locate a synthesizer
-                and create a Valon class for you.
-                You can alternatively pass a string such as '/dev/ttyUSB0' to specify the port for the
-                synthesizer, which will then be used for creating a Valon class.
-                Finally, for test suites, you can directly pass a Valon class or a class with the same
-                interface.
-        """
-        if roach:
-            self.r = roach
-        else:
-            from corr.katcp_wrapper import FpgaClient
-            self.r = FpgaClient(roachip)
-            t1 = time.time()
-            timeout = 10
-            while not self.r.is_connected():
-                if (time.time() - t1) > timeout:
-                    raise Exception("Connection timeout to roach")
-                time.sleep(0.1)
-
-        if adc_valon is None:
-            import valon
-            ports = valon.find_valons()
-            if len(ports) == 0:
-                self.adc_valon_port = None
-                self.adc_valon = None
-                print "Warning: No valon found!"
-            else:
-                for port in ports:
-                    try:
-                        self.adc_valon_port = port
-                        self.adc_valon = valon.Synthesizer(port)
-                        f = self.adc_valon.get_frequency_a()
-                        break
-                    except:
-                        pass
-        elif type(adc_valon) is str:
-            import valon
-            self.adc_valon_port = adc_valon
-            self.adc_valon = valon.Synthesizer(self.adc_valon_port)
-        else:
-            self.adc_valon = adc_valon
-
-        if host_ip is None:
-            hostname = socket.gethostname()
-            if hostname == 'detectors':
-                host_ip = '192.168.4.2'
-            else:
-                host_ip = '192.168.1.1'
-
-        self.host_ip = host_ip
-        self.adc_atten = 31.5
-        self.dac_atten = -1
-        self.fft_gain = 0
-        self.fft_bins = None
-        self.tone_nsamp = None
-        self.tone_bins = None
-        self.phases = None
-        self.bof_pid = None
-        self.roachip = roachip
-        try:
-            self.fs = self.adc_valon.get_frequency_a()
-        except:
-            print "warning couldn't get valon frequency, assuming 512 MHz"
-            self.fs = 512.0
-        self.wafer = wafer
-        self.dac_ns = 2 ** 16  # number of samples in the dac buffer
-        self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
-        self.nfft = 2 ** 11
-        # self.boffile = 'bb2xpfb12mcr5_2013_Oct_29_1658.bof'
-        #self.boffile = 'bb2xpfb11mcr7_2013_Nov_04_1309.bof'
-        #self.boffile = 'bb2xpfb11mcr8_2013_Nov_04_2151.bof'
-        self.boffile = 'bb2xpfb11mcr11_2014_Feb_01_1106.bof'
-        #self.boffile = 'bb2xpfb11mcr12_2014_Feb_26_1028.bof'
-        self._fpga_output_buffer = 'ppout%d' % wafer
-        self._window_mag = tools.compute_window(npfb=2 * self.nfft, taps=2, wfunc=scipy.signal.flattop)
-
-    def demodulate_data(self, data):
-        """
-        Demodulate the data from the FFT bin
-        
-        This function assumes that self.select_fft_bins was called to set up the necessary class attributes
-        
-        data : array of complex data
-        
-        returns : demodulated data in an array of the same shape and dtype as *data*
-        """
-        bank = self.bank
-        demod = np.zeros_like(data)
-        t = np.arange(data.shape[0])
-        for n, ich in enumerate(self.readout_selection):
-            phi0 = self.phases[ich]
-            k = self.tone_bins[bank, ich]
-            m = self.fft_bins[bank, ich]
-            if m >= self.nfft // 2:
-                sign = 1.0
-            else:
-                sign = -1.0
-            nfft = self.nfft
-            ns = self.tone_nsamp
-            foffs = (2 * k * nfft - m * ns) / float(ns)
-            wc = self._window_response(foffs / 2) * (self.tone_nsamp / 2.0 ** 18)
-            if have_numexpr:
-                pi = np.pi
-                this_data = data[:, n]
-                demod[:, n] = numexpr.evaluate('wc*exp(sign*1j*(2*pi*foffs*t + phi0)) * this_data')
-                if m >= self.nfft // 2:
-                    np.conj(demod[:, n], out=demod[:, n])
-            else:
-                demod[:, n] = wc * np.exp(sign * 1j * (2 * np.pi * foffs * t + phi0)) * data[:, n]
-                if m >= self.nfft // 2:
-                    demod[:, n] = np.conjugate(demod[:, n])
-        return demod
-
-
-class RoachBasebandWide10(RoachBasebandWide):
-
-    def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None):
-        """
-        Class to represent the baseband readout system (low-frequency (150 MHz), no mixers)
-        
-        roach: an FpgaClient instance for communicating with the ROACH. 
-                If not specified, will try to instantiate one connected to *roachip*
-        wafer: 0 or 1. 
-                In baseband mode, each of the two DAC and ADC connections can be used independantly to
-                readout a single wafer each. This parameter indicates which connection you want to use.
-        roachip: (optional). Network address of the ROACH if you don't want to provide an FpgaClient
-        adc_valon: a Valon class, a string, or None
-                Provide access to the Valon class which controls the Valon synthesizer which provides
-                the ADC and DAC sampling clock.
-                The default None value will use the valon.find_valon function to locate a synthesizer
-                and create a Valon class for you.
-                You can alternatively pass a string such as '/dev/ttyUSB0' to specify the port for the
-                synthesizer, which will then be used for creating a Valon class.
-                Finally, for test suites, you can directly pass a Valon class or a class with the same
-                interface.
-        """
-        if roach:
-            self.r = roach
-        else:
-            from corr.katcp_wrapper import FpgaClient
-            self.r = FpgaClient(roachip)
-            t1 = time.time()
-            timeout = 10
-            while not self.r.is_connected():
-                if (time.time() - t1) > timeout:
-                    raise Exception("Connection timeout to roach")
-                time.sleep(0.1)
-
-        if adc_valon is None:
-            import valon
-            ports = valon.find_valons()
-            if len(ports) == 0:
-                self.adc_valon_port = None
-                self.adc_valon = None
-                print "Warning: No valon found!"
-            else:
-                for port in ports:
-                    try:
-                        self.adc_valon_port = port
-                        self.adc_valon = valon.Synthesizer(port)
-                        f = self.adc_valon.get_frequency_a()
-                        break
-                    except:
-                        pass
-        elif type(adc_valon) is str:
-            import valon
-            self.adc_valon_port = adc_valon
-            self.adc_valon = valon.Synthesizer(self.adc_valon_port)
-        else:
-            self.adc_valon = adc_valon
-
-        self.adc_atten = -1
-        self.dac_atten = -1
-        self.bof_pid = None
-        self.roachip = roachip
-        try:
-            self.fs = self.adc_valon.get_frequency_a()
-        except:
-            print "warning couldn't get valon frequency, assuming 512 MHz"
-            self.fs = 512.0
-        self.wafer = wafer
-        self.dac_ns = 2 ** 16  # number of samples in the dac buffer
-        self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
-        self.nfft = 2 ** 10
-        # self.boffile = 'bb2xpfb10mcr8_2013_Nov_18_0706.bof'
-        self.boffile = 'bb2xpfb10mcr11_2014_Jan_20_1049.bof'
-        self._fpga_output_buffer = 'ppout%d' % wafer
-        self._window_mag = tools.compute_window(npfb=2 * self.nfft, taps=2, wfunc=scipy.signal.flattop)
-
-    def demodulate_data(self, data):
-        """
-        Demodulate the data from the FFT bin
-        
-        This function assumes that self.select_fft_bins was called to set up the necessary class attributes
-        
-        data : array of complex data
-        
-        returns : demodulated data in an array of the same shape and dtype as *data*
-        """
-        demod = np.zeros_like(data)
-        t = np.arange(data.shape[0])
-        for n, ich in enumerate(self.readout_selection):
-            phi0 = self.phases[ich]
-            k = self.tone_bins[ich]
-            m = self.fft_bins[ich]
-            if m >= self.nfft // 2:
-                sign = 1.0
-            else:
-                sign = -1.0
-            nfft = self.nfft
-            ns = self.tone_nsamp
-            foffs = (2 * k * nfft - m * ns) / float(ns)
-            wc = self._window_response(foffs / 2) * (self.tone_nsamp / 2.0 ** 18)
-            demod[:, n] = wc * np.exp(sign * 1j * (2 * np.pi * foffs * t + phi0)) * data[:, n]
-            if m >= self.nfft // 2:
-                demod[:, n] = np.conjugate(demod[:, n])
-        return demod
-
-
 

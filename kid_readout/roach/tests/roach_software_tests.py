@@ -76,3 +76,14 @@ def test_precomputed_wavenorm():
             actual_wavenorm = ri.wavenorm
             ri.set_tone_baseband_freqs(np.linspace(100,120,2**k),nsamp=2**16, phases=ri.phases, preset_norm=True)
             assert(ri.wavenorm >= 0.99*actual_wavenorm)   #guarantees the wave won't overflow
+
+def test_get_bank():
+    mr = kid_readout.roach.tests.mock_roach.MockRoach('roach')
+    mv = kid_readout.roach.tests.mock_valon.MockValon()
+    np.random.seed(123)
+    for class_ in [kid_readout.roach.heterodyne.RoachHeterodyne,
+                   kid_readout.roach.baseband.RoachBaseband,
+                   kid_readout.roach.r2baseband.Roach2Baseband,
+                   kid_readout.roach.r2heterodyne.Roach2Heterodyne]:
+        ri = class_(roach=mr,initialize=False, adc_valon=mv)
+        assert(ri.get_current_bank() is not None)

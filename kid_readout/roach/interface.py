@@ -301,6 +301,7 @@ class RoachInterface(object):
                 self.bank = bank_reg / (mask_reg + 1)
         except RuntimeError:
             self.bank = 0  # this catches the case that the ROACH is not yet programmed
+        return self.bank
 
     def select_bank(self, bank):
         dram_addr_per_bank = self.tone_nsamp / 2  # number of dram addresses per bank

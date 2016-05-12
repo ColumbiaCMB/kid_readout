@@ -62,7 +62,7 @@ class RoachHeterodyne(RoachInterface):
         self.heterodyne = True
         self.boffile = 'iq2xpfb14mcr7_2015_Nov_25_0907.bof'
         #self.boffile = 'iq2xpfb14mcr8_2016_Feb_12_1427.bof'
-        self.iq_delay = 4
+        self.iq_delay = 0
 
         self.wafer = wafer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
@@ -73,6 +73,9 @@ class RoachHeterodyne(RoachInterface):
 
         self.demodulator = Demodulator(hardware_delay_samples=self.hardware_delay_estimate*self.fs*1e6)
         self.attenuator = attenuator
+        if initialize:
+            self.initialize()
+
 
     # def get_raw_adc(self):
     #     """
