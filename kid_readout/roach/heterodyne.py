@@ -350,11 +350,6 @@ class RoachHeterodyne(RoachInterface):
         samples_per_channel_per_block = 4096
         return chan_rate / samples_per_channel_per_block
 
-
-    @property
-    def blocks_per_second(self):
-        return self.blocks_per_second_per_channel*len(self.readout_selection)
-
     def get_data(self, nread=2, demod=True):
         # TODO This is a temporary hack until we get the system simulation code in place
         if self._using_mock_roach:

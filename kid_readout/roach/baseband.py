@@ -27,7 +27,7 @@ except ImportError:
 
 class RoachBaseband(RoachInterface):
 
-    def __init__(self, roach=None, wafer=0, roachip=ROACH1_IP, adc_valon=None, host_ip=ROACH1_HOST_IP, initialize=True,
+    def __init__(self, roach=None, wafer=0, roachip=ROACH1_IP, adc_valon=ROACH1_VALON, host_ip=ROACH1_HOST_IP, initialize=True,
                  nfs_root='/srv/roach_boot/etch'):
         """
         Class to represent the baseband readout system (low-frequency (150 MHz), no mixers)
@@ -309,7 +309,7 @@ class RoachBaseband(RoachInterface):
             return self.get_data_udp(nread=nread, demod=demod)
 
     @property
-    def blocks_per_second(self):
+    def blocks_per_second_per_channel(self):
         chan_rate = self.fs * 1e6 / (2 * self.nfft)  # samples per second for one tone_index
         samples_per_channel_per_block = 4096
         return chan_rate / samples_per_channel_per_block
@@ -336,6 +336,17 @@ class RoachBaseband(RoachInterface):
             blocks = 2 ** lg2
 
         return self.get_data_udp(blocks, demod=demod)
+
+    def get_data_udp(self, nread=2, demod=True):
+        chan_offset = 1
+        nch = self.fpga_fft_readout_indexes.shape[0]
+        data, seqnos = udp_catcher.get_udp_data(self, npkts=nread * 16, streamid=np.random.randint(1,2**15),
+                                                chans=self.fpga_fft_readout_indexes + chan_offset,
+                                                nfft=self.nfft, addr=(self.host_ip, 12345))  # , stream_reg, addr)
+        if demod:
+            data = self.demodulate_data(data)
+        return data, seqnos
+
 
     def get_data_seconds_katcp(self, nseconds, demod=True, pow2=True):
         """
