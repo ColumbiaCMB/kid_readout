@@ -27,8 +27,8 @@ except ImportError:
 
 class RoachBaseband(RoachInterface):
 
-    def __init__(self, roach=None, wafer=0, roachip=ROACH1_IP, adc_valon=ROACH1_VALON, host_ip=ROACH1_HOST_IP, initialize=True,
-                 nfs_root='/srv/roach_boot/etch'):
+    def __init__(self, roach=None, wafer=0, roachip=ROACH1_IP, adc_valon=ROACH1_VALON, host_ip=ROACH1_HOST_IP,
+                 initialize=True, nfs_root='/srv/roach_boot/etch'):
         """
         Class to represent the baseband readout system (low-frequency (150 MHz), no mixers)
 

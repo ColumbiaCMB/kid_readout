@@ -446,6 +446,8 @@ class RoachInterface(object):
             self.modulation_output = state['modulation_output'][()]
             self.modulation_rate = state['modulation_rate'][()]
             self.lo_frequency = state['lo_frequency'][()]
+        self.set_debug(0) # Turn off debug and loopback no matter what to avoid surprises
+        self.set_loopback(False)
 
     def measure_fs(self):
         """

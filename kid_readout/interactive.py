@@ -27,4 +27,6 @@ from kid_readout.measurement.io.easync import EasyNetCDF4
 from kid_readout.analysis.resonator import lmfit_resonator
 from kid_readout.analysis.resonator import lmfit_models
 from kid_readout.measurement.acquire import acquire
+from kid_readout import measurement
+from kid_readout.measurement import basic
 
