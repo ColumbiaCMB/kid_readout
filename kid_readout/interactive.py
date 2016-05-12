@@ -7,8 +7,10 @@ Feel free to add additional imports as you find them helpful.
 import logging
 logger = logging.getLogger('kid_readout')
 from kid_readout.utils.log import default_handler
-logger.addHandler(default_handler)
-logger.info("kid_readout logging setup with default stream handler")
+if default_handler not in logger.handlers:
+    logger.addHandler(default_handler)
+    logger.setLevel(logging.INFO)
+    logger.info("kid_readout logging setup with default stream handler")
 
 from kid_readout.settings import *
 from kid_readout.roach import heterodyne,baseband,r2heterodyne,r2baseband, analog, hardware_tools
