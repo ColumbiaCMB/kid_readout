@@ -89,4 +89,7 @@ _versioned = {'Measurement': {0: 'kid_readout.measurement.core.Measurement'},
 # information. For these, it should map fully-qualified class name to fully-qualified class name.
 _unversioned = {'Dictionary': 'kid_readout.measurement.io.memory.Dictionary',
                 'NCFile': 'kid_readout.measurement.io.nc.NCFile',
-                'NumpyDirectory': 'kid_readout.measurement.io.npy.NumpyDirectory'}
+                'NumpyDirectory': 'kid_readout.measurement.io.npy.NumpyDirectory',
+                'kid_readout.measurement.basic.RoachStream': 'kid_readout.measurement.basic.RoachStream0',
+                'kid_readout.measurement.basic.SingleStream': 'kid_readout.measurement.basic.SingleStream0',
+                'kid_readout.measurement.basic.StreamArray': 'kid_readout.measurement.basic.StreamArray0'}
