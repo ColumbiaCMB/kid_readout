@@ -30,28 +30,42 @@ def test_s21_raw_mean_error():
     num_tones = 4
     num_samples = 128
     s21 = np.empty((num_tones, num_samples), dtype=np.complex)
+    s21[0, ::2] = 1 + 2j
+    s21[0, 1::2] = np.nan * (1 + 1j)
+    correct_s21_error_0 = 0
+    s21[1, ::2] = 1 + 0j
+    s21[1, 1::2] = 0 + 1j
+    correct_s21_error_1 = (0.5 + 0.5j) / np.sqrt(num_samples)
+    s21[2, ::4] = -1 + 0j
+    s21[2, 2::4] = 0 - 1j
+    s21[2, 1::2] = np.nan * (1 + 1j)
+    correct_s21_error_2 = (0.5 + 0.5j) / np.sqrt(num_samples/ 2)  # Half the samples are NaN.
     # Using np.nan * (1 + 1j) is crucial here because the error calculation takes real and imag parts of s21_raw.
-    s21[0, :] = np.nan * (1 + 1j)
-    s21[1, ::2] = 1 + 2j
-    s21[1, 1::2] = np.nan * (1 + 1j)
-    s21[2, ::2] = 1 + 0j
-    s21[2, 1::2] = 0 + 1j
-    s21[3, ::4] = -1 + 0j
-    s21[3, 2::4] = 0 - 1j
-    s21[3, 1::2] = np.nan * (1 + 1j)
+    # The correct error for index 3 is NaN
+    s21[3, :] = np.nan * (1 + 1j)
+    # Test StreamArray code path
     sa = utilities.fake_stream_array(num_tones=num_tones)
     sa.s21_raw = s21
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
         s21_raw_mean_error = sa.s21_raw_mean_error
-        print(w)
         assert len(w) == 2
-        assert issubclass(w[0].category, RuntimeWarning)
-        assert issubclass(w[1].category, RuntimeWarning)
-    assert np.isnan(s21_raw_mean_error[0])
-    np.testing.assert_allclose(s21_raw_mean_error[1], 0)
-    np.testing.assert_allclose(s21_raw_mean_error[2], (0.5 + 0.5j) / np.sqrt(num_samples))
-    np.testing.assert_allclose(s21_raw_mean_error[3], (0.5 + 0.5j) / np.sqrt(num_samples/ 2))
+        assert issubclass(w[0].category, RuntimeWarning)  # From real
+        assert issubclass(w[1].category, RuntimeWarning)  # From imag
+    np.testing.assert_allclose(s21_raw_mean_error[0], correct_s21_error_0)
+    np.testing.assert_allclose(s21_raw_mean_error[1], correct_s21_error_1)
+    np.testing.assert_allclose(s21_raw_mean_error[2], correct_s21_error_2)
+    assert np.isnan(s21_raw_mean_error[3])
+    # Test SingleStream code path.
+    assert sa[0].s21_raw_mean_error == correct_s21_error_0
+    assert sa[1].s21_raw_mean_error == correct_s21_error_1
+    assert sa[2].s21_raw_mean_error == correct_s21_error_2
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        assert np.isnan(sa[3].s21_raw_mean_error)
+        assert len(w) == 2
+        assert issubclass(w[0].category, RuntimeWarning)  # From real
+        assert issubclass(w[1].category, RuntimeWarning)  # From imag
 
 
 class TestSweepArray(object):

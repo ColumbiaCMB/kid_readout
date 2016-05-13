@@ -125,7 +125,6 @@ class RoachStream(core.Measurement):
         numpy.ndarray(complex)
             An estimate of the complex standard error of the mean of s21_raw.
         """
-        #  If
         # The float cast allows conversion to NaN.
         num_good_samples = np.sum(~np.isnan(self.s21_raw), axis=-1).astype(np.float)
         if isinstance(num_good_samples, np.ndarray):
