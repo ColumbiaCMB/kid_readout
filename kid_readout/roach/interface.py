@@ -378,7 +378,7 @@ class RoachInterface(object):
         except:
             pass
 
-    def initialize(self, fs=512.0, start_udp=True, use_config=True):
+    def initialize(self, fs=512.0, start_udp=True, use_config=True, raise_if_not_locked=True):
         """
         Reprogram the ROACH and get things running
 
@@ -420,6 +420,7 @@ class RoachInterface(object):
             estfs = self.measure_fs()
             if np.abs(fs - estfs) > 2.0:
                 logger.error("FPGA clock may not be locked to sampling clock!")
+                raise RuntimeError("ROACH not locked to Valon: Requested sampling rate %.1f MHz. Estimated sampling rate %.1f MHz" % (fs,estfs))
             logger.info("Requested sampling rate %.1f MHz. Estimated sampling rate %.1f MHz" % (fs, estfs))
             if start_udp and not self._using_mock_roach:
                 logger.debug("starting udp server process on PPC")
