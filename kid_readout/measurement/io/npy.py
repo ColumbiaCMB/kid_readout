@@ -16,36 +16,40 @@ from kid_readout.measurement import core
 
 class NumpyDirectory(core.IO):
 
-    def __init__(self, root_path, memmap=False):
-        super(NumpyDirectory, self).__init__(root_path=os.path.expanduser(root_path))
-        if not os.path.isdir(self.root_path):
-            os.mkdir(root_path)
-        self.root = self.root_path
+    def __init__(self, root_path, metadata=None, memmap=False):
+        super(NumpyDirectory, self).__init__(root_path=os.path.expanduser(root_path), metadata=metadata)
         if memmap:
             self._mmap_mode = 'r'
         else:
             self._mmap_mode = None
+
+    def _root_path_exists(self, root_path):
+        return os.path.isdir(root_path)
+
+    def _open_existing(self, root_path):
+        return root_path
+
+    def _create_new(self, root_path):
+        os.mkdir(root_path)
 
     def close(self):
         """
         Disable further reading or writing of files. Note that this doesn't actually close any memmapped files. The
         numpy.memmap documentation says that to close them you have to delete the memmap object, and it's not clear
         to me how to do that here.
-
-        :return: None
         """
-        self.root = None
+        self._root = None
 
     @property
     def closed(self):
-        return self.root is None
+        return self._root is None
 
     def create_node(self, node_path):
         if self.closed:
             raise ValueError("I/O operation on closed file")
         # This will correctly fail to validate an attempt to create the root node with node_path = ''
         core.validate_node_path(node_path)
-        os.mkdir(os.path.join(self.root, *core.explode(node_path)))
+        os.mkdir(os.path.join(self._root, *core.explode(node_path)))
 
     def write_array(self, node_path, key, value, dimensions):
         node = self._get_node(node_path)
@@ -96,7 +100,7 @@ class NumpyDirectory(core.IO):
             raise ValueError("I/O operation on closed file")
         if node_path != '':
             core.validate_node_path(node_path)
-        full_path = os.path.join(self.root, *core.explode(node_path))
+        full_path = os.path.join(self._root, *core.explode(node_path))
         if not os.path.isdir(full_path):
             raise ValueError("Invalid path: {}".format(full_path))
         return full_path

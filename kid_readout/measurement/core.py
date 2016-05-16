@@ -106,7 +106,7 @@ from kid_readout.measurement import classes
 
 CLASS_NAME = '_class'  # This is the string used by IO objects to save class names.
 VERSION = '_version'  # This is the string used by IO objects to save class versions.
-
+METADATA = '_metadata'  # This is the string used by IO objects to save metadata dictionaries.
 
 # TODO: decide which names really need to be reserved, and clean this up after add_legacy_origin is refactored.
 # These names cannot be used for attributes because they are used as part of the public DataFrame interface.
@@ -618,7 +618,7 @@ class IO(object):
     Implementations should implement the abstract methods and should be able to store large numpy arrays efficiently.
     """
 
-    def __init__(self, root_path):
+    def __init__(self, root_path, metadata=None):
         """
         Return a new IO object that will read to or write from the given root directory or file. If the root does not
         exist, it should be created. Implementations should never clobber an existing file and should make it difficult
@@ -628,20 +628,35 @@ class IO(object):
         ----------
         root_path : str
             The path to the root directory or file.
-
-        Returns
-        -------
-        IO
-            A new object that can read from and write to the root file or directory at the root path.
+        metadata : dict
+            If the root does not exist, write this dict to the root node.
         """
         self.root_path = root_path
-        self.root = None
+        if self._root_path_exists(self.root_path):
+            if metadata is not None:
+                raise ValueError("Cannot set metadata for an existing root: {}".format(root_path))
+            self._root = self._open_existing(self.root_path)
+            try:
+                self.metadata = StateDict(self.read_other('/', METADATA))
+            except ValueError:
+                self.metadata = None
+        else:
+            self._root = self._create_new(self.root_path)
+            self.write_other('/', METADATA, metadata)
+            self.metadata = metadata
 
-    def close(self):
-        """
-        Close open files.
-        """
-        pass
+    # These private methods must be implemented by subclasses.
+
+    def _root_path_exists(self, root_path):
+        return False
+
+    def _open_existing(self, root_path):
+        return None
+
+    def _create_new(self, root_path):
+        return None
+
+    # These public methods should work.
 
     @property
     def closed(self):
@@ -723,6 +738,12 @@ class IO(object):
     # The remaining public methods should be implemented by subclasses.
     # TODO: update comments, especially with exceptions raised and handling of private variables.
 
+    def close(self):
+        """
+        Close open files.
+        """
+        pass
+
     def create_node(self, node_path):
         """
         Create a node at the end of the given path; all but the final node in the path must already exist.
@@ -774,15 +795,15 @@ class IO(object):
 
     # Private methods
 
+    # TODO: add methods or metadata?
     def __getattr__(self, item):
         if item in self.measurement_names():
             return self.read(item)
         else:
             raise AttributeError()
 
-    # TODO: add methods?
     def __dir__(self):
-        return self.__dict__.keys() + self.measurement_names()
+        return list(set(self.__dict__.keys() + self.measurement_names()))
 
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__, repr(self.root_path))

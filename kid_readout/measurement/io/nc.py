@@ -52,24 +52,29 @@ class NCFile(core.IO):
     # that end with this string, and are returned on read as lists.
     is_list = '.list'
 
-    def __init__(self, root_path, cache_s21_raw=False):
-        super(NCFile, self).__init__(root_path=os.path.expanduser(root_path))
+    def __init__(self, root_path, metadata=None, cache_s21_raw=False):
+        super(NCFile, self).__init__(root_path=os.path.expanduser(root_path), metadata=metadata)
         self.cache_s21_raw = cache_s21_raw
-        try:
-            self.root = netCDF4.Dataset(self.root_path, mode='r', keepweakref=True)
-        except RuntimeError:
-            self.root = netCDF4.Dataset(root_path, mode='w', clobber=False)
+
+    def _root_path_exists(self, root_path):
+        return os.path.isfile(root_path)
+
+    def _open_existing(self, root_path):
+        return netCDF4.Dataset(self.root_path, mode='r', keepweakref=True)
+
+    def _create_new(self, root_path):
+        return netCDF4.Dataset(root_path, mode='w', clobber=False)
 
     def close(self):
         try:
-            self.root.close()
+            self._root.close()
         except RuntimeError:
             pass
-        self.root = None
+        self._root = None
 
     @property
     def closed(self):
-        return self.root is not None and not self.root.isopen()
+        return self._root is not None and not self._root.isopen()
 
     def read(self, node_path, translate=None):
         if translate is None:
@@ -159,7 +164,7 @@ class NCFile(core.IO):
     # Private methods.
 
     def _get_node(self, node_path):
-        node = self.root
+        node = self._root
         if node_path != '':
             core.validate_node_path(node_path)
             for name in core.explode(node_path):

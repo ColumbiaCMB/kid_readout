@@ -33,11 +33,12 @@ def get_udp_packets(ri,npkts,addr=('10.0.0.1',55555)):
 
     return pkts
     
-def get_udp_data(ri,npkts,nchans,addr=('10.0.0.1',55555)):
+def get_udp_data(ri,npkts,nchans,addr=('10.0.0.1',55555), verbose=False):
     pkts = get_udp_packets(ri, npkts, addr=addr)
     darray, seqnos, num_bad_pkts, num_dropped_pkts = decode_packets(pkts,nchans)
-    print "bad ", num_bad_pkts
-    print "dropped ", num_dropped_pkts
+    if verbose:
+        print "bad ", num_bad_pkts
+        print "dropped ", num_dropped_pkts
     return darray,seqnos
 
 

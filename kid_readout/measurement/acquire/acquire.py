@@ -32,7 +32,9 @@ import subprocess
 
 import numpy as np
 
+from kid_readout import settings
 from kid_readout.measurement import core, basic
+from kid_readout.analysis.resources import experiments
 
 
 def load_baseband_sweep_tones(ri, tone_banks, num_tone_samples):
@@ -43,7 +45,8 @@ def load_heterodyne_sweep_tones(ri, tone_banks, num_tone_samples):
     return ri.set_tone_freqs(freqs=np.vstack(tone_banks), nsamp=num_tone_samples)
 
 
-def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=1, state=None, description='', **kwargs):
+def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=1, state=None, description='', verbose=False,
+              **kwargs):
     """
     Return a SweepArray acquired using the given tone banks.
 
@@ -57,10 +60,12 @@ def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=1, state=None, de
     :return: a SweepArray instance.
     """
     stream_arrays = core.MeasurementList()
-    print "measuring bank: "
+    if verbose:
+        print("Measuring bank")
     for n, tone_bank in enumerate(tone_banks):
-        print n,
-        sys.stdout.flush()
+        if verbose:
+            print(n,)
+            sys.stdout.flush()
         ri.set_tone_freqs(tone_bank, nsamp=num_tone_samples)
         ri.select_fft_bins(np.arange(tone_bank.size))
         # we wait a bit here to let the roach2 sync catch up.  figuring this out still
@@ -68,8 +73,9 @@ def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=1, state=None, de
         stream_arrays.append(ri.get_measurement(num_seconds=length_seconds, **kwargs))
     return basic.SweepArray(stream_arrays, state=state, description=description)
 
+
 def run_loaded_sweep(ri, length_seconds=1, state=None, description='', tone_bank_indices=None, bin_indices=None,
-                                                                                                            **kwargs):
+                     **kwargs):
     """
     Return a SweepArray acquired using previously-loaded tones.
 
@@ -94,8 +100,8 @@ def run_loaded_sweep(ri, length_seconds=1, state=None, description='', tone_bank
     return basic.SweepArray(stream_arrays, state=state, description=description)
 
 
-def run_multipart_sweep(ri, length_seconds=1, state=None, description='', num_tones_read_at_once=32,verbose=False,
-                                                                                                            **kwargs):
+def run_multipart_sweep(ri, length_seconds=1, state=None, description='', num_tones_read_at_once=32, verbose=False,
+                        **kwargs):
     num_tones = ri.tone_bins.shape[1]
     num_steps = num_tones // num_tones_read_at_once
     if num_steps == 0:
@@ -103,16 +109,17 @@ def run_multipart_sweep(ri, length_seconds=1, state=None, description='', num_to
     indices_to_read = range(num_tones)
     parts = []
     for step in range(num_steps):
-        print "running sweep step",step,"of",num_steps
-        parts.append(run_loaded_sweep(ri,length_seconds=length_seconds,state=state,description=description,
-                                      bin_indices=indices_to_read[step::num_steps],**kwargs))
+        if verbose:
+            print("running sweep step {} of {}.".format(step,num_steps))
+        parts.append(run_loaded_sweep(ri, length_seconds=length_seconds, state=state, description=description,
+                                      bin_indices=indices_to_read[step::num_steps], **kwargs))
     stream_arrays = core.MeasurementList()
     for part in parts:
         stream_arrays.extend(list(part.stream_arrays))
-    return basic.SweepArray(stream_arrays,state=state,description=description)
+    return basic.SweepArray(stream_arrays, state=state, description=description)
 
 
-def source_code():
+def script_code():
     """
     Return the source code of a module running as '__main__'. Acquisition scripts can use this to save their code.
 
@@ -124,16 +131,22 @@ def source_code():
         The code, with lines separated by newline characters.
     """
     try:
-        return inspect.getsource(sys.modules[__name__])
+        return inspect.getsource(sys.modules['__main__'])
     except Exception as e:
         return str(e)
 
 
 def git_log():
     import kid_readout
-    path = os.path.abspath(kid_readout.__file__)
-    dir_name = os.path.dirname(path)
+    kid_readout_directory = os.path.dirname(os.path.abspath(kid_readout.__file__))
     try:
-        return subprocess.check_output(("cd {}; git log -1".format(dir_name)), shell=True)
+        return subprocess.check_output(("cd {}; git log -1".format(kid_readout_directory)), shell=True)
     except Exception as e:
         return str(e)
+
+
+def metadata():
+    meta = experiments.get_experiment_info_at(time.time(), cryostat=settings.CRYOSTAT)
+    meta['script_code'] = script_code()
+    meta['git_log'] = git_log()
+    return meta
