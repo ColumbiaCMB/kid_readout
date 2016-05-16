@@ -1,7 +1,14 @@
+"""
+This module contains functions that read data from legacy netCDF4 files and return Measurement subclasses.
+"""
+
 from __future__ import division
+
 import numpy as np
+
 from kid_readout.measurement.basic import (SingleStream, SingleSweep, SingleSweepStream,
                                            StreamArray, SweepArray, SweepStreamArray)
+
 
 # High-level functions that extract state information for all the hardware.
 
@@ -41,6 +48,7 @@ def timestream_state_from_rnc(rnc, timestream_group_index):
     if lockin_state:
         state['lockin'] = lockin_state
     return state
+
 
 # Roach.
 
@@ -123,6 +131,7 @@ def roach_state_from_tg(tg):
         pass
     return state
 
+
 # Millimeter-wave source.
 
 # TODO: implement ticks instead of turns, but keep turns available?
@@ -159,12 +168,14 @@ def mmw_source_state_from_tg(tg):
         state['output_frequency'] = f_mmw
     return state
 
+
 # Lock-in amplifier.
 
 def lockin_state_from_tg(tg):
     state = {'rms_voltage': float(common(tg.zbd_voltage)),
              'zbd_power_db_arb': float(common(tg.zbd_power_dbm))}
     return state
+
 
 # Helper functions
 
@@ -183,8 +194,7 @@ def common(sequence):
 
 # These functions are intended to use the new code to read legacy data.
 # TODO: change description functionality to add_legacy_origin
-
-
+# TODO: work out number vs. tone_index issue.
 def stream_from_rnc(rnc, timestream_group_index, tone_index, description=''):
     roach_state = timestream_roach_state_from_rnc(rnc, timestream_group_index)
     state = timestream_state_from_rnc(rnc, timestream_group_index)
@@ -198,12 +208,13 @@ def stream_from_rnc(rnc, timestream_group_index, tone_index, description=''):
     fpga_fft_bin_plus_one = int(tg.fftbin[increasing_order][tone_index])
     # All the epoch and data_len_seconds values are the same. Assume regular sampling.
     epoch = int(common(tg.epoch))
+    ssn = np.nan  # The sequence start numbers weren't saved.
     s21_raw = tg.data[increasing_order, :][tone_index]
     data_demodulated = True  # Modify this if possible to determine from the rnc.
     return SingleStream(tone_bin=tone_bin, tone_amplitude=tone_amplitude, tone_phase=tone_phase, tone_index=tone_index,
-                        filterbank_bin=fpga_fft_bin_plus_one, epoch=epoch, s21_raw=s21_raw,
-                        data_demodulated=data_demodulated, roach_state=roach_state, state=state,
-                        description=description)
+                        filterbank_bin=fpga_fft_bin_plus_one, epoch=epoch, sequence_start_number=ssn,
+                        s21_raw=s21_raw, data_demodulated=data_demodulated, roach_state=roach_state,
+                        number=tone_index, state=state, description=description)
 
 
 def streamarray_from_rnc(rnc, timestream_group_index, description=''):
@@ -220,14 +231,15 @@ def streamarray_from_rnc(rnc, timestream_group_index, description=''):
     fpga_fft_bin_plus_one = tg.fftbin[increasing_order].astype(np.int)
     # All the epoch and data_len_seconds values are the same. Assume regular sampling.
     epoch = int(common(tg.epoch))
+    ssn = np.nan  # The sequence start numbers weren't saved.
     s21_raw = tg.data[increasing_order, :]
     data_demodulated = True  # Modify this if possible to determine from the rnc.
     return StreamArray(tone_bin=tone_bin, tone_amplitude=tone_amplitude, tone_phase=tone_phase, tone_index=tone_index,
-                       filterbank_bin=fpga_fft_bin_plus_one, epoch=epoch, s21_raw=s21_raw,
+                       filterbank_bin=fpga_fft_bin_plus_one, epoch=epoch, sequence_start_number=ssn, s21_raw=s21_raw,
                        data_demodulated=data_demodulated, roach_state=roach_state, state=state, description=description)
 
 
-def sweep_from_rnc(rnc, sweep_group_index, tone_index, description=''):
+def sweep_from_rnc(rnc, sweep_group_index, number, description=''):
     roach_state = sweep_roach_state_from_rnc(rnc, sweep_group_index)
     state = sweep_state_from_rnc(rnc, sweep_group_index)
     sg = rnc.sweeps[sweep_group_index]
@@ -245,14 +257,16 @@ def sweep_from_rnc(rnc, sweep_group_index, tone_index, description=''):
         tone_bin = unordered_tone_bin[increasing_order]  # Assume monotonic frequencies at each epoch:
         tone_amplitude = np.ones(tone_bin.size, dtype=np.float)
         tone_phase = np.zeros(tone_bin.size, dtype=np.float)
-        fpga_fft_bin_plus_one = int(tg.fftbin[simultaneous][increasing_order][tone_index])
+        fpga_fft_bin_plus_one = int(tg.fftbin[simultaneous][increasing_order][number])
         # All of the epochs are the same
         epoch = int(common(tg.epoch[simultaneous]))
-        s21_raw = tg.data[simultaneous, :][increasing_order][tone_index]
+        ssn = np.nan  # The sequence start numbers weren't saved.
+        s21_raw = tg.data[simultaneous, :][increasing_order][number]
         data_demodulated = True  # Modify this if possible to determine from the rnc.
         streams.append(SingleStream(tone_bin=tone_bin, tone_amplitude=tone_amplitude, tone_phase=tone_phase,
-                                    tone_index=tone_index, filterbank_bin=fpga_fft_bin_plus_one, epoch=epoch,
-                                    s21_raw=s21_raw, data_demodulated=data_demodulated, roach_state=roach_state))
+                                    tone_index=number, filterbank_bin=fpga_fft_bin_plus_one, epoch=epoch,
+                                    sequence_start_number=ssn, s21_raw=s21_raw, data_demodulated=data_demodulated,
+                                    roach_state=roach_state))
     return SingleSweep(streams=streams, state=state, description=description)
 
 
@@ -278,11 +292,13 @@ def sweeparray_from_rnc(rnc, sweep_group_index, description=''):
         fpga_fft_bin_plus_one = tg.fftbin[simultaneous][increasing_order].astype(np.int)
         # All of the epochs are the same
         epoch = int(common(tg.epoch[simultaneous]))
+        ssn = np.nan  # The sequence start numbers weren't saved.
         s21_raw = tg.data[simultaneous, :][increasing_order]
         data_demodulated = True  # Modify this if possible to determine from the rnc.
         stream_arrays.append(StreamArray(tone_bin=tone_bin, tone_amplitude=amplitude, tone_phase=phase,
                                          tone_index=tone_index, filterbank_bin=fpga_fft_bin_plus_one, epoch=epoch,
-                                         s21_raw=s21_raw, data_demodulated=data_demodulated, roach_state=roach_state))
+                                         sequence_start_number=ssn, s21_raw=s21_raw, data_demodulated=data_demodulated,
+                                         roach_state=roach_state))
     return SweepArray(stream_arrays=stream_arrays, state=state, description=description)
 
 

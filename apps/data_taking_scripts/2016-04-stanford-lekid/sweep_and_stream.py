@@ -1,15 +1,13 @@
+import logging
 import time
-import sys
 
 import numpy as np
 
+from kid_readout.equipment import hardware
+from kid_readout.measurement import acquire
+from kid_readout.measurement.legacy import legacy_acquire
 from kid_readout.roach import analog, hardware_tools
-from kid_readout import *
-from kid_readout.measurement.acquire import acquire,legacy_acquire
-from kid_readout.measurement.acquire import hardware
-from kid_readout.measurement import mmw_source_sweep, core, basic
 
-import logging
 logger = logging.getLogger('kid_readout')
 handler = logging.StreamHandler()
 handler.setFormatter(logging.Formatter('%(levelname)s: %(asctime)s - %(name)s.%(funcName)s:%(lineno)d  %('
@@ -43,14 +41,14 @@ offsets = offset_bins * 512.0 / nsamp
 
 ri.set_dac_atten(36)
 tic = time.time()
-measured_frequencies = acquire.load_baseband_sweep_tones(ri,np.add.outer(offsets,f0s),num_tone_samples=nsamp)
+measured_frequencies = acquire.load_baseband_sweep_tones(ri, np.add.outer(offsets, f0s), num_tone_samples=nsamp)
 logger.info("waveforms loaded in %.1f minutes", (time.time()-tic)/60.)
 #for dac_atten in [40,36,32,28]:
 while True:
     dac_atten = 28
     ncf = new_nc_file(suffix='dark_%d_dB_dac' % dac_atten)
     ri.set_modulation_output('high')
-    swpa = acquire.run_loaded_sweep(ri,length_seconds=0,state=setup.state(),description='dark sweep')
+    swpa = acquire.run_loaded_sweep(ri, length_seconds=0, state=setup.state(), description='dark sweep')
     logger.info("resonance sweep done %.1f min", (time.time()-tic)/60.)
     ncf.write(swpa)
     #print "sweep written", (time.time()-tic)/60.

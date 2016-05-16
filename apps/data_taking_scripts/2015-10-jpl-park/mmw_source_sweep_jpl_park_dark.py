@@ -5,7 +5,7 @@ import numpy as np
 
 from kid_readout.roach import heterodyne
 from kid_readout.measurement.io import data_file
-from kid_readout.measurement.acquire import sweeps
+from kid_readout.measurement.legacy import sweeps
 from kid_readout.analysis.resonator.legacy_resonator import fit_best_resonator
 from kid_readout.equipment import hittite_controller, lockin_controller
 

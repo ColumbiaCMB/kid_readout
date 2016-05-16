@@ -1,16 +1,12 @@
 import time
-import sys
 
 import numpy as np
-
-from kid_readout.roach import analog
-from kid_readout import *
-from kid_readout.measurement.acquire import acquire
-from equipment.hittite import signal_generator
 from equipment.custom import mmwave_source
 from equipment.srs import lockin
-from kid_readout.measurement.acquire import hardware
-from kid_readout.measurement import mmw_source_sweep, core, basic
+
+from kid_readout.equipment import hardware
+from kid_readout.measurement import acquire
+from kid_readout.roach import analog
 
 # fg = FunctionGenerator()
 #hittite = signal_generator.Hittite(ipaddr='192.168.0.200')
@@ -30,7 +26,7 @@ source.ttl_modulation_source = 'roach'
 
 ifboard = analog.HeterodyneMarkI()
 
-setup = hardware.Hardware(source,lockin,ifboard)
+setup = hardware.Hardware(source, lockin, ifboard)
 #setup.hittite.set_freq(148e9/12.)
 
 
@@ -78,12 +74,12 @@ for (lo,f0s) in [(low_group_lo,low_group),
                  (high_group_lo, high_group)]:
     ri.set_lo(lo)
     tic = time.time()
-    measured_frequencies = acquire.load_heterodyne_sweep_tones(ri,np.add.outer(offsets,f0s),num_tone_samples=nsamp)
+    measured_frequencies = acquire.load_heterodyne_sweep_tones(ri, np.add.outer(offsets, f0s), num_tone_samples=nsamp)
     print "waveforms loaded", (time.time()-tic)/60.
     for dac_atten in [20,10,6,2]:
         ncf = new_nc_file(suffix='off_on_modulated_broadband_%d_dB_dac' % dac_atten)
         ri.set_modulation_output('high')
-        swpa = acquire.run_loaded_sweep(ri,length_seconds=0,state=setup.state(),description='source off sweep')
+        swpa = acquire.run_loaded_sweep(ri, length_seconds=0, state=setup.state(), description='source off sweep')
         print "resonance sweep done", (time.time()-tic)/60.
         ncf.write(swpa)
         #print "sweep written", (time.time()-tic)/60.

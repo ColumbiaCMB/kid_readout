@@ -1,5 +1,6 @@
 import numpy as np
-from kid_readout.measurement.acquire import acquire
+
+from kid_readout.measurement import acquire
 from kid_readout.roach.baseband import RoachBaseband
 from kid_readout.roach.heterodyne import RoachHeterodyne
 from kid_readout.roach.tests.mock_roach import MockRoach

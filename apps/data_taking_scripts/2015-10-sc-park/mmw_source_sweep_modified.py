@@ -1,16 +1,13 @@
 import time
-import sys
 
 import numpy as np
-
-from kid_readout.roach import heterodyne
-from kid_readout import *
-from kid_readout.measurement.acquire import acquire
-from equipment.hittite import signal_generator
 from equipment.custom import mmwave_source
+from equipment.hittite import signal_generator
 from equipment.srs import lockin
-from kid_readout.measurement.acquire import hardware
-from kid_readout.measurement import mmw_source_sweep, core
+
+from kid_readout.equipment import hardware
+from kid_readout.measurement import mmw_source_sweep, core, acquire
+from kid_readout.roach import heterodyne
 
 # fg = FunctionGenerator()
 hittite = signal_generator.Hittite(ipaddr='192.168.0.200')
@@ -30,7 +27,7 @@ source.multiplier_input = 'hittite'
 source.waveguide_twist_angle = 45
 source.ttl_modulation_source = 'roach'
 
-setup = hardware.Hardware(hittite,source,lockin)
+setup = hardware.Hardware(hittite, source, lockin)
 
 ri = heterodyne.RoachHeterodyne(adc_valon='/dev/ttyUSB0')
 ri.initialize()
@@ -77,10 +74,10 @@ for (lo,f0s) in [(low_group_lo,low_group),
     tic = time.time()
     ncf = new_nc_file(suffix='lo_%.1f' % lo)
     ri.set_lo(lo)
-    measured_frequencies = acquire.load_heterodyne_sweep_tones(ri,np.add.outer(offsets,f0s),num_tone_samples=nsamp)
+    measured_frequencies = acquire.load_heterodyne_sweep_tones(ri, np.add.outer(offsets, f0s), num_tone_samples=nsamp)
     print "waveforms loaded", (time.time()-tic)/60.
     setup.hittite.off()
-    swpa = acquire.run_loaded_sweep(ri,length_seconds=0,state=setup.state())
+    swpa = acquire.run_loaded_sweep(ri, length_seconds=0, state=setup.state())
     print "resonance sweep done", (time.time()-tic)/60.
     sweepstream = mmw_source_sweep.MMWSweepList(swpa, core.IOList(), state=setup.state())
     ncf.write(sweepstream)

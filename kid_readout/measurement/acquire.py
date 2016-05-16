@@ -34,8 +34,11 @@ import numpy as np
 
 from kid_readout import settings
 from kid_readout.measurement import core, basic
+from kid_readout.measurement.io import nc, npy
 from kid_readout.analysis.resources import experiments
 
+
+# Frequency sweep
 
 def load_baseband_sweep_tones(ri, tone_banks, num_tone_samples):
     return ri.set_tone_freqs(freqs=np.vstack(tone_banks), nsamp=num_tone_samples)
@@ -119,6 +122,8 @@ def run_multipart_sweep(ri, length_seconds=1, state=None, description='', num_to
     return basic.SweepArray(stream_arrays, state=state, description=description)
 
 
+# Metadata
+
 def script_code():
     """
     Return the source code of a module running as '__main__'. Acquisition scripts can use this to save their code.
@@ -145,8 +150,28 @@ def git_log():
         return str(e)
 
 
-def metadata():
+def all_metadata():
     meta = experiments.get_experiment_info_at(time.time(), cryostat=settings.CRYOSTAT)
     meta['script_code'] = script_code()
     meta['git_log'] = git_log()
     return meta
+
+
+# IO object creation
+
+def new_nc_file(suffix='', directory=settings.BASE_DATA_DIR, metadata=None):
+    if suffix and not suffix.startswith('_'):
+        suffix = '_' + suffix
+    if metadata is None:
+        metadata = all_metadata()
+    root_path = os.path.join(directory, time.strftime('%Y-%m-%d_%H%M%S') + suffix + '.nc')
+    return nc.NCFile(root_path, metadata=metadata)
+
+
+def new_npy_directory(suffix='', directory=settings.BASE_DATA_DIR, metadata=None):
+    if suffix and not suffix.startswith('_'):
+        suffix = '_' + suffix
+    if metadata is None:
+        metadata = all_metadata()
+    root_path = os.path.join(directory, time.strftime('%Y-%m-%d_%H%M%S') + suffix)
+    return npy.NumpyDirectory(root_path, metadata=metadata)

@@ -1,5 +1,5 @@
 import matplotlib
-from kid_readout.measurement.acquire import sweeps
+from kid_readout.measurement.legacy import sweeps
 
 from kid_readout.roach import baseband
 

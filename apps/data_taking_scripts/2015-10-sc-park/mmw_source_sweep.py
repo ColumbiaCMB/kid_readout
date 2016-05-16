@@ -1,12 +1,10 @@
 import time
-import sys
 
 import numpy as np
 
-from kid_readout.roach import heterodyne
-from kid_readout import *
-from kid_readout.measurement.acquire import acquire
 from kid_readout.equipment import hittite_controller, lockin_controller
+from kid_readout.measurement import acquire
+from kid_readout.roach import heterodyne
 
 
 # fg = FunctionGenerator()
@@ -61,10 +59,10 @@ for (lo,f0s) in [(low_group_lo,low_group),
     tic = time.time()
     ncf = new_nc_file(suffix='lo_%.1f' % lo)
     ri.set_lo(lo)
-    measured_frequencies = acquire.load_heterodyne_sweep_tones(ri,np.add.outer(offsets,f0s),num_tone_samples=nsamp)
+    measured_frequencies = acquire.load_heterodyne_sweep_tones(ri, np.add.outer(offsets, f0s), num_tone_samples=nsamp)
     print "waveforms loaded", (time.time()-tic)/60.
     hittite.off()
-    swpa = acquire.run_loaded_sweep(ri,length_seconds=0,state=state)
+    swpa = acquire.run_loaded_sweep(ri, length_seconds=0, state=state)
     print "resonance sweep done", (time.time()-tic)/60.
     ncf.write(swpa)
     print "sweep written", (time.time()-tic)/60.
