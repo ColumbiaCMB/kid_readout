@@ -10,7 +10,9 @@ Because json has only a single sequence type, all sequences that are not numpy a
 """
 import os
 import json
+
 import numpy as np
+
 from kid_readout.measurement import core
 
 
@@ -83,7 +85,7 @@ class NumpyDirectory(core.IO):
 
     def measurement_names(self, node_path='/'):
         node = self._get_node(node_path)
-        # TODO: this should actually check that the class contained in the group is a Measurement
+        # TODO: this should actually check that the class contained in the group is a Node.
         return [f for f in os.listdir(node) if os.path.isdir(os.path.join(node, f))]
 
     def array_names(self, node_path):

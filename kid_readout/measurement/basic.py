@@ -22,7 +22,7 @@ class RoachStream(core.Measurement):
     _version = 1
 
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, sequence_start_number,
-                 s21_raw, data_demodulated, roach_state, state=None, description=''):
+                 s21_raw, data_demodulated, roach_state, state=None, description='', validate=True):
         """
         Return a new RoachStream instance. This class has no dimensions and is intended to be subclassed.
 
@@ -52,6 +52,8 @@ class RoachStream(core.Measurement):
             All non-roach state information.
         description : str
             A human-readable description of this measurement.
+        validate : bool
+            If True, check that the array shapes match the dimensions OrderedDict.
         """
         self.tone_bin = tone_bin
         self.tone_amplitude = tone_amplitude
@@ -63,7 +65,7 @@ class RoachStream(core.Measurement):
         self.s21_raw = s21_raw
         self.data_demodulated = data_demodulated
         self.roach_state = core.StateDict(roach_state)
-        super(RoachStream, self).__init__(state=state, description=description)
+        super(RoachStream, self).__init__(state=state, description=description, validate=validate)
 
     @memoized_property
     def sample_time(self):
@@ -218,7 +220,7 @@ class StreamArray(RoachStream):
                               ('s21_raw', ('tone_index', 'sample_time'))])
 
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, sequence_start_number,
-                 s21_raw, data_demodulated, roach_state, state=None, description=''):
+                 s21_raw, data_demodulated, roach_state, state=None, description='', validate=True):
         """
         Return a new StreamArray instance. The integer array tone_index contains the indices of tone_bin,
         tone_amplitude, and tone_phase for the tones demodulated to produce the time-ordered s21_raw data.
@@ -251,12 +253,14 @@ class StreamArray(RoachStream):
             All non-roach state information.
         description : str
             A human-readable description of this measurement.
+        validate : bool
+            If True, check that the array shapes match the dimensions OrderedDict.
         """
         super(StreamArray, self).__init__(tone_bin=tone_bin, tone_amplitude=tone_amplitude, tone_phase=tone_phase,
                                           tone_index=tone_index, filterbank_bin=filterbank_bin, epoch=epoch,
                                           sequence_start_number=sequence_start_number, s21_raw=s21_raw,
                                           data_demodulated=data_demodulated, roach_state=roach_state, state=state,
-                                          description=description)
+                                          description=description, validate=validate)
 
     def __getitem__(self, number):
         """
@@ -301,7 +305,7 @@ class SingleStream(RoachStream):
                               ('s21_raw', ('sample_time',))])
 
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, sequence_start_number,
-                 s21_raw, data_demodulated, roach_state, number=0, state=None, description=''):
+                 s21_raw, data_demodulated, roach_state, number=0, state=None, description='', validate=True):
         """
         Return a new SingleStream instance. The single integer tone_index is the common index of tone_bin,
         tone_amplitude, and tone_phase for the tone used to produce the time-ordered s21_raw data.
@@ -336,13 +340,15 @@ class SingleStream(RoachStream):
             All non-roach state information.
         description : str
             A human-readable description of this measurement.
+        validate : bool
+            If True, check that the array shapes match the dimensions OrderedDict.
         """
         self.number = number
         super(SingleStream, self).__init__(tone_bin=tone_bin, tone_amplitude=tone_amplitude, tone_phase=tone_phase,
                                            tone_index=tone_index, filterbank_bin=filterbank_bin, epoch=epoch,
                                            sequence_start_number=sequence_start_number, s21_raw=s21_raw,
                                            data_demodulated=data_demodulated, roach_state=roach_state, state=state,
-                                           description=description)
+                                           description=description, validate=validate)
 
 
 class SingleStream0(RoachStream0):
@@ -504,7 +510,7 @@ class SingleSweep(core.Measurement):
 
     @memoized_property
     def resonator(self):
-        """BaseResonator: the result of the last """
+        """BaseResonator: the result of the last call to fit_resonator()."""
         return self.fit_resonator()
 
     # TODO: add arguments to specify model, etc.

@@ -21,8 +21,9 @@ These are stored as special strings that are attributes of the IO class, and con
 This is a little bit gross but probably safe in practice.
 """
 import os
-import netCDF4
 from collections import OrderedDict
+
+import netCDF4
 import numpy as np
 from memoized_property import memoized_property
 
@@ -76,7 +77,7 @@ class NCFile(core.IO):
     def closed(self):
         return self._root is not None and not self._root.isopen()
 
-    def read(self, node_path, translate=None):
+    def read(self, node_path, translate=None, force=False):
         if translate is None:
             translate = {}
         if self.cache_s21_raw:
@@ -84,7 +85,7 @@ class NCFile(core.IO):
                                   'kid_readout.measurement.io.nc.NCSingleStream',
                               'kid_readout.measurement.basic.StreamArray':
                                   'kid_readout.measurement.io.nc.NCStreamArray'})
-        return self._read_node(node_path, translate)
+        return self._read_node(node_path=node_path, translate=translate, force=force)
 
     def create_node(self, node_path):
         # This will correctly fail to validate an attempt to create the root node with node_path = ''
@@ -285,70 +286,10 @@ class NCVariable(object):
         return self.variable.datatype.name
 
 
-class NCSingleStream(basic.SingleStream):
-    """
-    This class contains time-ordered data from a single channel.
-    """
-
-    # TODO: Think about how to handle this
-    dimensions = OrderedDict([('tone_bin', ('tone_bin',)),
-                              ('tone_amplitude', ('tone_bin',)),
-                              ('tone_phase', ('tone_bin',))])
-    #              's21_raw': ('sample_time',)
-
-    def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
-                 data_demodulated, roach_state, sequence_start_number=np.nan, number=0, state=None, description=''):
-        """
-        Return a new NCSingleStream instance. This class stores the netCDF4 Variable containing the s21_raw data
-        instead of a numpy array so that the data is not read from disk unless requested. The Variable is stored using
-        a thin wrapper that takes the proper view of the complex data. Note that because it contains an attribute,
-        s21_raw_variable, that is not writeable, instances currently cannot be written back to disk.
-
-        :param tone_bin: an array of integers representing the frequencies of the tones played during the measurement.
-        :param tone_amplitude: an array of floats representing the amplitudes of the tones played during the
-          measurement.
-        :param tone_phase: an array of floats representing the radian phases of the tones played during the measurement.
-        :param tone_index: an int for which tone_bin[tone_index] corresponds to the frequency used to produce s21_raw.
-        :param filterbank_bin: an int that is the filter bank bin in which the tone lies.
-        :param epoch: a float that is the unix timestamp of first sample of the time stream.
-        :param s21_raw: a netCDF4 Variable containing a 1-D array of complex float s21 data, demodulated or not.
-        :param data_demodulated: True if the s21_raw data are demodulated.
-        :param roach_state: a dict containing state information for the roach.
-        :param state: a dict containing all non-roach state information.
-        :param description: a string describing this measurement.
-        :return: a new NCSingleStream instance.
-        """
-        self.tone_bin = tone_bin
-        self.tone_amplitude = tone_amplitude
-        self.tone_phase = tone_phase
-        self.tone_index = tone_index
-        self.filterbank_bin = filterbank_bin
-        self.epoch = epoch
-        self.sequence_start_number = sequence_start_number
-        self.s21_raw_variable = NCVariable(s21_raw)
-        self.data_demodulated = data_demodulated
-        self.number = number
-        self.roach_state = core.StateDict(roach_state)
-        super(basic.RoachStream, self).__init__(state=state, description=description)
-
-    @memoized_property
-    def s21_raw(self):
-        return self.s21_raw_variable[:]
-
-
 class NCStreamArray(basic.StreamArray):
     """
     This class represents simultaneously-sampled data from multiple channels.
     """
-
-    # TODO: Think about how to deal with this.
-    dimensions = OrderedDict([('tone_bin', ('tone_bin',)),
-                              ('tone_amplitude', ('tone_bin',)),
-                              ('tone_phase', ('tone_bin',)),
-                              ('tone_index', ('tone_index',)),
-                              ('filterbank_bin', ('tone_index',))])
-    # Skip validation of s21_raw.
-    #                  's21_raw': ('tone_index', 'sample_time')
 
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
                  data_demodulated, roach_state, sequence_start_number=np.nan, state=None, description=''):
@@ -373,24 +314,62 @@ class NCStreamArray(basic.StreamArray):
         :param description: a string describing this measurement.
         :return: a new NCStreamArray instance.
         """
-        self.tone_bin = tone_bin
-        self.tone_amplitude = tone_amplitude
-        self.tone_phase = tone_phase
-        self.tone_index = tone_index
-        self.filterbank_bin = filterbank_bin
-        self.epoch = epoch
-        self.sequence_start_number = sequence_start_number
         self.s21_raw_variable = NCVariable(s21_raw)
-        self.data_demodulated = data_demodulated
-        self.roach_state = core.StateDict(roach_state)
-        super(basic.RoachStream, self).__init__(state=state, description=description)
+        super(NCStreamArray, self).__init__(tone_bin=tone_bin, tone_amplitude=tone_amplitude, tone_phase=tone_phase,
+                                            tone_index=tone_index, filterbank_bin=filterbank_bin, epoch=epoch,
+                                            sequence_start_number=sequence_start_number, s21_raw=None,
+                                            data_demodulated=data_demodulated, roach_state=roach_state, state=state,
+                                            description=description, validate=False)
 
     @memoized_property
     def s21_raw(self):
         return self.s21_raw_variable[:]
 
-    def _validate_dimensions(self):
-        super(NCStreamArray, self)._validate_dimensions()
-        # Validate the first index of s21_raw. The other index isn't constrained, anyway.
-        if not self.s21_raw_variable.shape[0] == self.tone_index.size:
-            raise ValueError("s21_raw_variable.shape[0] does not match tone_index.size.")
+    # This exists so that the superclass __init__() can set it.
+    @s21_raw.setter
+    def s21_raw(self, s21):
+        pass
+
+
+class NCSingleStream(basic.SingleStream):
+    """
+    This class contains time-ordered data from a single channel.
+    """
+
+    def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, s21_raw,
+                 data_demodulated, roach_state, sequence_start_number=np.nan, number=0, state=None, description=''):
+        """
+        Return a new NCSingleStream instance. This class stores the netCDF4 Variable containing the s21_raw data
+        instead of a numpy array so that the data is not read from disk unless requested. The Variable is stored using
+        a thin wrapper that takes the proper view of the complex data. Note that because it contains an attribute,
+        s21_raw_variable, that is not writeable, instances currently cannot be written back to disk.
+
+        :param tone_bin: an array of integers representing the frequencies of the tones played during the measurement.
+        :param tone_amplitude: an array of floats representing the amplitudes of the tones played during the
+          measurement.
+        :param tone_phase: an array of floats representing the radian phases of the tones played during the measurement.
+        :param tone_index: an int for which tone_bin[tone_index] corresponds to the frequency used to produce s21_raw.
+        :param filterbank_bin: an int that is the filter bank bin in which the tone lies.
+        :param epoch: a float that is the unix timestamp of first sample of the time stream.
+        :param s21_raw: a netCDF4 Variable containing a 1-D array of complex float s21 data, demodulated or not.
+        :param data_demodulated: True if the s21_raw data are demodulated.
+        :param roach_state: a dict containing state information for the roach.
+        :param state: a dict containing all non-roach state information.
+        :param description: a string describing this measurement.
+        :return: a new NCSingleStream instance.
+        """
+        self.s21_raw_variable = NCVariable(s21_raw)
+        super(NCSingleStream, self).__init__(tone_bin=tone_bin, tone_amplitude=tone_amplitude, tone_phase=tone_phase,
+                                             tone_index=tone_index, filterbank_bin=filterbank_bin, epoch=epoch,
+                                             sequence_start_number=sequence_start_number, s21_raw=None,
+                                             data_demodulated=data_demodulated, roach_state=roach_state, number=number,
+                                             state=state, description=description, validate=False)
+
+    @memoized_property
+    def s21_raw(self):
+        return self.s21_raw_variable[:]
+
+    # This exists so that the superclass __init__() can set it.
+    @s21_raw.setter
+    def s21_raw(self, s21):
+        pass

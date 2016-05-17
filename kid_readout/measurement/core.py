@@ -1,98 +1,5 @@
 """
-This module is the core of the measurement subpackage.
-
-The main ideas are (1) to provide data container classes that define a format and include basic analysis code for the
-data, and (2) to separate these data container classes from the format in which the data are stored on disk. These
-goals are implemented using a Measurement class and a few functions and auxiliary classes.
-
-The format is designed to handle hierarchical measurements naturally. For example, a frequency sweep is a collection
-of streams of time-ordered data, so the both the class structure in memory and the hierarchical structure on disk are
-a standard tree. This structure allows measurements that follow the specified format to be saved to disk and
-re-created later without any additional metadata.
-
-The IO abstract class in this module controls reading to and writing from disk. Implementations of this class must
-implement its abstract methods using some data format.
-
-To create a new measurement, simply write a subclass of Measurement that follows these rules:
-  - All required arguments to the __init__() method are stored in the class as public attributes with the same name.
-  - Any arguments that are sequences of measurements use the MeasurementList class to contain them.
-  - All numpy ndarrays have an entry in the dimensions OrderedDict that specifies their size, possibly relative to other
-    arrays in the class; see the Measurement docstring.
-  - The __init__() method should call Measurement.__init__() after performing all other setup (otherwise,
-    Measurement._validate_dimensions() could fail to find the arrays that it needs.)
-  - All other public attributes obey the restrictions described in the Measurement docstring.
-  - None of the entries in RESERVED_NAMES are used as public attributes.
-
-The arguments to __init__() define the data format. Example:
-
-# The class must inherit Measurement.
-class TimeOrderedData(Measurement):
-
-    # These entries assert that the class has public attribute 'time' that is a 1-D numpy ndarray, and that it has
-    # a public attribute 'data' that is also a numpy ndarray with data.shape = (time.size,), i.e. the arrays have
-    # the same shape.
-    dimensions = OrderedDict([('time', ('time',)), ('data', ('time',))])
-
-    def __init__(self, data, time, measurement, meas_list, not_an_array, analyze_me=False, state=None, description=''):
-        # 1-D arrays data and time have to be public attributes and must have entries in dimensions.
-        self.data = data
-        self.time = time
-        # This other Measurement subclass will be automatically saved and loaded.
-        self.measurement = measurement
-        # This MeasurementList will also be automatically saved and loaded.
-        self.meas_list = meas_list
-        # This has no default value so it also has to be saved. It has no entry in dimensions so it should not be an
-        # array. See the Measurement docstring for restrictions on its value.
-        self.not_an_array = not_an_array
-        # Call Measurement.__init__() after assigning all arrays.
-        super(TimeOrderedData, self).__init__(state=state, description=description)
-        # This doesn't have to be recorded as an attribute because it has a default value, so the measurement can be
-        # resurrected without a value for it saved on disk.
-        if analyze_me:
-            self.analyze_me()
-
-The data in this class will be saved to disk by the IO.write() function and re-instantiated by the IO.read() function.
-If a class contains attributes that are either measurements or sequences of measurements (that use the MeasurementList
-container), these will also be saved and restored correctly. Each Measurement should be self-contained, meaning that it
-should contain all data and metadata necessary to analyze and understand it.
-
-Because the same measurement class can potentially describe many measurements that use different equipment and thus
-have different state data, the best way to handle presence or absence of equipment or settings is simply through the
-presence or absence of entries in the state dictionary. It's easy for external code to check
-if 'some_equipment_info' in state: analyze_it()
-to determine whether to analyze the information. If an entry has to be present for some reason, using None is better
-than NaN to signify "not available," even if the state value is usually a number. An example of a good reason would
-be if some equipment was used during the measurement, but its state was not available when the measurement was
-written. Besides the advantage of avoiding comparison subtleties, None will cause numeric operations to blow up
-immediately.
-
-An instantiated IO class creates a root node that can contain multiple measurements. Except for the root node, every
-node in the tree contains a measurement or a sequence of measurements. (The root node is reserved for metadata.) Every
-node can thus be reached by a unique node path starting from the root, denoted by a slash.
-
-For example, if the root contained two SweepStream measurements, the structure could be
-
-/SweepStream0
-  /stream
-  /sweep
-    /streams
-      /0
-      /1
-      etc.
-/SweepStream1
-etc.
-
-The node path to the first SweepStream would be just "/SweepStream0" while the node path to one of the streams in its
-sweep could be "/SweepStream0/sweep/streams/1", and so on. A valid node path is a string consisting of valid node names
-separated by slashes. A valid node name is either a valid Python variable or a string representing a nonnegative
-integer. Nodes that are Python variables correspond to attributes of a Measurement subclass or the measurements saved at
-the root level, while nodes that are integers correspond to an index in a MeasurementList.
-
-The IO class uses the node paths to save and load the data structure without knowledge of the underlying format. For
-example, if io is a subclass of IO, then io.read('SweepStream0') would read the entire first SweepStream from disk,
-while io.read('SweepStream0/stream') would read just its Stream measurement. (These node paths could also be specified
-as absolute paths, starting with a slash, but the IO class accepts either because it becomes the top-level node for
-the trees that it reads and writes.)
+This module is the core of the measurement subpackage. See __init__.py for documentation.
 """
 import re
 import inspect
@@ -326,9 +233,12 @@ class Measurement(Node):
 
     dimensions = OrderedDict()
 
-    def __init__(self, state=None, description=''):
+    def __init__(self, state=None, description='', validate=True):
         """
         Return a new Measurement instance.
+
+        Setting validate=False allows improperly-formed measurements to be created in special cases. Note that such a
+        measurement may not be saved correctly -- or at all -- by the IO classes.
 
         Parameters
         ----------
@@ -336,18 +246,21 @@ class Measurement(Node):
             A dictionary of state information that should be valid throughout the measurement period.
         description : str
             A verbose description of the measurement.
+        validate : bool
+            If true, verify that the array shapes are correctly described by the dimensions OrderedDict.
 
-        Returns
-        -------
-        Measurement
-            A new Measurement instance.
+        Raises
+        ------
+        ValueError
+            If the array shapes do not pass validation.
         """
         super(Measurement, self).__init__()
         if state is None:
             state = {}
         self.state = StateDict(state)
         self.description = description
-        self._validate_dimensions()
+        if validate:
+            self._validate_dimensions()
 
     def as_class(self, class_):
         public = dict([(k, v) for k, v in self.__dict__.items() if not k.startswith('_')])
@@ -708,9 +621,12 @@ class IO(object):
             absolute_node_path = NODE_PATH_SEPARATOR + node_path
         self._write_node(measurement, absolute_node_path)
 
-    def read(self, node_path, translate=None):
+    def read(self, node_path, translate=None, force=False):
         """
         Read a measurement from disk and return it.
+
+        The `force` keyword is intended for inspecting measurements for which the data on disk does not match the class
+        structure; see _instantiate().
 
         Parameters
         ----------
@@ -718,6 +634,8 @@ class IO(object):
             The path to the node to be loaded, in the form 'node0/node1/node2' or '/node0/node1/node2'.
         translate : dict
             A dictionary with entries 'original_class': 'new_class'; class names must be fully-qualified.
+        force : bool
+            If True, attempt to create the classes specified on disk even if the variables do not match.
 
         Returns
         -------
@@ -733,7 +651,7 @@ class IO(object):
             absolute_node_path = node_path
         if translate is None:
             translate = {}
-        return self._read_node(absolute_node_path, translate)
+        return self._read_node(node_path=absolute_node_path, translate=translate, force=force)
 
     # The remaining public methods should be implemented by subclasses.
     # TODO: update comments, especially with exceptions raised and handling of private variables.
@@ -845,7 +763,7 @@ class IO(object):
         node._io = self
         node._io_node_path = node_path
 
-    def _read_node(self, node_path, translate):
+    def _read_node(self, node_path, translate, force):
         original_class_name = self.read_other(node_path, CLASS_NAME)
         try:
             version_ = self.read_other(node_path, VERSION)
@@ -857,20 +775,19 @@ class IO(object):
         measurement_names = self.measurement_names(node_path)
         if issubclass(class_, MeasurementList):
             # Use the name of each measurement, which is an int, to restore the order in the sequence.
-            contents = [self._read_node(join(node_path, measurement_name), translate)
+            contents = [self._read_node(join(node_path, measurement_name), translate, force)
                         for measurement_name in sorted(measurement_names, key=int)]
             node = class_(contents)
         else:
             variables = {}
             for measurement_name in measurement_names:
-                variables[measurement_name] = self._read_node(join(node_path, measurement_name), translate)
+                variables[measurement_name] = self._read_node(join(node_path, measurement_name), translate, force)
             array_names = self.array_names(node_path)
             for array_name in array_names:
                 variables[array_name] = self.read_array(node_path, array_name)
             for other_name in self.other_names(node_path):
                 variables[other_name] = self.read_other(node_path, other_name)
-            # TODO: decide whether we need to use instantiate() here.
-            node = class_(**variables)
+            node = _instantiate(class_, variables, force)
         # Update the node with information about how it was loaded.
         node._io = self
         node._io_node_path = node_path
@@ -890,6 +807,64 @@ def from_series(series):
     io = io_class(series[ROOT_PATH])
     return io.read(series[NODE_PATH])
 
+
+def _instantiate(class_, variables, force):
+    """
+    Return a new instance of `class_` using the `variables` dict.
+
+    If `force == True`, variables required by __init__() that are not present will be passed as None, and variables on
+    disk that are not in the instantiation signature will be monkey-patched in after instantiation. Additionally,
+    for measurements that have the `validate` argument (as all measurements that directly contain arrays should),
+    it will be set to False to reduce the chance of errors. While this should work in many cases, it is not
+    guaranteed to load arbitrary data successfully.
+
+    If a forced instantiation still fails, many different errors could be raised.
+
+    Parameters
+    ----------
+    class_ : type
+        The class to instantiate.
+    variables : dict
+        A mapping from argument name to argument value.
+    force : bool
+        If True, attempt to force the measurement to instantiate; see IO.read().
+
+    Raises
+    ------
+    MeasurementError
+        If `force == False` and the keys of `variables` do not match the __init__() signature.
+
+    Returns
+    -------
+    class_
+        A new instance.
+    """
+    # The Measurement framework does not support varargs or keywords, so these should be None.
+    args, varargs, keywords, defaults = inspect.getargspec(class_.__init__)
+    # Populate this list from last to first.
+    arg_values = []
+    for arg, default in zip(reversed(args), reversed(defaults)):
+        if arg == 'validate' and force:
+            arg_values.append(False)  # Skip validation to increase the chances of success.
+        else:
+            arg_values.append(variables.get(arg, default))
+    for arg in reversed(args[1:-len(defaults)]):  # Skip the first arg, which is 'self'.
+        try:
+            arg_values.append(variables[arg])
+        except KeyError:
+            if force:
+                arg_values.append(None)
+            else:
+                raise MeasurementError("A required argument is not present on disk: {}".format(arg))
+    instance = class_(*reversed(arg_values))
+    extras = set(variables.keys()) - set(args)
+    if force:
+        for key in extras:
+            setattr(instance, key, variables[key])  # Monkey-patch.
+    else:
+        if extras:
+            raise MeasurementError("Extra values are present on disk: {}".format(extras))
+    return instance
 
 # Node-related functions
 
