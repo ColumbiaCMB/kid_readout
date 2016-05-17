@@ -14,6 +14,8 @@ import numpy as np
 from kid_readout.measurement import core
 
 
+# TODO: implement tagging and closing of memmapped files
+# TODO: check note path validation -- how were tests passing?
 class NumpyDirectory(core.IO):
 
     def __init__(self, root_path, metadata=None, memmap=False):
@@ -31,6 +33,7 @@ class NumpyDirectory(core.IO):
 
     def _create_new(self, root_path):
         os.mkdir(root_path)
+        return root_path
 
     def close(self):
         """

@@ -616,7 +616,7 @@ class RoachInterface(object):
     def get_measurement_blocks(self, num_blocks, demod=True, **kwargs):
         epoch = time.time()  # This will be improved
         data, seqnos = self.get_data(num_blocks, demod=demod)
-        sequence_start_number = seqnos[0]
+        sequence_start_number = int(seqnos[0])  # The numpy datatype causes IO problems.
         if np.isscalar(self.amps):
             tone_amplitude = self.amps * np.ones(self.tone_bins.shape[1], dtype='float')
         else:

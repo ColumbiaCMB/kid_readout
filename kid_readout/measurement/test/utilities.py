@@ -4,7 +4,6 @@ This module contains helper functions and data structures for running tests.
 import numpy as np
 
 from kid_readout.measurement import core, basic, acquire
-from kid_readout.measurement import acquire
 from kid_readout.roach import baseband  # TODO: incorporate heterodyne, r2heterodyne
 from kid_readout.roach.tests import mock_roach, mock_valon
 
