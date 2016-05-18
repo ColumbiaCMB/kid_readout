@@ -86,7 +86,7 @@ class Dictionary(core.IO):
         except KeyError:
             raise ValueError("Name not found: {}".format(key))
 
-    def measurement_names(self, node_path='/'):
+    def node_names(self, node_path='/'):
         """
         Return the names of all measurements contained in the measurement at node_path.
         """

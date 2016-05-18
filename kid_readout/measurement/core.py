@@ -550,7 +550,11 @@ class IO(object):
                 raise ValueError("Cannot set metadata for an existing root: {}".format(root_path))
             self._root = self._open_existing(self.root_path)
             try:
-                self.metadata = StateDict(self.read_other('/', METADATA))
+                metadata = self.read_other('/', METADATA)
+                if metadata is not None:
+                    self.metadata = StateDict(metadata)
+                else:
+                    self.metadata = None
             except ValueError:
                 self.metadata = None
         else:
@@ -581,22 +585,22 @@ class IO(object):
         """
         return True
 
-    def default_name(self, measurement):
+    def default_name(self, node):
         """
-        Return a name for the given measurement class or instance that is guaranteed to be unique at the root level.
+        Return a name for the given Node subclass or instance that is guaranteed to be unique at the root level.
 
         Parameters
         ----------
-        measurement : Measurement
+        node : Node
             An instance or subclass.
 
         Returns
         -------
         str
-            A string consisting of the class name and a number that is one plus the number of measurements
-            already stored at root level, guaranteeing uniqueness.
+            A string consisting of the class name and a number that is one plus the number of nodes already stored at
+            the root level, guaranteeing uniqueness.
         """
-        return measurement.class_name() + str(len(self.measurement_names()))
+        return node.class_name() + str(len(self.node_names()))
 
     def write(self, measurement, node_path=None):
         """
@@ -692,36 +696,35 @@ class IO(object):
         """
         pass
 
-    # TODO: rename to nodes()
-    def measurement_names(self, node_path='/'):
+    def node_names(self, node_path='/'):
         """
-        Return the names of all measurements contained in the measurement at node_path.
+        Return the names of all nodes contained in the node at node_path.
         """
         pass
 
     def array_names(self, node_path):
         """
-        Return the names of all arrays contained in the measurement at node_path.
+        Return the names of all arrays contained in the node at node_path.
         """
         pass
 
     def other_names(self, node_path):
         """
-        Return the names of all other variables contained in the measurement at node_path.
+        Return the names of all other variables contained in the node at node_path.
         """
         pass
 
     # Private methods
 
-    # TODO: add methods or metadata?
     def __getattr__(self, item):
-        if item in self.measurement_names():
+        if item in self.node_names():
             return self.read(item)
         else:
             raise AttributeError()
 
     def __dir__(self):
-        return list(set(self.__dict__.keys() + self.measurement_names()))
+        attrs = dir(self.__class__) + self.__dict__.keys() + self.node_names()
+        return list(set([attr for attr in attrs if not attr.startswith('_')]))
 
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__, repr(self.root_path))
@@ -738,7 +741,6 @@ class IO(object):
             The path of the new node into which the instance will be written.
         """
         self.create_node(node_path)
-        #this_class_name = '{}.{}'.format(node.__module__, node.class_name())
         self.write_other(node_path, CLASS_NAME, node.class_name())
         if hasattr(node, '_version'):
             self.write_other(node_path, VERSION, getattr(node, '_version'))
@@ -764,15 +766,14 @@ class IO(object):
         node._io_node_path = node_path
 
     def _read_node(self, node_path, translate, force):
-        original_class_name = self.read_other(node_path, CLASS_NAME)
+        saved_class_name = self.read_other(node_path, CLASS_NAME)
         try:
-            version_ = self.read_other(node_path, VERSION)
+            version = self.read_other(node_path, VERSION)
         except ValueError:
-            version_ = None
-        default_class_name = classes.full_name(original_class_name, version_)
-        full_class_name = translate.get(default_class_name, default_class_name)
+            version = None
+        full_class_name = translate.get(saved_class_name, classes.full_name(saved_class_name, version))
         class_ = get_class(full_class_name)
-        measurement_names = self.measurement_names(node_path)
+        measurement_names = self.node_names(node_path)
         if issubclass(class_, MeasurementList):
             # Use the name of each measurement, which is an int, to restore the order in the sequence.
             contents = [self._read_node(join(node_path, measurement_name), translate, force)

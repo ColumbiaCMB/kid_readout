@@ -1,11 +1,12 @@
 """
-This module implements reading and writing of Measurements using a directory hierarchy and numpy arrays.
+This module implements reading and writing of Measurements using a directory hierarchy, numpy arrays, and JSON.
 
-Each node is a string representing a directory.
-Numpy arrays are stored as .npy files.
-Other attributes are stored using json.
+Each node is a directory:
+Numpy arrays are stored as .npy files;
+Other values are stored using json.
 
-Limitations:
+Limitations and issues.
+
 Because json has only a single sequence type, all sequences that are not numpy arrays are returned as lists.
 """
 import os
@@ -17,7 +18,7 @@ from kid_readout.measurement import core
 
 
 # TODO: implement tagging and closing of memmapped files
-# TODO: check note path validation -- how were tests passing?
+# TODO: check node path validation -- how were tests passing?
 class NumpyDirectory(core.IO):
 
     def __init__(self, root_path, metadata=None, memmap=False):
@@ -50,11 +51,10 @@ class NumpyDirectory(core.IO):
         return self._root is None
 
     def create_node(self, node_path):
-        if self.closed:
-            raise ValueError("I/O operation on closed file")
-        # This will correctly fail to validate an attempt to create the root node with node_path = ''
-        core.validate_node_path(node_path)
-        os.mkdir(os.path.join(self._root, *core.explode(node_path)))
+        existing, new = core.split(node_path)
+        if not new:
+            raise core.MeasurementError("Cannot create root node.")
+        os.mkdir(os.path.join(self._get_node(existing), new))
 
     def write_array(self, node_path, key, value, dimensions):
         node = self._get_node(node_path)
@@ -69,8 +69,7 @@ class NumpyDirectory(core.IO):
             try:
                 json.dump(value, f)
             except TypeError as e:
-                print('{}:\nstr: {}\nrepr: {}'.format(key, value, repr(value)))
-                raise e
+                raise ValueError("json.dump({}) of {} ({}) failed: {}".format(key, value, repr(value), e.message))
 
     def read_array(self, node_path, name):
         full = os.path.join(self._get_node(node_path), name + '.npy')
@@ -83,9 +82,8 @@ class NumpyDirectory(core.IO):
         with open(full_name) as f:
             return json.load(f)
 
-    def measurement_names(self, node_path='/'):
+    def node_names(self, node_path='/'):
         node = self._get_node(node_path)
-        # TODO: this should actually check that the class contained in the group is a Node.
         return [f for f in os.listdir(node) if os.path.isdir(os.path.join(node, f))]
 
     def array_names(self, node_path):

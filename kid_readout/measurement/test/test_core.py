@@ -75,7 +75,7 @@ def test_io_list():
     sweep = basic.SingleSweep(core.IOList())
     io.write(sweep)
     sweep.streams.extend(streams)
-    assert io.read(io.measurement_names()[0]) == basic.SingleSweep(streams)
+    assert io.read(io.node_names()[0]) == basic.SingleSweep(streams)
 
 
 def test_read_write():

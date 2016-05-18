@@ -1,5 +1,5 @@
 """
-This module implements reading and writing of Measurement subclasses to disk using netCDF4.
+This module implements reading and writing of Measurements using netCDF4.
 
 Each node is a netCDF4 group;
 numpy arrays that are have entries in the dimensions dictionary are stored as netCDF4 variables;
@@ -21,7 +21,6 @@ These are stored as special strings that are attributes of the IO class, and con
 This is a little bit gross but probably safe in practice.
 """
 import os
-from collections import OrderedDict
 
 import netCDF4
 import numpy as np
@@ -36,7 +35,6 @@ class NCFile(core.IO):
     on_write = {None: '_None',
                 True: '_True',
                 False: '_False'}
-
     on_read = {'_None': None,
                '_True': True,
                '_False': False}
@@ -67,11 +65,12 @@ class NCFile(core.IO):
         return netCDF4.Dataset(root_path, mode='w', clobber=False)
 
     def close(self):
-        try:
-            self._root.close()
-        except RuntimeError:
-            pass
-        self._root = None
+        if not self.closed:
+            try:
+                self._root.close()
+                self._root = None
+            except RuntimeError:
+                pass
 
     @property
     def closed(self):
@@ -81,16 +80,14 @@ class NCFile(core.IO):
         if translate is None:
             translate = {}
         if self.cache_s21_raw:
-            translate.update({'kid_readout.measurement.basic.SingleStream':
-                                  'kid_readout.measurement.io.nc.NCSingleStream',
-                              'kid_readout.measurement.basic.StreamArray':
-                                  'kid_readout.measurement.io.nc.NCStreamArray'})
+            translate.update({'StreamArray': '{}.NCStreamArray'.format(__name__),
+                              'SingleStream': '{}.NCSingleStream'.format(__name__)})
         return self._read_node(node_path=node_path, translate=translate, force=force)
 
     def create_node(self, node_path):
-        # This will correctly fail to validate an attempt to create the root node with node_path = ''
-        core.validate_node_path(node_path)
         existing, new = core.split(node_path)
+        if not new:
+            raise core.MeasurementError("Cannot create root node.")
         self._get_node(existing).createGroup(new)
 
     def write_array(self, node_path, name, array, dimensions):
@@ -147,7 +144,7 @@ class NCFile(core.IO):
         else:
             raise ValueError("Name not found: {}".format(name))
 
-    def measurement_names(self, node_path='/'):
+    def node_names(self, node_path='/'):
         node = self._get_node(node_path)
         return [name for name in node.groups if not name.endswith(self.is_dict)]
 
@@ -165,6 +162,8 @@ class NCFile(core.IO):
     # Private methods.
 
     def _get_node(self, node_path):
+        if self.closed:
+            raise ValueError("I/O operation on closed file")
         node = self._root
         if node_path != '':
             core.validate_node_path(node_path)
