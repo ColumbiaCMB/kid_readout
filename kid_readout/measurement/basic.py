@@ -671,7 +671,7 @@ class SingleSweepStream(core.Measurement):
         """
         if not hasattr(self, '_S_frequency'):
             self._set_S()
-        return self._S_frequency[1:]
+        return self._S_frequency
 
     @property
     def S_qq(self):
