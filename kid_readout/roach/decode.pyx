@@ -12,7 +12,7 @@ def get_first_packet_index(plist):
     return len(plist)
 
 
-def decode_packets(plist,nchans):
+def decode_packets_fast(plist,nchans):
     assert(nchans>0)
     cdef long cntr_total
     cdef unsigned int nfft2, chns_per_pkt, pkt_counter_step, max_num_pkts, npkts
