@@ -671,7 +671,7 @@ class SingleSweepStream(core.Measurement):
         """
         if not hasattr(self, '_S_frequency'):
             self._set_S()
-        return self._S_frequency
+        return self._S_frequency[1:]
 
     @property
     def S_qq(self):
@@ -708,6 +708,9 @@ class SingleSweepStream(core.Measurement):
             NFFT = int(2**(np.floor(np.log2(self.stream.s21_raw.size)) - 3))
         S_qq, f = mlab.psd(self.q, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, **kwargs)
         S_xx, f = mlab.psd(self.x, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, **kwargs)
+        f = f[1:] # drop the DC bin since it's not helpful and makes plots look messy
+        S_xx = S_xx[1:]
+        S_qq = S_qq[1:]
         if binned:
             f, (S_xx, S_qq) = iqnoise.log_bin(f,[S_xx, S_qq])
         self._S_frequency = f
