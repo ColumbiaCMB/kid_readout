@@ -6,6 +6,7 @@ nose
 requests
 pyserial
 netcdf4
+cython
 emcee
 corner
 lmfit
