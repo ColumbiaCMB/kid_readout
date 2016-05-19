@@ -27,6 +27,9 @@ else:
 # The name of the cryostat.
 CRYOSTAT = None
 
+# Information about the current cooldown.
+COOLDOWN = None
+
 # The path of the directory containing temperature log files.
 TEMPERATURE_LOG_DIR = None
 

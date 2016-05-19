@@ -13,13 +13,14 @@ Ideally, it should be safe to use
 from kid_readout.settings import *
 so the variables defined here must not conflict with others in the package. If possible, use ALL_CAPS for constants and
 prefix temporary variables with an underscore ('_') so that they are not carried into the namespace by import *. (The
-module names for this package also have underscore prefixes for this reason.)
+module names in this subpackage also have underscore prefixes for this reason.)  Any module that is not built-in
+should be imported with an underscore:
+from kid_readout.subpackage import module as _module
+Similarly, use
+from kid_readout.subpackage.module import ONLY, NECESSARY, VARIABLES
+to avoid importing the module name into the namespace.
 
-Note that importing * from local.py will cause its namespace to be imported here too, so keep it clean. Use
-
-from kid_readout.subpackage._module import ONLY, NECESSARY, VARIABLES
-
-to import only these variables and not the module name into the namespace.
+Note that importing * from local.py will cause its namespace to be imported here too, so keep it clean.
 """
 import logging
 # Important: leading underscore helps ensure that logger in files won't be overridden by this logger

@@ -151,9 +151,10 @@ def git_log():
 
 
 def all_metadata():
-    meta = experiments.get_experiment_info_at(time.time(), cryostat=settings.CRYOSTAT)
-    meta['script_code'] = script_code()
-    meta['git_log'] = git_log()
+    meta = {'script_code': script_code(),
+            'git_log': git_log(),
+            'cryostat': settings.CRYOSTAT,
+            'cooldown': settings.COOLDOWN}
     return meta
 
 

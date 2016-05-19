@@ -1,12 +1,13 @@
 """
-This file tries to use sensible settings depending on the HOSTNAME
+This is a template local settings file for the computer `detectors` running the HPD cryostat in 1027.
 """
-import socket
+CRYOSTAT = 'HPD'
+COOLDOWN = {'date': '2016-04-20',
+            'description': 'Stanford Demo05AlMn-0506 v1 CPW coupling chip in holder H1 and lid L1, not taped.',
+            'optical_state': 'dark',
+            'chip_id': 'Demo05AlMn-0506'}
 
-HOSTNAME = socket.gethostname()
+TEMPERATURE_LOG_DIR = '/data/adc/cooldown_logs'
 
-if HOSTNAME == 'detectors':
-    from kid_readout.settings._detectors import *
-elif HOSTNAME == 'readout':
-    from kid_readout.settings._readout import *
-
+# The ROACH2 is running in heterodyne mode with the mark2 valon.
+from kid_readout.settings._roach import ROACH2_IP, ROACH2_VALON, ROACH2_HOST_IP, MARK2_VALON

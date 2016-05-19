@@ -4,6 +4,7 @@ __author__ = 'gjones'
 class SignalConditioner(object):
     name = 'signal_conditioner'
 
+    @property
     def state(self):
         return StateDict(description=self.description,
                          adc_chain_gain=self.adc_chain_gain,
