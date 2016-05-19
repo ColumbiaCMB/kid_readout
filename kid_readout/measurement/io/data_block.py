@@ -3,7 +3,7 @@ import bisect
 
 import scipy.signal
 
-from kid_readout.analysis.timedomain import fftfilt
+from kid_readout.analysis.timeseries import fftfilt
 
 lpf = scipy.signal.firwin(256,1/256.)
 

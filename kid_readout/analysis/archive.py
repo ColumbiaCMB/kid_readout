@@ -10,7 +10,7 @@ except ImportError:
 from kid_readout.analysis.noise_measurement import load_noise_pkl
 import glob
 import time
-import kid_readout.analysis.timedomain.noise_fit
+import kid_readout.analysis.timeseries.noise_fit
 from kid_readout.analysis import kid_response
 
 def build_simple_archives(pklglob,index_to_id=None):
@@ -79,9 +79,9 @@ def add_noise_summary(df,device_band=(1,100),amplifier_band=(2e3,10e3), method=n
 def add_noise_fits(df):
     def add_noise_fit_info(x):
         try:
-            nf = kid_readout.analysis.timedomain.noise_fit.fit_single_pole_noise(x['pca_freq'].iloc[0],
+            nf = kid_readout.analysis.timeseries.noise_fit.fit_single_pole_noise(x['pca_freq'].iloc[0],
                                                                   x['pca_eigvals'].iloc[0][1,:],
-                                                                  max_num_masked=8)
+                                                                                 max_num_masked=8)
         except:
             return x
         x['noise_fit_fc'] = nf.fc

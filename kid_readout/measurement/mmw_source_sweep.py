@@ -1,7 +1,7 @@
 from __future__ import division
-from kid_readout.measurement import core, basic
-import numpy as np
 import time
+
+import numpy as np
 import pandas as pd
 from memoized_property import memoized_property
 # The ZBD object loads a few data files from disk. If this import fails then the functions that use it below will still
@@ -11,6 +11,8 @@ try:
     zbd = ZBD()
 except ImportError:
     zbd = None
+
+from kid_readout.measurement import core, basic
 
 
 class MMWSweepList(basic.SweepStreamList):
@@ -65,7 +67,7 @@ class MMWResponse(basic.SingleSweepStreamList):
         for stream in self.stream_list:
             sss = basic.SingleSweepStream(sweep=self.sweep, stream=stream, state=stream.state,
                                           description=stream.description)
-            sss._set_q_and_x(deglitch=deglitch)
+            sss.set_q_and_x(deglitch=deglitch)
             result.append(sss)
         return result
 

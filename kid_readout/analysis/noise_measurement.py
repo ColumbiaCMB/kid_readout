@@ -17,13 +17,13 @@ mlab = plt.mlab
 
 from kid_readout.analysis.resonator.legacy_resonator import fit_best_resonator
 from kid_readout.analysis.resonator.khalil import qi_error
-from kid_readout.analysis.timedomain import iqnoise
+from kid_readout.analysis.timeseries import iqnoise
 from kid_readout.settings import HOSTNAME, BASE_DATA_DIR
 
 #from kid_readout.utils.fftfilt import fftfilt
-from kid_readout.analysis.timedomain.filters import low_pass_fir
+from kid_readout.analysis.timeseries.filters import low_pass_fir
 
-from kid_readout.analysis.timedomain.despike import deglitch_window
+from kid_readout.analysis.timeseries.despike import deglitch_window
 
 if HOSTNAME == 'detectors':
     from kid_readout.equipment.hpd_temps import get_temperatures_at

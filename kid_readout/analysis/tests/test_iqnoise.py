@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import mlab
 import warnings
 
-from kid_readout.analysis.timedomain.iqnoise import full_spectral_helper
+from kid_readout.analysis.timeseries.iqnoise import full_spectral_helper
 
 __author__ = 'gjones'
 

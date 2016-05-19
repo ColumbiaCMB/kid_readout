@@ -12,8 +12,7 @@ from memoized_property import memoized_property
 
 from kid_readout.measurement import core
 from kid_readout.analysis.resonator import lmfit_resonator
-from kid_readout.analysis.timedomain.despike import deglitch_window
-from kid_readout.analysis.timedomain import iqnoise
+from kid_readout.analysis.timeseries import bin, despike, iqnoise, periodic
 from kid_readout.roach import calculate
 
 
@@ -155,22 +154,10 @@ class RoachStream(core.Measurement):
         """
         return self.s21_raw_mean_error
 
-    def folded_shape(self, array, period_samples=None):
+    def fold(self, array, period_samples=None, reduce=np.mean):
         if period_samples is None:
             period_samples = calculate.modulation_period_samples(self.roach_state)
-        if period_samples == 0:
-            raise ValueError("Cannot fold unmodulated data or with period=0")
-        shape = list(array.shape)
-        shape[-1] = -1
-        shape.append(period_samples)
-        return tuple(shape)
-
-    def fold(self, array, period_samples=None, reduce=np.mean):
-        reshaped = array.reshape(self.folded_shape(array, period_samples=period_samples))
-        if reduce:
-            return reduce(reshaped, axis=reshaped.ndim-2)
-        else:
-            return reshaped
+        return periodic.fold(array, period_samples, reduce=reduce)
 
     def epochs(self, start=-np.inf, stop=np.inf):
         """
@@ -180,8 +167,8 @@ class RoachStream(core.Measurement):
 
         The indexing follows the Python convention that the first value is inclusive and the second is exclusive:
         start <= epoch < stop
-        Thus, the two slices stream_array[t0:t1] and stream_array[t1:t2] will contain all the data occurring at or after
-        t0 and before t2, with no duplication.
+        Thus, the two slices stream_array.epochs(t0, t1) and stream_array.epochs(t1, t2) will contain all the data
+        occurring at or after t0 and before t2, with no duplication.
         """
         start_index = np.searchsorted(self.epoch + self.sample_time, (start,), side='left')
         stop_index = np.searchsorted(self.epoch + self.sample_time, (stop,), side='right')  # This index is not included
@@ -515,7 +502,18 @@ class SingleSweep(core.Measurement):
 
     # TODO: add arguments to specify model, etc.
     def fit_resonator(self, model=lmfit_resonator.LinearResonatorWithCable):
-        # Reset the memoized properties that depend on the resonator fit.
+        """
+        Fit the s21 data with the given resonator model.
+
+        .. warning:: This function does not currently invalidate the caches of parent measurements that may depend on
+           its results, so use with caution.
+
+        Parameters
+        ----------
+        model : BaseResonator
+            The resonator model to use for tht fit.
+        """
+        # Reset the memoized properties of this object that depend on the resonator fit.
         for attr in ('_s21_normalized', '_s21_normalized_error'):
             if hasattr(self, attr):
                 delattr(self, attr)
@@ -610,28 +608,30 @@ class SingleSweepStream(core.Measurement):
     def resonator(self):
         return self.sweep.resonator
 
+    # TODO: handle cache invalidation when self.sweep.fit_resonator() is called.
+
     @memoized_property
     def stream_s21_normalized(self):
         return self.sweep.resonator.remove_background(self.stream.frequency, self.stream.s21_raw)
 
     @memoized_property
     def stream_s21_normalized_deglitched(self):
-        return self._set_stream_s21_normalized_deglitched()
+        return self.set_stream_s21_normalized_deglitched()
 
-    def _set_stream_s21_normalized_deglitched(self, window_in_seconds=1, deglitch_threshold=5):
+    def set_stream_s21_normalized_deglitched(self, window_in_seconds=1, deglitch_threshold=5):
         window = int(2 ** np.ceil(np.log2(window_in_seconds * self.stream.stream_sample_rate)))
-        self._stream_s21_normalized_deglitched = deglitch_window(self.stream_s21_normalized, window,
-                                                                 thresh=deglitch_threshold)
+        self._stream_s21_normalized_deglitched = despike.deglitch_window(self.stream_s21_normalized, window,
+                                                                         thresh=deglitch_threshold)
         return self._stream_s21_normalized_deglitched
 
     @property
     def q(self):
         """
         Return the inverse internal quality factor q = 1 / Q_i calculated by inverting the resonator model.
-        :return: an array of q values from self.stream corresponding to self.stream.epoch.
+        :return: an array of q values from self.stream corresponding to self.stream.sample_time
         """
         if not hasattr(self, '_q'):
-            self._set_q_and_x()
+            self.set_q_and_x()
         return self._q
 
     @property
@@ -639,7 +639,7 @@ class SingleSweepStream(core.Measurement):
         """
         Return half the inverse internal quality factor y = q / 2 calculated by inverting the resonator model. The
         purpose of this is that S_yy = S_xx when amplifier-noise dominated.
-        :return: an array of y values from self.stream corresponding to self.stream.epoch.
+        :return: an array of y values from self.stream corresponding to self.stream.sample_time.
         """
         return self.q / 2
 
@@ -647,13 +647,13 @@ class SingleSweepStream(core.Measurement):
     def x(self):
         """
         Return the fractional frequency shift x = f / f_r - 1 calculated by inverting the resonator model.
-        :return: an array of x values from self.stream corresponding to self.stream.epoch.
+        :return: an array of x values from self.stream corresponding to self.stream.sample_time.
         """
         if not hasattr(self, '_x'):
-            self._set_q_and_x()
+            self.set_q_and_x()
         return self._x
 
-    def _set_q_and_x(self, deglitch=True):
+    def set_q_and_x(self, deglitch=True):
         if deglitch:
             s21 = self.stream_s21_normalized_deglitched
         else:
@@ -670,7 +670,7 @@ class SingleSweepStream(core.Measurement):
         :return: an array of frequencies ranging from 0 through the Nyquist frequency.
         """
         if not hasattr(self, '_S_frequency'):
-            self._set_S()
+            self.set_S()
         return self._S_frequency
 
     @property
@@ -680,7 +680,7 @@ class SingleSweepStream(core.Measurement):
         :return: an array of complex values representing the spectral density of q(t)
         """
         if not hasattr(self, '_S_qq'):
-            self._set_S()
+            self.set_S()
         return self._S_qq
 
     @property
@@ -698,28 +698,29 @@ class SingleSweepStream(core.Measurement):
         :return: an array of complex values representing the spectral density of x(t)
         """
         if not hasattr(self, '_S_xx'):
-            self._set_S()
+            self.set_S()
         return self._S_xx
 
     # TODO: calculate errors in PSDs
-    def _set_S(self, NFFT=None, window=mlab.window_none, binned=True, **kwargs):
+    def set_S(self, NFFT=None, window=mlab.window_none, binned=True, **psd_kwds):
         # Use the same length calculation as SweepNoiseMeasurement
         if NFFT is None:
             NFFT = int(2**(np.floor(np.log2(self.stream.s21_raw.size)) - 3))
-        S_qq, f = mlab.psd(self.q, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, **kwargs)
-        S_xx, f = mlab.psd(self.x, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, **kwargs)
-        f = f[1:] # drop the DC bin since it's not helpful and makes plots look messy
-        S_xx = S_xx[1:]
-        S_qq = S_qq[1:]
+        S_qq, f = mlab.psd(self.q, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, **psd_kwds)
+        S_xx, f = mlab.psd(self.x, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, **psd_kwds)
+        # Drop the DC and Nyquist bins since they're not helpful and make plots look messy.
+        f = f[1:-1]
+        S_xx = S_xx[1:-1]
+        S_qq = S_qq[1:-1]
         if binned:
-            f, (S_xx, S_qq) = iqnoise.log_bin(f,[S_xx, S_qq])
+            f, (S_xx, S_qq) = bin.log_bin(f, [S_xx, S_qq])
         self._S_frequency = f
         self._S_qq = S_qq
         self._S_xx = S_xx
 
     def to_dataframe(self, deglitch=True, add_origin=True):
         if not deglitch:
-            self._set_q_and_x(deglitch=False)
+            self.set_q_and_x(deglitch=False)
         data = {'number': self.number, 'analysis_epoch': time.time(), 'start_epoch': self.start_epoch()}
         try:
             for thermometer, temperature in self.state['temperature'].items():
@@ -767,23 +768,10 @@ class SingleSweepStream(core.Measurement):
             self.add_origin(dataframe)
         return dataframe
 
-    # TODO: think about how to avoid code reuse here; monkey-patching in __init__ causes read/write problems.
-    def folded_shape(self, array, period_samples=None):
+    def fold(self, array, period_samples=None, reduce=np.mean):
         if period_samples is None:
             period_samples = calculate.modulation_period_samples(self.stream.roach_state)
-        if period_samples == 0:
-            raise ValueError("Cannot fold unmodulated data or with period=0")
-        shape = list(array.shape)
-        shape[-1] = -1
-        shape.append(period_samples)
-        return tuple(shape)
-
-    def fold(self, array, period_samples=None, reduce=np.mean):
-        reshaped = array.reshape(self.folded_shape(array, period_samples=period_samples))
-        if reduce:
-            return reduce(reshaped, axis=reshaped.ndim - 2)
-        else:
-            return reshaped
+        return periodic.fold(array, period_samples, reduce=reduce)
 
 
 class SweepStreamList(core.Measurement):

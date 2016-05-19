@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 import kid_readout.analysis.demodulate_rtl
-from kid_readout.analysis.timedomain import fftfilt
+from kid_readout.analysis.timeseries import fftfilt
 
 
 reload(kid_readout.analysis.demodulate_rtl)

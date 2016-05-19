@@ -6,7 +6,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
-import kid_readout.analysis.timedomain.fit_pulses
+import kid_readout.analysis.timeseries.fit_pulses
 import kid_readout.analysis.resonator
 from kid_readout.analysis.resonator.legacy_resonator import normalized_s21_to_detuning
 import kid_readout.measurement.io.readoutnc
