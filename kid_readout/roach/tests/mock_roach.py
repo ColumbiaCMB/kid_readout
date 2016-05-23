@@ -33,7 +33,7 @@ class MockRoach(object):
             pass
             #raise ValueError("Unknown boffile")
 
-    def read(self, device_name, size, offsest=0):
+    def read(self, device_name, size, offset=0):
         return
 
     def write(self, device_name, offset=0):
@@ -53,4 +53,7 @@ class MockRoach(object):
         return self._fpga_clk
 
     def blindwrite(self,device_name, data, offset=0):
+        pass
+
+    def tap_start(self, tap_dev, device, mac, ip, port):
         pass
