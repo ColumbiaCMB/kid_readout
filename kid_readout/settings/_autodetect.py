@@ -1,12 +1,11 @@
 """
 This file tries to use sensible settings depending on the HOSTNAME
 """
-import time
-import socket
+import socket as _socket
 
 from kid_readout.analysis.resources import experiments as _experiments
 
-HOSTNAME = socket.gethostname()
+HOSTNAME = _socket.gethostname()
 
 from kid_readout.settings._roach import *
 
