@@ -72,25 +72,107 @@ class TestSweepArray(object):
 
     @classmethod
     def setup(cls):
-        cls.sweep_array = utilities.fake_sweep_array()
+        cls.sa = utilities.fake_sweep_array()
+
+    def test_delete_memoized_property_caches(self):
+        memoized = ['ascending_order', 'frequency', 's21_point', 's21_point_error', 's21_raw']
+        for attr in memoized:
+            assert not hasattr(self.sa, '_' + attr), "Cache present: {}".format(attr)
+        _ = self.sa.frequency
+        _ = self.sa.s21_point
+        _ = self.sa.s21_point_error
+        _ = self.sa.s21_raw
+        for attr in memoized:
+            assert hasattr(self.sa, '_' + attr), "Cache missing: {}".format(attr)
+        self.sa._delete_memoized_property_caches()
+        for attr in memoized:
+            assert not hasattr(self.sa, '_' + attr), "Cache present: {}".format(attr)
 
     def test_frequency(self):
-        assert np.all(np.diff(self.sweep_array.frequency))  # Note that this will fail if there are duplicate tones.
+        assert np.all(np.diff(self.sa.frequency))  # Note that this will fail if there are duplicate tones.
 
     def test_s21_raw(self):
-        random_stream_index = np.random.randint(len(self.sweep_array.stream_arrays))
-        random_stream_array = self.sweep_array.stream_arrays[random_stream_index]
+        random_stream_index = np.random.randint(len(self.sa.stream_arrays))
+        random_stream_array = self.sa.stream_arrays[random_stream_index]
         random_channel_number = np.random.randint(random_stream_array.tone_index.size)
         random_single_stream = random_stream_array[random_channel_number]
         random_frequency = random_single_stream.frequency
         random_s21_raw = random_single_stream.s21_raw
-        sorted_frequencies = np.sort(np.concatenate([s.frequency for s in self.sweep_array.stream_arrays]))
+        sorted_frequencies = np.sort(np.concatenate([s.frequency for s in self.sa.stream_arrays]))
         sorted_index = np.searchsorted(sorted_frequencies, random_frequency)
-        assert random_frequency == self.sweep_array.frequency[sorted_index]
-        assert np.all(random_s21_raw == self.sweep_array.s21_raw[sorted_index])
+        assert random_frequency == self.sa.frequency[sorted_index]
+        assert np.all(random_s21_raw == self.sa.s21_raw[sorted_index])
+
+    def test_start_epoch(self):
+        assert self.sa.start_epoch() == self.sa.stream_arrays[0].epoch
 
 
-    #def test_s21_point(self):
+class TestSingleSweep(object):
 
+    @classmethod
+    def setup(cls):
+        cls.ss = utilities.fake_single_sweep()
+
+    def test_delete_memoized_property_caches(self):
+        memoized = ['ascending_order', 'frequency', 's21_point', 's21_point_error', 's21_raw',
+                    's21_normalized', 's21_normalized_error', 'resonator']  # These depend on the resonator
+        for attr in memoized:
+            assert not hasattr(self.ss, '_' + attr), "Cache present: {}".format(attr)
+        # Note that we have to fit the resonator first because fit_resonator clears all caches.
+        _ = self.ss.resonator
+        _ = self.ss.frequency
+        _ = self.ss.s21_point
+        _ = self.ss.s21_point_error
+        _ = self.ss.s21_raw
+        _ = self.ss.s21_normalized
+        _ = self.ss.s21_normalized_error
+        for attr in memoized:
+            assert hasattr(self.ss, '_' + attr), "Cache missing: {}".format(attr)
+        self.ss._delete_memoized_property_caches()
+        for attr in memoized:
+            assert not hasattr(self.ss, '_' + attr), "Cache present: {}".format(attr)
+
+    def test_frequency(self):
+        assert np.all(np.diff(self.ss.frequency))  # Note that this will fail if there are duplicate tones.
+
+    def test_s21_raw(self):
+        random_stream_index = np.random.randint(len(self.ss.streams))
+        random_single_stream = self.ss.streams[random_stream_index]
+        random_frequency = random_single_stream.frequency
+        random_s21_raw = random_single_stream.s21_raw
+        sorted_frequencies = np.sort([s.frequency for s in self.ss.streams])
+        sorted_index = np.searchsorted(sorted_frequencies, random_frequency)
+        assert random_frequency == self.ss.frequency[sorted_index]
+        assert np.all(random_s21_raw == self.ss.s21_raw[sorted_index])
+
+    def test_start_epoch(self):
+        assert self.ss.start_epoch() == self.ss.streams[0].epoch
+
+
+class TestSingleSweepStream(object):
+
+    @classmethod
+    def setup(cls):
+        cls.sss = utilities.fake_single_sweep_stream()
+
+    def test_delete_memoized_property_caches(self):
+        memoized = ['stream_s21_normalized', 'stream_s21_normalized_deglitched', 'q', 'x',
+                    'S_frequency', 'S_qq', 'S_xx', 'pca_S_frequency', 'pca_S_00', 'pca_S_11', 'pca_angles']
+        for attr in memoized:
+            assert not hasattr(self.sss, '_' + attr), "Cache present: {}".format(attr)
+        self.sss.set_S()
+        with warnings.catch_warnings(record=True) as ws:
+            warnings.simplefilter('always')
+            self.sss.set_pca()  # This raises 40 ComplexWarnings
+            for w in ws:
+                assert issubclass(w.category, np.ComplexWarning)
+        for attr in memoized:
+            assert hasattr(self.sss, '_' + attr), "Cache missing: {}".format(attr)
+        self.sss.sweep._delete_memoized_property_caches()
+        for attr in memoized:
+            assert not hasattr(self.sss, '_' + attr), "Cache present: {}".format(attr)
+
+    def test_start_epoch(self):
+        assert self.sss.start_epoch() == self.sss.sweep.streams[0].epoch
 
 

@@ -49,7 +49,7 @@ def load_heterodyne_sweep_tones(ri, tone_banks, num_tone_samples):
 
 
 def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=1, state=None, description='', verbose=False,
-              **kwargs):
+              wait_for_sync=True, **kwargs):
     """
     Return a SweepArray acquired using the given tone banks.
 
@@ -71,8 +71,9 @@ def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=1, state=None, de
             sys.stdout.flush()
         ri.set_tone_freqs(tone_bank, nsamp=num_tone_samples)
         ri.select_fft_bins(np.arange(tone_bank.size))
-        # we wait a bit here to let the roach2 sync catch up.  figuring this out still
-        time.sleep(0.1)
+        # we wait a bit here to let the roach2 sync catch up.  figuring this out still.
+        if wait_for_sync:
+            time.sleep(0.1)
         stream_arrays.append(ri.get_measurement(num_seconds=length_seconds, **kwargs))
     return basic.SweepArray(stream_arrays, state=state, description=description)
 

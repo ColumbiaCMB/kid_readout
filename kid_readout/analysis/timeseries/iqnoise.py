@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib import mlab
 from matplotlib.mlab import cbook
 
-from kid_readout.analysis.timeseries import bin
+from kid_readout.analysis.timeseries import binning
 
 
 def pca_noise_with_errors(d, NFFT, Fs, window=mlab.window_hanning, detrend=mlab.detrend_mean,
@@ -16,9 +16,9 @@ def pca_noise_with_errors(d, NFFT, Fs, window=mlab.window_hanning, detrend=mlab.
     pqq, pf = mlab.psd(d.imag, NFFT=NFFT, Fs=Fs, window=window, detrend=detrend)
     piq, pf = mlab.csd(d.real, d.imag, NFFT=NFFT, Fs=Fs, window=window, detrend=detrend)
     if use_log_bins:
-        bf, bp_ii, bc_ii, bvar_ii = bin.log_bin_with_errors(pf, pii, pii**2 / n_averaged)
-        bf, bp_qq, bc_qq, bvar_qq = bin.log_bin_with_errors(pf, pqq, pqq**2 / n_averaged)
-        bf, bp_iq, bc_iq, bvar_iq = bin.log_bin_with_errors(pf, piq, np.abs(piq)**2 / n_averaged)  # probably not right
+        bf, bp_ii, bc_ii, bvar_ii = binning.log_bin_with_errors(pf, pii, pii ** 2 / n_averaged)
+        bf, bp_qq, bc_qq, bvar_qq = binning.log_bin_with_errors(pf, pqq, pqq ** 2 / n_averaged)
+        bf, bp_iq, bc_iq, bvar_iq = binning.log_bin_with_errors(pf, piq, np.abs(piq) ** 2 / n_averaged)  # probably not right
         S, evals, evects, angles = calculate_pca_noise(bp_ii, bp_qq, bp_iq)
         return bf, S, evals, evects, angles, (bp_ii, bp_qq, bp_iq), bc_ii, np.vstack((bvar_qq, bvar_ii))
     else:
@@ -31,7 +31,7 @@ def pca_noise(d, NFFT=None, Fs=256e6/2.**11, window=mlab.window_hanning, detrend
               use_log_bins=True, use_full_spectral_helper=True):
     if NFFT is None:
         NFFT = int(2 ** (np.floor(np.log2(d.shape[0])) - 3))
-        print "using NFFT: 2**", np.log2(NFFT)
+        #print "using NFFT: 2**", np.log2(NFFT)
     if use_full_spectral_helper:
         pii, pqq, piq, fr_orig, t = full_spectral_helper(d.real, d.imag, NFFT=NFFT, Fs=Fs, window=window,
                                                          detrend=detrend)
@@ -43,7 +43,7 @@ def pca_noise(d, NFFT=None, Fs=256e6/2.**11, window=mlab.window_hanning, detrend
         pqq, fr = mlab.psd(d.imag, NFFT=NFFT, Fs=Fs, window=window, detrend=detrend)
         piq, fr = mlab.csd(d.real, d.imag, NFFT=NFFT, Fs=Fs, window=window, detrend=detrend)
     if use_log_bins:
-        fr, (pii, pqq, piq) = bin.log_bin(fr_orig, [pii, pqq, piq])
+        fr, (pii, pqq, piq) = binning.log_bin(fr_orig, [pii, pqq, piq])
     else:
         fr = fr_orig
     S, evals, evects, angles = calculate_pca_noise(pii, pqq, piq)

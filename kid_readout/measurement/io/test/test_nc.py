@@ -1,8 +1,8 @@
 import os
+
 import numpy as np
 from testfixtures import TempDirectory
 
-from kid_readout.measurement import core
 from kid_readout.measurement.test import utilities
 from kid_readout.measurement.io import nc
 

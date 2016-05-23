@@ -1,11 +1,9 @@
 import copy
 import numpy as np
-import pandas as pd
+
 from kid_readout.measurement import core, basic
 from kid_readout.measurement.io import memory
 from kid_readout.measurement.test import utilities
-
-# TODO: switch instances of the path separator to core.NODE_PATH_SEPARATOR
 
 
 def test_measurement_instantiation_blank():
@@ -177,7 +175,7 @@ def test_sweep_stream_array_node_path():
     # depends on the actual measurement structure that exists.
     ssa = io.read(name)
     assert ssa.current_node_path == '/'
-    assert ssa.io_node_path == '/ssa'
+    assert ssa._io_node_path == '/ssa'
     assert ssa.sweep_array.current_node_path == '/sweep_array'
     assert ssa.sweep_array.io_node_path == '/ssa/sweep_array'
     assert ssa.sweep_array.stream_arrays.current_node_path == '/sweep_array/stream_arrays'
@@ -186,19 +184,19 @@ def test_sweep_stream_array_node_path():
     assert ssa.sweep_array.stream_arrays[0].io_node_path == '/ssa/sweep_array/stream_arrays/0'
     sweep_array = io.read(core.join(name, 'sweep_array'))
     assert sweep_array.current_node_path == '/'
-    assert sweep_array.io_node_path == '/ssa/sweep_array'
+    assert sweep_array._io_node_path == '/ssa/sweep_array'
     assert sweep_array.stream_arrays.current_node_path == '/stream_arrays'
     assert sweep_array.stream_arrays.io_node_path == '/ssa/sweep_array/stream_arrays'
     assert sweep_array.stream_arrays[0].current_node_path == '/stream_arrays/0'
     assert sweep_array.stream_arrays[0].io_node_path == '/ssa/sweep_array/stream_arrays/0'
     stream_arrays = io.read(core.join(name, 'sweep_array', 'stream_arrays'))
     assert stream_arrays.current_node_path == '/'
-    assert stream_arrays.io_node_path == '/ssa/sweep_array/stream_arrays'
+    assert stream_arrays._io_node_path == '/ssa/sweep_array/stream_arrays'
     assert stream_arrays[0].current_node_path == '/0'
     assert stream_arrays[0].io_node_path == '/ssa/sweep_array/stream_arrays/0'
     stream_array_0 = io.read(core.join(name, 'sweep_array', 'stream_arrays', '0'))
     assert stream_array_0.current_node_path == '/'
-    assert stream_array_0.io_node_path == '/ssa/sweep_array/stream_arrays/0'
+    assert stream_array_0._io_node_path == '/ssa/sweep_array/stream_arrays/0'
     # Add the tree to a new measurement:
     m = core.Measurement()
     moved = ssa.sweep_array
@@ -206,7 +204,7 @@ def test_sweep_stream_array_node_path():
     # The IO node path is unchanged, while the current node path now reflects that the sweep array was last added to
     # the new measurement with the name 'moved'.
     assert ssa.current_node_path == '/'
-    assert ssa.io_node_path == '/ssa'
+    assert ssa._io_node_path == '/ssa'
     assert moved.current_node_path == '/moved'
     assert moved.io_node_path == '/ssa/sweep_array'
     assert moved.stream_arrays.current_node_path == '/moved/stream_arrays'

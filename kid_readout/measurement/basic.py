@@ -12,11 +12,52 @@ from memoized_property import memoized_property
 
 from kid_readout.measurement import core
 from kid_readout.analysis.resonator import lmfit_resonator
-from kid_readout.analysis.timeseries import bin, despike, iqnoise, periodic
+from kid_readout.analysis.timeseries import binning, despike, iqnoise, periodic
 from kid_readout.roach import calculate
 
 
-class RoachStream(core.Measurement):
+class RoachMeasurement(core.Measurement):
+    """
+    An abstract base class for measurements taken with the ROACH.
+    """
+
+    _version = 0
+
+    def start_epoch(self):
+        """
+        Return self.epoch, if it exists, and if not return the earliest epoch of any RoachMeasurement that this
+        measurement contains. Measurements that are not RoachMeasurements are ignored.
+
+        Returns
+        -------
+        float
+            The epoch of this Measurement or the earliest epoch of its contents; np.nan if neither is found.
+        """
+        if hasattr(self, 'epoch'):
+            return self.epoch
+        else:
+            possible_epochs = []
+            public_nodes = [(k, v) for k, v in self.__dict__.items()
+                            if not k.startswith('_') and isinstance(v, core.Node)]
+            for name, node in public_nodes:
+                if isinstance(node, RoachMeasurement):
+                    possible_epochs.append(node.start_epoch())
+                elif isinstance(node, core.MeasurementList):
+                    possible_epochs.append(np.min([m.start_epoch() for m in node if isinstance(m, RoachMeasurement)]))
+            if possible_epochs:
+                return np.min(possible_epochs)
+            else:
+                return np.nan
+
+    def _delete_memoized_property_caches(self):
+        for attr in dir(self):
+            if hasattr(self, '_' + attr) and attr not in core.PRIVATE:
+                delattr(self, '_' + attr)
+        if self._parent is not None:
+            self._parent._delete_memoized_property_caches()
+
+
+class RoachStream(RoachMeasurement):
 
     _version = 1
 
@@ -181,7 +222,7 @@ class RoachStream(core.Measurement):
                               state=self.state, description=self.description)
 
 
-class RoachStream0(core.Measurement):
+class RoachStream0(RoachMeasurement):
     """
     This class is a factory for producing RoachStream version 1 instances from version 0 data.
 
@@ -349,7 +390,7 @@ class SingleStream0(RoachStream0):
         return SingleStream(*args, **kwargs)
 
 
-class SweepArray(core.Measurement):
+class SweepArray(RoachMeasurement):
     """
     This class contains list of streams.
 
@@ -430,7 +471,7 @@ class SweepArray(core.Measurement):
         return pd.concat(dataframes, ignore_index=True)
 
 
-class SingleSweep(core.Measurement):
+class SingleSweep(RoachMeasurement):
     """
     This class contains list of single streams with different frequencies.
 
@@ -505,18 +546,12 @@ class SingleSweep(core.Measurement):
         """
         Fit the s21 data with the given resonator model.
 
-        .. warning:: This function does not currently invalidate the caches of parent measurements that may depend on
-           its results, so use with caution.
-
         Parameters
         ----------
         model : BaseResonator
-            The resonator model to use for tht fit.
+            The resonator model to use for the fit.
         """
-        # Reset the memoized properties of this object that depend on the resonator fit.
-        for attr in ('_s21_normalized', '_s21_normalized_error'):
-            if hasattr(self, attr):
-                delattr(self, attr)
+        self._delete_memoized_property_caches()
         self._resonator = model(frequency=self.frequency, s21=self.s21_point, errors=self.s21_point_error)
         self._resonator.fit()
         return self._resonator
@@ -558,7 +593,7 @@ class SingleSweep(core.Measurement):
         return dataframe
 
 
-class SweepStreamArray(core.Measurement):
+class SweepStreamArray(RoachMeasurement):
 
     _version = 0
 
@@ -568,6 +603,24 @@ class SweepStreamArray(core.Measurement):
         self.sweep_array = sweep_array
         self.stream_array = stream_array
         super(SweepStreamArray, self).__init__(state=state, description=description)
+
+    def epochs(self, start, stop):
+        """
+        Return a new SweepStreamArray containing the same sweep and only the stream data between the given epochs.
+
+        Parameters
+        ----------
+        start : float
+            The start time of the slice.
+        stop : float
+            The stop time of the slice.
+
+        Returns
+        -------
+        SweepStreamArray
+        """
+        return SweepStreamArray(self.sweep_array, self.stream_array.epochs(start, stop), state=self.state,
+                                description=self.description)
 
     @property
     def num_channels(self):
@@ -594,7 +647,7 @@ class SweepStreamArray(core.Measurement):
         return pd.concat(dataframes, ignore_index=True)
 
 
-class SingleSweepStream(core.Measurement):
+class SingleSweepStream(RoachMeasurement):
 
     _version = 0
 
@@ -604,11 +657,27 @@ class SingleSweepStream(core.Measurement):
         self.number = number
         super(SingleSweepStream, self).__init__(state=state, description=description)
 
+    def epochs(self, start, stop):
+        """
+        Return a new SingleSweepStream containing the same sweep and only the stream data between the given epochs.
+
+        Parameters
+        ----------
+        start : float
+            The start time of the slice.
+        stop : float
+            The stop time of the slice.
+
+        Returns
+        -------
+        SingleSweepStream
+        """
+        return SingleSweepStream(self.sweep, self.stream.epochs(start, stop), state=self.state,
+                                 number=self.number, description=self.description)
+
     @property
     def resonator(self):
         return self.sweep.resonator
-
-    # TODO: handle cache invalidation when self.sweep.fit_resonator() is called.
 
     @memoized_property
     def stream_s21_normalized(self):
@@ -702,21 +771,103 @@ class SingleSweepStream(core.Measurement):
         return self._S_xx
 
     # TODO: calculate errors in PSDs
-    def set_S(self, NFFT=None, window=mlab.window_none, binned=True, **psd_kwds):
-        # Use the same length calculation as SweepNoiseMeasurement
+    def set_S(self, NFFT=None, window=mlab.window_none, detrend=mlab.detrend_none, binned=True, **psd_kwds):
+        """
+        Calculate the spectral density of self.x and self.q and set the related properties.
+
+        Parameters
+        ----------
+        NFFT : int
+            The number of samples to use for each FFT chunk; should be a power of two for speed.
+        window  : callable
+            A function that takes a complex time series as argument and returns a windowed time series.
+        detrend : callable
+            A function that takes a complex time series as argument and returns a detrended time series.
+        binned : bool
+            If True, the result is binned using bin sizes that increase with frequency.
+        psd_kwds : dict
+            Additional keywords to pass to mlab.psd.
+
+        Returns
+        -------
+        None
+        """
         if NFFT is None:
             NFFT = int(2**(np.floor(np.log2(self.stream.s21_raw.size)) - 3))
-        S_qq, f = mlab.psd(self.q, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, **psd_kwds)
-        S_xx, f = mlab.psd(self.x, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, **psd_kwds)
+        S_qq, f = mlab.psd(self.q, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, detrend=detrend,
+                           **psd_kwds)
+        S_xx, f = mlab.psd(self.x, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, detrend=detrend,
+                           **psd_kwds)
         # Drop the DC and Nyquist bins since they're not helpful and make plots look messy.
         f = f[1:-1]
         S_xx = S_xx[1:-1]
         S_qq = S_qq[1:-1]
         if binned:
-            f, (S_xx, S_qq) = bin.log_bin(f, [S_xx, S_qq])
+            f, (S_xx, S_qq) = binning.log_bin(f, [S_xx, S_qq])
         self._S_frequency = f
         self._S_qq = S_qq
         self._S_xx = S_xx
+
+    @property
+    def pca_S_frequency(self):
+        if not hasattr(self, '_pca_frequency'):
+            self.set_pca()
+        return self._pca_S_frequency
+
+    @property
+    def pca_S_00(self):
+        if not hasattr(self, '_pca_S_00'):
+            self.set_pca()
+        return self._pca_S_00
+
+    @property
+    def pca_S_11(self):
+        if not hasattr(self, '_pca_S_11'):
+            self.set_pca()
+        return self._pca_S_11
+
+    @property
+    def pca_angles(self):
+        if not hasattr(self, '_pca_angles'):
+            self.set_pca()
+        return self._pca_angles
+
+    def set_pca(self, NFFT=None, window=mlab.window_none, detrend=mlab.detrend_none, binned=True):
+        """
+        Calculate the spectral densities of the complex time series self.x + 1j * self.y in the two directions that,
+        at each point, correspond to minimal and maximal fluctuation. We use self.y = self.q / 2 here because
+        isotropic fluctuations in S_{21} have the same amplitude in these units.
+
+        Note that if `binned` is True then binning is performed before PCA, and this can produce quite different results
+        from binning after PCA. At frequencies where amplifier noise dominates, PCA without binning will select the
+        direction corresponding to the largest fluctuations, so pca_S_00 will be less than pca_S_11 even though the
+        noise is isotropic.
+
+        Parameters
+        ----------
+        NFFT : int
+            The number of samples to use for each FFT chunk; should be a power of two for speed.
+        window  : callable
+            A function that takes a complex time series as argument and returns a windowed time series.
+        detrend : callable
+            A function that takes a complex time series as argument and returns a detrended time series.
+        binned : bool
+            If True, the PSDs are binned using bin sizes that increase with frequency before PCA is performed.
+
+        Returns
+        -------
+        None
+        """
+        if NFFT is None:
+            NFFT = int(2**(np.floor(np.log2(self.stream.s21_raw.size)) - 3))
+        fr, S, evals, evects, angles, piq = iqnoise.pca_noise(self.x + 1j * self.y, NFFT=NFFT,
+                                                              Fs=self.stream.stream_sample_rate, window=window,
+                                                              detrend=detrend, use_log_bins=binned,
+                                                              use_full_spectral_helper=True)
+        self._pca_S_frequency = fr
+        self._pca_S_00 = evals[0]
+        self._pca_S_11 = evals[1]
+        self._pca_angles = angles
 
     def to_dataframe(self, deglitch=True, add_origin=True):
         if not deglitch:
@@ -774,7 +925,7 @@ class SingleSweepStream(core.Measurement):
         return periodic.fold(array, period_samples, reduce=reduce)
 
 
-class SweepStreamList(core.Measurement):
+class SweepStreamList(RoachMeasurement):
 
     _version = 0
 
@@ -793,7 +944,7 @@ class SweepStreamList(core.Measurement):
         return self[number]
 
 
-class SingleSweepStreamList(core.Measurement):
+class SingleSweepStreamList(RoachMeasurement):
 
     _version = 0
 

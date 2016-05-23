@@ -21,7 +21,9 @@ IO_CLASS_NAME = 'io_class'  # This is the fully-qualified name of the io class u
 ROOT_PATH = 'root_path'  # This is the root file or directory from which a measurement was read from disk.
 NODE_PATH = 'node_path'  # This is the node path from the root node to the measurement node.
 # IO_MODULE = 'io_module'  # This is the full-qualified name of the module used to read and write legacy data.
-RESERVED_NAMES = [IO_CLASS_NAME, ROOT_PATH, NODE_PATH]  # IO_MODULE
+RESERVED = [IO_CLASS_NAME, ROOT_PATH, NODE_PATH]  # io_node_path is included here
+# These strings have a corresponding private attribute.
+PRIVATE = ['io_node_path']
 
 # This character separates nodes in a node path.
 NODE_PATH_SEPARATOR = '/'
@@ -87,7 +89,7 @@ class Node(object):
         this would return '/sweep/streams/3' regardless of whether some or all of these measurements have been written
         to disk. Thus, it will always differ from `io_node_path`.
 
-        Because this method has to traverse the contents of each parent, it could be slow for large structures.
+        Because this function has to traverse the contents of each parent, it could be slow for large structures.
 
         Returns
         -------
@@ -124,7 +126,7 @@ class Node(object):
         try:
             dataframe[IO_CLASS_NAME] = self._io.__class__.__name__
             dataframe[ROOT_PATH] = self._io.root_path
-            dataframe[NODE_PATH] = self.io_node_path
+            dataframe[NODE_PATH] = self._io_node_path
         except AttributeError:  # This node has not been read from or written to disk, so try its children.
             dataframe[IO_CLASS_NAME] = None
             dataframe[ROOT_PATH] = None
@@ -134,7 +136,7 @@ class Node(object):
                     try:
                         dataframe['.'.join((key, IO_CLASS_NAME))] = value._io.__class__.__name__
                         dataframe['.'.join((key, ROOT_PATH))] = value._io.root_path
-                        dataframe['.'.join((key, NODE_PATH))] = value.io_node_path
+                        dataframe['.'.join((key, NODE_PATH))] = value._io_node_path
                     except AttributeError:
                         dataframe['.'.join((key, IO_CLASS_NAME))] = None
                         dataframe['.'.join((key, ROOT_PATH))] = None
@@ -266,20 +268,6 @@ class Measurement(Node):
         public = dict([(k, v) for k, v in self.__dict__.items() if not k.startswith('_')])
         return class_(**public)
 
-    def start_epoch(self):
-        try:
-            return self.epoch
-        except AttributeError:
-            pass
-        possible_epochs = []
-        for key, value in self.__dict__.items():
-            if not key.startswith('_') and isinstance(value, (Measurement, MeasurementList)):
-                possible_epochs.append(value.start_epoch())
-        if possible_epochs:
-            return np.min(possible_epochs)
-        else:
-            return np.nan
-
     def to_dataframe(self):
         """
         This method should return a pandas DataFrame containing state information and analysis products, such as fit
@@ -399,10 +387,6 @@ class MeasurementList(list, Node):
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__, super(MeasurementList, self).__repr__())
 
-    def start_epoch(self):
-        possible_epochs = [x.start_epoch() for x in self]
-        return np.min(possible_epochs)
-
 
 class IOList(MeasurementList):
     """
@@ -422,7 +406,7 @@ class IOList(MeasurementList):
         self._len = 0
 
     def append(self, item):
-        self._io.write(item, join(self.io_node_path, str(len(self))))
+        self._io.write(item, join(self._io_node_path, str(len(self))))
         self._len += 1
 
     def extend(self, iterable):
@@ -468,7 +452,7 @@ class IOList(MeasurementList):
         raise NotImplementedError()
 
     def __repr__(self):
-        return '{}({}, {})'.format(self.__class__.__name__, self._io, self.io_node_path)
+        return '{}({}, {})'.format(self.__class__.__name__, self._io, self._io_node_path)
 
 
 class MeasurementError(Exception):

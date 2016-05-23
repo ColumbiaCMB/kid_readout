@@ -109,7 +109,7 @@ def fake_sweep_array(num_tones=16, num_waveforms=32, num_tone_samples=2 ** 21, l
     offsets = np.linspace(-100e-3, 100e-3, num_waveforms)
     tone_banks = [center_frequencies + offset for offset in offsets]
     return acquire.run_sweep(ri=ri, tone_banks=tone_banks, num_tone_samples=num_tone_samples,
-                             length_seconds=length_seconds, state=state, description=description)
+                             length_seconds=length_seconds, state=state, description=description, wait_for_sync=False)
 
 
 def fake_single_sweep(num_waveforms=32, num_tone_samples=2 ** 21, length_seconds=0.01,
