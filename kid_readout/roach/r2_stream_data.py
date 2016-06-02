@@ -1,7 +1,7 @@
+import numpy as np
 import socket
 from contextlib import closing
 import multiprocessing as mp
-from multiprocessing import Process, Queue
 import time
 import ctypes
 from Queue import Empty as EmptyException
