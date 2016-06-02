@@ -3,21 +3,14 @@ Classes to interface to ROACH2 hardware for KID readout systems
 """
 __author__ = 'gjones'
 
-import time
 import socket
-
 import numpy as np
-import scipy.signal
-
 import kid_readout.roach.r2_udp_catcher
-import tools
-from interface import RoachInterface
 from heterodyne import RoachHeterodyne
 
 
 try:
     import numexpr
-
     have_numexpr = True
 except ImportError:
     have_numexpr = False
@@ -32,7 +25,7 @@ class Roach2Heterodyne(RoachHeterodyne):
 
         self.lo_frequency = 0.0
         self.heterodyne = True
-        self.boffile = 'r2iq2xpfb14mcr13gb_2016_May_11_1226.bof'
+        self.boffile = 'r2iq2xpfb14mcr15gb_2016_May_24_1419.bof'
 
         self.wafer = wafer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
@@ -102,19 +95,23 @@ class Roach2Heterodyne(RoachHeterodyne):
         q = sb[1::2].copy().view('>i2') / 16.
         return i, q
 
-    def get_data_udp(self, nread=2, demod=True):
-        data, seqnos = kid_readout.roach.r2_udp_catcher.get_udp_data(self, npkts=nread,
+    def get_data_udp(self, nread=2, demod=True, fast=False):
+        data, seq_nos = kid_readout.roach.r2_udp_catcher.get_udp_data(self, npkts=nread,
                                                                      nchans=self.readout_selection.shape[0],
-                                                                     addr=(self.host_ip, 55555))  # , stream_reg, addr)
+                                                                     addr=(self.host_ip, 55555), fast=fast)
+
         if self.phase0 is None:
-            self.phase0 = seqnos[0]
+            self.phase0 = seq_nos[0]
         if demod:
-            seqnos -= self.phase0
-            data = self.demodulate_data(data, seqnos)
-        return data, seqnos
+            seq_nos -= self.phase0
+            if fast:
+                data = self.demodulate_stream(data, seq_nos)
+            else:
+                data = self.demodulate_data(data, seq_nos)
+        return data, seq_nos
 
     @property
     def blocks_per_second_per_channel(self):
         chan_rate = self.fs * 1e6 / (self.nfft)  # samples per second for one tone_index
-        samples_per_channel_per_block = 256
+        samples_per_channel_per_block = 1024
         return chan_rate / samples_per_channel_per_block

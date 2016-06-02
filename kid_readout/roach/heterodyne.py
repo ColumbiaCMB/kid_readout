@@ -7,10 +7,8 @@ from kid_readout.roach.interface import RoachInterface
 from kid_readout.roach.tools import compute_window, calc_wavenorm
 import kid_readout.roach.udp_catcher
 
-
 try:
     import numexpr
-
     have_numexpr = True
 except ImportError:
     have_numexpr = False
@@ -313,6 +311,27 @@ class RoachHeterodyne(RoachInterface):
                                             seq_nos=seq_nos)
         return demod
 
+    def demodulate_stream(self,data,seq_nos):
+        # Handles dropped packets assuming they are NaNs in data.
+        bank = self.bank
+        foffs = tone_offset_frequency(self.tone_bins[bank,:], self.tone_nsamp, self.fft_bins[bank,:], self.nfft)
+        nt = get_foffs_period(foffs)
+        if (data.shape[0] % nt):
+            data = data[: nt*(data.shape[0]//nt),:]
+        demod_wave, pphase, wc = self.create_demod_wave(data.shape, seq_nos, foffs, nt)
+        phi0 = self.phases
+        return numexpr.evaluate("pphase * wc * exp(-1j*phi0) * demod_wave * data")
+
+    def create_demod_wave(self, data_shape, seq_nos, foffs, nt):
+        # Handles dropped packets if they are included as NaNs.
+        # If do not want to use NaNs then need to calculate phase from seq_nos...
+        wc = self.demodulator.compute_pfb_response(foffs)
+        pphase = packet_phase(seq_nos[0], foffs, self.readout_selection.shape[0], self.nfft, self.tone_nsamp)
+        t = np.arange(nt, dtype='int64')
+        wave = np.exp(-1j * (2 * np.pi * np.outer(t, foffs)))
+        wave_mat = np.lib.stride_tricks.as_strided(wave, shape=data_shape, strides=(0,wave.strides[1]))
+        return wave_mat, pphase, wc
+
     def demodulate_data_original(self, data):
         """
         Demodulate the data from the FFT bin
@@ -500,8 +519,6 @@ class Demodulator(object):
 
     def demodulate(self,data,tone_bin,tone_num_samples,tone_phase,fft_bin,nchan,seq_nos=None):
         phi0 = tone_phase
-        k = tone_bin
-        m = fft_bin
         nfft = self.nfft
         ns = tone_num_samples
         foffs = tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft)
@@ -509,15 +526,14 @@ class Demodulator(object):
         t = np.arange(data.shape[0])
         demod = wc*np.exp(-1j * (2 * np.pi * foffs * t + phi0)) * data
         if type(seq_nos) is np.ndarray:
-            pphase = packet_phase(seq_nos[0] ,foffs,nchan,nfft,ns)
+            pphase = packet_phase(seq_nos[0],foffs,nchan,nfft,ns)
             demod *= pphase
         if self.hardware_delay_samples != 0:
             demod *= np.exp(2j*np.pi*self.hardware_delay_samples*tone_bin/tone_num_samples)
         return demod
 
 def packet_phase(seq_no,foffs,nchan,nfft,ns):
-    #need to generalize for non consecutive packets (eg use all seqnos in case of dropped pkts)
-    packet_bins = 256    #this is hardcoded for now.. number of fft bins that fit in 1 udp packet
+    packet_bins = 1024    #this is hardcoded from the roach. number of fft bins that fit in 1 udp packet
     packet_counts = nfft * packet_bins    
     chan_counts = packet_counts / nchan
     shift = int(np.log2(chan_counts)) - 1
@@ -528,7 +544,6 @@ def packet_phase(seq_no,foffs,nchan,nfft,ns):
     seq_no = seq_no >> shift
     seq_no %= modn
     return np.exp(-1j * 2. * np.pi * seq_no * foffs * multy / modn)
-        
 
 def tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft):
     k = tone_bin
@@ -537,3 +552,6 @@ def tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft):
     ns = tone_num_samples
     return nfft * (k / float(ns)) - m
 
+def get_foffs_period(foffs):
+    mask = foffs != 0
+    return int(np.max(1/foffs[mask]))

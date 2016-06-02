@@ -5,7 +5,7 @@ import numpy as np
 def get_first_packet_index(plist):
     start = 0
     for pkt in plist:
-        if len(pkt) != 1028:
+        if len(pkt) != 4100:
             start += 1
             continue
         return start
@@ -19,7 +19,7 @@ def decode_packets_fast(plist,nchans):
     plist = plist[1:]
     cntr_total = 2**32
     nfft2 = 2**14 / 2
-    chns_per_pkt = 256
+    chns_per_pkt = 1024
     pkt_counter_step = nfft2 * chns_per_pkt // nchans
     max_num_pkts = cntr_total // pkt_counter_step
     npkts = len(plist)
@@ -45,7 +45,7 @@ def decode_packets_fast(plist,nchans):
         n = 0
         was_below = False
         for pkt in plist:
-            if len(pkt) != 1028:
+            if len(pkt) != 4100:
                 num_bad_pkts += 1
                 continue
             all_data = np.fromstring(pkt,'<u4')
