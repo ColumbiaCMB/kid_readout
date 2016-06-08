@@ -18,6 +18,7 @@ from kid_readout.roach.heterodyne import RoachHeterodyne
 from kid_readout.roach.baseband import RoachBaseband
 from kid_readout.roach.r2baseband import RoachBaseband
 from kid_readout.roach.r2heterodyne import Roach2Heterodyne
+from kid_readout.roach.attenuator import Attenuator
 
 from kid_readout.analysis.resonator.helpers import *
 from kid_readout.measurement.io.readoutnc import ReadoutNetCDF

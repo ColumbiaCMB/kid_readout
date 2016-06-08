@@ -10,7 +10,14 @@ def r2_with_mk2(lo_freq=1000, atten=None):
                           attenuator=attenuator)
     r2.set_lo(lo_freq)
     return r2
-        
+
+
+def r2_with_mk1(lo_freq=1000):
+    r2 = Roach2Heterodyne(roachip=ROACH2_IP, adc_valon=ROACH2_VALON, host_ip=ROACH2_HOST_IP, lo_valon=None,
+                          attenuator=None)
+    r2.set_lo(lo_freq)
+    return r2
+
    
 def r1_with_mk2(lo_freq=1000, atten=None):
     attenuator = Attenuator(attenuation=atten)
