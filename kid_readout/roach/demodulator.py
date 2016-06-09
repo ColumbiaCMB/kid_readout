@@ -31,12 +31,12 @@ class Demodulator(object):
         phi0 = tone_phase
         nfft = self.nfft
         ns = tone_num_samples
-        foffs = tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft)
-        wc = self.compute_pfb_response(foffs)
+        offset_frequencies = tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft)
+        wc = self.compute_pfb_response(offset_frequencies)
         t = np.arange(data.shape[0])
-        demod = wc*np.exp(-1j * (2 * np.pi * foffs * t + phi0)) * data
+        demod = wc*np.exp(-1j * (2 * np.pi * offset_frequencies * t + phi0)) * data
         if type(seq_nos) is np.ndarray:
-            pphase = packet_phase(seq_nos[0],foffs,nchan,nfft,ns)
+            pphase = packet_phase(seq_nos[0],offset_frequencies,nchan,nfft,ns)
             demod *= pphase
         if self.hardware_delay_samples != 0:
             demod *= np.exp(2j*np.pi*self.hardware_delay_samples*tone_bin/tone_num_samples)
@@ -51,11 +51,12 @@ class StreamDemodulator(Demodulator):
                                                hardware_delay_samples=hardware_delay_samples)
 
         self.tone_bins = tone_bins
+        self.num_channels = self.tone_bins.shape[0]
         self.tone_nsamp = tone_nsamp
         self.phases = phases
         self.fft_bins = fft_bins
         self.offset_frequencies = tone_offset_frequency(self.tone_bins, self.tone_nsamp, self.fft_bins, self.nfft)
-        self.max_period = get_foffs_period(self.offset_frequencies)
+        self.max_period = get_offset_frequencies_period(self.offset_frequencies)
 
     def demodulate_stream(self, data, sequence_numbers):
         """
@@ -71,25 +72,27 @@ class StreamDemodulator(Demodulator):
         demodulated data in same shape and dtype as input data
 
         """
-        offset_frequencies = tone_offset_frequency(self.tone_bins, self.tone_nsamp, self.fft_bins, self.nfft)
-        wave_period = get_foffs_period(offset_frequencies)
+        demod_wave, wave_period = self.create_demodulation_waveform(data.shape, sequence_numbers)
         if (data.shape[0] % wave_period):
             data = data[: wave_period*(data.shape[0]//wave_period),:]
-        demod_wave, pphase, wc = self.create_demodulation_waveform(data.shape, sequence_numbers, offset_frequencies, wave_period)
-        return numexpr.evaluate("pphase * wc * demod_wave * data")
+        return demod_wave * data
 
-    def create_demodulation_waveform(self, data_shape, seq_nos, foffs, wave_period):
+    def create_demodulation_waveform(self, data_shape, seq_nos):
         # Handles dropped packets if they are included as NaNs.
         # If do not want to use NaNs then need to calculate phase from seq_nos...
-        wc = self.demodulator.compute_pfb_response(foffs)
-        pphase = packet_phase(seq_nos[0], foffs, self.readout_selection.shape[0], self.nfft, self.tone_nsamp)
-        t = np.arange(wave_period)
-        wave = np.exp(-1j * (2 * np.pi * np.outer(t, foffs) + pphase + self.phases))
-        wave_mat = np.lib.stride_tricks.as_strided(wave, shape=data_shape, strides=(0,wave.strides[1]))
-        return wave_mat, pphase, wc
+        offset_frequencies = tone_offset_frequency(self.tone_bins, self.tone_nsamp, self.fft_bins, self.nfft)
+        wave_period = get_offset_frequencies_period(offset_frequencies)
+        wc = self.compute_pfb_response(offset_frequencies)
+        pphase = packet_phase(seq_nos[0], offset_frequencies, self.num_channels, self.nfft, self.tone_nsamp)
+        hardware_delay = -self.hardware_delay_samples*self.tone_bins/float(self.tone_nsamp)
+        t = np.arange(data_shape[0])#wave_period)
+        wave = wc*np.exp(-1j * (2 * np.pi * (np.outer(t, offset_frequencies) + hardware_delay) + self.phases)) * pphase
+        #wave_mat = np.lib.stride_tricks.as_strided(wave, shape=data_shape, strides=(0,wave.strides[1]))
+        wave_mat=wave
+        return wave_mat, wave_period
 
 
-def packet_phase(seq_no,foffs,nchan,nfft,ns):
+def packet_phase(seq_no,offset_frequencies,nchan,nfft,ns):
     packet_bins = 1024    #this is hardcoded from the roach. number of fft bins that fit in 1 udp packet
     packet_counts = nfft * packet_bins
     chan_counts = packet_counts / nchan
@@ -100,7 +103,7 @@ def packet_phase(seq_no,foffs,nchan,nfft,ns):
     multy = ns / nfft
     seq_no = seq_no >> shift
     seq_no %= modn
-    return np.exp(-1j * 2. * np.pi * seq_no * foffs * multy / modn)
+    return np.exp(-1j * 2. * np.pi * seq_no * offset_frequencies * multy / modn)
 
 def tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft):
     k = tone_bin
@@ -109,10 +112,8 @@ def tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft):
     ns = tone_num_samples
     return nfft * (k / float(ns)) - m
 
-def get_foffs_period(foffs):
-    mask = foffs != 0
-    try:
-        period = int(np.max(1/foffs[mask]))
-    except ValueError:
-        period = 1
+def get_offset_frequencies_period(offset_frequencies):
+    period = 1
+    while not np.all(np.round(offset_frequencies*period)==offset_frequencies*period):
+        period = period * 2
     return period
