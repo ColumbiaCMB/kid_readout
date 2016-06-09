@@ -3,7 +3,7 @@ import time
 import numpy as np
 
 import kid_readout.roach.udp_catcher
-from kid_readout.roach.demodulator import Demodulator
+from kid_readout.roach.demodulator import Demodulator, StreamDemodulator
 from kid_readout.roach.interface import RoachInterface
 from kid_readout.roach.tools import calc_wavenorm
 
@@ -310,6 +310,16 @@ class RoachHeterodyne(RoachInterface):
                                             nchan=self.readout_selection.shape[0],
                                             seq_nos=seq_nos)
         return demod
+
+    def get_stream_demodulator(self):
+        return StreamDemodulator(tone_bins=self.tone_bins[self.bank,:],
+                                 phases=self.phases,
+                                 tone_nsamp=self.tone_nsamp,
+                                 fft_bins=self.fft_bins[self.bank,:],
+                                 nfft=self.nfft,
+                                 num_taps=self.demodulator.num_taps,
+                                 window=self.demodulator.window_function,
+                                 hardware_delay_samples=self.demodulator.hardware_delay_samples)
 
     def demodulate_data_original(self, data):
         """

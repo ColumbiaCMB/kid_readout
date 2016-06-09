@@ -42,24 +42,49 @@ class Demodulator(object):
             demod *= np.exp(2j*np.pi*self.hardware_delay_samples*tone_bin/tone_num_samples)
         return demod
 
-    def demodulate_stream(self,data,seq_nos):
-        # Handles dropped packets assuming they are NaNs in data.
-        bank = self.bank
-        foffs = tone_offset_frequency(self.tone_bins[bank,:], self.tone_nsamp, self.fft_bins[bank,:], self.nfft)
-        nt = get_foffs_period(foffs)
-        if (data.shape[0] % nt):
-            data = data[: nt*(data.shape[0]//nt),:]
-        demod_wave, pphase, wc = self.create_demod_wave(data.shape, seq_nos, foffs, nt)
-        phi0 = self.phases
-        return numexpr.evaluate("pphase * wc * exp(-1j*phi0) * demod_wave * data")
+class StreamDemodulator(Demodulator):
+    def __init__(self,tone_bins, phases, tone_nsamp, fft_bins, nfft=2**14,num_taps=2,window=scipy.signal.flattop,
+                 interpolation_factor=64,
+                 hardware_delay_samples=0):
+        super(StreamDemodulator,self).__init__(nfft=nfft,num_taps=num_taps,window=window,
+                                               interpolation_factor=interpolation_factor,
+                                               hardware_delay_samples=hardware_delay_samples)
 
-    def create_demod_wave(self, data_shape, seq_nos, foffs, nt):
+        self.tone_bins = tone_bins
+        self.tone_nsamp = tone_nsamp
+        self.phases = phases
+        self.fft_bins = fft_bins
+        self.offset_frequencies = tone_offset_frequency(self.tone_bins, self.tone_nsamp, self.fft_bins, self.nfft)
+        self.max_period = get_foffs_period(self.offset_frequencies)
+
+    def demodulate_stream(self, data, sequence_numbers):
+        """
+        Demodulate a stream of data from all channels
+
+        Parameters
+        ----------
+        data : array of complex64 (num_samples,num_channels)
+        sequence_numbers : array of uint32
+
+        Returns
+        -------
+        demodulated data in same shape and dtype as input data
+
+        """
+        offset_frequencies = tone_offset_frequency(self.tone_bins, self.tone_nsamp, self.fft_bins, self.nfft)
+        wave_period = get_foffs_period(offset_frequencies)
+        if (data.shape[0] % wave_period):
+            data = data[: wave_period*(data.shape[0]//wave_period),:]
+        demod_wave, pphase, wc = self.create_demodulation_waveform(data.shape, sequence_numbers, offset_frequencies, wave_period)
+        return numexpr.evaluate("pphase * wc * demod_wave * data")
+
+    def create_demodulation_waveform(self, data_shape, seq_nos, foffs, wave_period):
         # Handles dropped packets if they are included as NaNs.
         # If do not want to use NaNs then need to calculate phase from seq_nos...
         wc = self.demodulator.compute_pfb_response(foffs)
         pphase = packet_phase(seq_nos[0], foffs, self.readout_selection.shape[0], self.nfft, self.tone_nsamp)
-        t = np.arange(nt, dtype='int64')
-        wave = np.exp(-1j * (2 * np.pi * np.outer(t, foffs)))
+        t = np.arange(wave_period)
+        wave = np.exp(-1j * (2 * np.pi * np.outer(t, foffs) + pphase + self.phases))
         wave_mat = np.lib.stride_tricks.as_strided(wave, shape=data_shape, strides=(0,wave.strides[1]))
         return wave_mat, pphase, wc
 
@@ -86,4 +111,8 @@ def tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft):
 
 def get_foffs_period(foffs):
     mask = foffs != 0
-    return int(np.max(1/foffs[mask]))
+    try:
+        period = int(np.max(1/foffs[mask]))
+    except ValueError:
+        period = 1
+    return period
