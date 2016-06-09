@@ -39,8 +39,7 @@ class ReadoutPipeline:
         self.packet_data_buffers = [mp.Array(data_ctype, packet_buffer_size) for b in range(num_data_buffers)]
 
         demodulated_buffer_size = num_packets_per_buffer*samples_per_packet*np.dtype(np.complex64).size
-        self.demodulated_data_buffers = [mp.Array(ctypes.c_uint8, demodulated_buffer_size) for b in range(
-            num_data_buffers)]
+        self.demodulated_data_buffers = [mp.Array(ctypes.c_uint8, demodulated_buffer_size) for b in range(num_data_buffers)]
 
         self.real_time_data_buffer = mp.Array(ctypes.c_uint8, output_size*np.dtype(np.complex64).size)
 
@@ -120,19 +119,27 @@ class DecodePacketsAndDemodulateProcess:
                 self.status = "blocked"
                 output_to = self.demodulated_input_queue.get()
 
-                with self.packet_data_buffers[process_me].get_lock(), self.demodulated_data_buffers[
-                    output_to].get_lock():
+                with self.packet_data_buffers[process_me].get_lock(), self.demodulated_data_buffers[output_to].get_lock():
                     self.status = "processing"
                     packets = np.frombuffer(self.packet_data_buffers[process_me].get_obj(), dtype=data_dtype)
                     packets.shape=(self.num_packets_per_buffer, pkt_size)
                     pkt_counter = packets.view(counter_dtype)[:,-1]
 
+                    contiguous = np.all(np.diff(pkt_counter)==1)
+
+                    demod_data = np.frombuffer(self.demodulated_data_buffers[output_to].get_obj(), dtype=np.float32)
+
+                    raw_data = packets[:,:-4].view('<i2').astype(np.float32).view(np.complex64)
+                    raw_data = raw_data.reshape((-1,self.nchans))
+
+
+                    demod_data = np.transpose(demod_data.reshape((-1,self.nchans,2)),axes=(2,0,1))
+
                     # Decode packets
-                    data = np.empty(self.num_packets_per_buffer*chns_per_pkt, dtype='complex64')
                     for k in range(self.num_packets_per_buffer):
                         si = k * chns_per_pkt
                         sf = (k + 1) * chns_per_pkt
-                        data[si:sf] = packets[k,:-4].view('<i2').astype('float32').view('complex64')
+                        demod_data[si:sf] = packets[k,:-4].view('<i2').astype('float32').view('complex64')
                         self.sequence_num_buffer[self.output_index] = pkt_counter[k]
                         self.output_index += 1
                         self.output_index %= self.output_size
