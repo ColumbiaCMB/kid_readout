@@ -12,3 +12,4 @@ corner
 lmfit
 testfixtures
 memoized-property
+numexpr

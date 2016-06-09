@@ -1,7 +1,6 @@
 from kid_readout.analysis.timeseries import fftfilt, decimating_fir
 import numpy as np
 
-"""
 def test_decimating_fir():
     np.random.seed(123)
     x = np.random.randn(2**16) + 1j*np.random.randn(2**16)
@@ -9,7 +8,6 @@ def test_decimating_fir():
     gold = fftfilt.fftfilt(dfir.coefficients.ravel(),x)[15::16]
     result = dfir.process(x)
     assert np.allclose(gold,result)
-"""
 
 def test_fir1d_history():
     np.random.seed(123)

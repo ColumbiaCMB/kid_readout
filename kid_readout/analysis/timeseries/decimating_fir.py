@@ -12,15 +12,15 @@ class DecimatingFIR(object):
         self.coefficients = scipy.signal.firwin(self.num_taps,cutoff=1./self.downsample_factor).reshape((
             self.num_taps/self.downsample_factor,self.downsample_factor))[:,::-1]
 
-    def process(self,data,continuation=True, use_fft=False):
+    def process(self,data,continuation=True, use_fft=True):
         data = data.reshape((data.shape[0]//self.downsample_factor,self.downsample_factor))
         if use_fft:
             result = fftfilt.fftfilt_nd(self.coefficients,data)
         else:
             result = np.empty_like(data)
             for k in range(self.downsample_factor):
-                #result[:,k] = scipy.signal.lfilter(self.coefficients[:,k],1,data[:,k])
-                result[:,k] = np.convolve(self.coefficients[:,k],data[:,k],mode='same')
+                result[:,k] = scipy.signal.lfilter(self.coefficients[:,k],1,data[:,k])
+                #result[:,k] = np.convolve(self.coefficients[:,k],data[:,k],mode='same')
 
 
         return result.sum(1)
