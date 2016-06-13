@@ -3,13 +3,14 @@ import os
 import sys
 import time
 import warnings
+import socket
+import subprocess
 
 import numpy as np
-import socket
 import scipy
+
 import borph_utils
 from kid_readout.roach.tests.mock_roach import MockRoach
-import udp_catcher
 from kid_readout.settings import BASE_DATA_DIR
 from kid_readout.roach import tools
 from kid_readout.measurement.core import StateDict
@@ -515,8 +516,11 @@ class RoachInterface(object):
             data.tofile(os.path.join(self.nfs_root, datafile))
             dram_file = '/proc/%d/hw/ioreg/dram_memory' % self.bof_pid
             datafile = '/' + datafile
-            result = borph_utils.check_output(
-                ('ssh root@%s "dd seek=%d if=%s of=%s"' % (self.roachip, offset_blocks, datafile, dram_file)), shell=True)
+            # TODO: Verify that this change is fine.
+            # This was using borph_utils.check_output(), which seems to be the same as subprocess.check_output().
+            # Capture stderr to stdout because dd prints to stderr.
+            command = 'ssh root@%s "dd seek=%d if=%s of=%s"' % (self.roachip, offset_blocks, datafile, dram_file)
+            result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
             logger.debug(result)
         self._unpause_dram()
 
