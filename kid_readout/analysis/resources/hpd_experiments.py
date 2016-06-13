@@ -1,6 +1,11 @@
 from kid_readout.utils.time_tools import date_to_unix_time
 
 by_unix_time_table = [
+    dict(date='2016-06-09',
+         description='Stanford TwoLayer01-0306 v1 CPW medley chip in holder H1 and lid L1, taped.',
+         optical_state='dark',
+         chip_id='TwoLayer01-0306'
+         ),
     dict(date='2016-04-20',
          description='Stanford Demo05AlMn-0506 v1 CPW coupling chip in holder H1 and lid L1, not taped.',
          optical_state='dark',
