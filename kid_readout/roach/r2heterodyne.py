@@ -1,6 +1,8 @@
 """
 Classes to interface to ROACH2 hardware for KID readout systems
 """
+import logging
+
 __author__ = 'gjones'
 
 import socket
@@ -8,6 +10,7 @@ import numpy as np
 import kid_readout.roach.r2_udp_catcher
 from heterodyne import RoachHeterodyne
 
+logger = logging.getLogger(__name__)
 
 try:
     import numexpr
@@ -25,6 +28,7 @@ class Roach2Heterodyne(RoachHeterodyne):
 
         self.lo_frequency = 0.0
         self.heterodyne = True
+        self.is_roach2 = True
         self.boffile = 'r2iq2xpfb14mcr15gb_2016_May_24_1419.bof'
 
         self.wafer = wafer
@@ -39,18 +43,30 @@ class Roach2Heterodyne(RoachHeterodyne):
         if initialize:
             self.initialize()
 
-    def initialize(self, fs=512.0, cal_qdr=True, use_config=True):
-        super(Roach2Heterodyne,self).initialize(fs=fs,start_udp=False,use_config=use_config)
+    def initialize(self, fs=512.0, use_config=True, force_cal_qdr=False):
+        reprogrammed = super(Roach2Heterodyne,self).initialize(fs=fs,start_udp=False,use_config=use_config)
         self.r.write_int('destip',np.fromstring(socket.inet_aton(self.host_ip),dtype='>u4')[0])
         self.r.write_int('destport',55555)
         self.r.write_int('txrst',3)
         self.r.write_int('txrst',2)
+        try:
+            self.r.tap_stop('gbe')
+            logger.debug("Stopped tap interface")
+        except RuntimeError:
+            pass
         self.r.tap_start('gbe','one_GbE',0x021111123456,0x0A000002,12345)
+        logger.debug("Started tap interface")
 
-        if cal_qdr:
-            import qdr
-            q = qdr.Qdr(self.r,'qdr0')
-            q.qdr_cal(verbosity=1)
+        logger.debug("Checking QDR calibration")
+        import qdr
+        q = qdr.Qdr(self.r,'qdr0')
+        qdr_is_calibrated = q.qdr_cal_check()
+        if qdr_is_calibrated:
+            logger.debug("QDR is calibrated")
+        if not qdr_is_calibrated or force_cal_qdr or reprogrammed:
+            logger.debug("Calibrating QDR")
+            q.qdr_cal()
+            logger.info("Succesfully recalibrated QDR")
 
     def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None, phases=None, preset_norm=True):
         super(Roach2Heterodyne,self).set_tone_bins(bins=bins, nsamp=nsamp, amps=amps, load=load, normfact=normfact, phases=phases, preset_norm=preset_norm)

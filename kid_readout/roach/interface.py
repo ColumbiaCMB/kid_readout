@@ -8,6 +8,7 @@ import subprocess
 
 import numpy as np
 import scipy
+import zlib
 
 import borph_utils
 from kid_readout.roach.tests.mock_roach import MockRoach
@@ -50,6 +51,7 @@ class RoachInterface(object):
         host_ip: Override IP address to which the ROACH should send it's data. If left as None,
                 the host_ip will be set appropriately based on the HOSTNAME.
         """
+        self.is_roach2 = False
         self._using_mock_roach = False
         if roach:
             self.r = roach
@@ -60,13 +62,16 @@ class RoachInterface(object):
                 self._using_mock_roach = True
         else:
             from corr.katcp_wrapper import FpgaClient
+            logger.debug("Creating FpgaClient")
             self.r = FpgaClient(roachip)
             t1 = time.time()
             timeout = 10
+            logger.debug("Waiting for connection to ROACH")
             while not self.r.is_connected():
                 if (time.time() - t1) > timeout:
                     raise Exception("Connection timeout to roach")
                 time.sleep(0.1)
+            logger.debug("ROACH is connected")
 
         if adc_valon is None:
             from kid_readout.roach import valon
@@ -156,6 +161,8 @@ class RoachInterface(object):
 
     # FPGA Functions
     def _update_bof_pid(self):
+        if self.is_roach2:
+            return
         if self.bof_pid:
             return
         if not self._using_mock_roach:
@@ -383,9 +390,21 @@ class RoachInterface(object):
         """
         Reprogram the ROACH and get things running
 
+        Parameters
+        ----------
         fs: float
             Sampling frequency in MHz
+        start_udp
+        use_config
+        raise_if_not_locked
+
+        Returns
+        -------
+        reprogrammed: bool
+            True if the ROACH was reprogrammed
+
         """
+        reprogrammed = False
         if use_config:
             try:
                 state = np.load(self._config_file_name)
@@ -397,22 +416,36 @@ class RoachInterface(object):
             state = None
         if state is not None:
             try:
+                crc = self.r.read_int('sys_scratchpad')
+                logger.debug("Programmed boffile crc: %d" % crc)
+            except RuntimeError:
+                logger.debug("Could not read scratchpad, ROACH probably not configured yet")
+                crc = None
+
+            try:
                 self._update_bof_pid()
             except Exception:
                 self.bof_pid = None
-            if self.bof_pid is None or self.bof_pid != state['bof_pid']:
+            if (crc != zlib.crc32(self.boffile) or
+                not self.is_roach2 and (self.bof_pid is None or self.bof_pid != state['bof_pid'])):
                 logger.debug("ROACH configuration does not match saved state")
                 state = None
         if state is None or state['boffile'] != self.boffile:
+            reprogrammed = True
             logger.info("Reinitializing system")
-            logger.debug("Deprogramming")
             self._set_fs(fs)
+            logger.debug("Deprogramming")
             try:
                 self.r.progdev('')
             except RuntimeError, e:
                 pass
             logger.info("Programming %s", self.boffile)
             self.r.progdev(self.boffile)
+            try:
+                self.r.write_int('sys_scratchpad',zlib.crc32(self.boffile))
+            except RuntimeError, e:
+                logger.exception("Unable to write to ROACH scratchpad register. Something is very wrong")
+                raise RuntimeError("Unable to write to ROACH scratchpad register. Something is very wrong")
             self.bof_pid = None
             self._update_bof_pid()
             self.set_fft_gain(4)
@@ -451,6 +484,8 @@ class RoachInterface(object):
             self.lo_frequency = state['lo_frequency'][()]
         self.set_debug(0) # Turn off debug and loopback no matter what to avoid surprises
         self.set_loopback(False)
+
+        return reprogrammed
 
     def measure_fs(self):
         """

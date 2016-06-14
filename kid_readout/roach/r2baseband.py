@@ -32,6 +32,7 @@ class Roach2Baseband(RoachBaseband):
 
         self.lo_frequency = 0.0
         self.heterodyne = False
+        self.is_roach2 = True
         self.boffile = 'r2bb2xpfb14mcr23_2015_Oct_27_1357.bof'
 
         self.wafer = wafer
