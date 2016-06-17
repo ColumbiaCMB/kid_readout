@@ -1,7 +1,7 @@
 import time
 
 from kid_readout.equipment import sim
-from kid_readout.settings import LOCKIN_SERIAL
+from kid_readout.settings import SRS_TEMPERATURE_SERIAL_PORT
 
 
 def main():
@@ -9,7 +9,7 @@ def main():
     # Time between temperature requests, in seconds.
     delay = 3
 
-    sim900 = sim.SIM900(serial_port=LOCKIN_SERIAL, baudrate=115200)
+    sim900 = sim.SIM900(serial_port=SRS_TEMPERATURE_SERIAL_PORT, baudrate=115200)
     print("Connected to {}".format(sim900.identification))
     print("Port: Connected device:")
     for port, device in sim900.ports.items():
