@@ -6,7 +6,7 @@ import itertools
 import os
 import glob
 
-from kid_readout import *
+from kid_readout.interactive import *
 
 def validate_resonator(res):
     if res.Q / np.abs(res.Q_e) < 0.01:
@@ -55,7 +55,13 @@ def process_sweep(frequency,s21,errors):
             print frequency[0],k,e
     return [res.current_params for res in validated]
 
-fns = glob.glob('/artemis/readout/2016-04-09_1[123]*_scan_lo_*_MHz_mmw_modulated_7_7_turns.nc')
+#fns = glob.glob('/artemis/readout/2016-04-09_1[123]*_scan_lo_*_MHz_mmw_modulated_7_7_turns.nc')
+fns = ['/artemis/readout/2016-06-17_231132_scan_lo_850.0_MHz.nc',
+    '/artemis/readout/2016-06-17_230924_scan_lo_1010.0_MHz.nc',
+       '/artemis/readout/2016-06-18_005836_scan_lo_1210.0_MHz.nc',
+       '/artemis/readout/2016-06-17_231323_scan_lo_1350.0_MHz.nc',
+       '/artemis/readout/2016-06-18_005938_scan_lo_1400.0_MHz.nc'
+      ]
 fns.sort()
 for fn in fns[1:]:
     ncname = os.path.split(fn)[1]
