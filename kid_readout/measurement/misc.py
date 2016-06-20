@@ -6,8 +6,7 @@ from kid_readout.measurement.core import Measurement
 
 class ADCSnap(Measurement):
 
-    dimensions = OrderedDict([('sample', ('sample',)),
-                              ('x', ('sample',)),
+    dimensions = OrderedDict([('x', ('sample',)),
                               ('y', ('sample',))])
 
     def __init__(self, epoch, x, y, state=None, description='', validate=True):
@@ -19,4 +18,6 @@ class ADCSnap(Measurement):
     @property
     def sample(self):
         return np.arange(self.x.size)
+
+
 

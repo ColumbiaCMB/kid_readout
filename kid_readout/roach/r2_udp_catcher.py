@@ -2,6 +2,9 @@ import numpy as np
 import socket
 from contextlib import closing
 
+import logging
+logger = logging.getLogger(__name__)
+
 try:
     # must compile cython code by running: python setup.py build_ext --inplace
     import decode
@@ -33,7 +36,7 @@ def get_udp_packets(ri,npkts,addr=('10.0.0.1',55555)):
             if pkt:
                 pkts.append(pkt)
             else:
-                print "breaking"
+                logger.warning("Timed out waiting for packets from the ROACH")
                 break
 
     return pkts
@@ -49,6 +52,8 @@ def get_udp_data(ri,npkts,nchans,addr=('10.0.0.1',55555), verbose=False, fast=Fa
         darray, seqnos, num_bad_pkts, num_dropped_pkts = decode.decode_packets_fast(pkts,nchans)
     else:
         darray, seqnos, num_bad_pkts, num_dropped_pkts = decode_packets(pkts,nchans)
+    if num_bad_pkts or num_dropped_pkts:
+        logger.warning("Detected %d bad and %d dropped packets. Something is likely misconfigured" % (num_bad_pkts,num_dropped_pkts))
     if verbose:
         print "bad ", num_bad_pkts
         print "dropped ", num_dropped_pkts

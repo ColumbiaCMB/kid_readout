@@ -42,7 +42,10 @@ class MMWResponse(basic.SingleSweepStreamList):
                                          description=description)
     @property
     def lockin_rms_voltage(self):
-        return np.array(self.state_vector('lockin','rms_voltage'),dtype='float')
+        try:
+            return np.array(self.state_vector('lockin','rms_voltage'),dtype='float')
+        except KeyError:
+            return np.nan
 
     def zbd_power(self, linearize=False):
         return zbd_voltage_to_power(self.zbd_voltage(linearize=linearize), mmw_frequency=self.mmw_frequency)
@@ -77,7 +80,10 @@ class MMWResponse(basic.SingleSweepStreamList):
         result = []
         for sss in sweep_stream_list:
             fx = sss.fold(sss.x)
-            result.append(fx)
+            # TODO: this is a hack
+            phase = np.angle(np.fft.rfft(sss.x)[128])
+            roll_by = int(np.round(phase*256/(2*np.pi)))
+            result.append(np.roll(fx,-roll_by))
         return np.array(result)
 
     @memoized_property
@@ -114,7 +120,10 @@ class MMWResponse(basic.SingleSweepStreamList):
     def get_fractional_frequency_response(self):
         folded = self.folded_x
         period = folded.shape[-1]
-        return np.abs(folded[...,period//8:3*period//8].mean(-1) - folded[...,5*period//8:7*period//8].mean(-1))
+        template = np.ones((period,),dtype='float')
+        template[:period//2] = -1
+        response = np.abs(np.fft.irfft(np.fft.rfft(template)*np.fft.rfft(folded,axis=-1),axis=-1)*2./period).max(-1)
+        return response
 
     def to_dataframe(self, add_origin=True):
         data = {'number': self.number, 'analysis_epoch':time.time(), 'start_epoch':self.start_epoch()}

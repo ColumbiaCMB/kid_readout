@@ -29,6 +29,7 @@ import sys
 import time
 import inspect
 import subprocess
+import logging
 
 import numpy as np
 
@@ -37,6 +38,7 @@ from kid_readout.measurement import core, basic
 from kid_readout.measurement.io import nc, npy
 from kid_readout.analysis.resources import experiments
 
+logger = logging.getLogger(__name__)
 
 # Frequency sweep
 
@@ -67,7 +69,7 @@ def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=1, state=None, de
         print("Measuring bank")
     for n, tone_bank in enumerate(tone_banks):
         if verbose:
-            print(n,)
+            print n,
             sys.stdout.flush()
         ri.set_tone_freqs(tone_bank, nsamp=num_tone_samples)
         ri.select_fft_bins(np.arange(tone_bank.size))
@@ -167,6 +169,7 @@ def new_nc_file(suffix='', directory=settings.BASE_DATA_DIR, metadata=None):
     if metadata is None:
         metadata = all_metadata()
     root_path = os.path.join(directory, time.strftime('%Y-%m-%d_%H%M%S') + suffix + '.nc')
+    logger.debug("Creating new NCFile with path %s" % root_path)
     return nc.NCFile(root_path, metadata=metadata)
 
 
