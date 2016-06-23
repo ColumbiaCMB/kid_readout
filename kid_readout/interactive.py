@@ -30,3 +30,4 @@ from kid_readout.measurement.acquire import new_nc_file
 from kid_readout import measurement
 from kid_readout.measurement import basic, temperature
 from kid_readout.equipment import hardware
+from kid_readout.utils.misc import dB
