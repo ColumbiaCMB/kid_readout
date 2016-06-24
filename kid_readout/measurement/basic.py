@@ -464,10 +464,43 @@ class SweepArray(RoachMeasurement):
         """numpy.ndarray[complex]: The raw s21 streams of all data points, in ascending frequency order."""
         return np.vstack([stream_array.s21_raw for stream_array in self.stream_arrays])[self.ascending_order, :]
 
-    def to_dataframe(self, add_origin=True):
+    def to_dataframe(self, add_origin=True, one_sweep_per_row=True):
+        """
+
+        Parameters
+        ----------
+        add_origin
+        one_sweep_per_row: bool, default True
+            If True, return a dataframe with one row per sweep, usually what you want if each sweep corresponds to a
+            resonator.
+            If False, return a single row with frequency and s21_point arrays for VNA style sweep data.
+
+        Returns
+        -------
+
+        """
         dataframes = []
-        for number in range(self.num_channels):
-            dataframes.append(self.sweep(number).to_dataframe(add_origin=add_origin))
+        if one_sweep_per_row:
+            for number in range(self.num_channels):
+                dataframes.append(self.sweep(number).to_dataframe(add_origin=add_origin))
+        else:
+            data = {'number': self.number, 'analysis_epoch': time.time(), 'start_epoch': self.start_epoch()}
+            try:
+                for thermometer, temperature in self.state['temperature'].items():
+                    data['temperature_{}'.format(thermometer)] = temperature
+            except KeyError:
+                pass
+            try:
+                for key, value in self.streams_arrays[0].stream[0].roach_state.items():
+                    data['roach_{}'.format(key)] = value
+            except KeyError:
+                pass
+
+            flat_state = self.state.flatten(wrap_lists=True)
+            data.update(flat_state)
+            data['frequency'] = self.frequency
+            data['s21_point'] = self.s21_point
+            dataframes = [pd.DataFrame(data, index=[0])]
         return pd.concat(dataframes, ignore_index=True)
 
 
