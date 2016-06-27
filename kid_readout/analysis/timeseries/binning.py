@@ -6,14 +6,37 @@ from __future__ import division
 import numpy as np
 
 
-def log_bin_edges(f, bins_per_decade=30):
-    df = f[1] - f[0]
-    log_min_edge = np.log10(f.min() - df / 2)
-    log_max_edge = np.log10(f.max() + df / 2)
+def log_bin_edges(frequency, bins_per_decade=30):
+    """
+    Return an array of frequency bin edges that form bins with widths that increase approximately exponentially.
+
+    The lowest frequency must be positive and the frequencies are assumed to have constant spacing, though the code may
+    not fail if the spacing is irregular. The lowest bin edge will be positive and lower than the lowest input, and the
+    highest bin edge will be higher than the highest input.
+
+    At low frequencies where the bins would be so small that no input frequencies would land in them, the algorithm
+    instead returns bins with the same width as the input.
+
+    Parameters
+    ----------
+    frequency : numpy.ndarray(float)
+        The array of positive frequencies to use to create the bin edges.
+    bins_per_decade : int
+        The number of histogram bins per decade of frequency.
+
+    Returns
+    -------
+    numpy.ndarray (float)
+        The edges of the frequency bins; there will be one more bin edge than frequency.
+
+    """
+    df = frequency[1] - frequency[0]
+    log_min_edge = np.log10(frequency.min() - df / 2)
+    log_max_edge = np.log10(frequency.max() + df / 2)
     num_bins = int(bins_per_decade * (log_max_edge - log_min_edge))
     log_bins = np.logspace(log_min_edge, log_max_edge, num_bins)
     usable_log_bins = log_bins[np.sum(np.diff(log_bins) < df):]
-    bins = np.concatenate((f[f < usable_log_bins.min()] - df / 2, usable_log_bins))
+    bins = np.concatenate((frequency[frequency < usable_log_bins.min()] - df / 2, usable_log_bins))
     return bins
 
 
@@ -51,7 +74,8 @@ def make_freq_bins(fr):
 
 
 def log_bin(freqs, data):
-    freq_bins = log_bin_edges(freqs)
+    # Need to work out
+    freq_bins = make_freq_bins(freqs)
     bin_idxs = np.digitize(freqs, freq_bins)
     if type(data) is list:
         binned_data = []
