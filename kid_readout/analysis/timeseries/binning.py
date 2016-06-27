@@ -6,12 +6,15 @@ from __future__ import division
 import numpy as np
 
 
-# TODO: implement using ideas from branch imcompatible
-"""
-def loglike(frequency, combine_above):
-    left_edges = frequency[frequency <= combine_above]
-    return left_edges
-"""
+def log_bin_edges(f, bins_per_decade=30):
+    df = f[1] - f[0]
+    log_min_edge = np.log10(f.min() - df / 2)
+    log_max_edge = np.log10(f.max() + df / 2)
+    num_bins = int(bins_per_decade * (log_max_edge - log_min_edge))
+    log_bins = np.logspace(log_min_edge, log_max_edge, num_bins)
+    usable_log_bins = log_bins[np.sum(np.diff(log_bins) < df):]
+    bins = np.concatenate((f[f < usable_log_bins.min()] - df / 2, usable_log_bins))
+    return bins
 
 
 # These are the left bin edges: they stop before the highest frequency.
@@ -47,9 +50,8 @@ def make_freq_bins(fr):
     return np.concatenate(fout)
 
 
-# TODO: this currently throws away the data in the last bin, which has index len(freq_bins + 1)
 def log_bin(freqs, data):
-    freq_bins = make_freq_bins(freqs)
+    freq_bins = log_bin_edges(freqs)
     bin_idxs = np.digitize(freqs, freq_bins)
     if type(data) is list:
         binned_data = []
@@ -62,26 +64,24 @@ def log_bin(freqs, data):
     return binned_freqs, binned_data
 
 
-def log_bin_with_errors(f, data, variance):
+def log_bin_with_errors(frequency, data, variance):
     """
     Propagate errors assuming that the errors in each bin can be added in quadrature.
 
-    :param f: The frequency array, assumed to be equally spaced and starting at 0 (?)
+    :param frequency: The frequency array, assumed to be equally spaced starting from a nonzero frequency.
     :param data: The data array.
     :param variance: The variance of each point in data.
     :return:
     """
-    left_bin_edges = make_freq_bins(f)
-    bin_indices = np.digitize(f, left_bin_edges)
-    # skip the zeroth bin since it has nothing in it
-    # since make_freq_bins stops below the maximum frequency, there is data in the rightmost bin
-    binned_f = []
+    bin_edges = log_bin_edges(frequency)
+    bin_indices = np.digitize(frequency, bin_edges)
+    binned_frequency = []
     binned_data = []
     bin_counts = []
     binned_variance = []
-    for k in range(1, len(left_bin_edges) + 1):
-        binned_f.append(f[bin_indices == k].mean())
+    for k in range(1, len(bin_edges)):
+        binned_frequency.append(frequency[bin_indices == k].mean())
         binned_data.append(data[bin_indices == k].mean())
         bin_counts.append(np.sum(bin_indices == k))
         binned_variance.append(np.sum(variance[bin_indices == k]) / bin_counts[-1]**2)
-    return np.array(binned_f), np.array(binned_data), np.array(bin_counts), np.array(binned_variance)
+    return np.array(binned_frequency), np.array(binned_data), np.array(bin_counts), np.array(binned_variance)
