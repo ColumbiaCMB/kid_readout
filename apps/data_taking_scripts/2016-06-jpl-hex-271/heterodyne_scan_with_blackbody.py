@@ -9,11 +9,15 @@ from kid_readout.roach import r2heterodyne, attenuator, hardware_tools
 from equipment.custom import mmwave_source
 from equipment.hittite import signal_generator
 from equipment.srs import lockin
+from kid_readout.equipment.agilent_33220 import FunctionGenerator
 
 logger.setLevel(logging.DEBUG)
 
+fg = FunctionGenerator()
+fg.set_load_ohms(1e6)
+
 hittite = signal_generator.Hittite(ipaddr='192.168.0.200')
-hittite.set_power(-3.0)
+hittite.set_power(0)
 hittite.on()
 hittite.set_freq(148e9/12.)
 
@@ -35,7 +39,7 @@ setup = hardware.Hardware(hittite, source,lockin)
 ri = hardware_tools.r2_with_mk1(1000.)
 ri.iq_delay=-1
 
-ri.set_dac_atten(20)
+ri.set_dac_atten(0)
 ri.set_fft_gain(6)
 
 nsamp = 2**15
@@ -47,30 +51,44 @@ offset_bins = np.arange(-(nstep), (nstep)) * step
 offsets = offset_bins * 512.0 / nsamp
 
 ri.set_modulation_output(7)
+time.sleep(1)
+lockin.auto_gain(wait_until_done=True)
+time.sleep(3)
+rms_voltage, signal_phase = lockin.snap(3, 4)
+logger.info("zbd voltage: %f" % rms_voltage)
+ri.set_modulation_output('low')
 
 ri.set_lo(1250.)
 
 #legacy.load_heterodyne_sweep_tones(ri,(np.arange(1,129)[None,:]*7/4.+ri.lo_frequency + offsets[:,None]),
 #                                    num_tone_samples=nsamp)
 
-state = dict(field_canceling_magnet=False,warm_magnetic_shield=True,cryostat='starcryo')
+state = dict(field_canceling_magnet=False,magnetic_shield=True,cryostat='starcryo',initial_zbd_rms_voltage=rms_voltage)
 state.update(**setup.state())
 
-while True:
+for heater_voltage in np.arange(0,4,.2):
+    logger.info("Measuring at %.1f volts" % heater_voltage)
+    fg.set_dc_voltage(heater_voltage)
+    fg.enable_output(True)
+    if heater_voltage > 0:
+        logger.info("Waiting 10 minutes for load to stabilize")
+        time.sleep(10*60)
     tic = time.time()
     for lo in 830.+190*np.arange(0,4):
         logger.info("Measuring at LO %.1f" % lo)
         ri.set_lo(lo)
         df = acquire.new_nc_file(suffix='scan_lo_%.1f_MHz' % lo)
-        state.update(**setup.state(fast=True))
+        state.update(**setup.state())
+        state['heater_voltage'] = heater_voltage
         swa = acquire.run_sweep(ri, (np.arange(1, 257)[None, :] * 7 / 8. + ri.lo_frequency + offsets[:, None]),
                                 num_tone_samples=nsamp, length_seconds=0.1, state=state, verbose=True)
         df.write(swa)
         df.close()
         print "elapsed:", (time.time()-tic)/60.0,'minutes'
-    time.sleep(60.)
+    #time.sleep(60.)
     # while time.time() - tic < 5*60:
     #     print "waiting... %.1f min remaining" % ((5*60 - (time.time() - tic))/60)
     #     time.sleep(60)
 
-
+logger.info("Turning off heater")
+fg.enable_output(False)

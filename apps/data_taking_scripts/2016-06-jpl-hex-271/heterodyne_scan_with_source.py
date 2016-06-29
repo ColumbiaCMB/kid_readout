@@ -13,7 +13,7 @@ from equipment.srs import lockin
 logger.setLevel(logging.DEBUG)
 
 hittite = signal_generator.Hittite(ipaddr='192.168.0.200')
-hittite.set_power(-3.0)
+hittite.set_power(0)
 hittite.on()
 hittite.set_freq(148e9/12.)
 
@@ -46,29 +46,38 @@ offset_bins = np.arange(-(nstep), (nstep)) * step
 
 offsets = offset_bins * 512.0 / nsamp
 
-ri.set_modulation_output(7)
+ri.set_modulation_output('low')
 
 ri.set_lo(1250.)
 
 #legacy.load_heterodyne_sweep_tones(ri,(np.arange(1,129)[None,:]*7/4.+ri.lo_frequency + offsets[:,None]),
 #                                    num_tone_samples=nsamp)
 
-state = dict(field_canceling_magnet=False,warm_magnetic_shield=True,cryostat='starcryo')
+state = dict(field_canceling_magnet=False,magnetic_shield=True,cryostat='starcryo')
 state.update(**setup.state())
 
-while True:
+for hittite_power in np.arange(-3.0,1,.4):
+    logger.info("Measuring at %.1f dBm" % hittite_power)
+    hittite.set_power(hittite_power)
     tic = time.time()
     for lo in 830.+190*np.arange(0,4):
         logger.info("Measuring at LO %.1f" % lo)
         ri.set_lo(lo)
         df = acquire.new_nc_file(suffix='scan_lo_%.1f_MHz' % lo)
-        state.update(**setup.state(fast=True))
+        ri.set_modulation_output(7)
+        logger.info("autogain lockin")
+        time.sleep(1)
+        lockin.auto_gain(wait_until_done=True)
+        time.sleep(3)
+        logger.info("new sensitivity: %d values %s" % (lockin.sensitivity,str(lockin.fast_state)))
+        state.update(**setup.state())
+        ri.set_modulation_output('low')
         swa = acquire.run_sweep(ri, (np.arange(1, 257)[None, :] * 7 / 8. + ri.lo_frequency + offsets[:, None]),
                                 num_tone_samples=nsamp, length_seconds=0.1, state=state, verbose=True)
         df.write(swa)
         df.close()
         print "elapsed:", (time.time()-tic)/60.0,'minutes'
-    time.sleep(60.)
+    #time.sleep(60.)
     # while time.time() - tic < 5*60:
     #     print "waiting... %.1f min remaining" % ((5*60 - (time.time() - tic))/60)
     #     time.sleep(60)

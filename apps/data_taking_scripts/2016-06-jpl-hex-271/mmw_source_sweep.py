@@ -15,34 +15,36 @@ logger.setLevel(logging.DEBUG)
 hittite = signal_generator.Hittite(ipaddr='192.168.0.200')
 hittite.set_power(0)
 hittite.on()
-# lockin = lockin.Lockin('/dev/ttyUSB2')
-# tic = time.time()
+lockin = lockin.Lockin(LOCKIN_SERIAL_PORT)
+tic = time.time()
 # lockin.sensitivity = 17
-# print lockin.identification
+print lockin.identification
+print lockin.identification
 # print time.time()-tic
 # tic = time.time()
 # print lockin.state(measurement_only=True)
 # print time.time()-tic
 source = mmwave_source.MMWaveSource()
-source.set_attenuator_turns(7.0,7.0)
+source.set_attenuator_turns(6.0,6.0)
 source.multiplier_input = 'hittite'
 source.waveguide_twist_angle = 45
 source.ttl_modulation_source = 'roach'
 
-setup = hardware.Hardware(hittite, source)#, lockin)
+setup = hardware.Hardware(hittite, source, lockin)
 
 ri = hardware_tools.r2_with_mk1()#heterodyne.RoachHeterodyne(adc_valon='/dev/ttyUSB0')
 ri.iq_delay = -1
 ri.demodulator.hardware_delay_samples = - ri.demodulator.hardware_delay_samples
 ri.set_modulation_output(7)
 
-inital_f0s = np.load('/data/readout/resonances/2016-06-18-jpl-hex-271-initial-lo-1210-resonances.npy')
+#inital_f0s = np.load('/data/readout/resonances/2016-06-18-jpl-hex-271-initial-lo-1210-resonances.npy')
+inital_f0s = np.load('/data/readout/resonances/2016-06-22-lo-1210-128-resonances.npy')
 inital_f0s = inital_f0s/1e6
 lo = 1210.
 
-nsamp = 2**16
+nsamp = 2**17
 step = 1
-nstep = 24
+nstep = 48
 offset_bins = np.arange(-(nstep + 1), (nstep + 1)) * step
 offsets = offset_bins * 512.0 / nsamp
 
