@@ -60,8 +60,10 @@ class RoachHeterodyne(RoachInterface):
 
         self.lo_frequency = 0.0
         self.heterodyne = True
-        self.boffile = 'iq2xpfb14mcr7_2015_Nov_25_0907.bof'
+        #self.boffile = 'iq2xpfb14mcr7_2015_Nov_25_0907.bof'
+        self.boffile = 'iq2xpfb14mcr10_2016_Jun_29_1532.bof'
         self.iq_delay = 0
+        self.channel_selection_offset=3
 
         self.wafer = wafer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
@@ -76,20 +78,20 @@ class RoachHeterodyne(RoachInterface):
             self.initialize()
 
 
-    # def get_raw_adc(self):
-    #     """
-    #     Grab raw ADC samples
-    #     returns: s0,s1
-    #     s0 and s1 are the samples from adc 0 and adc 1 respectively
-    #     Each sample is a 12 bit signed integer (cast to a numpy float)
-    #     """
-    #     self.r.write_int('adc_snap_ctrl', 0)
-    #     self.r.write_int('adc_snap_ctrl', 5)
-    #     s0 = (np.fromstring(self.r.read('adc_snap_bram', self.raw_adc_ns * 2 * 2), dtype='>i2'))
-    #     sb = s0.view('>i4')
-    #     i = sb[::2].copy().view('>i2') / 16.
-    #     q = sb[1::2].copy().view('>i2') / 16.
-    #     return i, q
+    def get_raw_adc(self):
+        """
+        Grab raw ADC samples
+        returns: s0,s1
+        s0 and s1 are the samples from adc 0 and adc 1 respectively
+        Each sample is a 12 bit signed integer (cast to a numpy float)
+        """
+        self.r.write_int('adc_snap_ctrl', 0)
+        self.r.write_int('adc_snap_ctrl', 5)
+        s0 = (np.fromstring(self.r.read('adc_snap_bram', self.raw_adc_ns * 2 * 2), dtype='>i2'))
+        sb = s0.view('>i4')
+        i = sb[::2].copy().view('>i2') / 16.
+        q = sb[1::2].copy().view('>i2') / 16.
+        return i, q
 
     def find_best_iq_delay(self,iq_delay_range=np.arange(-4,5),set_tones=True,make_plot=False):
         if set_tones:
@@ -303,23 +305,29 @@ class RoachHeterodyne(RoachInterface):
         readout_selection : array of ints
             indexes into the self.fft_bins array to specify the bins to read out
         """
-        offset = 2
         idxs = self.fft_bin_to_index(self.fft_bins[self.bank,readout_selection])
         order = idxs.argsort()
         idxs = idxs[order]
+        if np.any(np.diff(idxs//2)==0):
+            failures = np.flatnonzero(np.diff(idxs//2)==0)
+            raise ValueError("Selected filterbank channels are too close together.\nChannels 2*k and 2*k+1 cannot be"
+                             "read out together.\n"
+                             "The requested channel indexes are: %s\n"
+                             "and the failing channel indexes are: %s" %
+                             (str(idxs), '; '.join([('%d,%d'% (x,x+1)) for x in idxs[failures]])))
         self.readout_selection = np.array(readout_selection)[order]
         self.fpga_fft_readout_indexes = idxs
         self.readout_fft_bins = self.fft_bins[self.bank, self.readout_selection]
 
-        binsel = np.zeros((self.fpga_fft_readout_indexes.shape[0] + 1,), dtype='>i4')
-        # evenodd = np.mod(self.fpga_fft_readout_indexes,2)
-        #binsel[:-1] = np.mod(self.fpga_fft_readout_indexes/2-offset,self.nfft/2)
-        #binsel[:-1] += evenodd*2**16
-        binsel[:-1] = np.mod(self.fpga_fft_readout_indexes - offset, self.nfft)
-        binsel[-1] = -1
+        binsel = np.zeros((self.nfft//2,), dtype='u1')
+        # values in this array are 1 for even channels and 3 for odd channels
+        evenodd = np.mod(self.fpga_fft_readout_indexes,2)*2+1
+        binsel_index = np.mod(self.fpga_fft_readout_indexes//2-self.channel_selection_offset,self.nfft//2)
+        binsel[binsel_index] = evenodd
         self.r.write('chans', binsel.tostring())
         if sync:
             self._sync()
+
 
     def demodulate_data(self,data,seq_nos=None):
         bank = self.bank
@@ -394,7 +402,7 @@ class RoachHeterodyne(RoachInterface):
             return self.get_data_udp(nread=nread, demod=demod)
 
     def get_data_udp(self, nread=2, demod=True):
-        chan_offset = 2
+        chan_offset = 1
         nch = self.fpga_fft_readout_indexes.shape[0]
         udp_channel = (self.fpga_fft_readout_indexes//2 + chan_offset) % (self.nfft//2)
         data, seqnos = kid_readout.roach.udp_catcher.get_udp_data(self, npkts=nread * 16, streamid=1,
