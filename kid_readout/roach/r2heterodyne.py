@@ -29,7 +29,8 @@ class Roach2Heterodyne(RoachHeterodyne):
         self.lo_frequency = 0.0
         self.heterodyne = True
         self.is_roach2 = True
-        self.boffile = 'r2iq2xpfb14mcr16gb_2016_Jun_08_1100.bof'
+        self.boffile = 'r2iq2xpfb14mcr17gb_2016_Jun_28_2211.bof'
+        self.channel_selection_offset=3
 
         self.wafer = wafer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
@@ -94,6 +95,43 @@ class Roach2Heterodyne(RoachHeterodyne):
         self.r.write_int('qdr_en',0)
     def _unpause_dram(self):
         self.r.write_int('qdr_en',1)
+
+    def select_fft_bins(self, readout_selection, sync=True):
+        """
+        Select which subset of the available FFT bins to read out
+
+        Initially we can only read out from a subset of the FFT bins, so this function selects which bins to read out right now
+        This also takes care of writing the selection to the FPGA with the appropriate tweaks
+
+        The readout selection is stored to self.readout_selection
+        The FPGA readout indexes is stored in self.fpga_fft_readout_indexes
+        The bins that we are reading out is stored in self.readout_fft_bins
+
+        readout_selection : array of ints
+            indexes into the self.fft_bins array to specify the bins to read out
+        """
+        idxs = self.fft_bin_to_index(self.fft_bins[self.bank,readout_selection])
+        order = idxs.argsort()
+        idxs = idxs[order]
+        if np.any(np.diff(idxs//2)==0):
+            failures = np.flatnonzero(np.diff(idxs//2)==0)
+            raise ValueError("Selected filterbank channels are too close together.\nChannels 2*k and 2*k+1 cannot be"
+                             "read out together.\n"
+                             "The requested channel indexes are: %s\n"
+                             "and the failing channel indexes are: %s" %
+                             (str(idxs), '; '.join([('%d,%d'% (x,x+1)) for x in idxs[failures]])))
+        self.readout_selection = np.array(readout_selection)[order]
+        self.fpga_fft_readout_indexes = idxs
+        self.readout_fft_bins = self.fft_bins[self.bank, self.readout_selection]
+
+        binsel = np.zeros((self.nfft//2,), dtype='u1')
+        # values in this array are 1 for even channels and 3 for odd channels
+        evenodd = np.mod(self.fpga_fft_readout_indexes,2)*2+1
+        binsel_index = np.mod(self.fpga_fft_readout_indexes//2-self.channel_selection_offset,self.nfft//2)
+        binsel[binsel_index] = evenodd
+        self.r.write('chans', binsel.tostring())
+        if sync:
+            self._sync()
 
 
     def get_raw_adc(self):

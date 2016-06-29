@@ -61,7 +61,7 @@ class Roach1Mixin(object):
 
 class Roach2Mixin(object):
     """
-    This class contains tests for the ROACH1 that can run using either real or mock hardware.
+    This class contains tests for the ROACH2 that can run using either real or mock hardware.
     """
     pass
 
