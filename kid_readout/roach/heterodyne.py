@@ -1,11 +1,12 @@
 import time
 
 import numpy as np
+import logging
 
 import kid_readout.roach.udp_catcher
 from kid_readout.roach.demodulator import Demodulator, StreamDemodulator
 from kid_readout.roach.interface import RoachInterface
-from kid_readout.roach.tools import calc_wavenorm
+from kid_readout.roach.tools import calc_wavenorm, find_best_iq_delay_adc
 
 try:
     import numexpr
@@ -13,6 +14,7 @@ try:
 except ImportError:
     have_numexpr = False
 
+logger = logging.getLogger(__name__)
 
 class RoachHeterodyne(RoachInterface):
     initial_values_for_writeable_registers = {
@@ -59,7 +61,6 @@ class RoachHeterodyne(RoachInterface):
         self.lo_frequency = 0.0
         self.heterodyne = True
         self.boffile = 'iq2xpfb14mcr7_2015_Nov_25_0907.bof'
-        #self.boffile = 'iq2xpfb14mcr8_2016_Feb_12_1427.bof'
         self.iq_delay = 0
 
         self.wafer = wafer
@@ -89,6 +90,17 @@ class RoachHeterodyne(RoachInterface):
     #     i = sb[::2].copy().view('>i2') / 16.
     #     q = sb[1::2].copy().view('>i2') / 16.
     #     return i, q
+
+    def find_best_iq_delay(self,iq_delay_range=np.arange(-4,5),set_tones=True,make_plot=False):
+        if set_tones:
+            self.set_tone_baseband_freqs(np.hstack((np.linspace(-220,-10,8),np.linspace(10,220,8)+2)),nsamp=2**16)
+        best_delay,best_rejection = find_best_iq_delay_adc(self,iq_delay_range=iq_delay_range,make_plot=make_plot)
+        if best_rejection < 15:
+            logger.warning("Best image rejection was only %.1f dB at iq_delay=%d, which is suspiciously low.\nCheck "
+                           "connections and "
+                           "try running with make_plot=True to diagnose" % (best_rejection,best_rejection))
+        self.iq_delay = best_delay
+        logger.debug("iq_delay set to %d" % best_delay)
 
     def set_loopback(self,enable):
         self.loopback = enable
@@ -148,6 +160,17 @@ class RoachHeterodyne(RoachInterface):
         self.select_fft_bins(readout_selection)
         self.save_state()
         return actual_freqs
+
+    @property
+    def tone_baseband_frequencies(self):
+        actual_freqs = self.fs * self.tone_bins / float(self.tone_nsamp)
+        actual_freqs[actual_freqs>self.fs/2.0] = actual_freqs[actual_freqs>self.fs/2.0] - self.fs
+        return actual_freqs
+
+    @property
+    def tone_frequencies(self):
+        return self.tone_baseband_frequencies + self.lo_frequency
+
 
     def add_tone_freqs(self, freqs, amps=None, overwrite_last=False):
         baseband_freqs = freqs-self.lo_frequency

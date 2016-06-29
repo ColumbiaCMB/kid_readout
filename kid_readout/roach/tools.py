@@ -4,7 +4,12 @@ Misc utils related to the ROACH hardware
 
 import numpy as np
 import scipy.signal
+from matplotlib import pyplot as plt
 
+import kid_readout.utils.misc
+import logging
+
+logger = logging.getLogger(__name__)
 
 def ntone_power_correction(ntones):
     """
@@ -100,3 +105,27 @@ def calc_wavenorm(ntones, nsamp, baseband=False):
     if baseband:
         wavenorm *= 2.
     return wavenorm
+
+def find_best_iq_delay_adc(ri,iq_delay_range=np.arange(-4,5), make_plot=False):
+    tone_baseband_frequencies = ri.tone_baseband_frequencies
+    total_rejections = []
+    for iq_delay in iq_delay_range:
+        ri.iq_delay = iq_delay
+        ri.set_tone_baseband_freqs(tone_baseband_frequencies,ri.tone_nsamp)
+#        time.sleep(0.1)
+        x,y = ri.get_raw_adc()
+        pxx,fr = plt.mlab.psd(x+1j*y,Fs=ri.fs,NFFT=512)
+        rejections = []
+        for idx,tone in enumerate(tone_baseband_frequencies[0,:]):
+            signal = kid_readout.utils.misc.dB(pxx[np.argmin(np.abs(fr - tone))], as_power=False)
+            image = kid_readout.dB(pxx[np.argmin(np.abs(fr + tone))], as_power=False)
+            rejection = signal-image
+            logger.debug("\nAt iq_delay: %d, tone: %.1f MHz, signal: %.1f dB, image %.1f dB, rejection %.1f dB" %
+                       (iq_delay, tone, signal, image, rejection))
+            rejections.append(rejection)
+        total_rejections.append(np.median(rejections))
+    best = np.argmax(total_rejections)
+    logger.info("Best delay is %d with median rejection %.1f dB" % (iq_delay_range[best],total_rejections[best]))
+    if make_plot:
+        plt.plot(iq_delay_range,total_rejections)
+    return iq_delay_range[best], total_rejections[best]

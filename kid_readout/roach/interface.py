@@ -132,6 +132,7 @@ class RoachInterface(object):
 
         # Things to be configured by subclasses
         self.lo_frequency = 0.0
+        self.iq_delay = 0
         self.heterodyne = False
         self.bof_pid = None
         self.boffile = None
@@ -380,7 +381,8 @@ class RoachInterface(object):
                  phases=self.phases,
                  modulation_rate=self.modulation_rate,
                  modulation_output=self.modulation_output,
-                 lo_frequency=self.lo_frequency)
+                 lo_frequency=self.lo_frequency,
+                 iq_delay=self.iq_delay)
         try:
             os.chmod(self._config_file_name, 0777)
         except:
@@ -482,6 +484,7 @@ class RoachInterface(object):
             self.modulation_output = state['modulation_output'][()]
             self.modulation_rate = state['modulation_rate'][()]
             self.lo_frequency = state['lo_frequency'][()]
+            self.iq_delay = state['iq_delay'][()]
         self.set_debug(0) # Turn off debug and loopback no matter what to avoid surprises
         self.set_loopback(False)
 
