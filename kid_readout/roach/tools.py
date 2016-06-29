@@ -6,7 +6,7 @@ import numpy as np
 import scipy.signal
 from matplotlib import pyplot as plt
 
-import kid_readout.utils.misc
+from kid_readout.utils.misc import dB
 import logging
 
 logger = logging.getLogger(__name__)
@@ -117,8 +117,8 @@ def find_best_iq_delay_adc(ri,iq_delay_range=np.arange(-4,5), make_plot=False):
         pxx,fr = plt.mlab.psd(x+1j*y,Fs=ri.fs,NFFT=512)
         rejections = []
         for idx,tone in enumerate(tone_baseband_frequencies[0,:]):
-            signal = kid_readout.utils.misc.dB(pxx[np.argmin(np.abs(fr - tone))], as_power=False)
-            image = kid_readout.dB(pxx[np.argmin(np.abs(fr + tone))], as_power=False)
+            signal = dB(pxx[np.argmin(np.abs(fr - tone))], as_power=False)
+            image = dB(pxx[np.argmin(np.abs(fr + tone))], as_power=False)
             rejection = signal-image
             logger.debug("\nAt iq_delay: %d, tone: %.1f MHz, signal: %.1f dB, image %.1f dB, rejection %.1f dB" %
                        (iq_delay, tone, signal, image, rejection))
