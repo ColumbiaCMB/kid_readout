@@ -50,7 +50,7 @@ def load_heterodyne_sweep_tones(ri, tone_banks, num_tone_samples):
     return ri.set_tone_freqs(freqs=np.vstack(tone_banks), nsamp=num_tone_samples)
 
 
-def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=1, state=None, description='', verbose=False,
+def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=0, state=None, description='', verbose=False,
               wait_for_sync=True, **kwargs):
     """
     Return a SweepArray acquired using the given tone banks.
@@ -58,7 +58,7 @@ def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=1, state=None, de
     :param ri: a RoachInterface subclass instance.
     :param tone_banks: an iterable of arrays of frequencies to use for the sweep.
     :param num_tone_samples: the number of samples in the playback buffer; must be a power of two.
-    :param length_seconds: the duration of each data stream.
+    :param length_seconds: the duration of each data stream. 0 means the minimum unit of data that can be read out in the current configuration
     :param state: the non-roach state to pass to the SweepArray.
     :param description: a string containing a description of the measurement.
     :param kwargs: keyword arguments passed to ri.get_measurement()
@@ -80,14 +80,15 @@ def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=1, state=None, de
     return basic.SweepArray(stream_arrays, state=state, description=description)
 
 
-def run_loaded_sweep(ri, length_seconds=1, state=None, description='', tone_bank_indices=None, bin_indices=None,
+def run_loaded_sweep(ri, length_seconds=0, state=None, description='', tone_bank_indices=None, bin_indices=None,
+                     verbose=False,
                      **kwargs):
     """
     Return a SweepArray acquired using previously-loaded tones.
 
     :param ri: a RoachInterface subclass instance.
     :param tone_bank_indices: the indices of the tone banks to use in the sweep; the default is to use all existing.
-    :param length_seconds: the duration of each data stream.
+    :param length_seconds: the duration of each data stream. 0 means the minimum unit of data that can be read out in the current configuration
     :param state: the non-roach state to pass to the SweepArray.
     :param description: a string containing a description of the measurement.
     :param kwargs: keyword arguments passed to ri.get_measurement()
@@ -98,7 +99,12 @@ def run_loaded_sweep(ri, length_seconds=1, state=None, description='', tone_bank
     if bin_indices is None:
         bin_indices = range(ri.tone_bins.shape[1])
     stream_arrays = core.MeasurementList()
+    if verbose:
+        print "Measuring bank:",
     for tone_bank_index in tone_bank_indices:
+        if verbose:
+            print tone_bank_index,
+            sys.stdout.flush()
         ri.select_bank(tone_bank_index)
         ri.select_fft_bins(bin_indices)
         ri._sync()
@@ -106,7 +112,7 @@ def run_loaded_sweep(ri, length_seconds=1, state=None, description='', tone_bank
     return basic.SweepArray(stream_arrays, state=state, description=description)
 
 
-def run_multipart_sweep(ri, length_seconds=1, state=None, description='', num_tones_read_at_once=32, verbose=False,
+def run_multipart_sweep(ri, length_seconds=0, state=None, description='', num_tones_read_at_once=32, verbose=False,
                         **kwargs):
     num_tones = ri.tone_bins.shape[1]
     num_steps = num_tones // num_tones_read_at_once
