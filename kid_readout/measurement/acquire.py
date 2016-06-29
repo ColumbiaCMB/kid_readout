@@ -36,7 +36,6 @@ import numpy as np
 from kid_readout import settings
 from kid_readout.measurement import core, basic
 from kid_readout.measurement.io import nc, npy
-from kid_readout.analysis.resources import experiments
 
 logger = logging.getLogger(__name__)
 
@@ -55,14 +54,33 @@ def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=0, state=None, de
     """
     Return a SweepArray acquired using the given tone banks.
 
-    :param ri: a RoachInterface subclass instance.
-    :param tone_banks: an iterable of arrays of frequencies to use for the sweep.
-    :param num_tone_samples: the number of samples in the playback buffer; must be a power of two.
-    :param length_seconds: the duration of each data stream. 0 means the minimum unit of data that can be read out in the current configuration
-    :param state: the non-roach state to pass to the SweepArray.
-    :param description: a string containing a description of the measurement.
-    :param kwargs: keyword arguments passed to ri.get_measurement()
-    :return: a SweepArray instance.
+    Parameters
+    ----------
+    ri : RoachInterface
+        An instance of a subclass.
+    tone_banks : iterable (numpy.ndarray (float))
+        An iterable of arrays of frequencies to use for the sweep.
+    num_tone_samples : int
+        The number of samples in the playback buffer; must be a power of two.
+    length_seconds : float
+        The duration of each data stream; the default of 0 means the minimum unit of data that can be read out in the
+        current configuration.
+    state : dict
+        The non-roach state to pass to the SweepArray.
+    description : str
+        A human-readable description of the measurement.
+    tone_bank_indices : numpy.ndarray[int]
+        The indices of the tone banks to use in the sweep; the default is to use all existing.
+    verbose : bool
+        If true, print progress messages.
+    wait_for_sync : bool
+        If true, sleep for a short time to let the ROACH sync finish.
+    kwargs
+        Keyword arguments passed to ri.get_measurement().
+
+    Returns
+    -------
+    SweepArray
     """
     stream_arrays = core.MeasurementList()
     if verbose:
@@ -81,23 +99,38 @@ def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=0, state=None, de
 
 
 def run_loaded_sweep(ri, length_seconds=0, state=None, description='', tone_bank_indices=None, bin_indices=None,
-                     verbose=False,
-                     **kwargs):
+                     verbose=False, **kwargs):
     """
     Return a SweepArray acquired using previously-loaded tones.
 
-    :param ri: a RoachInterface subclass instance.
-    :param tone_bank_indices: the indices of the tone banks to use in the sweep; the default is to use all existing.
-    :param length_seconds: the duration of each data stream. 0 means the minimum unit of data that can be read out in the current configuration
-    :param state: the non-roach state to pass to the SweepArray.
-    :param description: a string containing a description of the measurement.
-    :param kwargs: keyword arguments passed to ri.get_measurement()
-    :return: a SweepArray instance.
+    Parameters
+    ----------
+    ri : RoachInterface
+        An instance of a subclass.
+    length_seconds : float
+        The duration of each data stream; the default of 0 means the minimum unit of data that can be read out in the
+        current configuration.
+    state : dict
+        The non-roach state to pass to the SweepArray.
+    description : str
+        A human-readable description of the measurement.
+    tone_bank_indices : numpy.ndarray[int]
+        The indices of the tone banks to use in the sweep; the default is to use all existing.
+    bin_indices : numpy.ndarray[int]
+        The indices of the filterbank bins to read out; the default is to read out all bins.
+    verbose : bool
+        If true, print progress messages.
+    kwargs
+        Keyword arguments passed to ri.get_measurement().
+
+    Returns
+    -------
+    SweepArray
     """
     if tone_bank_indices is None:
         tone_bank_indices = np.arange(ri.tone_bins.shape[0])
     if bin_indices is None:
-        bin_indices = range(ri.tone_bins.shape[1])
+        bin_indices = np.arange(ri.tone_bins.shape[1])
     stream_arrays = core.MeasurementList()
     if verbose:
         print "Measuring bank:",
@@ -107,7 +140,6 @@ def run_loaded_sweep(ri, length_seconds=0, state=None, description='', tone_bank
             sys.stdout.flush()
         ri.select_bank(tone_bank_index)
         ri.select_fft_bins(bin_indices)
-        ri._sync()
         stream_arrays.append(ri.get_measurement(num_seconds=length_seconds, **kwargs))
     return basic.SweepArray(stream_arrays, state=state, description=description)
 

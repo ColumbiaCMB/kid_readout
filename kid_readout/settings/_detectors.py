@@ -8,4 +8,5 @@ from kid_readout.analysis.resources import experiments as _experiments
 CRYOSTAT = 'HPD'
 COOLDOWN = _experiments.get_experiment_info_at(_time.time(), cryostat=CRYOSTAT)
 
+LOG_DIR = '/data/detectors/log'
 TEMPERATURE_LOG_DIR = '/data/adc/cooldown_logs'

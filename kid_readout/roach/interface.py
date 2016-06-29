@@ -512,7 +512,7 @@ class RoachInterface(object):
         else:
             load_dram = self._load_dram_katcp
         nbytes = data.nbytes
-        logger.info("Writing %.1f kB to DRAM/QDR", (nbytes/2.**10))
+        logger.info("Writing %.1f kB to DRAM", (nbytes/2.**10))
         # PPC can only access 64MB at a time, so need to break the data into chunks of this size
         bank_size = (64 * 2 ** 20)
         nbanks, rem = divmod(nbytes, bank_size)
