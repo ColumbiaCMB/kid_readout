@@ -484,22 +484,24 @@ class SweepArray(RoachMeasurement):
             for number in range(self.num_channels):
                 dataframes.append(self.sweep(number).to_dataframe(add_origin=add_origin))
         else:
-            data = {'number': self.number, 'analysis_epoch': time.time(), 'start_epoch': self.start_epoch()}
+            data = {'analysis_epoch': time.time(), 'start_epoch': self.start_epoch()}
             try:
                 for thermometer, temperature in self.state['temperature'].items():
                     data['temperature_{}'.format(thermometer)] = temperature
             except KeyError:
                 pass
             try:
-                for key, value in self.streams_arrays[0].stream[0].roach_state.items():
+                for key, value in self.stream_arrays[0].stream(0).roach_state.items():
                     data['roach_{}'.format(key)] = value
             except KeyError:
                 pass
 
             flat_state = self.state.flatten(wrap_lists=True)
             data.update(flat_state)
-            data['frequency'] = self.frequency
-            data['s21_point'] = self.s21_point
+            data['frequency'] = [self.frequency]
+            data['s21_point'] = [self.s21_point]
+            data['s21_point_error'] = [self.s21_point_error]
+
             dataframes = [pd.DataFrame(data, index=[0])]
         return pd.concat(dataframes, ignore_index=True)
 

@@ -1,6 +1,7 @@
 """
 This module is the core of the measurement subpackage. See __init__.py for documentation.
 """
+import copy_reg
 import re
 import inspect
 import keyword
@@ -507,6 +508,10 @@ class StateDict(dict):
                 results[this_label] = v
         return results
 
+def pickle_state(s):
+    return StateDict, (dict(s),)
+
+copy_reg.pickle(StateDict,pickle_state)
 
 class IO(object):
     """
