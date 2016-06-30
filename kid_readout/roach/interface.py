@@ -436,10 +436,12 @@ class RoachInterface(object):
                 not self.is_roach2 and (self.bof_pid is None or self.bof_pid != state['bof_pid'])):
                 logger.debug("ROACH configuration does not match saved state")
                 state = None
-        try:
-            boffile_mismatch = state['boffile'] != self.boffile
-        except KeyError:
-            boffile_mismatch = False
+        boffile_mismatch = False
+        if state is not None:
+            try:
+                boffile_mismatch = state['boffile'] != self.boffile
+            except KeyError:
+                boffile_mismatch = True
         if state is None or boffile_mismatch:
             reprogrammed = True
             logger.info("Reinitializing system")
@@ -506,6 +508,9 @@ class RoachInterface(object):
         returns: fs, the approximate sampling rate in MHz
         """
         return 2 * self.r.est_brd_clk()
+
+    def measure_hardware_delay(self,**kwargs):
+        return tools.measure_hardware_delay(self,**kwargs)
 
     def _pause_dram(self):
         self.r.write_int('dram_rst', 0)

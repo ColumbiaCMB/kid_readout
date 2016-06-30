@@ -7,6 +7,7 @@ import scipy.signal
 from matplotlib import pyplot as plt
 
 from kid_readout.utils.misc import dB
+from kid_readout.measurement import acquire
 import logging
 
 logger = logging.getLogger(__name__)
@@ -129,3 +130,49 @@ def find_best_iq_delay_adc(ri,iq_delay_range=np.arange(-4,5), make_plot=False):
     if make_plot:
         plt.plot(iq_delay_range,total_rejections)
     return iq_delay_range[best], total_rejections[best]
+
+def measure_hardware_delay(ri,frequencies=np.arange(1,9)*24,num_tone_samples=2**16,num_points=16,make_plots=False,
+                           verbose=False):
+    offsets = np.arange(-num_points//2,num_points//2+1)*ri.fs/float(num_tone_samples)
+    if ri.is_roach2:
+        sa = acquire.run_sweep(ri,ri.lo_frequency+frequencies[None,:]+offsets[:,None],
+                               num_tone_samples=num_tone_samples,verbose=verbose)
+    else:
+        acquire.load_heterodyne_sweep_tones(ri,ri.lo_frequency+frequencies[None,:]+offsets[:,None],
+                                            num_tone_samples=num_tone_samples)
+        sa = acquire.run_loaded_sweep(ri,verbose=verbose)
+
+    print np.median(np.abs(sa.s21_point))
+    local_delays = []
+    for k in range(frequencies.shape[0]):
+        swp = sa.sweep(k)
+        deltaf = swp.frequency-swp.frequency.min()
+        phase = np.unwrap(np.angle(swp.s21_point))
+        rad_per_Hz,offset = np.polyfit(deltaf,phase,1)
+        local_delays.append(rad_per_Hz/(2*np.pi))
+        if make_plots:
+            plt.plot(deltaf,phase-offset,'.')
+            plt.plot(deltaf,rad_per_Hz*deltaf)
+            plt.xlabel('Offset Frequency (Hz)')
+            plt.ylabel('Phase (rad)')
+    local_delays = np.array(local_delays)
+    if make_plots:
+        plt.figure()
+        plt.plot(frequencies,local_delays*1e9,'o')
+        plt.axhline(np.median(local_delays*1e9),linestyle='--',color='r')
+        plt.xlabel('Measurement Frequency (MHz)')
+        plt.ylabel('Delay (ns)')
+    logger.debug("median local delay: %.1f ns" % (np.median(local_delays)*1e9))
+    frequency = sa.frequency
+    deltaf = frequency - frequency.min()
+    phase = np.unwrap(np.angle(sa.s21_point*np.exp(-1j*np.median(local_delays)*2*np.pi*deltaf)))
+    rad_per_Hz,offset = np.polyfit(deltaf,phase,1)
+    if make_plots:
+        plt.figure()
+        plt.plot(frequency/1e6,phase,'.')
+        plt.plot(frequency/1e6,offset+rad_per_Hz*deltaf)
+        plt.xlabel('Frequency (MHz)')
+        plt.ylabel('Phase (rad)')
+    total_delay = np.median(local_delays) + rad_per_Hz/(2*np.pi)
+    logger.debug("residual delay %.1f ns global delay = %.1f ns" % (1e9*rad_per_Hz/(2*np.pi), 1e9*total_delay))
+    return total_delay

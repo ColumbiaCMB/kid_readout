@@ -113,6 +113,15 @@ class HeterodyneHardwareMixin(object):
     """
     This class contains tests for heterodyne hardware that can run in loopback mode.
     """
+    def test_hardware_delay(self):
+        self.ri.set_lo(1000.)
+        self.ri.set_loopback(True)
+        self.ri.set_debug(False)
+        self.ri.set_fft_gain(0)
+        delay = self.ri.measure_hardware_delay()
+        assert(np.abs(delay) < 1e-6)
+
+
     def test_fft_bin_selection(self):
         test_cases = [#np.array([[16368, 16370, 16372, 16374, 16376, 16379, 16381, 16383, 1,
             #3,     5,     8,    10,    12,    14,    16]]),  #this special case doesn't quite work because of the

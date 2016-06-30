@@ -11,3 +11,9 @@ class MockValon(object):
 
     def set_frequency_a(self, freq, chan_spacing=10.0):
         pass
+
+    def set_frequency_b(self, freq, chan_spacing=10.0):
+        pass
+
+    def set_rf_level(self,synth,power):
+        pass
