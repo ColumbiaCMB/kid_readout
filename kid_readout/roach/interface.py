@@ -436,7 +436,11 @@ class RoachInterface(object):
                 not self.is_roach2 and (self.bof_pid is None or self.bof_pid != state['bof_pid'])):
                 logger.debug("ROACH configuration does not match saved state")
                 state = None
-        if state is None or state['boffile'] != self.boffile:
+        try:
+            boffile_mismatch = state['boffile'] != self.boffile
+        except KeyError:
+            boffile_mismatch = False
+        if state is None or boffile_mismatch:
             reprogrammed = True
             logger.info("Reinitializing system")
             self._set_fs(fs)
