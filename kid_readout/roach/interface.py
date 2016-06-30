@@ -60,7 +60,7 @@ class RoachInterface(object):
             #  or type name matches regex including 'mock'
             if type(roach) is MockRoach:
                 self._using_mock_roach = True
-        else:
+        else:  # pragma: no cover
             from corr.katcp_wrapper import FpgaClient
             logger.debug("Creating FpgaClient")
             self.r = FpgaClient(roachip)
@@ -73,7 +73,7 @@ class RoachInterface(object):
                 time.sleep(0.1)
             logger.debug("ROACH is connected")
 
-        if adc_valon is None:
+        if adc_valon is None:  # pragma: no cover
             from kid_readout.roach import valon
             ports = valon.find_valons()
             if len(ports) == 0:
@@ -89,21 +89,21 @@ class RoachInterface(object):
                         break
                     except:
                         pass
-        elif type(adc_valon) is str:
+        elif type(adc_valon) is str: # pragma: no cover
             from kid_readout.roach import valon
             self.adc_valon_port = adc_valon
             self.adc_valon = valon.Synthesizer(self.adc_valon_port)
         else:
             self.adc_valon = adc_valon
 
-        if type(lo_valon) is str:
+        if type(lo_valon) is str: # pragma: no cover
             from kid_readout.roach import valon
             self.lo_valon_port = lo_valon
             self.lo_valon = valon.Synthesizer(self.lo_valon_port)
         else:
             self.lo_valon = lo_valon
 
-        if host_ip is None:
+        if host_ip is None: # pragma: no cover
             hostname = socket.gethostname()
             if hostname == 'detectors':
                 host_ip = '192.168.1.1'
