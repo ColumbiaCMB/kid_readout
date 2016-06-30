@@ -17,7 +17,11 @@ __test__ = False
 class TestRoach2HeterodyneLoopback(RoachMixin, Roach2Mixin, HeterodyneSoftwareMixin, HeterodyneHardwareMixin):
 
     @classmethod
-    def setup(cls):
+    def setup_class(cls):
         cls.ri = Roach2Heterodyne(roachip=ROACH2_IP, adc_valon=ROACH2_VALON, host_ip=ROACH2_HOST_IP,
                                   lo_valon=MockValon(), initialize=False)
         cls.ri.initialize(use_config=False)
+
+    @classmethod
+    def teardown_class(cls):
+        cls.ri.r.stop() # be sure to disconnect to avoid too many connections to roach

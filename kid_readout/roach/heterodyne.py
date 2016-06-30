@@ -61,7 +61,8 @@ class RoachHeterodyne(RoachInterface):
         self.lo_frequency = 0.0
         self.heterodyne = True
         #self.boffile = 'iq2xpfb14mcr7_2015_Nov_25_0907.bof'
-        self.boffile = 'iq2xpfb14mcr10_2016_Jun_29_1532.bof'
+        #self.boffile = 'iq2xpfb14mcr10_2016_Jun_29_1532.bof'
+        self.boffile = 'iq2xpfb14mcr11_2016_Jun_30_1301.bof'
         self.iq_delay = 0
         self.channel_selection_offset=3
 

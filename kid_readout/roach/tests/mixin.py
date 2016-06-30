@@ -132,6 +132,7 @@ class HeterodyneHardwareMixin(object):
             yield self.check_fft_bin_selection, bin_array
 
     def check_fft_bin_selection(self,bin_array):
+        self.ri.select_bank(0)
         self.ri.set_debug(True)
         self.ri.fft_bins = bin_array
         self.ri.select_fft_bins(range(self.ri.fft_bins.shape[1]))

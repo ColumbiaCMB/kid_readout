@@ -198,7 +198,7 @@ class RoachInterface(object):
             if x is None:
                 return x
             else:
-                return x.copy()
+                return np.asanyarray(x).copy()
         state = StateDict(
                   tone_bin=copy_or_none(self.tone_bins),
                   tone_amplitude=copy_or_none(self.amps),
@@ -313,6 +313,10 @@ class RoachInterface(object):
         return self.bank
 
     def select_bank(self, bank):
+        if self.tone_nsamp is None:
+            logger.warning("Attemped to select bank, but no tones have been loaded yet")
+            self.bank = 0
+            return
         dram_addr_per_bank = self.tone_nsamp / 2  # number of dram addresses per bank
         mask_reg = dram_addr_per_bank - 1
         bank_reg = dram_addr_per_bank * bank

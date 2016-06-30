@@ -114,7 +114,7 @@ def find_best_iq_delay_adc(ri,iq_delay_range=np.arange(-4,5), make_plot=False):
         ri.set_tone_baseband_freqs(tone_baseband_frequencies,ri.tone_nsamp)
 #        time.sleep(0.1)
         x,y = ri.get_raw_adc()
-        pxx,fr = plt.mlab.psd(x+1j*y,Fs=ri.fs,NFFT=512)
+        pxx,fr = plt.mlab.psd(x+1j*y,Fs=ri.fs,NFFT=1024)
         rejections = []
         for idx,tone in enumerate(tone_baseband_frequencies[0,:]):
             signal = dB(pxx[np.argmin(np.abs(fr - tone))], as_power=False)
