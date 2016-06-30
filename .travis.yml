@@ -22,4 +22,4 @@ install:
 after_success:
   - codecov
 # command to run tests
-script: nosetests --with-coverage --cover-erase --cover-xml --cover-inclusive --cover-package=kid_readout --exclude=".*equipment.*" --ignore-files="setup.py|interactive.py"
+script: nosetests -v --with-coverage --cover-erase --cover-xml --cover-inclusive --cover-package=kid_readout --exclude=".*equipment.*" --ignore-files="setup.py|interactive.py"
