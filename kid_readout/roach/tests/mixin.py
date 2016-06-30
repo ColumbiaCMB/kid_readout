@@ -139,6 +139,34 @@ class HeterodyneHardwareMixin(object):
         data,sequence = self.ri.get_data(demod=False)
         assert(np.all(data[0,:].imag.astype('int') == self.ri.fpga_fft_readout_indexes))
 
+    def test_peak_fft_bin(self):
+        # Because the PFB channels currently have rather poor isolation up to several channels away, this test will
+        # only work for widely spaced channeels
+        test_cases = [np.array([[1000, 1201, 1457, 8096]]),
+                      np.array([[8193, 11111, 12345, 16383, 1000, 1201, 1457, 7096]])]
+        for bin_array in test_cases:
+            yield self.check_peak_fft_bin, bin_array
+    def check_peak_fft_bin(self,bin_array):
+        baseband_freqs = bin_array[0,:]/2.**14
+        baseband_freqs[baseband_freqs>0.5] = baseband_freqs[baseband_freqs>0.5]-1
+        baseband_freqs = self.ri.fs*baseband_freqs
+        self.ri.set_tone_baseband_freqs(baseband_freqs,nsamp=2**16)
+        self.ri.set_debug(False)
+        self.ri.set_loopback(True)
+        self.ri.set_fft_gain(0)
+        base_fft_bins = self.ri.fft_bins.copy()
+        values = []
+        bin_offsets = [-1,0,1]
+        for bin_offset in bin_offsets:
+            self.ri.fft_bins = base_fft_bins + bin_offset
+            self.ri.fft_bins = np.mod(self.ri.fft_bins,2**14)
+            self.ri.select_fft_bins(range(self.ri.fft_bins.shape[1]))
+            data,sequence = self.ri.get_data(demod=False)
+            values.append((np.abs(data)**2).mean(0))
+        values = np.array(values)
+        for bin_index in range(values.shape[1]):
+            assert(bin_offsets[values[:,bin_index].argmax()]==0)
+
 
 class BasebandAnalogMixin(object):
     """
