@@ -49,14 +49,14 @@ class RoachMixin(object):
         self.ri.select_fft_bins(range(num_tones))
         _ = self.ri.get_measurement_blocks(2)
 
+    def test_get_current_bank(self):
+        assert self.ri.get_current_bank() is not None
 
 class Roach1Mixin(object):
     """
     This class contains tests for the ROACH1 that can run using either real or mock hardware.
     """
-
-    def test_get_current_bank(self):
-        assert self.ri.get_current_bank() is not None
+    pass
 
 
 class Roach2Mixin(object):
@@ -74,7 +74,6 @@ class BasebandSoftwareMixin(object):
     def test_is_not_heterodyne(self):
         assert not self.ri.heterodyne
 
-    # TODO: why was this test being run only for RoachBaseband and RoachHeterodyne?
     def test_calc_fft_bins(self):
         for nsamp in 2 ** np.arange(10, 18):
             max_nsamp = nsamp / 2  # only positive bins are valid for baseband
