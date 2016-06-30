@@ -111,6 +111,11 @@ class HeterodyneSoftwareMixin(object):
             bins = self.ri.calc_fft_bins(tone_bins, nsamp)
             assert np.all(bins >= 0)
             assert np.all(bins < self.ri.nfft)
+    def test_iq_delay(self):
+        self.ri.set_loopback(True)
+        self.ri.set_debug(False)
+        self.ri.set_fft_gain(0)
+        self.ri.find_best_iq_delay()
 
 
 class BasebandHardwareMixin(object):
@@ -125,6 +130,14 @@ class HeterodyneHardwareMixin(object):
     """
     This class contains tests for heterodyne hardware that can run in loopback mode.
     """
+
+    def test_iq_delay(self):
+        self.ri.set_loopback(True)
+        self.ri.set_debug(False)
+        self.ri.set_fft_gain(0)
+        iq_delay,rejection = self.ri.find_best_iq_delay()
+        assert iq_delay == 0
+        assert rejection > 55.0
 
     def test_not_mock(self):
         assert not self.ri._using_mock_roach

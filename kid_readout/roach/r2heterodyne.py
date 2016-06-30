@@ -98,23 +98,6 @@ class Roach2Heterodyne(RoachHeterodyne):
     def _unpause_dram(self):
         self.r.write_int('qdr_en',1)
 
-
-
-    def get_raw_adc(self):
-        """
-        Grab raw ADC samples
-        returns: s0,s1
-        s0 and s1 are the samples from adc 0 and adc 1 respectively
-        Each sample is a 12 bit signed integer (cast to a numpy float)
-        """
-        self.r.write_int('adc_snap_ctrl', 0)
-        self.r.write_int('adc_snap_ctrl', 5)
-        s0 = (np.fromstring(self.r.read('adc_snap_bram', self.raw_adc_ns * 2 * 2), dtype='>i2'))
-        sb = s0.view('>i4')
-        i = sb[::2].copy().view('>i2') / 16.
-        q = sb[1::2].copy().view('>i2') / 16.
-        return i, q
-
     def get_data_udp(self, nread=2, demod=True, fast=False):
         data, seq_nos = kid_readout.roach.r2_udp_catcher.get_udp_data(self, npkts=nread,
                                                                      nchans=self.readout_selection.shape[0],

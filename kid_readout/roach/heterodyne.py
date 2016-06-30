@@ -86,6 +86,8 @@ class RoachHeterodyne(RoachInterface):
         s0 and s1 are the samples from adc 0 and adc 1 respectively
         Each sample is a 12 bit signed integer (cast to a numpy float)
         """
+        if self._using_mock_roach:
+            return np.random.randint(-2048,2047,size=self.raw_adc_ns),np.random.randint(-2048,2047,size=self.raw_adc_ns)
         self.r.write_int('adc_snap_ctrl', 0)
         self.r.write_int('adc_snap_ctrl', 5)
         s0 = (np.fromstring(self.r.read('adc_snap_bram', self.raw_adc_ns * 2 * 2), dtype='>i2'))
@@ -104,6 +106,7 @@ class RoachHeterodyne(RoachInterface):
                            "try running with make_plot=True to diagnose" % (best_rejection,best_rejection))
         self.iq_delay = best_delay
         logger.debug("iq_delay set to %d" % best_delay)
+        return best_delay,best_rejection
 
     def set_loopback(self,enable):
         self.loopback = enable
