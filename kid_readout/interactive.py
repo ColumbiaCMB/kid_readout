@@ -5,7 +5,7 @@ Feel free to add additional imports as you find them helpful.
 """
 import logging
 logger = logging.getLogger('kid_readout')
-from kid_readout.utils.log import default_handler
+from kid_readout.utils.log import default_handler, file_handler
 
 if default_handler not in logger.handlers:
     logger.addHandler(default_handler)

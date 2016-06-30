@@ -4,7 +4,7 @@ import logging
 
 from kid_readout.settings import LOG_DIR
 
-message_format = '%(levelname)s: %(asctime)s - %(name)s.%(funcName)s:%(lineno)d  %(message)s'
+message_format = '%(levelname)-8.8s %(asctime)s - %(name)s.%(funcName)s:%(lineno)d  %(message)s'
 default_handler = logging.StreamHandler()
 default_formatter = logging.Formatter(message_format)
 default_handler.setFormatter(default_formatter)
@@ -38,8 +38,6 @@ class RoachFilter(object):
 
     def __init__(self, level=logging.WARNING):
         self.level = level
-        self.records = []
 
     def filter(self, record):
-        self.records.append(record)
         return not (record.name.startswith('kid_readout.roach') and record.levelno < self.level)
