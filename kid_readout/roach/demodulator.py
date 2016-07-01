@@ -1,6 +1,8 @@
 import numpy as np
 import scipy.signal
-import numexpr
+
+from kid_readout.roach.calculate import packet_phase, tone_offset_frequency, get_offset_frequencies_period
+
 
 class Demodulator(object):
     def __init__(self,nfft=2**14,num_taps=2,window=scipy.signal.flattop,interpolation_factor=64,
@@ -31,12 +33,12 @@ class Demodulator(object):
         phi0 = tone_phase
         nfft = self.nfft
         ns = tone_num_samples
-        offset_frequencies = tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft)
-        wc = self.compute_pfb_response(offset_frequencies)
+        offset_frequency = tone_offset_frequency(tone_bin, tone_num_samples, fft_bin, nfft)
+        wc = self.compute_pfb_response(offset_frequency)
         t = np.arange(data.shape[0])
-        demod = wc*np.exp(-1j * (2 * np.pi * offset_frequencies * t + phi0)) * data
+        demod = wc*np.exp(-1j * (2 * np.pi * offset_frequency * t + phi0)) * data
         if type(seq_nos) is np.ndarray:
-            pphase = packet_phase(seq_nos[0],offset_frequencies,nchan,nfft,ns)
+            pphase = packet_phase(seq_nos[0], offset_frequency, nchan, nfft, ns)
             demod *= pphase
         if self.hardware_delay_samples != 0:
             demod *= np.exp(2j*np.pi*self.hardware_delay_samples*tone_bin/tone_num_samples)
@@ -92,28 +94,3 @@ class StreamDemodulator(Demodulator):
         return wave_mat, wave_period
 
 
-def packet_phase(seq_no,offset_frequencies,nchan,nfft,ns):
-    packet_bins = 1024    #this is hardcoded from the roach. number of fft bins that fit in 1 udp packet
-    packet_counts = nfft * packet_bins
-    chan_counts = packet_counts / nchan
-    shift = int(np.log2(chan_counts)) - 1
-    modn = ns / chan_counts
-    if modn == 0:
-        modn = 1
-    multy = ns / nfft
-    seq_no = seq_no >> shift
-    seq_no %= modn
-    return np.exp(-1j * 2. * np.pi * seq_no * offset_frequencies * multy / modn)
-
-def tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft):
-    k = tone_bin
-    m = fft_bin
-    nfft = nfft
-    ns = tone_num_samples
-    return nfft * (k / float(ns)) - m
-
-def get_offset_frequencies_period(offset_frequencies):
-    period = 1
-    while not np.all(np.round(offset_frequencies*period)==offset_frequencies*period):
-        period = period * 2
-    return period
