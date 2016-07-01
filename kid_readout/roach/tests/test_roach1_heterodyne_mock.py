@@ -10,6 +10,6 @@ from kid_readout.roach.tests.mixin import RoachMixin, Roach1Mixin, HeterodyneSof
 class TestRoach1HeterodyneMock(RoachMixin, Roach1Mixin, HeterodyneSoftwareMixin, MockMixin):
 
     @classmethod
-    def setup(cls):
+    def setup_class(cls):
         cls.ri = RoachHeterodyne(roach=MockRoach('roach'), adc_valon=MockValon(), lo_valon=MockValon(),
                                  initialize=False)

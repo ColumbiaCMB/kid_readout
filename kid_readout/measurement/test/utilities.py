@@ -86,7 +86,7 @@ class CornerCases(core.Measurement):
         super(CornerCases, self).__init__(state=state, description=description)
 
 
-def fake_stream_array(num_tones=16, num_tone_samples=2 ** 21, length_seconds=0.01,
+def fake_stream_array(num_tones=16, num_tone_samples=2 ** 16, length_seconds=0.01,
                       state={'I_am_a': 'fake stream array'}, description='fake stream array'):
     frequency = np.linspace(100, 200, num_tones)
     ri = baseband.RoachBaseband(roach=mock_roach.MockRoach('roach'), adc_valon=mock_valon.MockValon(), initialize=False)
@@ -95,14 +95,14 @@ def fake_stream_array(num_tones=16, num_tone_samples=2 ** 21, length_seconds=0.0
     return ri.get_measurement(length_seconds, state=state, description=description)
 
 
-def fake_single_stream(num_tone_samples=2 ** 21, length_seconds=0.01,
+def fake_single_stream(num_tone_samples=2 ** 16, length_seconds=0.01,
                        state={'I_am_a': 'fake single stream'}, description='fake single stream'):
     stream_array = fake_stream_array(num_tones=1, num_tone_samples=num_tone_samples,
                                      length_seconds=length_seconds, state=state, description=description)
     return stream_array[0]
 
 
-def fake_sweep_array(num_tones=16, num_waveforms=32, num_tone_samples=2 ** 21, length_seconds=0.01,
+def fake_sweep_array(num_tones=16, num_waveforms=16, num_tone_samples=2 ** 16, length_seconds=0.01,
                      state={'I_am_a': 'fake sweep array'}, description='fake sweep array'):
     ri = baseband.RoachBaseband(roach=mock_roach.MockRoach('roach'), adc_valon=mock_valon.MockValon(), initialize=False)
     center_frequencies = np.linspace(100, 200, num_tones)
@@ -112,15 +112,15 @@ def fake_sweep_array(num_tones=16, num_waveforms=32, num_tone_samples=2 ** 21, l
                              length_seconds=length_seconds, state=state, description=description, wait_for_sync=False)
 
 
-def fake_single_sweep(num_waveforms=32, num_tone_samples=2 ** 21, length_seconds=0.01,
+def fake_single_sweep(num_waveforms=16, num_tone_samples=2 ** 16, length_seconds=0.01,
                      state={'I_am_a': 'fake single sweep'}, description='fake single sweep'):
     sweep_array = fake_sweep_array(num_tones=1, num_waveforms=num_waveforms, num_tone_samples=num_tone_samples,
                                    length_seconds=length_seconds, state=state, description=description)
     return sweep_array[0]
 
 
-def fake_sweep_stream_array(num_tones=16, sweep_num_waveforms=32, sweep_num_tone_samples=2 ** 21,
-                            sweep_length_seconds=0.01, stream_num_tone_samples=2 ** 21, stream_length_seconds=0.01,
+def fake_sweep_stream_array(num_tones=16, sweep_num_waveforms=16, sweep_num_tone_samples=2 ** 16,
+                            sweep_length_seconds=0.01, stream_num_tone_samples=2 ** 16, stream_length_seconds=0.01,
                             state={'I_am_a': 'fake sweep stream array'}, description='fake sweep stream array'):
     sweep_array = fake_sweep_array(num_tones=num_tones, num_waveforms=sweep_num_waveforms,
                                    num_tone_samples=sweep_num_tone_samples, length_seconds=sweep_length_seconds)
@@ -130,8 +130,8 @@ def fake_sweep_stream_array(num_tones=16, sweep_num_waveforms=32, sweep_num_tone
                                   description=description)
 
 
-def fake_single_sweep_stream(sweep_num_waveforms=32, sweep_num_tone_samples=2 ** 21, sweep_length_seconds=0.01,
-                             stream_num_tone_samples=2 ** 21, stream_length_seconds=0.01,
+def fake_single_sweep_stream(sweep_num_waveforms=16, sweep_num_tone_samples=2 ** 16, sweep_length_seconds=0.01,
+                             stream_num_tone_samples=2 ** 16, stream_length_seconds=0.01,
                              state={'I_am_a': 'fake single sweep stream'}, description='fake single sweep stream'):
     ssa = fake_sweep_stream_array(num_tones=1, sweep_num_waveforms=sweep_num_waveforms,
                                   sweep_num_tone_samples=sweep_num_tone_samples,

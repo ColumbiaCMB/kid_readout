@@ -308,6 +308,13 @@ class StreamArray(RoachStream):
         """Deprecated: use __getitem__."""
         return self[number]
 
+    def tone_offset_frequency(self, normalized_frequency=True):
+        offset = calculate.tone_offset_frequency(self.tone_bin,self.roach_state.num_tone_samples,self.filterbank_bin,
+                                     self.roach_state.num_filterbank_channels)
+        if not normalized_frequency:
+            offset = offset * self.stream_sample_rate
+        return offset
+
 
 class StreamArray0(RoachStream0):
     """
@@ -378,6 +385,12 @@ class SingleStream(RoachStream):
                                            data_demodulated=data_demodulated, roach_state=roach_state, state=state,
                                            description=description, validate=validate)
 
+    def tone_offset_frequency(self, normalized_frequency=True):
+        offset = calculate.tone_offset_frequency(self.tone_bin,self.roach_state.num_tone_samples,self.filterbank_bin,
+                                     self.roach_state.num_filterbank_channels)
+        if not normalized_frequency:
+            offset = offset * self.stream_sample_rate
+        return offset
 
 class SingleStream0(RoachStream0):
     """

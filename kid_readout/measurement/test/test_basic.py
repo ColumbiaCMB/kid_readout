@@ -175,4 +175,8 @@ class TestSingleSweepStream(object):
     def test_start_epoch(self):
         assert self.sss.start_epoch() == self.sss.sweep.streams[0].epoch
 
+    def test_tone_offset_frequency(self):
+        self.sss.stream.tone_offset_frequency()
+        self.sss.stream.tone_offset_frequency(normalized_frequency=False)
+
 
