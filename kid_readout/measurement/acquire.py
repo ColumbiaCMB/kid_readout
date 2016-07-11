@@ -34,6 +34,7 @@ import logging
 import numpy as np
 
 from kid_readout import settings
+from kid_readout.utils import log
 from kid_readout.measurement import core, basic
 from kid_readout.measurement.io import nc, npy
 
@@ -217,4 +218,26 @@ def new_npy_directory(suffix='', directory=settings.BASE_DATA_DIR, metadata=None
     if metadata is None:
         metadata = all_metadata()
     root_path = os.path.join(directory, time.strftime('%Y-%m-%d_%H%M%S') + suffix)
+    logger.debug("Creating new NumpyDirectory with path %s" % root_path)
     return npy.NumpyDirectory(root_path, metadata=metadata)
+
+
+# Interactive settings check
+
+def show_settings():
+    print("cryostat: {}".format(settings.CRYOSTAT))
+    for k, v in settings.COOLDOWN.items():
+        print("{}: {}".format(k, v))
+    raw_input("Press enter to continue or ctrl-C to quit.")
+
+
+# Logging
+
+def get_script_logger(name):
+    script_logger = logging.getLogger('kid_readout')
+    script_logger.setLevel(logging.DEBUG)
+    stream_handler = log.default_handler
+    stream_handler.setLevel(logging.INFO)
+    script_logger.addHandler(stream_handler)
+    script_logger.addHandler(log.file_handler(name))
+    return script_logger
