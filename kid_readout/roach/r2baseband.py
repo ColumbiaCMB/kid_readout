@@ -8,12 +8,14 @@ import socket
 
 import numpy as np
 import scipy.signal
+import logging
 
 import udp_catcher
 import tools
 from interface import RoachInterface
 from baseband import RoachBaseband
 
+logger = logging.getLogger(__name__)
 
 try:
     import numexpr
@@ -28,7 +30,7 @@ class Roach2Baseband(RoachBaseband):
     def __init__(self,roach=None, wafer=0, roachip='r2kid', adc_valon=None, host_ip=None, initialize=True,
                  nfs_root='/srv/roach_boot/etch'):
         super(Roach2Baseband,self).__init__(roach=roach,wafer=wafer,roachip=roachip, adc_valon=adc_valon,
-                                            host_ip=host_ip, initialize=initialize, nfs_root=nfs_root)
+                                            host_ip=host_ip, initialize=False, nfs_root=nfs_root)
 
         self.lo_frequency = 0.0
         self.heterodyne = False
@@ -45,12 +47,18 @@ class Roach2Baseband(RoachBaseband):
         if initialize:
             self.initialize()
 
-    def initialize(self, fs=512.0, cal_qdr=True, use_config=True):
-        super(Roach2Baseband,self).initialize(fs=fs,start_udp=False,use_config=use_config)
-        if cal_qdr:
-            import qdr
-            q = qdr.Qdr(self.r,'qdr0')
-            q.qdr_cal(verbosity=1)
+    def initialize(self, fs=512.0, use_config=True, force_cal_qdr=False):
+        reprogrammed = super(Roach2Baseband,self).initialize(fs=fs,start_udp=False,use_config=use_config)
+        logger.debug("Checking QDR calibration")
+        import qdr
+        q = qdr.Qdr(self.r,'qdr0')
+        qdr_is_calibrated = q.qdr_cal_check()
+        if qdr_is_calibrated:
+            logger.debug("QDR is calibrated")
+        if not qdr_is_calibrated or force_cal_qdr or reprogrammed:
+            logger.debug("Calibrating QDR")
+            q.qdr_cal()
+            logger.info("Succesfully recalibrated QDR")
 
     def load_waveform(self, wave, start_offset=0, fast=True):
         """
