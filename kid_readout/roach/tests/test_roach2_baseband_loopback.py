@@ -13,6 +13,10 @@ __test__ = False
 class TestRoach2BasebandLoopback(RoachMixin, Roach2Mixin, BasebandSoftwareMixin, BasebandHardwareMixin):
 
     @classmethod
-    def setup(cls):
+    def setup_class(cls):
         cls.ri = Roach2Baseband(roachip=ROACH2_IP, adc_valon=ROACH2_VALON, host_ip=ROACH2_HOST_IP, initialize=False)
         cls.ri.initialize(use_config=False)
+
+    @classmethod
+    def teardown_class(cls):
+        cls.ri.r.stop()

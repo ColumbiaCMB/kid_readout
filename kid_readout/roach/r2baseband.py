@@ -14,6 +14,7 @@ import udp_catcher
 import tools
 from interface import RoachInterface
 from baseband import RoachBaseband
+import kid_readout.roach.r2_udp_catcher
 
 logger = logging.getLogger(__name__)
 
@@ -82,3 +83,31 @@ class Roach2Baseband(RoachBaseband):
         self.r.write_int('qdr_en',0)
     def _unpause_dram(self):
         self.r.write_int('qdr_en',1)
+
+    def get_data(self, nread=2, demod=True):
+        # TODO This is a temporary hack until we get the system simulation code in place
+        if self._using_mock_roach:
+            data = (np.random.standard_normal((nread * 4096, self.num_tones)) +
+                    1j * np.random.standard_normal((nread * 4096, self.num_tones)))
+            if self.r.sleep_for_fake_data:
+                time.sleep(nread / self.blocks_per_second)
+            seqnos = np.arange(data.shape[0])
+            return data, seqnos
+        else:
+            return self.get_data_katcp(nread=nread, demod=demod)
+"""
+    def get_data_udp(self, nread=2, demod=True, fast=False):
+        data, seq_nos = kid_readout.roach.r2_udp_catcher.get_udp_data(self, npkts=nread,
+                                                                     nchans=self.readout_selection.shape[0],
+                                                                     addr=(self.host_ip, 55555), fast=fast)
+
+        if self.phase0 is None:
+            self.phase0 = seq_nos[0]
+        if demod:
+            seq_nos -= self.phase0
+            if fast:
+                data = self.demodulate_stream(data, seq_nos)
+            else:
+                data = self.demodulate_data(data)
+        return data, seq_nos
+"""
