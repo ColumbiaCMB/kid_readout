@@ -302,7 +302,7 @@ def sweeparray_from_rnc(rnc, sweep_group_index, description=''):
     return SweepArray(stream_arrays=stream_arrays, state=state, description=description)
 
 
-def sweepstream_from_rnc(rnc, sweep_group_index, timestream_group_index, tone_index):
+def singlesweepstream_from_rnc(rnc, sweep_group_index, timestream_group_index, tone_index):
     state = global_roach_state_from_rnc(rnc)
     sweep = sweep_from_rnc(rnc, sweep_group_index, tone_index)
     stream = stream_from_rnc(rnc, timestream_group_index, tone_index)

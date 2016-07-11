@@ -745,7 +745,11 @@ class SingleSweepStream(RoachMeasurement):
     def q(self):
         """
         Return the inverse internal quality factor q = 1 / Q_i calculated by inverting the resonator model.
-        :return: an array of q values from self.stream corresponding to self.stream.sample_time
+
+        Returns
+        -------
+        numpy.ndarray (float)
+            Values of q from self.stream corresponding to self.stream.sample_time
         """
         if not hasattr(self, '_q'):
             self.set_q_and_x()
@@ -756,7 +760,11 @@ class SingleSweepStream(RoachMeasurement):
         """
         Return half the inverse internal quality factor y = q / 2 calculated by inverting the resonator model. The
         purpose of this is that S_yy = S_xx when amplifier-noise dominated.
-        :return: an array of y values from self.stream corresponding to self.stream.sample_time.
+
+        Returns
+        -------
+        numpy.ndarray (float)
+            Values of y from self.stream corresponding to self.stream.sample_time.
         """
         return self.q / 2
 
@@ -764,13 +772,31 @@ class SingleSweepStream(RoachMeasurement):
     def x(self):
         """
         Return the fractional frequency shift x = f / f_r - 1 calculated by inverting the resonator model.
-        :return: an array of x values from self.stream corresponding to self.stream.sample_time.
+
+        Returns
+        -------
+        numpy.ndarray (float)
+            Values of x from self.stream corresponding to self.stream.sample_time.
         """
         if not hasattr(self, '_x'):
             self.set_q_and_x()
         return self._x
 
     def set_q_and_x(self, deglitch=True):
+        """
+        Use the resonator model to calculate time-ordered resonator parameters from the time-ordered s21 data.
+
+        The parameters are q and x: q is the inverse internal quality factor and x is the fractional frequency shift.
+
+        Parameters
+        ----------
+        deglitch : bool
+            If true, use the de-glitched s21 timeseries to calculate q and x.
+
+        Returns
+        -------
+        None
+        """
         if deglitch:
             s21 = self.stream_s21_normalized_deglitched
         else:
@@ -784,7 +810,11 @@ class SingleSweepStream(RoachMeasurement):
     def S_frequency(self):
         """
         Return the frequencies used in calculating the single-sided spectral densities.
-        :return: an array of frequencies ranging from 0 through the Nyquist frequency.
+
+        Returns
+        -------
+        numpy.ndarray (float)
+             Positive frequencies through the Nyquist frequency.
         """
         if not hasattr(self, '_S_frequency'):
             self.set_S()
@@ -794,7 +824,11 @@ class SingleSweepStream(RoachMeasurement):
     def S_qq(self):
         """
         The single-sided spectral density of q(t), S_qq(f), where f is self.S_frequency.
-        :return: an array of complex values representing the spectral density of q(t)
+
+        Returns
+        -------
+        numpy.ndarray (complex)
+            :return: an array of complex values representing the spectral density of q(t)
         """
         if not hasattr(self, '_S_qq'):
             self.set_S()
@@ -817,6 +851,30 @@ class SingleSweepStream(RoachMeasurement):
         if not hasattr(self, '_S_xx'):
             self.set_S()
         return self._S_xx
+
+    @property
+    def S_xq(self):
+        """
+        The single-sided cross-spectral density of q(t) and x(t), S_xq(f), where f is self.S_frequency.
+
+        Returns
+        -------
+        numpy.ndarray (complex)
+        """
+        if not hasattr(self, '_S_xq'):
+            self.set_S()
+        return self._S_xq
+
+    @property
+    def S_xy(self):
+        """
+        The single-sided cross-spectral density of y(t) and x(t), S_yx(f), where f is self.S_frequency.
+
+        Returns
+        -------
+        numpy.ndarray (complex)
+        """
+        return self.S_xq / 2
 
     # TODO: calculate errors in PSDs
     def set_S(self, NFFT=None, window=mlab.window_none, detrend=mlab.detrend_none, binned=True, **psd_kwds):
@@ -846,15 +904,19 @@ class SingleSweepStream(RoachMeasurement):
                            **psd_kwds)
         S_xx, f = mlab.psd(self.x, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, detrend=detrend,
                            **psd_kwds)
+        S_xq, f = mlab.csd(self.x, self.q, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, detrend=detrend,
+                           **psd_kwds)
         # Drop the DC and Nyquist bins since they're not helpful and make plots look messy.
         f = f[1:-1]
         S_xx = S_xx[1:-1]
         S_qq = S_qq[1:-1]
+        S_xq = S_xq[1:-1]
         if binned:
-            f, (S_xx, S_qq) = binning.log_bin(f, [S_xx, S_qq])
+            f, (S_xx, S_qq, S_xq) = binning.log_bin(f, [S_xx, S_qq, S_xq])
         self._S_frequency = f
         self._S_qq = S_qq
         self._S_xx = S_xx
+        self._S_xq = S_xq
 
     @property
     def pca_S_frequency(self):
