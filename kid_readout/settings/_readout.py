@@ -1,5 +1,5 @@
 """
-This is template local settings file for the computer `readout` running the STAR Cryo cryostat in 1132.
+This is a template local settings file for the computer `readout` running the STAR Cryo cryostat in 1132.
 """
 import time as _time
 

@@ -5,8 +5,8 @@ Note that this file is under version control so it is shared by all deploys. If 
 settings, it's better to create multiple, descriptive names for these settings here instead of overwriting with the one
 currently in use. The values in this file shouldn't have to change often.
 
-On each system, local.py should contain or import only the settings for hardware that is actually connected. For
-example, if a ROACH1 is connected and in baseband mode, local.py could contain
+On each system, _local.py should contain or import only the settings for hardware that is actually connected. For
+example, if a ROACH1 is connected and in baseband mode, it could contain
 
 from kid_readout.settings.roach import ROACH1_IP, ROACH1_VALON, ROACH1_HOST_IP
 """

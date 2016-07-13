@@ -74,7 +74,7 @@ class NCFile(core.IO):
 
     @property
     def closed(self):
-        return self._root is not None and not self._root.isopen()
+        return self._root is None
 
     def read(self, node_path, translate=None, force=False):
         if translate is None:
