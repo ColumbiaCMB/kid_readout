@@ -239,12 +239,16 @@ class RoachInterface(object):
                           bank=self.bank,
                           loopback=self.loopback,
                           debug_register=self.debug_register,
+                          fft_shift_register = self.fft_shift_register
                           )
         if include_registers:
             for register in self.initial_values_for_writeable_registers:
                 roach_state[register] = self.r.read_int(register)
         return roach_state
 
+    @property
+    def fft_shift_register(self):
+        return self.r.read_uint('fftshift')
 
     def get_raw_adc(self):
         """
