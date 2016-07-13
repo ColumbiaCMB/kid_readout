@@ -19,4 +19,5 @@ class TestRoach2BasebandLoopback(RoachMixin, Roach2Mixin, BasebandSoftwareMixin,
 
     @classmethod
     def teardown_class(cls):
+        cls.ri.initialize(use_config=False)
         cls.ri.r.stop()

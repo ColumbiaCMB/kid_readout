@@ -24,4 +24,5 @@ class TestRoach2HeterodyneLoopback(RoachMixin, Roach2Mixin, HeterodyneSoftwareMi
 
     @classmethod
     def teardown_class(cls):
+        cls.ri.initialize(use_config=False)
         cls.ri.r.stop() # be sure to disconnect to avoid too many connections to roach
