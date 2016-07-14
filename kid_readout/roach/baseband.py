@@ -385,6 +385,8 @@ class RoachBaseband(RoachInterface):
         addrs: counter values when each frame was read. Can be used to check that
             frames are contiguous
         """
+        self.r.write_int('streamid',0)  # The code below assumes streamid=0. If we want to use other streamids later,
+                                        #  will need to update the code below to mask off the streamid info
         bufname = 'ppout%d' % self.wafer
         chan_offset = 1
         draw, addr, ch = self._read_data(nread, bufname)
