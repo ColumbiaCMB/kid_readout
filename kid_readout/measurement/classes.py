@@ -87,6 +87,7 @@ _versioned = {'Measurement': {0: 'kid_readout.measurement.core.Measurement'},
               'SingleSweepStreamList': {0: 'kid_readout.measurement.basic.SingleSweepStreamList'},
               'Scan': {0: 'kid_readout.measurement.basic.SweepArray'},  # Deprecated
               'MMWSweepList': {0: 'kid_readout.measurement.mmw_source_sweep.MMWSweepList'},
+              'ADCSnap': {0: 'kid_readout.measurement.misc.ADCSnap'},
               }
 
 # This dict includes the IO implementations, which have no version numbers, as well as any classes that have no version
