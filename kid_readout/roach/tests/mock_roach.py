@@ -45,6 +45,9 @@ class MockRoach(object):
     def write_int(self, device_name, integer, blindwrite=False, offset=0):
         pass
 
+    def read_uint(self, device_name, offset=0):
+        return 0
+
     def snapshot_get(self, dev_name, man_trig=False, man_valid=False, wait_period=1, offset=-1, circular_capture=False,
                      get_extra_val=False):
         pass

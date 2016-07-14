@@ -53,7 +53,11 @@ class Roach2Baseband(RoachBaseband):
         logger.debug("Checking QDR calibration")
         import qdr
         q = qdr.Qdr(self.r,'qdr0')
-        qdr_is_calibrated = q.qdr_cal_check()
+        if self._using_mock_roach:
+            logger.info("Using MockRoach and skipping QDR calibration.")
+            return
+        else:
+            qdr_is_calibrated = q.qdr_cal_check()
         if qdr_is_calibrated:
             logger.debug("QDR is calibrated")
         if not qdr_is_calibrated or force_cal_qdr or reprogrammed:

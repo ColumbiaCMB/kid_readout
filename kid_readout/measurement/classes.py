@@ -72,6 +72,7 @@ def latest_version_number(class_name):
 _versioned = {'Measurement': {0: 'kid_readout.measurement.core.Measurement'},
               'MeasurementList': {0: 'kid_readout.measurement.core.MeasurementList'},
               'CornerCases': {0: 'kid_readout.measurement.test.utilities.CornerCases'},
+              'ADCSnap': {0: 'kid_readout.measurement.misc.ADCSnap'},
               'RoachMeasurement': {0: 'kid_readout.measurement.basic.RoachMeasurement'},
               'RoachStream': {0: 'kid_readout.measurement.basic.RoachStream0',
                               1: 'kid_readout.measurement.basic.RoachStream'},
