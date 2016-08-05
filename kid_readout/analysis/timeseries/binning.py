@@ -6,7 +6,7 @@ from __future__ import division
 import numpy as np
 
 
-def log_bin_edges(frequency, bins_per_decade=30):
+def log_bin_edges(frequency, bins_per_decade=30, ensure_none_empty=True):
     """
     Return an array of frequency bin edges that form bins with widths that increase approximately exponentially.
 
@@ -14,15 +14,15 @@ def log_bin_edges(frequency, bins_per_decade=30):
     not fail if the spacing is irregular. The lowest bin edge will be positive and lower than the lowest input, and the
     highest bin edge will be higher than the highest input.
 
-    At low frequencies where the bins would be so small that no input frequencies would land in them, the algorithm
-    instead returns bins with the same width as the input.
-
     Parameters
     ----------
     frequency : numpy.ndarray(float)
         The array of positive frequencies to use to create the bin edges.
     bins_per_decade : int
         The number of histogram bins per decade of frequency.
+    ensure_none_empty : bool
+        If True, then at low frequencies where the bins would be so small that no input frequencies would land in them,
+        return bins with the same width as the input to ensure that no bins are empty.
 
     Returns
     -------
@@ -35,8 +35,11 @@ def log_bin_edges(frequency, bins_per_decade=30):
     log_max_edge = np.log10(frequency.max() + df / 2)
     num_bins = int(bins_per_decade * (log_max_edge - log_min_edge))
     log_bins = np.logspace(log_min_edge, log_max_edge, num_bins)
-    usable_log_bins = log_bins[np.sum(np.diff(log_bins) < df):]
-    bins = np.concatenate((frequency[frequency < usable_log_bins.min()] - df / 2, usable_log_bins))
+    if ensure_none_empty:
+        usable_log_bins = log_bins[np.sum(np.diff(log_bins) < df):]
+        bins = np.concatenate((frequency[frequency < usable_log_bins.min()] - df / 2, usable_log_bins))
+    else:
+        bins = log_bins
     return bins
 
 

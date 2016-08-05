@@ -192,9 +192,19 @@ def git_log():
         return str(e)
 
 
+def git_status():
+    import kid_readout
+    kid_readout_directory = os.path.dirname(os.path.abspath(kid_readout.__file__))
+    try:
+        return subprocess.check_output(("cd {}; git status --porcelain".format(kid_readout_directory)), shell=True)
+    except Exception as e:
+        return str(e)
+
+
 def all_metadata():
     meta = {'script_code': script_code(),
             'git_log': git_log(),
+            'git_status': git_status(),
             'cryostat': settings.CRYOSTAT,
             'cooldown': settings.COOLDOWN}
     return meta
@@ -222,12 +232,18 @@ def new_npy_directory(suffix='', directory=settings.BASE_DATA_DIR, metadata=None
     return npy.NumpyDirectory(root_path, metadata=metadata)
 
 
-# Interactive settings check
+# Interactive checks to be used at the beginning of scripts
 
 def show_settings():
     print("cryostat: {}".format(settings.CRYOSTAT))
     for k, v in settings.COOLDOWN.items():
         print("{}: {}".format(k, v))
+    raw_input("Press enter to continue or ctrl-C to quit.")
+
+
+def show_git_status():
+    print("git status:")
+    print(git_status())
     raw_input("Press enter to continue or ctrl-C to quit.")
 
 

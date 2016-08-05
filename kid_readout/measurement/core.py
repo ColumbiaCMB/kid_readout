@@ -3,10 +3,12 @@ This module is the core of the measurement subpackage. See __init__.py for docum
 """
 import copy_reg
 import re
+import logging
 import inspect
 import keyword
 import importlib
 from collections import OrderedDict
+
 import numpy as np
 import pandas as pd
 
@@ -18,16 +20,20 @@ METADATA = '_metadata'  # This is the string used by IO objects to save metadata
 
 # TODO: decide which names really need to be reserved, and clean this up after add_legacy_origin is refactored.
 # These names cannot be used for attributes because they are used as part of the public DataFrame interface.
-IO_CLASS_NAME = 'io_class'  # This is the fully-qualified name of the io class used to read a measurement from disk.
+IO_CLASS_NAME = 'io_class'  # This is the fully-qualified name of the IO class used to read a measurement from disk.
 ROOT_PATH = 'root_path'  # This is the root file or directory from which a measurement was read from disk.
 NODE_PATH = 'node_path'  # This is the node path from the root node to the measurement node.
+NUMBER = 'number'  # This is the index of a single measurement slice from an array-like measurement.
+
 # IO_MODULE = 'io_module'  # This is the full-qualified name of the module used to read and write legacy data.
-RESERVED = [IO_CLASS_NAME, ROOT_PATH, NODE_PATH]  # io_node_path is included here
+RESERVED = [IO_CLASS_NAME, ROOT_PATH, NODE_PATH, NUMBER]  # io_node_path is included here
 # These strings have a corresponding private attribute.
 PRIVATE = ['io_node_path']
 
 # This character separates nodes in a node path.
 NODE_PATH_SEPARATOR = '/'
+
+logger = logging.getLogger(__name__)
 
 
 class Node(object):
@@ -508,10 +514,12 @@ class StateDict(dict):
                 results[this_label] = v
         return results
 
+
 def pickle_state(s):
     return StateDict, (dict(s),)
 
-copy_reg.pickle(StateDict,pickle_state)
+copy_reg.pickle(StateDict, pickle_state)
+
 
 class IO(object):
     """
@@ -591,20 +599,20 @@ class IO(object):
         """
         return node.class_name() + str(len(self.node_names()))
 
-    def write(self, measurement, node_path=None):
+    def write(self, node, node_path=None):
         """
-        Write the measurement to disk at the given node path. If no node path is specified, write at the root level
-        using the name given by default_name(). If a node path is specified, all but the final node must already exist.
+        Write the node to disk at the given node path. If no node path is specified, write at the root level using the
+        name given by self.default_name(). If a node path is specified, all but the final node must already exist.
 
         Parameters
         ----------
-        measurement : Measurement
+        node : Node
             The instance to write to disk.
         node_path : str
-             The node_path to the node that will contain this object.
+             The node path to the node that will contain this object.
         """
         if node_path is None:
-            node_path = self.default_name(measurement)
+            node_path = self.default_name(node)
         elif node_path == NODE_PATH_SEPARATOR:
             raise MeasurementError("Nothing may be written to the IO root.")
         validate_node_path(node_path)
@@ -612,7 +620,8 @@ class IO(object):
             absolute_node_path = node_path
         else:
             absolute_node_path = NODE_PATH_SEPARATOR + node_path
-        self._write_node(measurement, absolute_node_path)
+        self._write_node(node, absolute_node_path)
+        logger.info("Wrote {} to node path {}".format(node.__class__.__name__, absolute_node_path))
 
     def read(self, node_path, translate=None, force=False):
         """
@@ -795,7 +804,11 @@ def get_class(full_class_name):
 def from_series(series):
     io_class = get_class(classes.full_name(class_name=series[IO_CLASS_NAME], version=None))
     io = io_class(series[ROOT_PATH])
-    return io.read(series[NODE_PATH])
+    node = io.read(series[NODE_PATH])
+    if NUMBER in series:
+        return node[series[NUMBER]]
+    else:
+        return node
 
 
 def _instantiate(class_, variables, force):

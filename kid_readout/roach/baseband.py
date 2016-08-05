@@ -135,7 +135,7 @@ class RoachBaseband(RoachInterface):
         Set the stimulus tones by specific integer bins
         
         bins : array of bins at which tones should be placed
-            For Heterodyne system, negative frequencies should be placed in cannonical FFT order
+            For Heterodyne system, negative frequencies should be placed in canonical FFT order
             If 2d, interpret as (nwaves,ntones)
         nsamp : int, must be power of 2
             number of samples in the playback buffer. Frequency resolution will be fs/nsamp

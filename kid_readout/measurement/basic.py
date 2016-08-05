@@ -292,20 +292,30 @@ class StreamArray(RoachStream):
 
     def __getitem__(self, number):
         """
-        Return a SingleStream object containing the data at the frequency corresponding to the given integer number.
+        Return a SingleStream object containing the data from the channel corresponding to the given integer.
+
+        Parameters
+        ----------
+        number : int
+            The index of the stream to use to create the new single-channel object.
+
+        Returns
+        -------
+        SingleStream
         """
-        if isinstance(number, int):
-            return SingleStream(tone_bin=self.tone_bin, tone_amplitude=self.tone_amplitude, tone_phase=self.tone_phase,
-                                tone_index=self.tone_index[number], filterbank_bin=self.filterbank_bin[number],
-                                epoch=self.epoch, sequence_start_number=self.sequence_start_number,
-                                s21_raw=self.s21_raw[number, :], data_demodulated=self.data_demodulated,
-                                roach_state=self.roach_state, number=number, state=self.state,
-                                description=self.description)
-        else:
-            raise ValueError("Invalid number: {}".format(number))
+        number = int(number)  # Avoid weird indexing bugs
+        ss = SingleStream(tone_bin=self.tone_bin, tone_amplitude=self.tone_amplitude, tone_phase=self.tone_phase,
+                          tone_index=self.tone_index[number], filterbank_bin=self.filterbank_bin[number],
+                          epoch=self.epoch, sequence_start_number=self.sequence_start_number,
+                          s21_raw=self.s21_raw[number, :], data_demodulated=self.data_demodulated,
+                          roach_state=self.roach_state, number=number, state=self.state,
+                          description=self.description)
+        ss._io = self._io
+        ss._io_node_path = self._io_node_path
+        return ss
 
     def stream(self, number):
-        """Deprecated: use __getitem__."""
+        """See __getitem__."""
         return self[number]
 
     def tone_offset_frequency(self, normalized_frequency=True):
@@ -427,14 +437,27 @@ class SweepArray(RoachMeasurement):
         super(SweepArray, self).__init__(state=state, description=description)
 
     def __getitem__(self, number):
-        if isinstance(number, int):
-            return SingleSweep(streams=core.MeasurementList(sa.stream(number) for sa in self.stream_arrays),
-                               number=number, state=self.state, description=self.description)
-        else:
-            raise ValueError("Invalid number: {}".format(number))
+        """
+        Return a SingleSweep object containing the data from the channel corresponding to the given integer.
+
+        Parameters
+        ----------
+        number : int
+            The index of the sweep to use to create the new single-channel object.
+
+        Returns
+        -------
+        SingleSweep
+        """
+        number = int(number)  # Avoid weird indexing bugs
+        ss = SingleSweep(streams=core.MeasurementList(sa.stream(number) for sa in self.stream_arrays),
+                           number=number, state=self.state, description=self.description)
+        ss._io = self._io
+        ss._io_node_path = self._io_node_path
+        return ss
 
     def sweep(self, number):
-        """Deprecated; use __getitem__."""
+        """See __getitem__."""
         return self[number]
 
     @property
@@ -606,19 +629,21 @@ class SingleSweep(RoachMeasurement):
 
     def to_dataframe(self, add_origin=True):
         data = {'number': self.number, 'analysis_epoch': time.time(), 'start_epoch': self.start_epoch()}
+        # This should happen automatically
+        """
         try:
             for thermometer, temperature in self.state['temperature'].items():
                 data['temperature_{}'.format(thermometer)] = temperature
         except KeyError:
             pass
+        """
         try:
             for key, value in self.streams[0].roach_state.items():
                 data['roach_{}'.format(key)] = value
         except KeyError:
             pass
 
-        flat_state = self.state.flatten(wrap_lists=True)
-        data.update(flat_state)
+        data.update(self.state.flatten(wrap_lists=True))
 
         for param in self.resonator.current_result.params.values():
             data['res_{}'.format(param.name)] = param.value
@@ -676,16 +701,26 @@ class SweepStreamArray(RoachMeasurement):
 
     def __getitem__(self, number):
         """
-        Return a SweepStream object containing the data at the frequency corresponding to the given integer number.
+        Return a SingleSweepStream object containing the data from the channel corresponding to the given integer.
+
+        Parameters
+        ----------
+        number : int
+            The index of the sweep and stream to use to create the new single-channel object.
+
+        Returns
+        -------
+        SingleSweepStream
         """
-        if isinstance(number, int):
-            return SingleSweepStream(sweep=self.sweep_array.sweep(number), stream=self.stream_array.stream(number),
-                                     number=number, state=self.state, description=self.description)
-        else:
-            raise ValueError("Invalid number: {}".format(number))
+        number = int(number)  # Avoid weird indexing bugs
+        sss = SingleSweepStream(sweep=self.sweep_array.sweep(number), stream=self.stream_array.stream(number),
+                                number=number, state=self.state, description=self.description)
+        sss._io = self._io
+        sss._io_node_path = self._io_node_path
+        return sss
 
     def sweep_stream(self, number):
-        """Deprecated: use __getitem__"""
+        """See __getitem__"""
         return self[number]
 
     def to_dataframe(self, deglitch=True):
@@ -979,23 +1014,21 @@ class SingleSweepStream(RoachMeasurement):
         self._pca_S_11 = evals[1]
         self._pca_angles = angles
 
-    def to_dataframe(self, deglitch=True, add_origin=True):
+    def to_dataframe(self, deglitch=True, add_origin=True, num_model_points=1000):
+        # TODO: can we remove analysis calls from this method?
         if not deglitch:
             self.set_q_and_x(deglitch=False)
         data = {'number': self.number, 'analysis_epoch': time.time(), 'start_epoch': self.start_epoch()}
-        try:
-            for thermometer, temperature in self.state['temperature'].items():
-                data['temperature_{}'.format(thermometer)] = temperature
-        except KeyError:
-            pass
+
+        data.update(self.state.flatten(wrap_lists=True))
+        data.update(self.stream.state.flatten(prefix='stream', wrap_lists=True))
+        data.update(self.sweep.state.flatten(prefix='sweep', wrap_lists=True))
+
         try:
             for key, value in self.stream.roach_state.items():
                 data['roach_{}'.format(key)] = value
         except KeyError:
             pass
-
-        flat_state = self.stream.state.flatten(wrap_lists=True)
-        data.update(flat_state)
 
         for param in self.sweep.resonator.current_result.params.values():
             data['res_{}'.format(param.name)] = param.value
@@ -1004,18 +1037,22 @@ class SingleSweepStream(RoachMeasurement):
         data['res_Q_i'] = self.sweep.resonator.Q_i
         data['res_Q_e'] = self.sweep.resonator.Q_e
 
-        data['S_xx'] = [self.S_xx]
-        data['S_yy'] = [self.S_yy]
-        data['S_qq'] = [self.S_qq]
-        data['S_frequency'] = [self.S_frequency]
-
-        data['res_s21_data'] = [self.sweep.resonator.data]
         data['res_frequency_data'] = [self.sweep.resonator.frequency]
+        data['res_s21_data'] = [self.sweep.resonator.data]
         data['res_s21_errors'] = [self.sweep.resonator.errors]
-        modelf = np.linspace(self.sweep.resonator.frequency.min(), self.sweep.resonator.frequency.max(), 1000)
-        models21 = self.sweep.resonator.model.eval(params=self.sweep.resonator.current_params, f=modelf)
-        data['res_model_frequency'] = [modelf]
-        data['res_model_s21'] = [models21]
+        model_f = np.linspace(self.sweep.resonator.frequency.min(), self.sweep.resonator.frequency.max(),
+                              num_model_points)
+        data['res_model_frequency'] = [model_f]
+        model_s21 = self.sweep.resonator.model.eval(params=self.sweep.resonator.current_params, f=model_f)
+        data['res_model_s21'] = [model_s21]
+        data['res_s21_data_normalized'] = [self.sweep.resonator.remove_background(self.sweep.resonator.frequency,
+                                                                                  self.sweep.resonator.data)]
+        data['res_model_s21_normalized'] = [self.sweep.resonator.remove_background(model_f, model_s21)]
+        s21_at_f_0 = self.sweep.resonator.model.eval(params=self.sweep.resonator.current_params,
+                                                     f=self.sweep.resonator.f_0)
+        data['res_model_s21_at_f_0'] = s21_at_f_0
+        data['res_model_s21_normalized_at_f_0'] = self.sweep.resonator.remove_background(self.sweep.resonator.f_0,
+                                                                                         s21_at_f_0)
 
         try:
             data['folded_x'] = [self.stream.fold(self.x)]
@@ -1023,6 +1060,11 @@ class SingleSweepStream(RoachMeasurement):
             data['folded_normalized_s21'] = [self.stream.fold(self.stream_s21_normalized)]
         except ValueError:
             pass
+
+        data['S_xx'] = [self.S_xx]
+        data['S_yy'] = [self.S_yy]
+        data['S_xy'] = [self.S_xy]
+        data['S_frequency'] = [self.S_frequency]
 
         dataframe = pd.DataFrame(data, index=[0])
         if add_origin:
@@ -1045,12 +1087,28 @@ class SweepStreamList(RoachMeasurement):
         super(SweepStreamList, self).__init__(state=state, description=description)
 
     def __getitem__(self, number):
-        return SingleSweepStreamList(self.sweep[number],
+        """
+        Return a SingleSweepStreamList object containing the data from the channel corresponding to the given integer.
+
+        Parameters
+        ----------
+        number : int
+            The index of the sweep and streams to use to create the new single-channel object.
+
+        Returns
+        -------
+        SingleSweepStreamList
+        """
+        number = int(number)  # Avoid weird indexing bugs
+        sssl = SingleSweepStreamList(self.sweep[number],
                                      core.MeasurementList(sa[number] for sa in self.stream_list),
                                      number=number, state=self.state, description=self.description)
+        sssl._io = self._io
+        sssl._io_node_path = self._io_node_path
+        return sssl
 
     def single_sweep_stream_list(self, number):
-        """Deprecated: use __getitem__"""
+        """See __getitem__"""
         return self[number]
 
 

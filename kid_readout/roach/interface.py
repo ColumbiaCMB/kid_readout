@@ -295,10 +295,11 @@ class RoachInterface(object):
 
         gain: the number of stages to not divide on. The final gain will be 2^gain
         """
-        fftshift = (2 ** 20 - 1) - (2 ** gain - 1)  # this expression puts downsifts at the earliest stages of the FFT
+        fftshift = (2 ** 20 - 1) - (2 ** gain - 1)  # this expression puts downshifts at the earliest stages of the FFT
         self.fft_gain = gain
         self.r.write_int('fftshift', fftshift)
         self.save_state()
+        logger.info("Set FFT gain integer to {:d}.".format(gain))
 
     # TODO: this should raise a RoachError or return None if no bank is selected or the Roach isn't programmed.
     def get_current_bank(self):
@@ -343,24 +344,31 @@ class RoachInterface(object):
         returns: float, switching rate in Hz.
         """
         rate_register = 'gpiob'
+        message = "Set modulation rate to '{}': {:.3f} Hz."
         if str.lower(str(rate)) == 'low':
             self.r.write_int(rate_register, 0)
             self.modulation_rate = 0
             self.modulation_output = 0
             self.save_state()
-            return 0.0
+            rate_Hz = 0.0
+            logger.info(message.format(rate, rate_Hz, self.modulation_rate, self.modulation_output))
+            return rate_Hz
         if str.lower(str(rate)) == 'high':
             self.r.write_int(rate_register, 1)
             self.modulation_rate = 0
             self.modulation_output = 1
             self.save_state()
-            return 0.0
-        if rate >= 1 and rate <= 8:
+            rate_Hz = 0.0
+            logger.info(message.format(rate, rate_Hz, self.modulation_rate, self.modulation_output))
+            return rate_Hz
+        if 1 <= rate <= 8:
             self.r.write_int(rate_register, 10 - rate)
             self.modulation_rate = rate
             self.modulation_output = 2
             self.save_state()
-            return self.get_modulation_rate_hz()
+            rate_Hz = self.get_modulation_rate_hz()
+            logger.info(message.format(rate, rate_Hz, self.modulation_rate, self.modulation_output))
+            return rate_Hz
         else:
             raise ValueError('Invalid value for rate: got %s, expected one of "high", "low", or 1-8' % str(rate))
 
@@ -617,7 +625,6 @@ class RoachInterface(object):
     def set_dac_attenuator(self, attendb):
         if attendb < 0 or attendb > 63:
             raise ValueError("DAC Attenuator must be between 0 and 63 dB. Value given was: %s" % str(attendb))
-
         if attendb > 31.5:
             attena = 31.5
             attenb = attendb - attena
@@ -628,6 +635,7 @@ class RoachInterface(object):
         self.set_attenuator(attenb, le_bit=0x02)
         self.dac_atten = int(attendb * 2) / 2.0
         self.save_state()
+        logger.info("Set DAC attenuator to {:.1f} dB.".format(self.dac_atten))
 
     def set_dac_atten(self, attendb):
         """ Alias for set_dac_attenuator """
