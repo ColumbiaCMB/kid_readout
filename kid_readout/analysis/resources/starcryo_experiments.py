@@ -1,5 +1,6 @@
 from kid_readout.utils.time_tools import date_to_unix_time
 
+thermometry_2016_08_10 = dict(package=9, load=1)
 thermometry_2016_07_08 = dict(package=9, load=1)
 thermometry_2015_10_28 = dict(package=9, load=11, waveguide=1)
 thermometry_2015_06_26 = dict(package=9, load=11, waveguide=1)
@@ -14,6 +15,12 @@ thermometry_2014_10_10 = dict(package=9, load=1, stage=11, waveguide=2)
 thermometry_2014_03_19 = dict(package=11, load=2, stage=13, copper=1)
 
 by_unix_time_table = [
+    dict(date='2016-08-10',
+         description='Stanford TwoLayer02-0303 hybrid Al-Nb eight-LEKID chip in dark package H3+L3, taped.',
+         optical_state='dark',
+         thermometry_config=thermometry_2016_08_10,
+         chip_id='TwoLayer02-0303'),
+
     dict(date='2016-07-08',
          description='STAR Cryo 150509 WSPEC MT chip in dark package; absorber tied to 3 K.',
          optical_state='dark',
