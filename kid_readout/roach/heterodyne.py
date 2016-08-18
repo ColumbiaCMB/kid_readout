@@ -500,6 +500,7 @@ class RoachHeterodyne(RoachInterface):
         else :
             self.attenuator.set_att(attendb)
             self.dac_atten = int(attendb * 2) / 2.0
+        logger.info("Set DAC attenuator to {:.1f} dB.".format(self.dac_atten))
 
     def set_adc_attenuator(self, attendb):
         if attendb < 0 or attendb > 31.5:

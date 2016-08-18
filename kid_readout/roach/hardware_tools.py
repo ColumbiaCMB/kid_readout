@@ -19,6 +19,8 @@ def r2_with_mk1(**kwargs):
    
 def r1_with_mk2(**kwargs):
     attenuator = Attenuator()
+    if MARK2_VALON is None:  # If lo_valon is None the roach will use its internal valon, with unfortunate results.
+        raise ValueError("MARK2_VALON is None.")
     r1 = RoachHeterodyne(roachip=ROACH1_IP, adc_valon=ROACH1_VALON, host_ip=ROACH1_HOST_IP, lo_valon=MARK2_VALON,
                          attenuator=attenuator, **kwargs)
     return r1
