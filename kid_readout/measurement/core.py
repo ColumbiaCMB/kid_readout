@@ -718,7 +718,7 @@ class IO(object):
         if item in self.node_names():
             return self.read(item)
         else:
-            raise AttributeError()
+            raise AttributeError("Node name not found: {}".format(item))
 
     def __dir__(self):
         attrs = dir(self.__class__) + self.__dict__.keys() + self.node_names()

@@ -292,16 +292,7 @@ class StreamArray(RoachStream):
 
     def __getitem__(self, number):
         """
-        Return a SingleStream object containing the data from the channel corresponding to the given integer.
-
-        Parameters
-        ----------
-        number : int
-            The index of the stream to use to create the new single-channel object.
-
-        Returns
-        -------
-        SingleStream
+        See stream().
         """
         number = int(number)  # Avoid weird indexing bugs
         ss = SingleStream(tone_bin=self.tone_bin, tone_amplitude=self.tone_amplitude, tone_phase=self.tone_phase,
@@ -315,7 +306,18 @@ class StreamArray(RoachStream):
         return ss
 
     def stream(self, number):
-        """See __getitem__."""
+        """
+        Return a SingleStream object containing the data from the channel corresponding to the given integer.
+
+        Parameters
+        ----------
+        number : int
+            The index of the stream to use to create the new single-channel object.
+
+        Returns
+        -------
+        SingleStream
+        """
         return self[number]
 
     def tone_offset_frequency(self, normalized_frequency=True):
@@ -426,17 +428,30 @@ class SweepArray(RoachMeasurement):
         """
         Parameters
         ----------
-        stream_arrays : MeasurementList(StreamArray)
+        stream_arrays : iterable(StreamArray)
             The streams that make up the sweep.
         state : dict
             All non-roach state information.
         description : str
             A human-readable description of this measurement.
         """
+        if not isinstance(stream_arrays, core.MeasurementList):
+            stream_arrays = core.MeasurementList(stream_arrays)
         self.stream_arrays = stream_arrays
         super(SweepArray, self).__init__(state=state, description=description)
 
     def __getitem__(self, number):
+        """
+        See sweep().
+        """
+        number = int(number)  # Avoid weird indexing bugs
+        ss = SingleSweep(streams=core.MeasurementList(sa.stream(number) for sa in self.stream_arrays),
+                           number=number, state=self.state, description=self.description)
+        ss._io = self._io
+        ss._io_node_path = self._io_node_path
+        return ss
+
+    def sweep(self, number):
         """
         Return a SingleSweep object containing the data from the channel corresponding to the given integer.
 
@@ -449,15 +464,6 @@ class SweepArray(RoachMeasurement):
         -------
         SingleSweep
         """
-        number = int(number)  # Avoid weird indexing bugs
-        ss = SingleSweep(streams=core.MeasurementList(sa.stream(number) for sa in self.stream_arrays),
-                           number=number, state=self.state, description=self.description)
-        ss._io = self._io
-        ss._io_node_path = self._io_node_path
-        return ss
-
-    def sweep(self, number):
-        """See __getitem__."""
         return self[number]
 
     @property
@@ -555,7 +561,7 @@ class SingleSweep(RoachMeasurement):
         """
         Parameters
         ----------
-        streams: MeasurementList(SingleStream)
+        streams: iterable(SingleStream)
             The streams that make up the sweep.
         number : int
             The number of this instance in the SweepArray from which it was created.
@@ -564,6 +570,8 @@ class SingleSweep(RoachMeasurement):
         description : str
             A human-readable description of this measurement.
         """
+        if not isinstance(streams, core.MeasurementList):
+            streams = core.MeasurementList(streams)
         self.streams = streams
         self.number = number
         super(SingleSweep, self).__init__(state=state, description=description)
@@ -671,6 +679,14 @@ class SweepStreamArray(RoachMeasurement):
     _version = 0
 
     def __init__(self, sweep_array, stream_array, state=None, description=''):
+        """
+        Parameters
+        ----------
+        sweep_array : SweepArray
+        stream_array : StreamArray
+        state : dict
+        description : str
+        """
         if sweep_array.num_channels != stream_array.tone_index.size:
             raise core.MeasurementError("The number of SweepArray channels does not match the StreamArray number.")
         self.sweep_array = sweep_array
@@ -701,6 +717,17 @@ class SweepStreamArray(RoachMeasurement):
 
     def __getitem__(self, number):
         """
+        See sweep_stream()
+        """
+        number = int(number)  # Avoid weird indexing bugs
+        sss = SingleSweepStream(sweep=self.sweep_array.sweep(number), stream=self.stream_array.stream(number),
+                                number=number, state=self.state, description=self.description)
+        sss._io = self._io
+        sss._io_node_path = self._io_node_path
+        return sss
+
+    def sweep_stream(self, number):
+        """
         Return a SingleSweepStream object containing the data from the channel corresponding to the given integer.
 
         Parameters
@@ -712,15 +739,6 @@ class SweepStreamArray(RoachMeasurement):
         -------
         SingleSweepStream
         """
-        number = int(number)  # Avoid weird indexing bugs
-        sss = SingleSweepStream(sweep=self.sweep_array.sweep(number), stream=self.stream_array.stream(number),
-                                number=number, state=self.state, description=self.description)
-        sss._io = self._io
-        sss._io_node_path = self._io_node_path
-        return sss
-
-    def sweep_stream(self, number):
-        """See __getitem__"""
         return self[number]
 
     def to_dataframe(self, deglitch=True):
@@ -735,6 +753,15 @@ class SingleSweepStream(RoachMeasurement):
     _version = 0
 
     def __init__(self, sweep, stream, number=0, state=None, description=''):
+        """
+        Parameters
+        ----------
+        sweep : SingleSweep
+        stream : SingleStream
+        number : int
+        state : dict
+        description : str
+        """
         self.sweep = sweep
         self.stream = stream
         self.number = number
@@ -1082,11 +1109,33 @@ class SweepStreamList(RoachMeasurement):
     _version = 0
 
     def __init__(self, sweep, stream_list, state=None, description=''):
+        """
+        Parameters
+        ----------
+        sweep : SweepArray
+        stream_list : iterable(StreamArray)
+        state : dict
+        description : str
+        """
         self.sweep = sweep
+        if not isinstance(stream_list, core.MeasurementList):
+            stream_list = core.MeasurementList
         self.stream_list = stream_list
         super(SweepStreamList, self).__init__(state=state, description=description)
 
     def __getitem__(self, number):
+        """
+        See single_sweep_stream_list().
+        """
+        number = int(number)  # Avoid weird indexing bugs
+        sssl = SingleSweepStreamList(self.sweep[number],
+                                     core.MeasurementList(sa[number] for sa in self.stream_list),
+                                     number=number, state=self.state, description=self.description)
+        sssl._io = self._io
+        sssl._io_node_path = self._io_node_path
+        return sssl
+
+    def single_sweep_stream_list(self, number):
         """
         Return a SingleSweepStreamList object containing the data from the channel corresponding to the given integer.
 
@@ -1099,16 +1148,6 @@ class SweepStreamList(RoachMeasurement):
         -------
         SingleSweepStreamList
         """
-        number = int(number)  # Avoid weird indexing bugs
-        sssl = SingleSweepStreamList(self.sweep[number],
-                                     core.MeasurementList(sa[number] for sa in self.stream_list),
-                                     number=number, state=self.state, description=self.description)
-        sssl._io = self._io
-        sssl._io_node_path = self._io_node_path
-        return sssl
-
-    def single_sweep_stream_list(self, number):
-        """See __getitem__"""
         return self[number]
 
 
@@ -1117,7 +1156,18 @@ class SingleSweepStreamList(RoachMeasurement):
     _version = 0
 
     def __init__(self, single_sweep, stream_list, number=0, state=None, description=''):
+        """
+        Parameters
+        ----------
+        single_sweep : SingleSweep
+        stream_list : iterable(SingleStream)
+        number : int
+        state : dict
+        description : str
+        """
         self.sweep = single_sweep
+        if not isinstance(stream_list, core.MeasurementList):
+            stream_list = core.MeasurementList
         self.stream_list = stream_list
         self.number = number
         super(SingleSweepStreamList, self).__init__(state=state, description=description)
