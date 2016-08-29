@@ -13,7 +13,7 @@ from equipment.srs import lockin
 logger.setLevel(logging.DEBUG)
 
 hittite = signal_generator.Hittite(ipaddr='192.168.0.200')
-hittite.set_power(-3.0)
+hittite.set_power(0.0)
 hittite.on()
 hittite.set_freq(148e9/12.)
 
@@ -33,10 +33,11 @@ source.ttl_modulation_source = 'roach'
 setup = hardware.Hardware(hittite, source,lockin)
 
 ri = hardware_tools.r2_with_mk1(1000.)
-ri.iq_delay=-1
 
-ri.set_dac_atten(20)
-ri.set_fft_gain(6)
+ri.set_dac_atten(0)
+ri.set_fft_gain(8)
+ri.set_debug(False)
+ri.set_loopback(False)
 
 nsamp = 2**15
 step = 1
@@ -56,19 +57,21 @@ ri.set_lo(1250.)
 state = dict(field_canceling_magnet=False,warm_magnetic_shield=True,cryostat='starcryo')
 state.update(**setup.state())
 
-while True:
+if True:
     tic = time.time()
     for lo in 830.+190*np.arange(0,4):
         logger.info("Measuring at LO %.1f" % lo)
         ri.set_lo(lo)
-        df = acquire.new_nc_file(suffix='scan_lo_%.1f_MHz' % lo)
+        df = acquire.new_nc_file(suffix='scan_lo_%.1f_MHz_modulated_mmw_source' % lo)
         state.update(**setup.state(fast=True))
         swa = acquire.run_sweep(ri, (np.arange(1, 257)[None, :] * 7 / 8. + ri.lo_frequency + offsets[:, None]),
                                 num_tone_samples=nsamp, length_seconds=0.1, state=state, verbose=True)
+        x,y = ri.get_raw_adc()
+        logger.info("ADC RMSs: %.1f %.1f" % (x.std(),y.std()))
         df.write(swa)
         df.close()
         print "elapsed:", (time.time()-tic)/60.0,'minutes'
-    time.sleep(60.)
+    #time.sleep(60.)
     # while time.time() - tic < 5*60:
     #     print "waiting... %.1f min remaining" % ((5*60 - (time.time() - tic))/60)
     #     time.sleep(60)
