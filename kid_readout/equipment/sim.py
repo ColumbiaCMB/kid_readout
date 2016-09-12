@@ -227,13 +227,18 @@ class SIM900(SIM):
         self.send('RPER 510') # Turn on pass-through for ports 1-8
         self.broadcast('*IDN?') # Ask everything for its identification
         self.send('WAIT 1000') # Wait for one second
+        time.sleep(1) #wait that second locally before doing anything else
         self.send('BRER 0') # Turn off broadcasting
         self.send('RPER 0') # Turn off message pass-through. Check that this keeps self-sent messages on!
         lines = [line.strip() for line in self.serial.readlines()]
         lines = [line for line in lines if line] # Remove blank messages
         for line in lines:
             port, message = self.parse_message(line)
-            SRS, sim, serial_number, firmware_version = self.parse_definite_length(message).split(',')
+            try:
+                SRS, sim, serial_number, firmware_version = self.parse_definite_length(message).split(',')
+            except ValueError:
+                raise RuntimeError("Trouble communicating with SIM modules. Try running your command again. Failing "
+                                   "response string was: %r" % message)
             try:
                 self.ports[port] = globals()[sim](self.serial, (self, port)) # Update
             except KeyError as e:
