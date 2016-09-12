@@ -77,7 +77,12 @@ def main():
         while True:
             dio1_volt = diodes.voltage(1)
             dio1_temp = diodes.temperature(1)
-            dio2_volt = dio2_temp = dio3_volt = dio3_temp = dio4_volt = dio4_temp = 0
+            dio2_volt = diodes.voltage(2)
+            dio2_temp = diodes.temperature(2)
+            dio3_volt = diodes.voltage(3)
+            dio3_temp = diodes.temperature(3)
+            dio4_volt = diodes.voltage(4)
+            dio4_temp = diodes.temperature(4)
             rox1_res = ruox3628.resistance
             rox1_temp = ruox3628.temperature
             rox2_res = sim6.resistance
