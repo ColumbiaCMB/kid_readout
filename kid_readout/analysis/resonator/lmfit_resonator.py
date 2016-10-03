@@ -86,6 +86,13 @@ class BaseResonator(FitterWithAttributeAccess):
         else:
             return None
 
+    def eval(self,frequency=None,params=None):
+        if params is None:
+            params = self.current_params
+        if frequency is None:
+            frequency = self.frequency
+        return self.model.eval(f=frequency,params=params)
+
     def background_s21(self, frequency=None):
         if frequency is None:
             frequency = self.frequency

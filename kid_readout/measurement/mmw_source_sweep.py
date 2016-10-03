@@ -81,9 +81,10 @@ class MMWResponse(basic.SingleSweepStreamList):
         for sss in sweep_stream_list:
             fx = sss.fold(sss.x)
             # TODO: this is a hack
-            phase = np.angle(np.fft.rfft(sss.x)[128])
-            roll_by = int(np.round(phase*256/(2*np.pi)))
-            result.append(np.roll(fx,-roll_by))
+            xfft = np.fft.rfft(fx)
+            phase = np.angle(xfft[1])
+            roll_by = int(np.round(phase*fx.shape[0]/(2*np.pi))) + fx.shape[0]//4
+            result.append(np.roll(fx,roll_by))
         return np.array(result)
 
     @memoized_property
