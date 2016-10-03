@@ -196,4 +196,4 @@ class Roach2Baseband(RoachBaseband):
                            * data[:, n])
             if m >= self.nfft // 2:
                 demod[:, n] = np.conjugate(demod[:, n])
-        return demod
+        return np.conjugate(demod)
