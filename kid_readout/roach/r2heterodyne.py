@@ -37,6 +37,7 @@ class Roach2Heterodyne(RoachHeterodyne):
         self.wafer = wafer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
         self.nfft = 2 ** 14
+        self.fpga_cycles_per_filterbank_frame = 2**13
         self._fpga_output_buffer = 'ppout%d' % wafer
 
         self.phase0 = None      #initial sequence number, if none then no data has been read in yet

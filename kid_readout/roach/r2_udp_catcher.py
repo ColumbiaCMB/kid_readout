@@ -48,17 +48,13 @@ def get_udp_packets(ri,npkts,addr=('10.0.0.1',55555)):
 
     return pkts
 
-def stream_data(ri, ):
-    x=1
-    return
-
 
 def get_udp_data(ri,npkts,nchans,addr=('10.0.0.1',55555), verbose=False, fast=False):
     pkts = get_udp_packets(ri, npkts, addr=addr)
     if fast:
         darray, seqnos, num_bad_pkts, num_dropped_pkts = decode.decode_packets_fast(pkts,nchans)
     else:
-        darray, seqnos, num_bad_pkts, num_dropped_pkts = decode_packets(pkts,nchans)
+        darray, seqnos, num_bad_pkts, num_dropped_pkts = decode_packets(pkts,nchans,ri.fpga_cycles_per_filterbank_frame)
     if num_bad_pkts or num_dropped_pkts:
         logger.warning("Detected %d bad and %d dropped packets. Something is likely misconfigured" % (num_bad_pkts,num_dropped_pkts))
     if verbose:
@@ -67,13 +63,12 @@ def get_udp_data(ri,npkts,nchans,addr=('10.0.0.1',55555), verbose=False, fast=Fa
     return darray,seqnos
 
 
-def decode_packets(plist,nchans):
+def decode_packets(plist,nchans,clocks_per_filterbank_frame):
     assert(nchans>0)
     plist = plist[1:]
     cntr_total = 2**32
-    nfft2 = 2**14 / 2
     chns_per_pkt = 1024
-    pkt_counter_step = nfft2 * chns_per_pkt // nchans
+    pkt_counter_step = clocks_per_filterbank_frame * chns_per_pkt // nchans
     max_num_pkts = cntr_total // pkt_counter_step
     npkts = len(plist)
 

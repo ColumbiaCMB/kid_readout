@@ -69,6 +69,7 @@ class RoachHeterodyne(RoachInterface):
         self.wafer = wafer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
         self.nfft = 2 ** 14
+        self.fpga_cycles_per_filterbank_frame = 2**13
         self._fpga_output_buffer = 'ppout%d' % wafer
 
         self._general_setup()
@@ -158,10 +159,7 @@ class RoachHeterodyne(RoachInterface):
         #self.set_tone_bins(bins, nsamp, amps=amps, phases=self.phases, **kwargs)
         self.set_tone_bins(bins, nsamp, amps=amps, preset_norm=preset_norm, **kwargs)
         self.fft_bins = self.calc_fft_bins(bins, nsamp)
-        if self.fft_bins.shape[1] > 4:
-            readout_selection = range(4)
-        else:
-            readout_selection = range(self.fft_bins.shape[1])
+        readout_selection = range(self.fft_bins.shape[1])
         self.select_bank(0)
         self.select_fft_bins(readout_selection)
         self.save_state()

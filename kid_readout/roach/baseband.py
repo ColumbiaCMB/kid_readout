@@ -62,6 +62,7 @@ class RoachBaseband(RoachInterface):
         self.wafer = wafer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
         self.nfft = 2 ** 14
+        self.fpga_cycles_per_filterbank_frame = 2**14
         self._fpga_output_buffer = 'ppout%d' % wafer
 
         self._general_setup()
@@ -109,6 +110,7 @@ class RoachBaseband(RoachInterface):
         self.set_tone_bins(bins, nsamp, amps=amps, load=load, normfact=normfact,phases=phases, preset_norm=preset_norm)
         self.fft_bins = self.calc_fft_bins(bins, nsamp)
         self.select_bank(0)
+        readout_selection = range(self.fft_bins.shape[1])
         self.select_fft_bins(readout_selection)
         self.save_state()
         return actual_freqs
@@ -280,6 +282,7 @@ class RoachBaseband(RoachInterface):
             f_tone = k * self.fs / float(ns)
             foffs = (2 * k * nfft - m * ns) / float(ns)
             wc = self._window_response(foffs / 2.0) * (self.tone_nsamp / 2.0 ** 18)
+            #print "chan",m,"tone",k,"sign",sign,"foffs",foffs
             demod[:, n] = (wc * np.exp(sign * 1j * (2 * np.pi * foffs * t + phi0) - sign *
                                        2j*np.pi*f_tone*hardware_delay)
                            * data[:, n])

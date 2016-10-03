@@ -126,6 +126,7 @@ class RoachInterface(object):
         self.modulation_output = 0
         self.modulation_rate = 0
         self.wavenorm = None
+        self.phase0 = None
 
         self.loopback = None
         self.debug_register = None
@@ -190,6 +191,10 @@ class RoachInterface(object):
         return num_tones
 
     @property
+    def hardware_delay_samples(self):
+        return self.hardware_delay_estimate*self.fs*1e6
+
+    @property
     def state_arrays(self):
         return self.get_state_arrays()
 
@@ -239,7 +244,9 @@ class RoachInterface(object):
                           bank=self.bank,
                           loopback=self.loopback,
                           debug_register=self.debug_register,
-                          fft_shift_register = self.fft_shift_register
+                          fft_shift_register = self.fft_shift_register,
+                          hardware_delay_samples = self.hardware_delay_samples,
+                          reference_sequence_number = self.phase0
                           )
         if include_registers:
             for register in self.initial_values_for_writeable_registers:

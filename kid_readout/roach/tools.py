@@ -81,7 +81,9 @@ heterodyne_nfft_delay_estimates = {
                         2**14 : -31.3e-6,
                         2**15 : -63.3e-6}
 
-
+def preset_phases(num_bins):
+    np.random.seed(123)
+    return np.random.random(num_bins) * 2 * np.pi
 
 def compute_window(npfb=2 ** 15, taps=2, wfunc=scipy.signal.flattop):
     wv = wfunc(npfb * taps)
