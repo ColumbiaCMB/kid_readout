@@ -22,7 +22,7 @@ print lockin.identification
 # print time.time()-tic
 source = mmwave_source.MMWaveSource()
 source.set_attenuator_turns(6.0,6.0)
-source.multiplier_input = 'hittite'
+source.multiplier_input = 'thermal'
 source.waveguide_twist_angle = 0
 source.ttl_modulation_source = 'roach'
 
@@ -34,9 +34,8 @@ setup = hardware.Hardware(hwp_motor, source, lockin,hittite)
 
 ri = Roach2Baseband()
 
-initial_f0s = np.load('/data/readout/resonances/2016-10-04-JPL-8x8-LF-2_firstcooldown_resonances.npy')/1e6
-initial_f0s[35]-=0.02
-initial_f0s[37] += 0.02
+initial_f0s = np.load('/data/readout/resonances/2016-10-03-jpl-lf-2-crude-initial-resonator-list.npy')/1e6
+
 nf = len(initial_f0s)
 atonce = 128
 if nf % atonce > 0:
@@ -49,11 +48,11 @@ offsets = np.arange(-16,16)*512./nsamp
 mmw_freqs = np.linspace(140e9, 165e9, 200)
 
 ri.set_dac_atten(20)
-#hittite.off()
+hittite.off()
 ri.set_modulation_output('high')
 
 tic = time.time()
-ncf = new_npy_directory(suffix='cw_hwp_sweep')
+ncf = new_nc_file(suffix='broadband_hwp_sweep')
 swpa = acquire.run_sweep(ri, tone_banks=initial_f0s[None,:] + offsets[:,None], num_tone_samples=nsamp,
                              length_seconds=0, verbose=True,
                          )
@@ -85,22 +84,16 @@ if np.any(np.diff(current_f0s)<0.015):
 ri.set_tone_freqs(current_f0s,nsamp)
 ri.select_fft_bins(range(initial_f0s.shape[0]))
 
-hittite.on()
+#hittite.on()
 ri.set_modulation_output(7)
-for n in range(100):
+for n in range(200):
     hwp_motor.increment()
-    for freq in mmw_freqs:
-        hittite.set_freq(freq/12.)
-        time.sleep(0.1)
-        state=setup.state(fast=True)
-        meas = ri.get_measurement(num_seconds=1., state=state)
-        print n, freq
-        try:
-            sweepstream.stream_list.append(meas)
-        except RuntimeError,e:
-            print "failed to write measurement",e
-            print meas.state
-#    time.sleep(30)
+    time.sleep(0.5)
+    state=setup.state(fast=True)
+    meas = ri.get_measurement(num_seconds=1., state=state)
+    #print n,
+    sweepstream.stream_list.append(meas)
+    time.sleep(30)
 
 
 print "dac_atten %f done in %.1f minutes" % (20, (time.time()-tic)/60.)
