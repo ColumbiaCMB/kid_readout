@@ -38,7 +38,7 @@ def _add_temperature(measurement, temps, thermometry, recursive, overwrite):
 
 def valid_temperatures(epoch, temps, thermometry):
     # We could use thermometry to get the names that are used there, but it's not clear to me if we want to do this.
-    names = ('primary_package', 'secondary_package', 'primary_load', 'secondary_load')
+    names = ('package', 'package_secondary', 'load', 'aux')
     return core.StateDict([(name, temp) for name, temp in zip(names, temps.get_temperatures_at(epoch))
                            if not np.isnan(temp)])
 

@@ -56,6 +56,13 @@ class RoachMeasurement(core.Measurement):
         if self._parent is not None:
             self._parent._delete_memoized_property_caches()
 
+    @property
+    def cryostat(self):
+        try:
+            return self._io.metadata.cryostat
+        except (AttributeError, KeyError) as e:
+            return None
+
 
 class RoachStream(RoachMeasurement):
 
@@ -637,14 +644,6 @@ class SingleSweep(RoachMeasurement):
 
     def to_dataframe(self, add_origin=True):
         data = {'number': self.number, 'analysis_epoch': time.time(), 'start_epoch': self.start_epoch()}
-        # This should happen automatically
-        """
-        try:
-            for thermometer, temperature in self.state['temperature'].items():
-                data['temperature_{}'.format(thermometer)] = temperature
-        except KeyError:
-            pass
-        """
         try:
             for key, value in self.streams[0].roach_state.items():
                 data['roach_{}'.format(key)] = value
@@ -741,7 +740,7 @@ class SweepStreamArray(RoachMeasurement):
         """
         return self[number]
 
-    def to_dataframe(self, deglitch=True):
+    def to_dataframe(self, deglitch=None):
         dataframes = []
         for number in range(self.num_channels):
             dataframes.append(self.sweep_stream(number).to_dataframe(deglitch=deglitch))
@@ -1041,10 +1040,9 @@ class SingleSweepStream(RoachMeasurement):
         self._pca_S_11 = evals[1]
         self._pca_angles = angles
 
-    def to_dataframe(self, deglitch=True, add_origin=True, num_model_points=1000):
-        # TODO: can we remove analysis calls from this method?
-        if not deglitch:
-            self.set_q_and_x(deglitch=False)
+    def to_dataframe(self, deglitch=None, add_origin=True, num_model_points=1000):
+        if deglitch is not None:
+            self.set_q_and_x(deglitch=deglitch)
         data = {'number': self.number, 'analysis_epoch': time.time(), 'start_epoch': self.start_epoch()}
 
         data.update(self.state.flatten(wrap_lists=True))

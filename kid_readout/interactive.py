@@ -23,10 +23,11 @@ from kid_readout.roach.attenuator import Attenuator
 from kid_readout.analysis.resonator.helpers import *
 from kid_readout.measurement.io.readoutnc import ReadoutNetCDF
 from kid_readout.measurement.io.nc import NCFile
+from kid_readout.measurement.io.npy import NumpyDirectory
 from kid_readout.measurement.io.easync import EasyNetCDF4
 from kid_readout.analysis.resonator import lmfit_resonator, lmfit_models
 from kid_readout.measurement import acquire
-from kid_readout.measurement.acquire import new_nc_file
+from kid_readout.measurement.acquire import new_nc_file, new_npy_directory
 from kid_readout import measurement
 from kid_readout.measurement import basic, temperature
 from kid_readout.equipment import hardware
