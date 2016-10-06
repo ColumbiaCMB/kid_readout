@@ -246,7 +246,7 @@ class RoachInterface(object):
                           debug_register=self.debug_register,
                           fft_shift_register = self.fft_shift_register,
                           hardware_delay_samples = self.hardware_delay_samples,
-                          reference_sequence_number = self.phase0
+                          reference_sequence_number = int(self.phase0)
                           )
         if include_registers:
             for register in self.initial_values_for_writeable_registers:
