@@ -1117,7 +1117,7 @@ class SweepStreamList(RoachMeasurement):
         """
         self.sweep = sweep
         if not isinstance(stream_list, core.MeasurementList):
-            stream_list = core.MeasurementList
+            stream_list = core.MeasurementList(stream_list)
         self.stream_list = stream_list
         super(SweepStreamList, self).__init__(state=state, description=description)
 
