@@ -38,13 +38,28 @@ def modulation_period_samples(roach_state):
     if roach_state.modulation_output != 2:
         return 0
     else:
-        return 2**(roach_state.modulation_rate+1)
+        if roach_state.heterodyne:
+            return 2**(roach_state.modulation_rate+1)
+        else:
+            return 2**(roach_state.modulation_rate)
 
+def packet_phase(packet_sequence_number, offset_frequencies, num_channels, maximum_period, num_filterbank_channels):
+    samples_per_packet = 1024  # hardcoded in roach FPGA design. 4096 payload bytes and 4 bytes per sample
+    samples_per_channel_per_packet = samples_per_packet // num_channels
+    # If each packet holds at least as many samples per channel as the longest possible demodulated period,
+    # then no packet phase correction is needed
+    if samples_per_channel_per_packet >= maximum_period:
+        return np.zeros_like(offset_frequencies)
+    fft_frame_number = packet_sequence_number // num_filterbank_channels
+    sample_number = fft_frame_number * samples_per_channel_per_packet
+    reduced_sample_number = sample_number % maximum_period
+    phase = -2*np.pi*reduced_sample_number*offset_frequencies
+    return phase
 
-def packet_phase(seq_no,offset_frequencies,nchan,nfft,ns):
+def packet_phase_original(seq_no,offset_frequencies,nchan,nfft,ns):
     packet_bins = 1024    #this is hardcoded from the roach. number of fft bins that fit in 1 udp packet
     packet_counts = nfft * packet_bins
-    chan_counts = packet_counts / nchan
+    chan_counts = packet_counts // nchan
     shift = int(np.log2(chan_counts)) - 1
     modn = ns / chan_counts
     if modn == 0:
