@@ -35,8 +35,8 @@ setup = hardware.Hardware(hwp_motor, source, lockin,hittite)
 ri = Roach2Baseband()
 
 initial_f0s = np.load('/data/readout/resonances/2016-10-04-JPL-8x8-LF-2_firstcooldown_resonances.npy')/1e6
-initial_f0s[35]-=0.02
-initial_f0s[37] += 0.02
+#initial_f0s[35]-=0.02
+#initial_f0s[37] += 0.02
 nf = len(initial_f0s)
 atonce = 128
 if nf % atonce > 0:
@@ -53,12 +53,9 @@ ri.set_dac_atten(20)
 ri.set_modulation_output('high')
 
 tic = time.time()
-ncf = new_npy_directory(suffix='cw_hwp_sweep')
 swpa = acquire.run_sweep(ri, tone_banks=initial_f0s[None,:] + offsets[:,None], num_tone_samples=nsamp,
                              length_seconds=0, verbose=True,
                          )
-sweepstream = mmw_source_sweep.MMWSweepList(swpa, core.IOList(), state=setup.state())
-ncf.write(sweepstream)
 current_f0s = []
 for sidx in range(initial_f0s.shape[0]):
     swp = swpa.sweep(sidx)
@@ -88,12 +85,15 @@ ri.select_fft_bins(range(initial_f0s.shape[0]))
 hittite.on()
 ri.set_modulation_output(7)
 for n in range(100):
+    ncf = new_nc_file(suffix='cw_sweep_hwp_step_%03d'%n)
+    sweepstream = mmw_source_sweep.MMWSweepList(swpa, core.IOList(), state=setup.state())
+    ncf.write(sweepstream)
+
     hwp_motor.increment()
     for freq in mmw_freqs:
         hittite.set_freq(freq/12.)
-        time.sleep(0.1)
-        state=setup.state(fast=True)
-        meas = ri.get_measurement(num_seconds=1., state=state)
+        meas = ri.get_measurement(num_seconds=1.)
+        meas.state = setup.state(fast=True)
         print n, freq
         try:
             sweepstream.stream_list.append(meas)

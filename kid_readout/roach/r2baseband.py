@@ -197,3 +197,9 @@ class Roach2Baseband(RoachBaseband):
             if m >= self.nfft // 2:
                 demod[:, n] = np.conjugate(demod[:, n])
         return np.conjugate(demod)
+
+    @property
+    def blocks_per_second_per_channel(self):
+        chan_rate = self.fs * 1e6 / (2 * self.nfft)  # samples per second for one tone_index
+        samples_per_channel_per_block = 1024 #1024 samples per packet
+        return chan_rate / samples_per_channel_per_block

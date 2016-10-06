@@ -3,6 +3,7 @@ import time
 
 import numpy as np
 import pandas as pd
+import logging
 from memoized_property import memoized_property
 # The ZBD object loads a few data files from disk. If this import fails then the functions that use it below will still
 # work, but only with default arguments.
@@ -14,6 +15,7 @@ except ImportError:
 
 from kid_readout.measurement import core, basic
 
+logger = logging.getLogger(__file__)
 
 class MMWSweepList(basic.SweepStreamList):
 
@@ -83,7 +85,12 @@ class MMWResponse(basic.SingleSweepStreamList):
             # TODO: this is a hack
             xfft = np.fft.rfft(fx)
             phase = np.angle(xfft[1])
-            roll_by = int(np.round(phase*fx.shape[0]/(2*np.pi))) + fx.shape[0]//4
+            roll_by = 0
+            try:
+                roll_by = int(np.round(phase*fx.shape[0]/(2*np.pi))) + fx.shape[0]//4
+            except ValueError:
+                logger.error("NaN values encounterd while trying to fold data for stream %d. Data won't be aligned" %
+                             sss.number)
             result.append(np.roll(fx,roll_by))
         return np.array(result)
 
