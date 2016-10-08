@@ -40,8 +40,11 @@ class RoachMixin(object):
             assert self.ri.wavenorm >= 0.99 * actual_wavenorm  # guarantees the wave won't overflow
 
     def test_calculate_modulation_period(self):
-        roach_state = core.StateDict(modulation_rate=7, modulation_output=2)
+        roach_state = core.StateDict(modulation_rate=7, modulation_output=2, heterodyne=True)
         assert calculate.modulation_period_samples(roach_state) == 256
+        roach_state = core.StateDict(modulation_rate=7, modulation_output=2, heterodyne=False)
+        assert calculate.modulation_period_samples(roach_state) == 128
+
 
     def test_get_measurement_blocks(self):
         num_tones = 32

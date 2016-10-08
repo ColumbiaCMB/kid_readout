@@ -230,6 +230,10 @@ class RoachInterface(object):
         return self.get_state()
 
     def get_state(self,include_registers=False):
+        if self.phase0 is None:
+            reference_sequence_number = -1
+        else:
+            reference_sequence_number = int(self.phase0)
         roach_state = StateDict(boffile=self.boffile,
                           heterodyne=self.heterodyne,
                           adc_sample_rate=self.fs*1e6, # roach still uses MHz, so convert to Hz
@@ -246,7 +250,7 @@ class RoachInterface(object):
                           debug_register=self.debug_register,
                           fft_shift_register = self.fft_shift_register,
                           hardware_delay_samples = self.hardware_delay_samples,
-                          reference_sequence_number = int(self.phase0)
+                          reference_sequence_number = reference_sequence_number
                           )
         if include_registers:
             for register in self.initial_values_for_writeable_registers:
