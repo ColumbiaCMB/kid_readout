@@ -10,7 +10,7 @@ default_formatter = logging.Formatter(message_format)
 default_handler.setFormatter(default_formatter)
 
 
-def file_handler(name, level=logging.DEBUG):
+def file_handler(name='', level=logging.DEBUG):
     """
     Return a FileHandler that will write to a log file in the default location with a sensible name.
 
@@ -25,7 +25,8 @@ def file_handler(name, level=logging.DEBUG):
     -------
     logging.FileHandler
     """
-    fh = logging.FileHandler(os.path.join(LOG_DIR, '.'.join([time.strftime('%Y-%m-%d_%H%M%S'), name, 'log'])))
+    fh = logging.FileHandler(os.path.join(LOG_DIR, '.'.join([time.strftime('%Y-%m-%d_%H%M%S'), name.replace('/','.'),
+                                                             'log'])))
     fh.setFormatter(default_formatter)
     fh.setLevel(level)
     return fh

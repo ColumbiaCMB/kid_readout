@@ -31,7 +31,7 @@ CRYOSTAT = None
 COOLDOWN = None
 
 # The path of the directory containing log files.
-LOG_DIR = None
+LOG_DIR = '/tmp'
 
 # The path of the directory containing temperature log files.
 TEMPERATURE_LOG_DIR = None

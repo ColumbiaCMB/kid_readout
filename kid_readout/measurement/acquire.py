@@ -252,8 +252,9 @@ def show_git_status():
 def get_script_logger(name):
     script_logger = logging.getLogger('kid_readout')
     script_logger.setLevel(logging.DEBUG)
-    stream_handler = log.default_handler
-    stream_handler.setLevel(logging.INFO)
-    script_logger.addHandler(stream_handler)
+    if log.default_handler not in script_logger.handlers:
+        stream_handler = log.default_handler
+        stream_handler.setLevel(logging.INFO)
+        script_logger.addHandler(stream_handler)
     script_logger.addHandler(log.file_handler(name))
     return script_logger
