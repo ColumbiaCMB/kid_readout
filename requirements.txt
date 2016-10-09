@@ -1,7 +1,7 @@
 numpy
 scipy
 matplotlib
-pandas=0.18.1
+pandas
 nose
 requests
 pyserial
