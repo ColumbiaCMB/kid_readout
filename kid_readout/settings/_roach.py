@@ -13,13 +13,13 @@ from kid_readout.settings.roach import ROACH1_IP, ROACH1_VALON, ROACH1_HOST_IP
 
 # ROACH1
 ROACH1_IP = 'roach'
-ROACH1_VALON = '/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AM01H05A-if00-port0'
+ROACH1_VALON = '/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A101FK1K-if00-port0'
 ROACH1_HOST_IP = '192.168.1.1'
 
 # ROACH2
 ROACH2_IP = 'r2kid'
-ROACH2_VALON = '/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A101FK1K-if00-port0'
+
 ROACH2_HOST_IP = '192.168.1.1'
 ROACH2_GBE_HOST_IP = '10.0.0.1'
-
+ROACH2_VALON = '/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AM01H05A-if00-port0'
 MARK2_VALON = '/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A101FK1H-if00-port0'
