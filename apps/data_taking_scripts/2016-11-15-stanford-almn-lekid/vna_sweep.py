@@ -6,7 +6,7 @@ ri = Roach2Baseband()
 
 ri.set_modulation_output('high')
 
-for dac_atten in [20]:
+for dac_atten in [40]:
     ri.set_dac_atten(dac_atten)
 
     df = acquire.new_nc_file(suffix='vna_dac_atten_%.1f_dB' % dac_atten)
@@ -14,5 +14,9 @@ for dac_atten in [20]:
                             2**18,
                             verbose=True,length_seconds=.5,
                             )
+#    swa = acquire.run_sweep(ri,np.linspace(10,250,256)[None,:]+np.arange(480,dtype='int')[:,None]*512./2.**18,
+#                            2**18,
+#                            verbose=True,length_seconds=.25,
+#                            )
     df.write(swa)
     df.close()

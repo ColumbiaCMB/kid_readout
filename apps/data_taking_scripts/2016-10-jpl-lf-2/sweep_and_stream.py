@@ -5,7 +5,8 @@ import time
 
 ri = Roach2Baseband()
 
-initial_f0s = np.load('/data/readout/resonances/2016-10-03-jpl-lf-2-crude-initial-resonator-list.npy')/1e6
+ri.set_modulation_output('high')
+initial_f0s = np.load('/data/readout/resonances/2016-10-04-JPL-8x8-LF-2_firstcooldown_resonances.npy')/1e6
 
 nf = len(initial_f0s)
 atonce = 128
@@ -16,7 +17,7 @@ if nf % atonce > 0:
 nsamp = 2**18 #going above 2**18 with 128 simultaneous tones doesn't quite work yet
 offsets = np.arange(-16,16)*512./nsamp
 
-for dac_atten in [40,30,20,10]:
+for dac_atten in [20,16,13,10,6,3,0]:
     tic = time.time()
     ri.set_dac_atten(dac_atten)
     ncf = new_nc_file(suffix='%d_dB_dac' % dac_atten)
@@ -55,3 +56,4 @@ for dac_atten in [40,30,20,10]:
     print "dac_atten %f done in %.1f minutes" % (dac_atten, (time.time()-tic)/60.)
     ncf.close()
 
+ri.set_dac_atten(20)

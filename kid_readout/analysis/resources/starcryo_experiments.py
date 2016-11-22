@@ -6,6 +6,7 @@ DIODE_4_TEMP = 4
 ROX_1_TEMP = 9
 ROX_2_TEMP = 11
 ROX_3_TEMP = 13
+thermometry_2016_11_14 = dict(package=ROX_2_TEMP, secondary_package=ROX_3_TEMP, load=DIODE_1_TEMP)
 thermometry_2016_09_09 = dict(package=ROX_2_TEMP, load=DIODE_1_TEMP)
 thermometry_2016_08_10 = dict(package=9, load=1)
 thermometry_2016_07_08 = dict(package=9, load=1)
@@ -22,6 +23,12 @@ thermometry_2014_10_10 = dict(package=9, load=1, stage=11, waveguide=2)
 thermometry_2014_03_19 = dict(package=11, load=2, stage=13, copper=1)
 
 by_unix_time_table = [
+    dict(date='2016-11-18',
+         description='Stanford AlMn LEKID',
+         optical_state='dark',
+         thermometry_config=thermometry_2016_11_14,
+         chip_id='Stanford-AlMn-0304'),
+
     dict(date='2016-09-30',
          description='JPL LF-2 dual pol 8x8 array in prototype Cardiff horn package LB-P LL-P',
          optical_state='light',

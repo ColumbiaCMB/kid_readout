@@ -8,20 +8,22 @@ from xystage import stepper
 
 import time
 
+acquire.get_script_logger('')
+
 hittite = signal_generator.Hittite(ipaddr='192.168.0.200')
 hittite.set_power(0)
 hittite.on()
 lockin = lockin.Lockin(LOCKIN_SERIAL_PORT)
 tic = time.time()
-# lockin.sensitivity = 17
 print lockin.identification
 print lockin.identification
+lockin.sensitivity = 21 #21 --> 20 mV
 # print time.time()-tic
 # tic = time.time()
 # print lockin.state(measurement_only=True)
 # print time.time()-tic
 source = mmwave_source.MMWaveSource()
-source.set_attenuator_turns(6.0,6.0)
+source.set_attenuator_turns(5.0,5.0)
 source.multiplier_input = 'hittite'
 source.waveguide_twist_angle = 0
 source.ttl_modulation_source = 'roach'
@@ -46,7 +48,7 @@ if nf % atonce > 0:
 nsamp = 2**18 #going above 2**18 with 128 simultaneous tones doesn't quite work yet
 offsets = np.arange(-16,16)*512./nsamp
 
-mmw_freqs = np.linspace(140e9, 165e9, 200)
+mmw_freqs = np.linspace(140e9, 165e9, 128)
 
 ri.set_dac_atten(20)
 #hittite.off()
@@ -90,19 +92,24 @@ for n in range(100):
     ncf.write(sweepstream)
 
     hwp_motor.increment()
-    for freq in mmw_freqs:
-        hittite.set_freq(freq/12.)
-        meas = ri.get_measurement(num_seconds=1.)
-        meas.state = setup.state(fast=True)
-        print n, freq
-        try:
-            sweepstream.stream_list.append(meas)
-        except RuntimeError,e:
-            print "failed to write measurement",e
-            print meas.state
-#    time.sleep(30)
 
+    for hittite_power in [-3,-2,-1,0]:
+        hittite.set_power(hittite_power)
+        for freq in mmw_freqs:
+            hittite.set_freq(freq/12.)
+            try:
+                meas = ri.get_measurement(num_seconds=0.2)
+                meas.state = setup.state(fast=True)
+                print n,hittite_power, freq, meas.state.lockin.rms_voltage
+                try:
+                    sweepstream.stream_list.append(meas)
+                except RuntimeError,e:
+                    print "failed to write measurement",e
+                    print meas.state
+            except Exception, e:
+                print n,hittite_power, freq, "failed",e
+#    time.sleep(30)
+    ncf.close()
 
 print "dac_atten %f done in %.1f minutes" % (20, (time.time()-tic)/60.)
-ncf.close()
 

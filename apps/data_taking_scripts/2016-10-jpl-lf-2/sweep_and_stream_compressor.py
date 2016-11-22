@@ -3,9 +3,9 @@ import time
 from kid_readout.equipment import agilent_33220
 
 fg = agilent_33220.FunctionGenerator()
-fg.set_load_ohms(1000)
-fg.set_dc_voltage(9)
 fg.enable_output(False)
+#fg.set_load_ohms(1000)
+#fg.set_dc_voltage(0)
 
 
 #setup = hardware.Hardware()
@@ -23,10 +23,10 @@ if nf % atonce > 0:
 nsamp = 2**18 #going above 2**18 with 128 simultaneous tones doesn't quite work yet
 offsets = np.arange(-16,16)*512./nsamp
 
-for dac_atten in [20]:
+for dac_atten in [20,10]:
     tic = time.time()
     ri.set_dac_atten(dac_atten)
-    ncf = new_nc_file(suffix='%d_dB_dac_thermal_pulse' % dac_atten)
+    ncf = new_nc_file(suffix='%d_dB_dac_compressor' % dac_atten)
     swpa = acquire.run_sweep(ri, tone_banks=initial_f0s[None,:] + offsets[:,None], num_tone_samples=nsamp,
                                  length_seconds=0, verbose=True,
                              )
@@ -56,14 +56,14 @@ for dac_atten in [20]:
         current_f0s[problems] = (current_f0s[problems-1] + current_f0s[problems+1])/2.0
     ri.set_tone_freqs(current_f0s,nsamp)
     ri.select_fft_bins(range(initial_f0s.shape[0]))
-    #raw_input("turn off compressor")
-    fg.enable_output(True)
-    on_at = time.time()
-    meas = ri.get_measurement(num_seconds=300., description='stream while load is heating. load on at %f'%on_at)
-    fg.enable_output(False)
-    off_at = time.time()
+    #
+    #fg.enable_output(True)
+    meas = ri.get_measurement(num_seconds=30., description='compressor on')
+    #fg.enable_output(False)
     ncf.write(meas)
-    meas = ri.get_measurement(num_seconds=300., description='stream while load is cooling. load off at %f' %off_at)
+    raw_input("turn off compressor")
+    meas = ri.get_measurement(num_seconds=30., description='compressor off')
+    raw_input("turn on compressor")
     ncf.write(meas)
     print "dac_atten %f done in %.1f minutes" % (dac_atten, (time.time()-tic)/60.)
     ncf.close()
