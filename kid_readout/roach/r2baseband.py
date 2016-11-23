@@ -196,7 +196,7 @@ class Roach2Baseband(RoachBaseband):
                            * data[:, n])
             if m >= self.nfft // 2:
                 demod[:, n] = np.conjugate(demod[:, n])
-        return np.conjugate(demod)
+        return self.wavenorm*np.conjugate(demod)
 
     @property
     def blocks_per_second_per_channel(self):

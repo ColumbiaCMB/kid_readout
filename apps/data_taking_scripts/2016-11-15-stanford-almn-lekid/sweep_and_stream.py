@@ -16,8 +16,10 @@ if nf % atonce > 0:
     print "extending list of resonators to make a multiple of ", atonce
     initial_f0s = np.concatenate((initial_f0s, np.arange(1, 1 + atonce - (nf % atonce)) + initial_f0s.max()))
 
-nsamp = 2**20 #going above 2**18 with 128 simultaneous tones doesn't quite work yet
+nsamp = 2**19 #going above 2**18 with 128 simultaneous tones doesn't quite work yet
 offsets = np.arange(-64,64)*512./nsamp
+
+dense_offsets = np.arange(-8,8)*512./2**21
 
 for dac_atten in [42,39,36,30]:
     tic = time.time()
@@ -50,10 +52,27 @@ for dac_atten in [42,39,36,30]:
         print "deltas:",np.diff(current_f0s)
         problems = np.flatnonzero(np.diff(current_f0s)<0.015)+1
         current_f0s[problems] = (current_f0s[problems-1] + current_f0s[problems+1])/2.0
-    ri.set_tone_freqs(current_f0s,nsamp)
+    swpb = acquire.run_sweep(ri,tone_banks=current_f0s[None,:]+dense_offsets[:,None], num_tone_samples=2**21,
+                             verbose=True)
+    ncf.write(swpb)
+    current_f0s = []
+    for sidx in range(initial_f0s.shape[0]):
+        swp = swpb.sweep(sidx)
+        res = swp.resonator
+        print res.f_0, res.Q, res.current_result.redchi, (initial_f0s[sidx]*1e6-res.f_0)
+        if np.abs(res.f_0 - initial_f0s[sidx]*1e6) > 200e3:
+            current_f0s.append(initial_f0s[sidx]*1e6)
+            print "using original frequency for ",initial_f0s[sidx]
+        else:
+            current_f0s.append(res.f_0)
+    print "fits complete", (time.time()-tic)/60.
+    current_f0s = np.array(current_f0s)/1e6
+    current_f0s.sort()
+
+    ri.set_tone_freqs(current_f0s,2**21)
     ri.select_fft_bins(range(initial_f0s.shape[0]))
     #raw_input("turn off compressor")
-    meas = ri.get_measurement(num_seconds=30., description='source off stream')
+    meas = ri.get_measurement(num_seconds=120., description='source off stream')
     ncf.write(meas)
     print "dac_atten %f done in %.1f minutes" % (dac_atten, (time.time()-tic)/60.)
     ncf.close()

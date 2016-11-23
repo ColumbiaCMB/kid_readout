@@ -288,7 +288,7 @@ class RoachBaseband(RoachInterface):
                            * data[:, n])
             if m >= self.nfft // 2:
                 demod[:, n] = np.conjugate(demod[:, n])
-        return demod
+        return self.wavenorm*demod
 
     def set_loopback(self,enable):
         if enable:
