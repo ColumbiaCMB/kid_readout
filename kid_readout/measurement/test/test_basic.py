@@ -151,14 +151,14 @@ class TestSingleSweep(object):
 
 class TestSingleSweepStream(object):
 
-    #@classmethod
+    @classmethod
     def setup(cls):
         cls.sss = utilities.fake_single_sweep_stream()
 
     def test_delete_memoized_property_caches(self):
         memoized = ['stream_s21_normalized', 'stream_s21_normalized_deglitched', 'q', 'x',
                     'S_frequency', 'S_qq', 'S_xx', 'pca_S_frequency', 'pca_S_00', 'pca_S_11', 'pca_angles',
-                    ]#'S_xx_variance', 'S_qq_variance', 'S_counts']
+                    'S_xx_variance', 'S_qq_variance', 'S_counts']
         for attr in memoized:
             assert not hasattr(self.sss, '_' + attr), "Cache present: {}".format(attr)
         self.sss.set_S()
@@ -169,12 +169,10 @@ class TestSingleSweepStream(object):
                 assert issubclass(w.category, np.ComplexWarning)
         for attr in memoized:
             assert hasattr(self.sss, '_' + attr), "Cache missing: {}".format(attr)
+        _ = self.sss.S_yy_variance
         self.sss.sweep._delete_memoized_property_caches()
         for attr in memoized:
             assert not hasattr(self.sss, '_' + attr), "Cache present: {}".format(attr)
-
-    def test_other_properties(self):
-        _ = self.sss.S_yy_variance
 
     def test_start_epoch(self):
         assert self.sss.start_epoch() == self.sss.sweep.streams[0].epoch
