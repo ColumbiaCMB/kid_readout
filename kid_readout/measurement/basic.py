@@ -937,8 +937,55 @@ class SingleSweepStream(RoachMeasurement):
         """
         return self.S_xq / 2
 
+    @property
+    def S_counts(self):
+        """
+        The number of spectral samples that contributed to each frequency bin
+        Returns
+        -------
+
+        """
+        if not hasattr(self,'_S_counts'):
+            self.set_S()
+        return self._S_counts
+
+    @property
+    def S_xx_variance(self):
+        """
+        The variance on S_xx
+        Returns
+        -------
+
+        """
+        if not hasattr(self,'_S_xx_variance'):
+            self.set_S()
+        return self._S_xx_variance
+
+    @property
+    def S_qq_variance(self):
+        """
+        The variance on S_qq
+        Returns
+        -------
+
+        """
+        if not hasattr(self,'_S_qq_variance'):
+            self.set_S()
+        return self._S_qq_variance
+
+    @property
+    def S_yy_variance(self):
+        """
+        The variance on S_yy
+        Returns
+        -------
+
+        """
+        return self.S_qq_variance/4
+
     # TODO: calculate errors in PSDs
-    def set_S(self, NFFT=None, window=mlab.window_none, detrend=mlab.detrend_none, binned=True, **psd_kwds):
+    def set_S(self, NFFT=None, window=mlab.window_none, detrend=mlab.detrend_none, binned=True,
+              bins_per_decade=30, **psd_kwds):
         """
         Calculate the spectral density of self.x and self.q and set the related properties.
 
@@ -952,6 +999,8 @@ class SingleSweepStream(RoachMeasurement):
             A function that takes a complex time series as argument and returns a detrended time series.
         binned : bool
             If True, the result is binned using bin sizes that increase with frequency.
+        bins_per_decade : int
+            If binned ==True, this is the number of frequency bins per decade that will be used.
         psd_kwds : dict
             Additional keywords to pass to mlab.psd.
 
@@ -967,17 +1016,32 @@ class SingleSweepStream(RoachMeasurement):
                            **psd_kwds)
         S_xq, f = mlab.csd(self.x, self.q, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, detrend=detrend,
                            **psd_kwds)
+        ndof = 2*self.x.shape[0]//NFFT
         # Drop the DC and Nyquist bins since they're not helpful and make plots look messy.
         f = f[1:-1]
         S_xx = S_xx[1:-1]
         S_qq = S_qq[1:-1]
         S_xq = S_xq[1:-1]
+        unused_input = np.zeros_like(S_xx)
         if binned:
-            f, (S_xx, S_qq, S_xq) = binning.log_bin(f, [S_xx, S_qq, S_xq])
-        self._S_frequency = f
+            f_binned, S_xx, counts, _ = binning.log_bin_with_errors(f, S_xx, unused_input,
+                                                                  bins_per_decade=bins_per_decade)
+            _, S_qq, counts, _ = binning.log_bin_with_errors(f, S_qq, unused_input, bins_per_decade=bins_per_decade)
+            _, S_xq, counts, _ = binning.log_bin_with_errors(f, S_xq, unused_input, bins_per_decade=bins_per_decade)
+        else:
+            counts = 1
+            f_binned = f
+
+        counts = counts * ndof
+        self._S_frequency = f_binned
         self._S_qq = S_qq
         self._S_xx = S_xx
         self._S_xq = S_xq
+        self._S_xx_variance = S_xx/(counts)
+        self._S_qq_variance = S_qq/(counts)
+        self._S_xq_variance = S_xq/(counts)
+        self._S_counts = counts
+
 
     @property
     def pca_S_frequency(self):
@@ -1089,6 +1153,10 @@ class SingleSweepStream(RoachMeasurement):
         data['S_xx'] = [self.S_xx]
         data['S_yy'] = [self.S_yy]
         data['S_xy'] = [self.S_xy]
+        data['S_xx_variance'] = [self.S_xx_variance]
+        data['S_yy_variance'] = [self.S_yy_variance]
+        data['S_counts'] = [self.S_counts]
+        #data['S_xy_variance'] = [self.S_xy_variance]
         data['S_frequency'] = [self.S_frequency]
 
         dataframe = pd.DataFrame(data, index=[0])
