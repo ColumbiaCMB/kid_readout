@@ -158,7 +158,7 @@ class TestSingleSweepStream(object):
     def test_delete_memoized_property_caches(self):
         memoized = ['stream_s21_normalized', 'stream_s21_normalized_deglitched', 'q', 'x',
                     'S_frequency', 'S_qq', 'S_xx', 'pca_S_frequency', 'pca_S_00', 'pca_S_11', 'pca_angles',
-                    'S_xx_variance', 'S_qq_variance', 'S_counts']
+                    'S_xx_variance', 'S_qq_variance', 'S_counts', 'q_raw','x_raw', 'glitch_mask']
         for attr in memoized:
             assert not hasattr(self.sss, '_' + attr), "Cache present: {}".format(attr)
         self.sss.set_S()

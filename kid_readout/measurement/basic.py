@@ -4,6 +4,7 @@ This module contains basic measurement classes for data acquired with the ROACH.
 from __future__ import division
 import time
 from collections import OrderedDict
+import logging
 
 import numpy as np
 import pandas as pd
@@ -15,6 +16,7 @@ from kid_readout.analysis.resonator import lmfit_resonator
 from kid_readout.analysis.timeseries import binning, despike, iqnoise, periodic
 from kid_readout.roach import calculate
 
+logger = logging.getLogger(__name__)
 
 class RoachMeasurement(core.Measurement):
     """
@@ -788,19 +790,85 @@ class SingleSweepStream(RoachMeasurement):
     def resonator(self):
         return self.sweep.resonator
 
+    @property
+    def glitch_mask(self):
+        if not hasattr(self,'_glitch_mask'):
+            logger.debug("glitch_mask running deglitch")
+            self.deglitch()
+        return self._glitch_mask
+
+    @property
+    def number_of_masked_samples(self):
+        if not hasattr(self,'_number_of_masked_samples'):
+            logger.debug("number_of_masked_samples running deglitch")
+            self.deglitch()
+        return self._number_of_masked_samples
+
+    def deglitch(self,threshold=8,window_in_seconds=1,mask_extend_samples=50):
+        window_samples = int(2 ** np.ceil(np.log2(window_in_seconds * self.stream.stream_sample_rate)))
+        logger.debug("deglitching with threshold %f, window %.f seconds, %d samples, extending mask by %d samples"
+                     % (threshold,window_in_seconds,window_samples,mask_extend_samples))
+        self._glitch_mask = despike.deglitch_mask_mad(self.x_raw,thresh=threshold,window_length=window_samples,
+                                                      mask_extend=mask_extend_samples)
+        self._number_of_masked_samples = self._glitch_mask.sum()
+        self._x,self._q,self._stream_s21_normalized_deglitched = despike.mask_glitches([self.x_raw,self.q_raw,
+                                                                                        self.stream_s21_normalized],
+                                                                                       mask=self._glitch_mask,
+                                                                                       window_length=window_samples)
+        logger.debug("masked %d samples out of %d total, fraction: %f" % (self._number_of_masked_samples,
+                                                                   self._x_raw.shape[0],
+                                                                  (self._number_of_masked_samples/self._x_raw.shape[0])))
+
     @memoized_property
     def stream_s21_normalized(self):
         return self.sweep.resonator.remove_background(self.stream.frequency, self.stream.s21_raw)
 
-    @memoized_property
+    @property
     def stream_s21_normalized_deglitched(self):
-        return self.set_stream_s21_normalized_deglitched()
-
-    def set_stream_s21_normalized_deglitched(self, window_in_seconds=1, deglitch_threshold=5):
-        window = int(2 ** np.ceil(np.log2(window_in_seconds * self.stream.stream_sample_rate)))
-        self._stream_s21_normalized_deglitched = despike.deglitch_window(self.stream_s21_normalized, window,
-                                                                         thresh=deglitch_threshold)
+        if not hasattr(self,'_stream_s21_normalized_deglitched'):
+            logger.debug("stream_s21_normalized_deglitch running deglitch")
+            self.deglitch()
         return self._stream_s21_normalized_deglitched
+    @property
+    def q_raw(self):
+        """
+        Return the inverse internal quality factor q = 1 / Q_i calculated by inverting the resonator model.
+
+        Returns
+        -------
+        numpy.ndarray (float)
+            Values of q from self.stream corresponding to self.stream.sample_time
+        """
+        if not hasattr(self, '_q_raw'):
+            self.set_q_and_x()
+        return self._q_raw
+
+    @property
+    def y_raw(self):
+        """
+        Return half the inverse internal quality factor y = q / 2 calculated by inverting the resonator model. The
+        purpose of this is that S_yy = S_xx when amplifier-noise dominated.
+
+        Returns
+        -------
+        numpy.ndarray (float)
+            Values of y from self.stream corresponding to self.stream.sample_time.
+        """
+        return self.q_raw / 2
+
+    @property
+    def x_raw(self):
+        """
+        Return the fractional frequency shift x = f / f_r - 1 calculated by inverting the resonator model.
+
+        Returns
+        -------
+        numpy.ndarray (float)
+            Values of x from self.stream corresponding to self.stream.sample_time.
+        """
+        if not hasattr(self, '_x_raw'):
+            self.set_q_and_x()
+        return self._x_raw
 
     @property
     def q(self):
@@ -813,7 +881,7 @@ class SingleSweepStream(RoachMeasurement):
             Values of q from self.stream corresponding to self.stream.sample_time
         """
         if not hasattr(self, '_q'):
-            self.set_q_and_x()
+            self.deglitch()
         return self._q
 
     @property
@@ -840,32 +908,24 @@ class SingleSweepStream(RoachMeasurement):
             Values of x from self.stream corresponding to self.stream.sample_time.
         """
         if not hasattr(self, '_x'):
-            self.set_q_and_x()
+            self.deglitch()
         return self._x
 
-    def set_q_and_x(self, deglitch=True):
+    def set_q_and_x(self):
         """
         Use the resonator model to calculate time-ordered resonator parameters from the time-ordered s21 data.
 
         The parameters are q and x: q is the inverse internal quality factor and x is the fractional frequency shift.
 
-        Parameters
-        ----------
-        deglitch : bool
-            If true, use the de-glitched s21 timeseries to calculate q and x.
-
         Returns
         -------
         None
         """
-        if deglitch:
-            s21 = self.stream_s21_normalized_deglitched
-        else:
-            s21 = self.stream_s21_normalized
+        s21 = self.stream_s21_normalized
         c = 1 / self.sweep.resonator.Q_e  # c is the inverse of the complex couping quality factor.
         z = c / (1 - s21)
-        self._q = z.real - c.real
-        self._x = z.imag / 2  # This factor of two means S_xx = S_qq / 4 when amplifier noise dominated.
+        self._q_raw = z.real - c.real
+        self._x_raw = z.imag / 2  # This factor of two means S_xx = S_qq / 4 when amplifier noise dominated.
 
     @property
     def S_frequency(self):
@@ -1144,8 +1204,8 @@ class SingleSweepStream(RoachMeasurement):
                                                                                          s21_at_f_0)
 
         try:
-            data['folded_x'] = [self.stream.fold(self.x)]
-            data['folded_q'] = [self.stream.fold(self.q)]
+            data['folded_x'] = [self.stream.fold(self.x_raw)]
+            data['folded_q'] = [self.stream.fold(self.q_raw)]
             data['folded_normalized_s21'] = [self.stream.fold(self.stream_s21_normalized)]
         except ValueError:
             pass
