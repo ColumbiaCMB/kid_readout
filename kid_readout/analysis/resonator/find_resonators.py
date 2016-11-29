@@ -93,8 +93,9 @@ def validate_resonator(res):
     if np.abs(res.Q_e_imag) > 1e6:
         print "failed high Qei"
         return False
-    if Qe > 1e6:
+    if Qe > 1e5:
         print "failed high Qe"
+        return False
     if res.Q < 1000:
         print "failed low Q"
         return False

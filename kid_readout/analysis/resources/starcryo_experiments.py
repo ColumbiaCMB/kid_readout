@@ -6,7 +6,7 @@ DIODE_4_TEMP = 4
 ROX_1_TEMP = 9
 ROX_2_TEMP = 11
 ROX_3_TEMP = 13
-thermometry_2016_11_14 = dict(package=ROX_2_TEMP, secondary_package=ROX_3_TEMP, load=DIODE_1_TEMP)
+thermometry_2016_11_14 = dict(package=ROX_1_TEMP, secondary_package=ROX_2_TEMP, load=DIODE_1_TEMP)
 thermometry_2016_09_09 = dict(package=ROX_2_TEMP, load=DIODE_1_TEMP)
 thermometry_2016_08_10 = dict(package=9, load=1)
 thermometry_2016_07_08 = dict(package=9, load=1)
