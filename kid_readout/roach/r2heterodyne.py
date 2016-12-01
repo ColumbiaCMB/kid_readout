@@ -112,6 +112,7 @@ class Roach2Heterodyne(RoachHeterodyne):
                 data = self.demodulate_stream(data, seq_nos)
             else:
                 data = self.demodulate_data(data, seq_nos)
+            data = data*self.wavenorm
         return data, seq_nos
 
     @property

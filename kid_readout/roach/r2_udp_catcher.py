@@ -31,14 +31,17 @@ def get_udp_packets(ri,npkts,addr=('10.0.0.1',55555)):
         
         ri.r.write_int('txrst',0)
         pkts = []
-        while len(pkts) < (npkts + 1):
+        retries = 0
+        while len(pkts) < (npkts + 1) and retries < 5:
             try:
                 pkt = s.recv(5000)
+                retries = 0
             except socket.timeout:
                 logger.error("Socket timeout waiting for packets from ROACH. This probably means the GbE is jammed. "
                              "Attempting to restart GbE")
                 ri.r.write_int('txrst',1)
                 ri.r.write_int('txrst',0)
+                retries += 1
             else:
                 if pkt:
                     pkts.append(pkt)

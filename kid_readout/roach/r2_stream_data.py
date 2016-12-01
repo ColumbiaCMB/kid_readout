@@ -21,7 +21,7 @@ import multiprocessing as mp
 import time
 import ctypes
 from Queue import Empty as EmptyException
-
+from kid_readout.roach import demodulator
 
 pkt_size = 4100
 data_ctype = ctypes.c_uint8
@@ -49,6 +49,9 @@ class ReadoutPipeline:
         self.sequence_num = np.frombuffer(self._sequence_num_buffer.get_obj(), dtype=counter_dtype)
         self.sequence_num[:] = 0
 
+        self.capture_status = mp.Array(ctypes.c_char, 32)
+        self.demodulate_status = mp.Array(ctypes.c_char, 32)
+
         self._num_bad_packets = mp.Value(ctypes.c_uint)
         self.num_bad_packets = self._num_bad_packets.get_obj()
         self.num_bad_packets.value = 0
@@ -70,14 +73,14 @@ class ReadoutPipeline:
                                                               demodulated_input_queue=self.demodulated_input_queue,
                                                               sequence_num_buffer=self._sequence_num_buffer,
                                                               output_size=output_size,
-                                                              nchans=nchans)
+                                                              nchans=nchans, status = self.demodulate_status)
 
         self.read_data = CapturePacketsProcess(packet_data_buffers=self.packet_data_buffers,
                                                num_packets_per_buffer=num_packets_per_buffer,
                                                packet_input_queue=self.packet_input_queue,
                                                packet_output_queue=self.packet_output_queue,
                                                bad_packets_counter=self._num_bad_packets,
-                                               host_address=host_address)
+                                               host_address=host_address, status = self.capture_status)
 
     def close(self):
         self.packet_input_queue.put(None)
@@ -90,7 +93,7 @@ class DecodePacketsAndDemodulateProcess:
     def __init__(self, packet_data_buffers, demodulated_data_buffers, num_packets_per_buffer,
                  packet_input_queue, packet_output_queue,
                  demodulated_input_queue, sequence_num_buffer, output_size,
-                 nchans):
+                 nchans, status):
         self.output_index = 0
         self.packet_data_buffers = packet_data_buffers
         self.demodulated_data_buffers = demodulated_data_buffers
@@ -101,33 +104,37 @@ class DecodePacketsAndDemodulateProcess:
         self.sequence_num_buffer = sequence_num_buffer
         self.output_size = output_size
         self.nchans = nchans
-        self.status = "not started"
+        self.status = status
+        self.status.value = "not started"
         self.child = mp.Process(target=self.run)
         self.child.start()
 
     def run(self):
+        self.demodulator = demodulator.StreamDemodulator(tone_bins=self.tone_bins,phases=self.phases,
+                                                         tone_nsamp=self.tone_nsamp, fft_bins=self.fft_bins,
+                                                         nfft=self.nfft, )
         while True:
             try:
                 process_me = self.packet_output_queue.get_nowait()
             except EmptyException:
-                self.status = "waiting"
+                self.status.value = "waiting"
                 time.sleep(0.01)
                 continue
             if process_me is None:
                 break
             else:
-                self.status = "blocked"
+                self.status.value = "blocked"
                 output_to = self.demodulated_input_queue.get()
 
                 with self.packet_data_buffers[process_me].get_lock(), self.demodulated_data_buffers[output_to].get_lock():
-                    self.status = "processing"
+                    self.status.value = "processing"
                     packets = np.frombuffer(self.packet_data_buffers[process_me].get_obj(), dtype=data_dtype)
                     packets.shape=(self.num_packets_per_buffer, pkt_size)
                     pkt_counter = packets.view(counter_dtype)[:,-1]
 
-                    contiguous = np.all(np.diff(pkt_counter)==1)
+#                    contiguous = np.all(np.diff(pkt_counter)==1)
 
-                    demod_data = np.frombuffer(self.demodulated_data_buffers[output_to].get_obj(), dtype=np.float32)
+                    demod_data = np.frombuffer(self.demodulated_data_buffers[output_to].get_obj(), dtype=np.complex64)
 
                     raw_data = packets[:,:-4].view('<i2').astype(np.float32).view(np.complex64)
                     raw_data = raw_data.reshape((-1,self.nchans))
@@ -143,25 +150,27 @@ class DecodePacketsAndDemodulateProcess:
                         self.sequence_num_buffer[self.output_index] = pkt_counter[k]
                         self.output_index += 1
                         self.output_index %= self.output_size
-                    data = data.reshape((-1,self.nchans))
+                    demod_data = demod_data.reshape((-1,self.nchans))
+
 #                    data = r2.demodulate_stream(data, pkt_counter)
                     #print "decode ", timeit.default_timer() - t0
                 self.demodulated_output_queue.put(output_to)
                 self.packet_input_queue.put(process_me)
-        self.status = "exiting"
+        self.status.value = "exiting"
         return None
 
 
 class CapturePacketsProcess:
     def __init__(self, packet_data_buffers, num_packets_per_buffer, packet_input_queue, packet_output_queue,
-                 bad_packets_counter, host_address):
+                 bad_packets_counter, host_address,status):
         self.packet_data_buffers = packet_data_buffers
         self.num_packets_per_buffer = num_packets_per_buffer
         self.packet_input_queue = packet_input_queue
         self.packet_output_queue = packet_output_queue
         self.bad_packets_counter = bad_packets_counter
         self.host_address = host_address
-        self.status = "starting"
+        self.status = status
+        self.status.value = "starting"
         self.child = mp.Process(target=self.run)
         self.child.start()
 
@@ -173,14 +182,14 @@ class CapturePacketsProcess:
                 try:
                     process_me = self.packet_input_queue.get_nowait()
                 except EmptyException:
-                    self.status = "blocked"
+                    self.status.value = "blocked"
                     time.sleep(0.005)
                     continue
                 if process_me is None:
                     break
                 else:
                     with self.packet_data_buffers[process_me].get_lock():
-                        self.status = "processing"
+                        self.status.value = "processing"
                         #t0 = timeit.default_timer()
                         packet_buffer = np.frombuffer(self.packet_data_buffers[process_me].get_obj(), dtype=data_dtype)
                         packet_buffer.shape=(self.num_packets_per_buffer, pkt_size)
@@ -195,5 +204,5 @@ class CapturePacketsProcess:
                                 self.bad_packets_counter.value += 1
                         #print "read: ", timeit.default_timer() - t0
                     self.packet_output_queue.put(process_me)
-        self.status = "exiting"
+        self.status.value = "exiting"
         return None

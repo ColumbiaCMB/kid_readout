@@ -1,5 +1,6 @@
 import random
 import numpy as np
+from matplotlib import pyplot as plt
 from scipy.ndimage import filters
 import scipy.signal
 from kid_readout.analysis.timeseries.fftfilt import fftfilt
@@ -81,7 +82,6 @@ def deglitch_mask_block_mad(ts,thresh=5,mask_extend=50,debug=False):
     mad = np.median(deviations)
     mask = deviations > (mad*thresh)
     if debug:
-        from matplotlib import pyplot as plt
         plt.plot(deviations)
         plt.plot(mask*deviations.max(),'o')
     new_mask = mask.copy()
@@ -98,7 +98,6 @@ def deglitch_mask_block_mad(ts,thresh=5,mask_extend=50,debug=False):
 
 def deglitch_mask_mad(ts,thresh=5,mask_extend=50,window_length=2**8):
     full_mask = np.zeros(ts.shape,dtype='bool')
-    clean = ts.copy()
     step = window_length//2
     if step > ts.shape[0]:
         step = ts.shape[0]

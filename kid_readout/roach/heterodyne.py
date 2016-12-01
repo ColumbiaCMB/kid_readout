@@ -342,7 +342,7 @@ class RoachHeterodyne(RoachInterface):
                                             fft_bin=self.fft_bins[bank,ich], 
                                             nchan=self.readout_selection.shape[0],
                                             seq_nos=seq_nos)
-        return demod
+        return demod*self.wavenorm
 
     def get_stream_demodulator(self):
         return StreamDemodulator(tone_bins=self.tone_bins[self.bank,:],
@@ -383,7 +383,7 @@ class RoachHeterodyne(RoachInterface):
             demod[:, n] = np.exp(sign * 1j * (2 * np.pi * foffs * t + phi0)) * data[:, n]
             if doconj:
                 demod[:, n] = np.conjugate(demod[:, n])
-        return demod
+        return demod*self.wavenorm
 
     @property
     def blocks_per_second_per_channel(self):
