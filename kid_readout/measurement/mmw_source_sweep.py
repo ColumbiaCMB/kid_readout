@@ -72,7 +72,6 @@ class MMWResponse(basic.SingleSweepStreamList):
         for stream in self.stream_list:
             sss = basic.SingleSweepStream(sweep=self.sweep, stream=stream, state=stream.state,
                                           description=stream.description)
-            sss.set_q_and_x(deglitch=deglitch)
             result.append(sss)
         return result
 
@@ -81,7 +80,7 @@ class MMWResponse(basic.SingleSweepStreamList):
         sweep_stream_list = self.sweep_stream_list
         result = []
         for sss in sweep_stream_list:
-            fx = sss.fold(sss.x)
+            fx = sss.fold(sss.x_raw)
             # TODO: this is a hack
             xfft = np.fft.rfft(fx)
             phase = np.angle(xfft[1])
@@ -99,7 +98,7 @@ class MMWResponse(basic.SingleSweepStreamList):
         sweep_stream_list = self.sweep_stream_list
         result = []
         for sss in sweep_stream_list:
-            fq = sss.fold(sss.q)
+            fq = sss.fold(sss.q_raw)
             result.append(fq)
         return np.array(result)
 
