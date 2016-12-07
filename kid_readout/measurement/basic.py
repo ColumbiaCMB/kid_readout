@@ -1045,7 +1045,7 @@ class SingleSweepStream(RoachMeasurement):
 
     # TODO: calculate errors in PSDs
     def set_S(self, NFFT=None, window=mlab.window_none, detrend=mlab.detrend_none, binned=True,
-              bins_per_decade=30, **psd_kwds):
+              bins_per_decade=30, masking_function=None, **psd_kwds):
         """
         Calculate the spectral density of self.x and self.q and set the related properties.
 
@@ -1076,6 +1076,14 @@ class SingleSweepStream(RoachMeasurement):
                            **psd_kwds)
         S_xq, f = mlab.csd(self.x, self.q, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, detrend=detrend,
                            **psd_kwds)
+        if masking_function is not None:
+            mask = masking_function(f,S_xx,S_qq,S_xq)
+            f = f[mask]
+            S_qq = S_qq[mask]
+            S_xx = S_xx[mask]
+            S_xq = S_xq[mask]
+            self._S_mask = mask
+            logger.debug("Masked %d frequencies from raw power spectra" % (~mask).sum())
         ndof = 2*self.x.shape[0]//NFFT
         # Drop the DC and Nyquist bins since they're not helpful and make plots look messy.
         f = f[1:-1]

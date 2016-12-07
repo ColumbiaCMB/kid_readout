@@ -2,6 +2,7 @@ import numpy as np
 import warnings
 
 from kid_readout.measurement.test import utilities
+from kid_readout.analysis.timeseries import spectral_masks
 
 
 def test_s21_raw_mean():
@@ -180,5 +181,8 @@ class TestSingleSweepStream(object):
     def test_tone_offset_frequency(self):
         self.sss.stream.tone_offset_frequency()
         self.sss.stream.tone_offset_frequency(normalized_frequency=False)
+
+    def test_spectral_mask(self):
+        self.sss.set_S(masking_function=spectral_masks.pulse_tube_mask)
 
 
