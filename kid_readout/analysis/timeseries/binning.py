@@ -104,7 +104,7 @@ def log_bin(freqs, data):
     return binned_freqs, binned_data
 
 
-def log_bin_with_errors(frequency, data, variance, bins_per_decade=30):
+def log_bin_with_errors(frequency, data, variance, bins_per_decade=30, mask_nans=True):
     """
     Propagate errors assuming that the errors in each bin can be added in quadrature.
 
@@ -124,4 +124,14 @@ def log_bin_with_errors(frequency, data, variance, bins_per_decade=30):
         binned_data.append(data[bin_indices == k].mean())
         bin_counts.append(np.sum(bin_indices == k))
         binned_variance.append(np.sum(variance[bin_indices == k]) / bin_counts[-1]**2)
-    return np.array(binned_frequency), np.array(binned_data), np.array(bin_counts), np.array(binned_variance)
+    binned_frequency = np.array(binned_frequency)
+    binned_data = np.array(binned_data)
+    bin_counts = np.array(bin_counts)
+    binned_variance = np.array(binned_variance)
+    if mask_nans:
+        mask = np.isfinite(binned_frequency) & np.isfinite(binned_data) & np.isfinite(bin_counts) & np.isfinite(binned_variance)
+        binned_frequency = binned_frequency[mask]
+        binned_data = binned_data[mask]
+        bin_counts = bin_counts[mask]
+        binned_variance = binned_variance[mask]
+    return binned_frequency, binned_data, bin_counts, binned_variance
