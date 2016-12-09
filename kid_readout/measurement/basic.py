@@ -631,7 +631,6 @@ class SingleSweep(RoachMeasurement):
         """BaseResonator: the result of the last call to fit_resonator()."""
         return self.fit_resonator()
 
-    # TODO: add arguments to specify model, etc.
     def fit_resonator(self, model=lmfit_resonator.LinearResonatorWithCable):
         """
         Fit the s21 data with the given resonator model.
@@ -1000,6 +999,19 @@ class SingleSweepStream(RoachMeasurement):
         return self.S_xq / 2
 
     @property
+    def S_edges(self):
+        """
+        The edges of the bins used for log-binning of the spectral densities, or None if the spectra were not binned.
+
+        Returns
+        -------
+        numpy.ndarray(float)
+        """
+        if not hasattr(self, '_S_edges'):
+            self.set_S()
+        return self._S_edges
+
+    @property
     def S_counts(self):
         """
         The number of spectral samples that contributed to each frequency bin
@@ -1043,10 +1055,9 @@ class SingleSweepStream(RoachMeasurement):
         -------
 
         """
-        return self.S_qq_variance/4
+        return self.S_qq_variance / 4
 
-    # TODO: calculate errors in PSDs
-    def set_S(self, NFFT=None, window=mlab.window_none, detrend=mlab.detrend_none, binned=True,
+    def set_S(self, NFFT=None, window=mlab.window_none, detrend=mlab.detrend_none, noverlap=None, binned=True,
               bins_per_decade=30, masking_function=None, **psd_kwds):
         """
         Calculate the spectral density of self.x and self.q and set the related properties.
@@ -1055,16 +1066,21 @@ class SingleSweepStream(RoachMeasurement):
         ----------
         NFFT : int
             The number of samples to use for each FFT chunk; should be a power of two for speed.
-        window  : callable
-            A function that takes a complex time series as argument and returns a windowed time series.
         detrend : callable
             A function that takes a complex time series as argument and returns a detrended time series.
+        window  : callable
+            A function that takes a complex time series as argument and returns a windowed time series.
+        noverlap : int
+            The number of samples to overlap in each chunk; if None, a value equal to half the NFFT value is used.
         binned : bool
             If True, the result is binned using bin sizes that increase with frequency.
         bins_per_decade : int
-            If binned ==True, this is the number of frequency bins per decade that will be used.
+            If binned is True, this is the number of frequency bins per decade that will be used.
+        masking_function : callable
+            A function that takes the frequency and all spectral densities as inputs and produces a boolean mask used
+            to remove points from them.
         psd_kwds : dict
-            Additional keywords to pass to mlab.psd.
+            Additional keywords to pass to mlab.psd and mlab.csd.
 
         Returns
         -------
@@ -1072,46 +1088,54 @@ class SingleSweepStream(RoachMeasurement):
         """
         if NFFT is None:
             NFFT = int(2**(np.floor(np.log2(self.stream.s21_raw.size)) - 3))
+        if noverlap is None:
+            noverlap = NFFT // 2
         S_qq, f = mlab.psd(self.q, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, detrend=detrend,
-                           **psd_kwds)
+                           noverlap=noverlap, **psd_kwds)
         S_xx, f = mlab.psd(self.x, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, detrend=detrend,
-                           **psd_kwds)
+                           noverlap=noverlap, **psd_kwds)
         S_xq, f = mlab.csd(self.x, self.q, Fs=self.stream.stream_sample_rate, NFFT=NFFT, window=window, detrend=detrend,
-                           **psd_kwds)
+                           noverlap=noverlap, **psd_kwds)
         if masking_function is not None:
-            mask = masking_function(f,S_xx,S_qq,S_xq)
+            mask = masking_function(f, S_xx, S_qq, S_xq)
             f = f[mask]
             S_qq = S_qq[mask]
             S_xx = S_xx[mask]
             S_xq = S_xq[mask]
             self._S_mask = mask
             logger.debug("Masked %d frequencies from raw power spectra" % (~mask).sum())
-        ndof = 2*self.x.shape[0]//NFFT
         # Drop the DC and Nyquist bins since they're not helpful and make plots look messy.
         f = f[1:-1]
         S_xx = S_xx[1:-1]
         S_qq = S_qq[1:-1]
         S_xq = S_xq[1:-1]
-        unused_input = np.zeros_like(S_xx)
+        # The value in each bin is chi-squared distributed with degrees of freedom equal to two times the number of
+        # spectra that are averaged. Assume that the variance of the value in a bin is equal to the square of the value
+        # in that bin divided by the number of degrees of freedom. Using nonzero overlap will complicate this, but let's
+        # ignore that. It's also not clear that this is correct for the cross-spectrum.
+        ndof = 2 * self.x.size // NFFT
         if binned:
-            f_binned, S_xx, counts, _ = binning.log_bin_with_errors(f, S_xx, unused_input,
-                                                                  bins_per_decade=bins_per_decade)
-            _, S_qq, counts, _ = binning.log_bin_with_errors(f, S_qq, unused_input, bins_per_decade=bins_per_decade)
-            _, S_xq, counts, _ = binning.log_bin_with_errors(f, S_xq, unused_input, bins_per_decade=bins_per_decade)
+            edges, counts, f_mean, d_and_v = binning.log_bin_with_variance(f, bins_per_decade,
+                                                                           (S_xx, S_xx**2 / ndof),
+                                                                           (S_qq, S_qq**2 / ndof),
+                                                                           (S_xq, S_xq**2 / ndof))
+            (S_xx, V_xx), (S_qq, V_qq), (S_xq, V_xq) = d_and_v
         else:
-            counts = 1
-            f_binned = f
-
-        counts = counts * ndof
-        self._S_frequency = f_binned
+            edges = None
+            counts = np.ones(f.size, dtype=int)
+            f_mean = f
+            V_xx = S_xx**2 / ndof
+            V_qq = S_qq**2 / ndof
+            V_xq = S_xq**2 / ndof
+        self._S_edges = edges
+        self._S_counts = counts
+        self._S_frequency = f_mean
         self._S_qq = S_qq
         self._S_xx = S_xx
         self._S_xq = S_xq
-        self._S_xx_variance = S_xx/(counts)
-        self._S_qq_variance = S_qq/(counts)
-        self._S_xq_variance = S_xq/(counts)
-        self._S_counts = counts
-
+        self._S_xx_variance = V_xx
+        self._S_qq_variance = V_qq
+        self._S_xq_variance = V_xq
 
     @property
     def pca_S_frequency(self):

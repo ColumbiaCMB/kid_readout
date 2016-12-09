@@ -1,10 +1,73 @@
 from __future__ import division
 
+from collections import namedtuple
+
 import numpy as np
 from matplotlib import mlab
 from matplotlib.mlab import cbook
 
 from kid_readout.analysis.timeseries import binning
+
+
+AutoAutoCross = namedtuple('AutoAutoCross', field_names=['f', 'S_aa', 'S_bb', 'S_ab'])
+
+
+def auto_auto_cross(a, b, sample_rate, NFFT=None, detrend=mlab.detrend_none, window=mlab.window_none, noverlap=None,
+                    binned=True, bins_per_decade=30, **kwds):
+    """
+    Return estimates of the auto-spectral density of both real time series a and b, of their cross-spectral density, and
+    the frequencies corresponding to these estimates.
+
+    Parameters
+    ----------
+    a : ndarray(real)
+        A real time series.
+    b : ndarray(real)
+        A real time series.
+    sample_rate : float
+        The sample rate of both time series.
+    NFFT : int
+        The number of samples to use for each FFT chunk; should be a power of two for speed; if None, a reasonable
+        default is used.
+    window  : callable
+        A function that takes a complex time series as argument and returns a windowed time series.
+    noverlap : int
+        The number of samples to overlap in each chunk; if None, a value equal to half the NFFT value is used.
+    detrend : callable
+        A function that takes a complex time series as argument and returns a detrended time series.
+    binned : bool
+        If True, the result is binned using bin sizes that increase with frequency, and the bins at zero frequency and
+        the Nyquist frequency are dropped.
+    bins_per_decade : int
+        The number of bins per decade; used only if binned is True.
+    kwds : dict
+        Additional keywords to pass to mlab.psd and mlab.csd.
+
+    Returns
+    -------
+    f : ndarray(float)
+        The frequencies corresponding to the data.
+    S_aa : ndarray(float)
+        The spectral density of a.
+    S_bb : ndarray(float)
+        The spectral density of b.
+    S_ab : ndarray(complex)
+        The cross-spectral density of a and b.
+    """
+    if NFFT is None:
+        NFFT = int(2 ** (np.floor(np.log2(a.size)) - 3))
+    if noverlap is None:
+        noverlap = NFFT // 2
+    S_aa, f = mlab.psd(a, Fs=sample_rate, NFFT=NFFT, detrend=detrend, window=window, noverlap=noverlap, **kwds)
+    S_bb, f = mlab.psd(b, Fs=sample_rate, NFFT=NFFT, detrend=detrend, window=window, noverlap=noverlap, **kwds)
+    S_ab, f = mlab.csd(a, b, Fs=sample_rate, NFFT=NFFT, window=window, detrend=detrend, noverlap=noverlap, **kwds)
+    if binned:
+        f = f[1:-1]
+        S_aa = S_aa[1:-1]
+        S_bb = S_bb[1:-1]
+        S_ab = S_ab[1:-1]
+        edges, counts, f, (S_aa, S_bb, S_ab) = binning.log_bin(f, bins_per_decade, S_aa, S_bb, S_ab)
+    return AutoAutoCross(f, S_aa, S_bb, S_ab)
 
 
 def pca_noise_with_errors(d, NFFT, Fs, window=mlab.window_hanning, detrend=mlab.detrend_mean,
@@ -16,9 +79,9 @@ def pca_noise_with_errors(d, NFFT, Fs, window=mlab.window_hanning, detrend=mlab.
     pqq, pf = mlab.psd(d.imag, NFFT=NFFT, Fs=Fs, window=window, detrend=detrend)
     piq, pf = mlab.csd(d.real, d.imag, NFFT=NFFT, Fs=Fs, window=window, detrend=detrend)
     if use_log_bins:
-        bf, bp_ii, bc_ii, bvar_ii = binning.log_bin_with_errors(pf, pii, pii ** 2 / n_averaged)
-        bf, bp_qq, bc_qq, bvar_qq = binning.log_bin_with_errors(pf, pqq, pqq ** 2 / n_averaged)
-        bf, bp_iq, bc_iq, bvar_iq = binning.log_bin_with_errors(pf, piq, np.abs(piq) ** 2 / n_averaged)  # probably not right
+        bf, bc_ii, (bp_ii, bvar_ii) = binning.log_bin_with_variance(pf, pii, pii ** 2 / n_averaged)
+        bf, bc_qq, (bp_qq, bvar_qq) = binning.log_bin_with_variance(pf, pqq, pqq ** 2 / n_averaged)
+        bf, bc_iq, (bp_iq, bvar_iq) = binning.log_bin_with_variance(pf, piq, np.abs(piq) ** 2 / n_averaged)  # probably not right
         S, evals, evects, angles = calculate_pca_noise(bp_ii, bp_qq, bp_iq)
         return bf, S, evals, evects, angles, (bp_ii, bp_qq, bp_iq), bc_ii, np.vstack((bvar_qq, bvar_ii))
     else:
@@ -43,7 +106,7 @@ def pca_noise(d, NFFT=None, Fs=256e6/2.**11, window=mlab.window_hanning, detrend
         pqq, fr = mlab.psd(d.imag, NFFT=NFFT, Fs=Fs, window=window, detrend=detrend)
         piq, fr = mlab.csd(d.real, d.imag, NFFT=NFFT, Fs=Fs, window=window, detrend=detrend)
     if use_log_bins:
-        fr, (pii, pqq, piq) = binning.log_bin(fr_orig, [pii, pqq, piq])
+        fr, (pii, pqq, piq) = binning.log_bin_old(fr_orig, [pii, pqq, piq])
     else:
         fr = fr_orig
     S, evals, evects, angles = calculate_pca_noise(pii, pqq, piq)
