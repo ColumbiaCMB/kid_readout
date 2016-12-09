@@ -18,6 +18,7 @@ from kid_readout.roach import calculate
 
 logger = logging.getLogger(__name__)
 
+
 class RoachMeasurement(core.Measurement):
     """
     An abstract base class for measurements taken with the ROACH.
@@ -406,6 +407,7 @@ class SingleStream(RoachStream):
                                            data_demodulated=data_demodulated, roach_state=roach_state, state=state,
                                            description=description, validate=validate)
 
+    # ToDo: use tone_index?
     def tone_offset_frequency(self, normalized_frequency=True):
         offset = calculate.tone_offset_frequency(self.tone_bin,self.roach_state.num_tone_samples,self.filterbank_bin,
                                      self.roach_state.num_filterbank_channels)
