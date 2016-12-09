@@ -27,7 +27,8 @@ class Demodulator(object):
     def compute_window_frequency_response(self,window,interpolation_factor=64):
         response = np.abs(np.fft.fftshift(np.fft.fft(window,window.shape[0]*interpolation_factor)))
         response = response/response.max()
-        normalized_frequency = (np.arange(-len(response)/2.,len(response)/2.)/interpolation_factor)/2.
+        normalized_frequency = (np.arange(-len(response)/2., len(response)/2.) /
+                                float(interpolation_factor * self.num_taps))
         return normalized_frequency,response
 
     def compute_pfb_response(self,normalized_frequency):
