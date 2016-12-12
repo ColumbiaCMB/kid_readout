@@ -15,7 +15,15 @@ def r2_with_mk1(**kwargs):
                                        lo_valon=None, attenuator=None, **kwargs)
     return r2
 
-   
+
+def r1_with_mk2(**kwargs):
+    return r1h14_with_mk2(**kwargs)
+
+
+def r1_with_mk1(**kwargs):
+    return r1h14_with_mk1(**kwargs)
+
+
 def r1h14_with_mk2(**kwargs):
     if MARK2_VALON is None:  # If lo_valon is None the roach will use its internal valon, with unfortunate results.
         raise ValueError("MARK2_VALON is None.")
