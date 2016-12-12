@@ -227,7 +227,7 @@ def new_npy_directory(suffix='', directory=settings.BASE_DATA_DIR, metadata=None
         suffix = '_' + suffix
     if metadata is None:
         metadata = all_metadata()
-    root_path = os.path.join(directory, time.strftime('%Y-%m-%d_%H%M%S') + suffix)
+    root_path = os.path.join(directory, time.strftime('%Y-%m-%d_%H%M%S') + suffix + '.npd')
     logger.debug("Creating new NumpyDirectory with path %s" % root_path)
     return npy.NumpyDirectory(root_path, metadata=metadata)
 

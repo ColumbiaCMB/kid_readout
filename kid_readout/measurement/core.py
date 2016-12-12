@@ -801,11 +801,12 @@ def get_class(full_class_name):
     return getattr(module, class_name)
 
 
+# ToDo: look at effect of None in number field, and handle it here
 def from_series(series):
     io_class = get_class(classes.full_name(class_name=series[IO_CLASS_NAME], version=None))
     io = io_class(series[ROOT_PATH])
     node = io.read(series[NODE_PATH])
-    if NUMBER in series:
+    if NUMBER in series and pd.notnull(series[NUMBER]):
         return node[series[NUMBER]]
     else:
         return node

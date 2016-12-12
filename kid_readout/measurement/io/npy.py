@@ -22,7 +22,8 @@ from kid_readout.measurement import core
 class NumpyDirectory(core.IO):
 
     def __init__(self, root_path, metadata=None, memmap=False):
-        super(NumpyDirectory, self).__init__(root_path=os.path.expanduser(root_path), metadata=metadata)
+        super(NumpyDirectory, self).__init__(root_path=os.path.abspath(os.path.expanduser(root_path)),
+                                             metadata=metadata)
         if memmap:
             self._mmap_mode = 'r'
         else:

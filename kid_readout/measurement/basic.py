@@ -239,7 +239,7 @@ class RoachStream0(RoachMeasurement):
     Version 0 did not save the sequence_start_number integer.
     """
     def __new__(cls, *args, **kwargs):
-        kwargs['sequence_start_number'] = np.nan
+        kwargs['sequence_start_number'] = None
         return RoachStream(*args, **kwargs)
 
 
@@ -345,7 +345,7 @@ class StreamArray0(RoachStream0):
     Version 0 did not save the sequence_start_number integer.
     """
     def __new__(cls, *args, **kwargs):
-        kwargs['sequence_start_number'] = np.nan
+        kwargs['sequence_start_number'] = None
         return StreamArray(*args, **kwargs)
 
 
@@ -362,7 +362,7 @@ class SingleStream(RoachStream):
                               ('s21_raw', ('sample_time',))])
 
     def __init__(self, tone_bin, tone_amplitude, tone_phase, tone_index, filterbank_bin, epoch, sequence_start_number,
-                 s21_raw, data_demodulated, roach_state, number=0, state=None, description='', validate=True):
+                 s21_raw, data_demodulated, roach_state, number=None, state=None, description='', validate=True):
         """
         Return a new SingleStream instance. The single integer tone_index is the common index of tone_bin,
         tone_amplitude, and tone_phase for the tone used to produce the time-ordered s21_raw data.
@@ -391,7 +391,7 @@ class SingleStream(RoachStream):
             True if the data is demodulated.
         roach_state : dict
             State information for the roach; the result of roach.state.
-        number : int
+        number : int or None
             The number of this instance in some larger structure, such as a StreamArray.
         state : dict
             All non-roach state information.
@@ -422,7 +422,7 @@ class SingleStream0(RoachStream0):
     Version 0 did not save the sequence_start_number integer.
     """
     def __new__(cls, *args, **kwargs):
-        kwargs['sequence_start_number'] = np.nan
+        kwargs['sequence_start_number'] = None
         return SingleStream(*args, **kwargs)
 
 
@@ -568,13 +568,13 @@ class SingleSweep(RoachMeasurement):
 
     _version = 0
 
-    def __init__(self, streams, number=0, state=None, description=''):
+    def __init__(self, streams, number=None, state=None, description=''):
         """
         Parameters
         ----------
         streams: iterable(SingleStream)
             The streams that make up the sweep.
-        number : int
+        number : int or None
             The number of this instance in the SweepArray from which it was created.
         state : dict
             All non-roach state information.
@@ -755,13 +755,13 @@ class SingleSweepStream(RoachMeasurement):
 
     _version = 0
 
-    def __init__(self, sweep, stream, number=0, state=None, description=''):
+    def __init__(self, sweep, stream, number=None, state=None, description=''):
         """
         Parameters
         ----------
         sweep : SingleSweep
         stream : SingleStream
-        number : int
+        number : int or None
         state : dict
         description : str
         """
@@ -1291,19 +1291,19 @@ class SingleSweepStreamList(RoachMeasurement):
 
     _version = 0
 
-    def __init__(self, single_sweep, stream_list, number=0, state=None, description=''):
+    def __init__(self, single_sweep, stream_list, number=None, state=None, description=''):
         """
         Parameters
         ----------
         single_sweep : SingleSweep
         stream_list : iterable(SingleStream)
-        number : int
+        number : int or None
         state : dict
         description : str
         """
         self.sweep = single_sweep
         if not isinstance(stream_list, core.MeasurementList):
-            stream_list = core.MeasurementList
+            stream_list = core.MeasurementList(stream_list)
         self.stream_list = stream_list
         self.number = number
         super(SingleSweepStreamList, self).__init__(state=state, description=description)
@@ -1313,7 +1313,7 @@ class SingleSweepStreamList(RoachMeasurement):
         for stream in self.stream_list:
             state = stream.state
             for key in keys:
-                if state is np.nan:
+                if state is np.nan:  # Not clear that this actually works
                     break
                 state = state.get(key, np.nan)
             vector.append(state)
