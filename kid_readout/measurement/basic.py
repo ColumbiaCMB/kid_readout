@@ -1301,7 +1301,7 @@ class SingleSweepStreamList(RoachMeasurement):
         state : dict
         description : str
         """
-        self.sweep = single_sweep
+        self.single_sweep = single_sweep
         if not isinstance(stream_list, core.MeasurementList):
             stream_list = core.MeasurementList(stream_list)
         self.stream_list = stream_list
