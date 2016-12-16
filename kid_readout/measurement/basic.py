@@ -805,20 +805,21 @@ class SingleSweepStream(RoachMeasurement):
             self.deglitch()
         return self._number_of_masked_samples
 
-    def deglitch(self,threshold=8,window_in_seconds=1,mask_extend_samples=50):
+    def deglitch(self, threshold=8, window_in_seconds=1, mask_extend_samples=50):
         window_samples = int(2 ** np.ceil(np.log2(window_in_seconds * self.stream.stream_sample_rate)))
         logger.debug("deglitching with threshold %f, window %.f seconds, %d samples, extending mask by %d samples"
-                     % (threshold,window_in_seconds,window_samples,mask_extend_samples))
-        self._glitch_mask = despike.deglitch_mask_mad(self.x_raw,thresh=threshold,window_length=window_samples,
+                     % (threshold, window_in_seconds,window_samples, mask_extend_samples))
+        self._glitch_mask = despike.deglitch_mask_mad(self.x_raw, thresh=threshold, window_length=window_samples,
                                                       mask_extend=mask_extend_samples)
         self._number_of_masked_samples = self._glitch_mask.sum()
-        self._x,self._q,self._stream_s21_normalized_deglitched = despike.mask_glitches([self.x_raw,self.q_raw,
-                                                                                        self.stream_s21_normalized],
-                                                                                       mask=self._glitch_mask,
-                                                                                       window_length=window_samples)
+        self._x, self._q, self._stream_s21_normalized_deglitched = despike.mask_glitches([self.x_raw, self.q_raw,
+                                                                                          self.stream_s21_normalized],
+                                                                                         mask=self._glitch_mask,
+                                                                                         window_length=window_samples)
         logger.debug("masked %d samples out of %d total, fraction: %f" % (self._number_of_masked_samples,
-                                                                   self._x_raw.shape[0],
-                                                                  (self._number_of_masked_samples/self._x_raw.shape[0])))
+                                                                          self._x_raw.size,
+                                                                          (self._number_of_masked_samples /
+                                                                           self._x_raw.size)))
 
     @memoized_property
     def stream_s21_normalized(self):
@@ -830,6 +831,7 @@ class SingleSweepStream(RoachMeasurement):
             logger.debug("stream_s21_normalized_deglitch running deglitch")
             self.deglitch()
         return self._stream_s21_normalized_deglitched
+
     @property
     def q_raw(self):
         """
@@ -841,7 +843,7 @@ class SingleSweepStream(RoachMeasurement):
             Values of q from self.stream corresponding to self.stream.sample_time
         """
         if not hasattr(self, '_q_raw'):
-            self.set_q_and_x()
+            self.set_raw_q_and_x()
         return self._q_raw
 
     @property
@@ -868,7 +870,7 @@ class SingleSweepStream(RoachMeasurement):
             Values of x from self.stream corresponding to self.stream.sample_time.
         """
         if not hasattr(self, '_x_raw'):
-            self.set_q_and_x()
+            self.set_raw_q_and_x()
         return self._x_raw
 
     @property
@@ -912,7 +914,7 @@ class SingleSweepStream(RoachMeasurement):
             self.deglitch()
         return self._x
 
-    def set_q_and_x(self):
+    def set_raw_q_and_x(self):
         """
         Use the resonator model to calculate time-ordered resonator parameters from the time-ordered s21 data.
 
@@ -1055,7 +1057,7 @@ class SingleSweepStream(RoachMeasurement):
         -------
 
         """
-        return self.S_qq_variance / 4
+        return self.S_qq_variance / 16
 
     def set_S(self, NFFT=None, window=mlab.window_none, detrend=mlab.detrend_none, noverlap=None, binned=True,
               bins_per_decade=30, masking_function=None, **psd_kwds):
@@ -1064,13 +1066,14 @@ class SingleSweepStream(RoachMeasurement):
 
         Parameters
         ----------
-        NFFT : int
-            The number of samples to use for each FFT chunk; should be a power of two for speed.
+        NFFT : int or None
+            The number of samples to use for each FFT chunk; should be a power of two for speed; if None, a reasonable
+            default is calculated that averages about eight spectra.
         detrend : callable
             A function that takes a complex time series as argument and returns a detrended time series.
         window  : callable
             A function that takes a complex time series as argument and returns a windowed time series.
-        noverlap : int
+        noverlap : int or None
             The number of samples to overlap in each chunk; if None, a value equal to half the NFFT value is used.
         binned : bool
             If True, the result is binned using bin sizes that increase with frequency.
@@ -1198,9 +1201,7 @@ class SingleSweepStream(RoachMeasurement):
         self._pca_S_11 = evals[1]
         self._pca_angles = angles
 
-    def to_dataframe(self, deglitch=None, add_origin=True, num_model_points=1000):
-        if deglitch is not None:
-            self.set_q_and_x(deglitch=deglitch)
+    def to_dataframe(self, add_origin=True, num_model_points=1000):
         data = {'number': self.number, 'analysis_epoch': time.time(), 'start_epoch': self.start_epoch()}
 
         data.update(self.state.flatten(wrap_lists=True))
@@ -1213,29 +1214,26 @@ class SingleSweepStream(RoachMeasurement):
         except KeyError:
             pass
 
-        for param in self.sweep.resonator.current_result.params.values():
+        for param in self.resonator.current_result.params.values():
             data['res_{}'.format(param.name)] = param.value
             data['res_{}_error'.format(param.name)] = param.stderr
-        data['res_redchi'] = self.sweep.resonator.current_result.redchi
-        data['res_Q_i'] = self.sweep.resonator.Q_i
-        data['res_Q_e'] = self.sweep.resonator.Q_e
+        data['res_redchi'] = self.resonator.current_result.redchi
+        data['res_Q_i'] = self.resonator.Q_i
+        data['res_Q_e'] = self.resonator.Q_e
 
-        data['res_frequency_data'] = [self.sweep.resonator.frequency]
-        data['res_s21_data'] = [self.sweep.resonator.data]
-        data['res_s21_errors'] = [self.sweep.resonator.errors]
-        model_f = np.linspace(self.sweep.resonator.frequency.min(), self.sweep.resonator.frequency.max(),
-                              num_model_points)
+        data['res_frequency_data'] = [self.resonator.frequency]
+        data['res_s21_data'] = [self.resonator.data]
+        data['res_s21_errors'] = [self.resonator.errors]
+        model_f = np.linspace(self.resonator.frequency.min(), self.resonator.frequency.max(), num_model_points)
         data['res_model_frequency'] = [model_f]
-        model_s21 = self.sweep.resonator.model.eval(params=self.sweep.resonator.current_params, f=model_f)
+        model_s21 = self.resonator.model.eval(params=self.resonator.current_params, f=model_f)
         data['res_model_s21'] = [model_s21]
-        data['res_s21_data_normalized'] = [self.sweep.resonator.remove_background(self.sweep.resonator.frequency,
-                                                                                  self.sweep.resonator.data)]
-        data['res_model_s21_normalized'] = [self.sweep.resonator.remove_background(model_f, model_s21)]
-        s21_at_f_0 = self.sweep.resonator.model.eval(params=self.sweep.resonator.current_params,
-                                                     f=self.sweep.resonator.f_0)
+        data['res_s21_data_normalized'] = [self.resonator.remove_background(self.resonator.frequency,
+                                                                            self.resonator.data)]
+        data['res_model_s21_normalized'] = [self.resonator.remove_background(model_f, model_s21)]
+        s21_at_f_0 = self.resonator.model.eval(params=self.resonator.current_params, f=self.resonator.f_0)
         data['res_model_s21_at_f_0'] = s21_at_f_0
-        data['res_model_s21_normalized_at_f_0'] = self.sweep.resonator.remove_background(self.sweep.resonator.f_0,
-                                                                                         s21_at_f_0)
+        data['res_model_s21_normalized_at_f_0'] = self.resonator.remove_background(self.resonator.f_0, s21_at_f_0)
 
         try:
             data['folded_x'] = [self.stream.fold(self.x_raw)]

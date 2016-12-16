@@ -41,7 +41,8 @@ def log_bin_edges(frequency, bins_per_decade, ensure_none_empty):
     if ensure_none_empty:
         log_at_least_df = log_bins[np.sum(np.diff(log_bins) <= df):]
         linear = frequency[frequency < log_at_least_df[0]] - df / 2
-        log_at_least_df += df - (log_at_least_df[0] - linear[-1]) #  shift to ensure all bins are at least df wide
+        # Shift all but the last bin edge to ensure all bins are at least df wide and all bins are populated.
+        log_at_least_df[:-1] += df - (log_at_least_df[0] - linear[-1])
         return np.concatenate((linear, log_at_least_df))
     else:
         return log_bins
