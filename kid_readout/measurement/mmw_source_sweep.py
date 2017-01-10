@@ -238,10 +238,10 @@ class MMWSweepOnMod(core.Measurement):
         off_rows = []
         for n in range(self.sweep.num_channels):
             off_ss, on_ss, mod_ss = self.sweep_stream_set(n)
-            on_rows.append(on_ss.to_dataframe(add_origin=False))
-            mod_rows.append(mod_ss.to_dataframe(deglitch=False,add_origin=False))
+            on_rows.append(on_ss.to_dataframe())
+            mod_rows.append(mod_ss.to_dataframe())
             if off_ss:
-                off_rows.append(off_ss.to_dataframe(add_origin=False))
+                off_rows.append(off_ss.to_dataframe())
         df_on = pd.concat(on_rows,ignore_index=True)
         df_mod = pd.concat(mod_rows,ignore_index=True)
         dfs = [df_on,df_mod]

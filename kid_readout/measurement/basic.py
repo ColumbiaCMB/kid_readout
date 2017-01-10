@@ -743,10 +743,10 @@ class SweepStreamArray(RoachMeasurement):
         """
         return self[number]
 
-    def to_dataframe(self, deglitch=None):
+    def to_dataframe(self):
         dataframes = []
         for number in range(self.num_channels):
-            dataframes.append(self.sweep_stream(number).to_dataframe(deglitch=deglitch))
+            dataframes.append(self.sweep_stream(number).to_dataframe())
         return pd.concat(dataframes, ignore_index=True)
 
 
