@@ -17,7 +17,11 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+
 class RoachHeterodyne(RoachInterface):
+
+    DRAM_SIZE_BYTES = 2 ** 28  # 256 MB
+
     initial_values_for_writeable_registers = {
         'chans': -1,  # this isn't a register, but this will make the read table invalid
         'dacctrl': 0,
@@ -458,9 +462,12 @@ class RoachHeterodyne(RoachInterface):
         lo_level: LO power level on the valon. options are [-4, -1, 2, 5]
         """
         #TODO: Fix this after valon is updated
+        # ToDo: move logging to ValonSynth
         if self.lo_valon is None:
             self.adc_valon.set_rf_level(8,2)
             self.adc_valon.set_frequency_b(lomhz, chan_spacing=chan_spacing)
+            logger.info("Set ADC Valon frequency B to {:.4f} MHz  "
+                        "with channel spacing {:.4f} MHz".format(lomhz, chan_spacing))
             self.lo_frequency = lomhz
             self.save_state()
         else:
@@ -479,6 +486,8 @@ class RoachHeterodyne(RoachInterface):
                 self.lo_valon.set_rf_level(8,5)
             self.lo_valon.set_frequency_a(lomhz, chan_spacing=chan_spacing)
             self.lo_valon.set_frequency_b(lomhz, chan_spacing=chan_spacing)
+            logger.info("Set LO Valon frequencies A and B to {:.4f} MHz"
+                        " with channel spacing {:.4f} MHz".format(lomhz, chan_spacing))
             self.lo_frequency = lomhz
             self.save_state()
 
@@ -517,6 +526,8 @@ class RoachHeterodyne(RoachInterface):
 
 
 class Roach1Heterodyne11(RoachHeterodyne):
+
+    # The RoachHeterodyne class is a roach 1 class, so this build has the same DRAM size.
 
     def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None, host_ip=None, initialize=False,
                  use_config=False, nfs_root='/srv/roach_boot/etch', lo_valon=None, attenuator=None):

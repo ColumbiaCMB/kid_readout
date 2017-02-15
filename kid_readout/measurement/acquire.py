@@ -59,8 +59,8 @@ def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=0, state=None, de
     ----------
     ri : RoachInterface
         An instance of a subclass.
-    tone_banks : iterable (numpy.ndarray (float))
-        An iterable of arrays of frequencies to use for the sweep.
+    tone_banks : iterable of ndarray (float)
+        An iterable of arrays (or a 2-D array) of frequencies to use for the sweep.
     num_tone_samples : int
         The number of samples in the playback buffer; must be a power of two.
     length_seconds : float
@@ -70,8 +70,6 @@ def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=0, state=None, de
         The non-roach state to pass to the SweepArray.
     description : str
         A human-readable description of the measurement.
-    tone_bank_indices : numpy.ndarray[int]
-        The indices of the tone banks to use in the sweep; the default is to use all existing.
     verbose : bool
         If true, print progress messages.
     wait_for_sync : bool

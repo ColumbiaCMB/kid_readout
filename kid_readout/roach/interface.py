@@ -23,6 +23,7 @@ CONFIG_FILE_NAME_TEMPLATE = os.path.join(BASE_DATA_DIR,'%s_config.npz')
 
 logger = logging.getLogger(__name__)
 
+
 class RoachInterface(object):
     """
     Base class for readout systems.
@@ -30,6 +31,9 @@ class RoachInterface(object):
     These methods define an abstract interface that can be relied on to be consistent between the baseband and
     heterodyne readout systems.
     """
+
+    BYTES_PER_SAMPLE = 4
+    DRAM_SIZE_BYTES = None  # Subclasses should give the appropriate value
 
     def __init__(self, roach=None, roachip='roach', adc_valon=None, host_ip=None,
                  nfs_root='/srv/roach_boot/etch', lo_valon=None):
@@ -173,6 +177,9 @@ class RoachInterface(object):
             except Exception, e:
                 self.bof_pid = None
     #            raise e
+
+    def max_num_waveforms(self, num_tone_samples):
+        return self.DRAM_SIZE_BYTES // (self.BYTES_PER_SAMPLE * num_tone_samples)
 
     @property
     def num_tones(self):
