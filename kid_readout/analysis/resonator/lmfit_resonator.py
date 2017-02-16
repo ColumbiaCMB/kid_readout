@@ -34,7 +34,7 @@ class BaseResonator(FitterWithAttributeAccess):
         if errors is None:
             weights = None
         else:
-            weights = 1/errors.real + 1j/errors.imag
+            weights = 1 / errors.real + 1j / errors.imag
         nanmask = np.isfinite(frequency)
         nanmask = nanmask & np.isfinite(s21)
         if weights is not None:
@@ -48,20 +48,19 @@ class BaseResonator(FitterWithAttributeAccess):
         #    def fit(self, data, params=None, weights=None, method='leastsq',
         #            iter_cb=None, scale_covar=True, verbose=False, fit_kws=None, **kwargs):
         super(BaseResonator, self).__init__(data=s21, f=frequency,
-                                        model=model, weights=weights, **kwargs)
+                                            model=model, weights=weights, **kwargs)
         self.frequency = frequency
         self.errors = errors
         self.weights = weights
-
         self.fit()
 
     @property
     def Q_i(self):
-        return 1/(1./self.Q - np.real(1/self.Q_e))
+        return 1 / (1. / self.Q - np.real(1 / self.Q_e))
 
     @property
     def Q_e(self):
-        return self.Q_e_real + 1j*self.Q_e_imag
+        return self.Q_e_real + 1j * self.Q_e_imag
 
     @property
     def s21(self):
@@ -69,7 +68,7 @@ class BaseResonator(FitterWithAttributeAccess):
 
     @property
     def target(self):
-        if isinstance(self.model,lmfit.model.CompositeModel):
+        if isinstance(self.model, lmfit.model.CompositeModel):
             return self.model.right
         else:
             return self.model
@@ -81,17 +80,17 @@ class BaseResonator(FitterWithAttributeAccess):
 
     @property
     def background(self):
-        if isinstance(self.model,lmfit.model.CompositeModel):
+        if isinstance(self.model, lmfit.model.CompositeModel):
             return self.model.left
         else:
             return None
 
-    def eval(self,frequency=None,params=None):
+    def eval(self, frequency=None, params=None):
         if params is None:
             params = self.current_params
         if frequency is None:
             frequency = self.frequency
-        return self.model.eval(f=frequency,params=params)
+        return self.model.eval(f=frequency, params=params)
 
     def background_s21(self, frequency=None):
         if frequency is None:
@@ -103,7 +102,7 @@ class BaseResonator(FitterWithAttributeAccess):
             else:
                 return np.ones_like(frequency)
         else:
-            return background.eval(self.current_result.params,f=frequency)
+            return background.eval(self.current_result.params, f=frequency)
 
     def remove_background(self, frequency, s21_raw):
         """
@@ -116,9 +115,7 @@ class BaseResonator(FitterWithAttributeAccess):
             raw s21 data which should be normalized
         """
         normalization = self.background_s21(frequency)
-
         return s21_raw / normalization
-
 
     def approximate_target_gradient(self, frequency, delta_f=1.0):
         """
@@ -134,7 +131,7 @@ class BaseResonator(FitterWithAttributeAccess):
         f1 = frequency + delta_f
         y = self.target_s21(frequency)
         y1 = self.target_s21(f1)
-        gradient = (y1 - y)/delta_f  # division by 1 Hz is implied.
+        gradient = (y1 - y) / delta_f  # division by 1 Hz is implied.
         return gradient
 
     def project_s21_to_frequency(self, frequency, s21, use_data_mean=True, s21_already_normalized=False):
@@ -196,42 +193,54 @@ class BaseResonator(FitterWithAttributeAccess):
 
 class LinearResonator(BaseResonator):
     def __init__(self, frequency, s21, errors, **kwargs):
-        super(LinearResonator,self).__init__(frequency=frequency, s21=s21, errors=errors,
-                                             model = lmfit_models.LinearResonatorModel, **kwargs)
+        super(LinearResonator, self).__init__(frequency=frequency, s21=s21, errors=errors,
+                                              model=lmfit_models.LinearResonatorModel, **kwargs)
+
 
 _general_cable_model = lmfit_models.GeneralCableModel()
 _linear_resonator_model = lmfit_models.LinearResonatorModel()
-_linear_resonator_with_cable = (_general_cable_model
-                                * _linear_resonator_model)
-def _linear_resonator_with_cable_guess(data, f=None,**kwargs):
-    cable_params = _general_cable_model.guess(data=data,f=f,**kwargs)
-    resonator_params = _linear_resonator_model.guess(data=data,f=f,**kwargs)
+_linear_resonator_with_cable = (_general_cable_model * _linear_resonator_model)
+
+
+def _linear_resonator_with_cable_guess(data, f=None, **kwargs):
+    cable_params = _general_cable_model.guess(data=data, f=f, **kwargs)
+    resonator_params = _linear_resonator_model.guess(data=data, f=f, **kwargs)
     cable_params.update(resonator_params)
     return cable_params
+
+
 _linear_resonator_with_cable.guess = _linear_resonator_with_cable_guess
+
+
 class LinearResonatorWithCable(BaseResonator):
     def __init__(self, frequency, s21, errors, **kwargs):
-        super(LinearResonatorWithCable,self).__init__(frequency=frequency, s21=s21, errors=errors,
-                                             model = _linear_resonator_with_cable, **kwargs)
+        super(LinearResonatorWithCable, self).__init__(frequency=frequency, s21=s21, errors=errors,
+                                                       model=_linear_resonator_with_cable, **kwargs)
+
 
 _background_resonator_model = lmfit_models.LinearResonatorModel(prefix='bg_')
 _foreground_resonator_model = lmfit_models.LinearResonatorModel(prefix='fg_')
-
 _colliding_linear_resonators_with_cable = ((_general_cable_model * _background_resonator_model)
-                                                      * _foreground_resonator_model)
-def _colliding_linear_resonators_with_cable_guess(data, f=None,**kwargs):
-    cable_params = _general_cable_model.guess(data=data,f=f,**kwargs)
-    resonator_params = _foreground_resonator_model.guess(data=data,f=f,**kwargs)
-    bg_resonator_params = _background_resonator_model.guess(data=data,f=f, **kwargs)
+                                           * _foreground_resonator_model)
+
+
+def _colliding_linear_resonators_with_cable_guess(data, f=None, **kwargs):
+    cable_params = _general_cable_model.guess(data=data, f=f, **kwargs)
+    resonator_params = _foreground_resonator_model.guess(data=data, f=f, **kwargs)
+    bg_resonator_params = _background_resonator_model.guess(data=data, f=f, **kwargs)
     cable_params.update(resonator_params)
     cable_params.update(bg_resonator_params)
     return cable_params
+
+
 _colliding_linear_resonators_with_cable.guess = _colliding_linear_resonators_with_cable_guess
+
 
 class CollidingLinearResonatorsWithCable(BaseResonator):
     def __init__(self, frequency, s21, errors, **kwargs):
-        super(CollidingLinearResonatorsWithCable,self).__init__(frequency=frequency, s21=s21, errors=errors,
-                                             model = _colliding_linear_resonators_with_cable, **kwargs)
+        super(CollidingLinearResonatorsWithCable, self).__init__(frequency=frequency, s21=s21, errors=errors,
+                                                                 model=_colliding_linear_resonators_with_cable,
+                                                                 **kwargs)
 
 
 class GeneralCable(FitterWithAttributeAccess):
@@ -257,14 +266,47 @@ class GeneralCable(FitterWithAttributeAccess):
         if errors is None:
             weights = None
         else:
-            weights = 1/errors.real + 1j/errors.imag
+            weights = 1 / errors.real + 1j / errors.imag
         # kwargs get passed from Fitter to Model.fit directly. Signature is:
         #    def fit(self, data, params=None, weights=None, method='leastsq',
         #            iter_cb=None, scale_covar=True, verbose=False, fit_kws=None, **kwargs):
         super(GeneralCable, self).__init__(data=s21, f=frequency,
-                                        model=lmfit_models.GeneralCableModel, weights=weights, **kwargs)
+                                           model=lmfit_models.GeneralCableModel, weights=weights, **kwargs)
         self.frequency = frequency
         self.errors = errors
         self.weights = weights
-
         self.fit()
+
+
+# This is a copy of the code surrounding LinearResonatorWithCable
+_linear_loss_resonator_model = lmfit_models.LinearLossResonatorModel()
+_linear_loss_resonator_with_cable = _general_cable_model * _linear_loss_resonator_model
+
+
+def _linear_loss_resonator_with_cable_guess(data, f=None, **kwargs):
+    cable_params = _general_cable_model.guess(data=data, f=f, **kwargs)
+    resonator_params = _linear_loss_resonator_model.guess(data=data, f=f, **kwargs)
+    cable_params.update(resonator_params)
+    return cable_params
+
+
+_linear_loss_resonator_with_cable.guess = _linear_loss_resonator_with_cable_guess
+
+
+class LinearLossResonatorWithCable(BaseResonator):
+
+    def __init__(self, frequency, s21, errors, **kwargs):
+        super(LinearLossResonatorWithCable, self).__init__(frequency=frequency, s21=s21, errors=errors,
+                                                           model=_linear_loss_resonator_with_cable, **kwargs)
+
+    @property
+    def Q(self):
+        return 1 / (self.loss_i + self.loss_c)
+
+    @property
+    def Q_e(self):
+        return 1 / (self.loss_c * (1 + 1j * self.mu))
+
+    @property
+    def Q_i(self):
+        return 1 / self.loss_i

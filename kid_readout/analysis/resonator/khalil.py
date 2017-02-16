@@ -1,8 +1,8 @@
 """
 This module uses models from the Khalil paper.
 """
-
 from __future__ import division
+
 import numpy as np
 from scipy.special import cbrt
 from lmfit import Parameters

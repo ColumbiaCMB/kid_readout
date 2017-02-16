@@ -72,7 +72,14 @@ def nonlinear_resonator(f,f_0,Q,Q_e_real,Q_e_imag,a):
         s21new = s21
     return s21new
 
+
 def inverse_nonlinear_resonator(f, f_0, iQ, iQ_e_real, iQ_e_imag,a):
     Q = 1/iQ
     Qe = 1/(iQ_e_real+1j*iQ_e_imag)
     return nonlinear_resonator(f,f_0,Q,Q_e_real=np.real(Qe),Q_e_imag=np.imag(Qe),a=a)
+
+
+# A linear model that fits directly to the inverse quality factors
+def loss_linear_resonator(f, f_0, loss_c, loss_i, mu):
+    return 1 - (loss_c * (1 + 1j * mu) /
+                (loss_c + loss_i + 2j * (f_0 / f - 1)))
