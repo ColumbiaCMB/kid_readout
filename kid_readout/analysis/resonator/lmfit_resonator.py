@@ -1,4 +1,5 @@
 from __future__ import division
+from collections import namedtuple
 
 import lmfit
 import numpy as np
@@ -7,7 +8,17 @@ from kid_readout.analysis.lmfit_fitter import FitterWithAttributeAccess
 from kid_readout.analysis.resonator import lmfit_models
 
 
+# This is a simple format for extracted resonator data, useful for plotting.
+# The _data arrays are the raw frequency and s21 data;
+# The _model arrays are the model frequency and evaluated s21
+# The _0 points are the resonance frequency (float) and the model (complex) evaluated there.
+ResonatorData = namedtuple('ResonatorData', field_names=['f_data', 's21_data',
+                                                         'f_model', 's21_model',
+                                                         'f_0', 's21_0'])
+
+
 class BaseResonator(FitterWithAttributeAccess):
+
     def __init__(self, frequency, s21, errors, model, **kwargs):
         """
         General resonator fitting class.
@@ -20,7 +31,7 @@ class BaseResonator(FitterWithAttributeAccess):
             measured S21 data
         errors: None or array of complex
             errors on the real and imaginary parts of the s21 data. None means use no errors
-        model: an lmfit.Model
+        model: lmfit.Model
             the model for the resonator. Common models are provided in lmfit_models. If the model is composite,
             it is assumed to be of the form background * target, where target is the model of the target resonator
             itself, and background represents any other nuisance effects (cable delay, other adjacent resonators etc.)
@@ -56,7 +67,7 @@ class BaseResonator(FitterWithAttributeAccess):
 
     @property
     def Q_i(self):
-        return 1 / (1. / self.Q - np.real(1 / self.Q_e))
+        return 1 / (1 / self.Q - np.real(1 / self.Q_e))
 
     @property
     def Q_e(self):
@@ -106,7 +117,7 @@ class BaseResonator(FitterWithAttributeAccess):
 
     def remove_background(self, frequency, s21_raw):
         """
-        Normalize s21 data, removing arbitrary ampltude, delay, and phase terms
+        Normalize s21 data, removing arbitrary amplitude, delay, and phase terms
         
         frequency : float or array of floats
             frequency in same units as the model was built with, at which normalization should be computed
@@ -133,6 +144,76 @@ class BaseResonator(FitterWithAttributeAccess):
         y1 = self.target_s21(f1)
         gradient = (y1 - y) / delta_f  # division by 1 Hz is implied.
         return gradient
+
+    def extract(self, normalize=False, num_model_points=1000):
+        """
+        Extract and return a namedtuple containing three pairs of frequency and s21 values corresponding to (1) the
+        input data array, (2) the evaluated model array, and (3) a single point at the resonance frequency.
+
+        Parameters
+        ----------
+        normalize : bool, default False
+            If True, return all s21 values with the background model removed.
+        num_model_points : int, default 1000
+            The number of data points to use in evaluating the model over the span of the data frequencies.
+
+        Returns
+        -------
+        ResonatorData, a namedtuple defined in this module
+        """
+        f_data = self.frequency.copy()
+        s21_data = self.data.copy()
+        f_model = np.linspace(f_data.min(), f_data.max(), num_model_points)
+        s21_model = self.model.eval(params=self.current_params, f=f_model)
+        f_0 = self.f_0
+        s21_0 = self.model.eval(params=self.current_params, f=f_0)
+        if normalize:
+            s21_data = self.remove_background(frequency=f_data, s21_raw=s21_data)
+            s21_model = self.remove_background(frequency=f_model, s21_raw=s21_model)
+            s21_0 = self.remove_background(frequency=f_0, s21_raw=s21_0)
+        return ResonatorData(f_data, s21_data, f_model, s21_model, f_0, s21_0)
+
+    def invert_raw(self, frequency, s21_raw):
+        """
+        Invert the resonator model and return the time-ordered resonator parameters x(t) and Q_i^[-1}(t) that correspond
+        to the given time-ordered non-normalized s21 data; see invert().
+
+        Parameters
+        ----------
+        frequency : float
+            The tone frequency used to record the time-ordered data.
+        s21_raw : ndarray (complex)
+            The time-ordered raw s21 data.
+
+        Returns
+        -------
+        ndarray (real)
+            The time-ordered values of the fractional frequency detuning.
+        ndarray (real)
+            The time-ordered values of the inverse internal quality factor.
+
+        """
+        return self.invert(self.remove_background(frequency=frequency, s21_raw=s21_raw))
+
+    # ToDo: finish
+    def invert(self, s21_normalized):
+        """
+        Invert the resonator model and return the time-ordered resonator parameters x(t) and Q_i^[-1}(t) that correspond
+        to the given time-ordered s21 data. These data should be normalized to equal 1 far from the resonance.
+
+        Parameters
+        ----------
+        s21_normalized : ndarray (complex)
+            The time-ordered s21 data, normalized to 1 off-resonance.
+
+        Returns
+        -------
+        ndarray (real)
+            The time-ordered values of the fractional frequency detuning x.
+        ndarray (real)
+            The time-ordered values of the inverse internal quality factor q = 1 / Q_i.
+        """
+        raise NotImplementedError("Subclasses should implement this using their parameters.")
 
     def project_s21_to_frequency(self, frequency, s21, use_data_mean=True, s21_already_normalized=False):
         """
@@ -217,6 +298,13 @@ class LinearResonatorWithCable(BaseResonator):
         super(LinearResonatorWithCable, self).__init__(frequency=frequency, s21=s21, errors=errors,
                                                        model=_linear_resonator_with_cable, **kwargs)
 
+    def invert(self, s21_normalized):
+        c = 1 / self.Q_e  # c is the inverse of the complex couping quality factor.
+        z = c / (1 - s21_normalized)
+        q = z.real - c.real
+        x = z.imag / 2  # This factor of two means S_xx = S_qq / 4 when amplifier-noise dominated.
+        return x, q
+
 
 _background_resonator_model = lmfit_models.LinearResonatorModel(prefix='bg_')
 _foreground_resonator_model = lmfit_models.LinearResonatorModel(prefix='fg_')
@@ -299,13 +387,21 @@ class LinearLossResonatorWithCable(BaseResonator):
         super(LinearLossResonatorWithCable, self).__init__(frequency=frequency, s21=s21, errors=errors,
                                                            model=_linear_loss_resonator_with_cable, **kwargs)
 
+    def invert(self, s21_normalized):
+        z = self.loss_c * (1j * self.asymmetry + s21_normalized) / (1 - s21_normalized)
+        x = z.imag / 2
+        q = z.real
+        return x, q
+
+    # These properties improve compatibility with other models.
+
     @property
     def Q(self):
         return 1 / (self.loss_i + self.loss_c)
 
     @property
     def Q_e(self):
-        return 1 / (self.loss_c * (1 + 1j * self.mu))
+        return 1 / (self.loss_c * (1 + 1j * self.asymmetry))
 
     @property
     def Q_i(self):

@@ -6,6 +6,7 @@ from distutils.version import StrictVersion
 
 import equations
 
+
 def update_param_values_and_limits(pars, prefix, **kwargs):
     for key, val in kwargs.items():
         if key.endswith('_max'):
@@ -125,17 +126,14 @@ class NonlinearResonatorModel(ComplexModel):
 class LinearLossResonatorModel(ComplexModel):
 
     def __init__(self, *args, **kwargs):
-        super(LinearLossResonatorModel, self).__init__(equations.loss_linear_resonator, *args, **kwargs)
+        super(LinearLossResonatorModel, self).__init__(equations.linear_loss_resonator, *args, **kwargs)
 
-    # ToDo: improve loss guessing
-    # ToDo: understand composite guessing
     def guess(self, data, f=None, **kwargs):
-        verbose = kwargs.pop('verbose', None)
+        verbose = kwargs.pop('verbose', False)
         if f is None:
             return self.make_params(verbose=verbose, **kwargs)
         else:
-            argmin_s21 = np.abs(data).argmin()
-            f_0_guess = f[argmin_s21]  # guess that the resonance is the lowest point
+            f_0_guess = f[np.argmin(np.abs(data))]  # guess that the resonance is the lowest point
             width = f.size // 10
             gaussian = np.exp(-np.linspace(-4, 4, width) ** 2)
             gaussian /= np.sum(gaussian)  # not necessary
@@ -144,11 +142,14 @@ class LinearLossResonatorModel(ComplexModel):
             # Exclude the edges, which are affected by zero padding.
             linewidth = (f[np.argmax(derivative[width:-width])] -
                          f[np.argmin(derivative[width:-width])])
-            loss_guess = linewidth / f_0_guess
-            params = self.make_params(loss_i=loss_guess / 2, loss_c=loss_guess / 2, mu=0, f_0=f_0_guess)
-            params['%sloss_i' % self.prefix].set(min=0, max=1)
-            params['%sf_0' % self.prefix].set(min=f.min(), max=f.max())
-            params['%sloss_c' % self.prefix].set(min=0, max=1)
-            params['%smu' % self.prefix].set(min=-10, max=10)
+            i_plus_c = linewidth / f_0_guess
+            i_over_c = 1 / (1 / np.min(np.abs(data) - 1))
+            loss_c_guess = i_plus_c / (1 + i_over_c)
+            loss_i_guess = i_plus_c * i_over_c / (1 + i_over_c)
+            params = self.make_params(f_0=f_0_guess, loss_i=loss_i_guess, loss_c=loss_c_guess, asymmetry=0)
+            params['{}f_0'.format(self.prefix)].set(min=f.min(), max=f.max())
+            params['{}loss_i'.format(self.prefix)].set(min=0, max=1)
+            params['{}loss_c'.format(self.prefix)].set(min=0, max=1)
+            params['{}asymmetry'.format(self.prefix)].set(min=-10, max=10)
             return update_param_values_and_limits(params, self.prefix, **kwargs)
 

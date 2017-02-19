@@ -35,25 +35,6 @@ resonance_defaults = {'linestyle': 'none',
                       'alpha': 1}
 
 
-ResonatorData = namedtuple('ResonatorData', field_names=['f_data', 's21_data',
-                                                         'f_model', 's21_model',
-                                                         'f_r', 's21_r'])
-
-
-def extract_resonator(resonator, normalize, num_model_points):
-    f_data = resonator.frequency.copy()
-    s21_data = resonator.data.copy()
-    f_model = np.linspace(f_data.min(), f_data.max(), num_model_points)
-    s21_model = resonator.model.eval(params=resonator.current_params, f=f_model)
-    f_r = resonator.f_0
-    s21_r = resonator.model.eval(params=resonator.current_params, f=f_r)
-    if normalize:
-        s21_data = resonator.remove_background(frequency=f_data, s21_raw=s21_data)
-        s21_model = resonator.remove_background(frequency=f_model, s21_raw=s21_model)
-        s21_r = resonator.remove_background(frequency=f_r, s21_raw=s21_r)
-    return ResonatorData(f_data, s21_data, f_model, s21_model, f_r, s21_r)
-
-
 def resonator_complex_plane(resonator, axis, normalize=True, num_model_points=1000,
                             sweep_mean_settings=None, model_settings=None, resonance_settings=None):
     sweep_mean_kwds = sweep_mean_defaults.copy()
@@ -65,10 +46,10 @@ def resonator_complex_plane(resonator, axis, normalize=True, num_model_points=10
     resonance_kwds = resonance_defaults.copy()
     if resonance_settings is not None:
         resonance_kwds.update(resonance_settings)
-    rd = extract_resonator(resonator, normalize=normalize, num_model_points=num_model_points)
+    rd = resonator.extract(normalize=normalize, num_model_points=num_model_points)
     axis.plot(rd.s21_data.real, rd.s21_data.imag, **sweep_mean_kwds)
     axis.plot(rd.s21_model.real, rd.s21_model.imag, **model_kwds)
-    axis.plot(rd.s21_r.real, rd.s21_r.imag, **resonance_kwds)
+    axis.plot(rd.s21_0.real, rd.s21_0.imag, **resonance_kwds)
     return rd
 
 
@@ -96,8 +77,8 @@ def sss_complex_plane(sss, axis, normalize=True, num_model_points=1000, zoom=Fal
                                  num_model_points=num_model_points, sweep_mean_settings=sweep_mean_settings,
                                  model_settings=model_settings, resonance_settings=resonance_settings)
     if zoom:
-        x_span = np.abs(rd.s21_r.real - stream_s21.real.mean())
-        y_span = np.abs(rd.s21_r.imag - stream_s21.imag.mean())
+        x_span = np.abs(rd.s21_0.real - stream_s21.real.mean())
+        y_span = np.abs(rd.s21_0.imag - stream_s21.imag.mean())
         span = np.max([x_span, y_span, 0.1])
-        axis.set_xlim(rd.s21_r.real - span, rd.s21_r.real + span)
-        axis.set_ylim(rd.s21_r.imag - span, rd.s21_r.imag + span)
+        axis.set_xlim(rd.s21_0.real - span, rd.s21_0.real + span)
+        axis.set_ylim(rd.s21_0.imag - span, rd.s21_0.imag + span)

@@ -79,7 +79,8 @@ def inverse_nonlinear_resonator(f, f_0, iQ, iQ_e_real, iQ_e_imag,a):
     return nonlinear_resonator(f,f_0,Q,Q_e_real=np.real(Qe),Q_e_imag=np.imag(Qe),a=a)
 
 
-# A linear model that fits directly to the inverse quality factors
-def loss_linear_resonator(f, f_0, loss_c, loss_i, mu):
-    return 1 - (loss_c * (1 + 1j * mu) /
-                (loss_c + loss_i + 2j * (f_0 / f - 1)))
+# A linear model that fits directly to the inverse quality factors, or losses
+def linear_loss_resonator(f, f_0, loss_i, loss_c, asymmetry):
+    x = f / f_0 - 1
+    return 1 - ((1 + 1j * asymmetry) /
+                (1 + (loss_i + 2j * x) / loss_c))

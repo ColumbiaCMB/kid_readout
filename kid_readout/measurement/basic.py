@@ -410,10 +410,11 @@ class SingleStream(RoachStream):
     # ToDo: use tone_index?
     def tone_offset_frequency(self, normalized_frequency=True):
         offset = calculate.tone_offset_frequency(self.tone_bin,self.roach_state.num_tone_samples,self.filterbank_bin,
-                                     self.roach_state.num_filterbank_channels)
+                                                 self.roach_state.num_filterbank_channels)
         if not normalized_frequency:
             offset = offset * self.stream_sample_rate
         return offset
+
 
 class SingleStream0(RoachStream0):
     """
@@ -428,7 +429,7 @@ class SingleStream0(RoachStream0):
 
 class SweepArray(RoachMeasurement):
     """
-    This class contains list of streams.
+    This class contains a list of StreamArrays.
 
     The properties return values in ascending frequency order.
     """
@@ -561,7 +562,7 @@ class SweepArray(RoachMeasurement):
 
 class SingleSweep(RoachMeasurement):
     """
-    This class contains list of single streams with different frequencies.
+    This class contains a list of SingleStreams with different frequencies.
 
     The properties return values in ascending frequency order.
     """
@@ -631,18 +632,20 @@ class SingleSweep(RoachMeasurement):
         """BaseResonator: the result of the last call to fit_resonator()."""
         return self.fit_resonator()
 
-    def fit_resonator(self, model=lmfit_resonator.LinearResonatorWithCable):
+    def fit_resonator(self, model=lmfit_resonator.LinearResonatorWithCable, params=None):
         """
-        Fit the s21 data with the given resonator model.
+        Fit the s21 data with the given resonator model and, if given, the initial Parameters.
 
         Parameters
         ----------
         model : BaseResonator
             The resonator model to use for the fit.
+        params : lmfit.Parameters
+            A parameters object to use for initial values and limits in the fit.
         """
         self._delete_memoized_property_caches()
         self._resonator = model(frequency=self.frequency, s21=self.s21_point, errors=self.s21_point_error)
-        self._resonator.fit()
+        self._resonator.fit(params=params)
         return self._resonator
 
     def to_dataframe(self, add_origin=True):
@@ -924,11 +927,7 @@ class SingleSweepStream(RoachMeasurement):
         -------
         None
         """
-        s21 = self.stream_s21_normalized
-        c = 1 / self.sweep.resonator.Q_e  # c is the inverse of the complex couping quality factor.
-        z = c / (1 - s21)
-        self._q_raw = z.real - c.real
-        self._x_raw = z.imag / 2  # This factor of two means S_xx = S_qq / 4 when amplifier noise dominated.
+        self._x_raw, self._q_raw = self.resonator.invert(self.stream_s21_normalized)
 
     @property
     def S_frequency(self):
