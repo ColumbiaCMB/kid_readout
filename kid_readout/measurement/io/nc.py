@@ -31,6 +31,10 @@ from kid_readout.measurement import core, basic
 
 class NCFile(core.IO):
 
+    # This can be used as a conventional extension for files created by this IO class, but it is not used or enforced
+    # anywhere internally.
+    EXTENSION = '.nc'
+
     # These special strings are used to store None, True, and False as ncattrs.
     on_write = {None: '_None',
                 True: '_True',

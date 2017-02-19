@@ -21,6 +21,10 @@ from kid_readout.measurement import core
 # TODO: check node path validation -- how were tests passing?
 class NumpyDirectory(core.IO):
 
+    # This can be used as a conventional extension for directories created by this IO class, but it is not used or
+    # enforced anywhere internally.
+    EXTENSION = '.npd'
+
     def __init__(self, root_path, metadata=None, memmap=False):
         super(NumpyDirectory, self).__init__(root_path=os.path.abspath(os.path.expanduser(root_path)),
                                              metadata=metadata)

@@ -215,7 +215,7 @@ def new_nc_file(suffix='', directory=settings.BASE_DATA_DIR, metadata=None):
         suffix = '_' + suffix
     if metadata is None:
         metadata = all_metadata()
-    root_path = os.path.join(directory, time.strftime('%Y-%m-%d_%H%M%S') + suffix + '.nc')
+    root_path = os.path.join(directory, time.strftime('%Y-%m-%d_%H%M%S') + suffix + nc.NCFile.EXTENSION)
     logger.debug("Creating new NCFile with path %s" % root_path)
     return nc.NCFile(root_path, metadata=metadata)
 
@@ -225,7 +225,7 @@ def new_npy_directory(suffix='', directory=settings.BASE_DATA_DIR, metadata=None
         suffix = '_' + suffix
     if metadata is None:
         metadata = all_metadata()
-    root_path = os.path.join(directory, time.strftime('%Y-%m-%d_%H%M%S') + suffix + '.npd')
+    root_path = os.path.join(directory, time.strftime('%Y-%m-%d_%H%M%S') + suffix + npy.NumpyDirectory.EXTENSION)
     logger.debug("Creating new NumpyDirectory with path %s" % root_path)
     return npy.NumpyDirectory(root_path, metadata=metadata)
 

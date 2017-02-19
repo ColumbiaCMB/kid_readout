@@ -528,6 +528,9 @@ class IO(object):
     Implementations should implement the abstract methods and should be able to store large numpy arrays efficiently.
     """
 
+    # Subclasses can define a conventional extension for files or directories they create.
+    EXTENSION = ''
+
     def __init__(self, root_path, metadata=None):
         """
         Return a new IO object that will read to or write from the given root directory or file. If the root does not
