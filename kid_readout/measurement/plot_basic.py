@@ -35,6 +35,54 @@ resonance_defaults = {'linestyle': 'none',
                       'alpha': 1}
 
 
+def resonator_amplitude(resonator, axis, normalize=True, num_model_points=1000, f_scale=1e-6, three_ticks=True,
+                        decibels=True, sweep_mean_settings=None, model_settings=None, resonance_settings=None):
+    sweep_mean_kwds = sweep_mean_defaults.copy()
+    if sweep_mean_settings is not None:
+        sweep_mean_kwds.update(sweep_mean_settings)
+    model_kwds = model_defaults.copy()
+    if model_settings is not None:
+        model_kwds.update(model_settings)
+    resonance_kwds = resonance_defaults.copy()
+    if resonance_settings is not None:
+        resonance_kwds.update(resonance_settings)
+    rd = resonator.extract(normalize=normalize, num_model_points=num_model_points)
+    if decibels:
+        data_scale = lambda d: 20 * np.log10(np.abs(d))
+    else:
+        data_scale = lambda d: np.abs(d)
+    axis.plot(f_scale * rd.f_data, data_scale(rd.s21_data), **sweep_mean_kwds)
+    axis.plot(f_scale * rd.f_model, data_scale(rd.s21_model), **model_kwds)
+    axis.plot(f_scale * rd.f_0, data_scale(rd.s21_0), **resonance_kwds)
+    if three_ticks:
+        axis.set_xticks(f_scale * np.array([rd.f_data.min(), rd.f_0, rd.f_data.max()]))
+    return rd
+
+
+def resonator_phase(resonator, axis, normalize=True, num_model_points=1000, f_scale=1e-6, three_ticks=True,
+                    radians=True, sweep_mean_settings=None, model_settings=None, resonance_settings=None):
+    sweep_mean_kwds = sweep_mean_defaults.copy()
+    if sweep_mean_settings is not None:
+        sweep_mean_kwds.update(sweep_mean_settings)
+    model_kwds = model_defaults.copy()
+    if model_settings is not None:
+        model_kwds.update(model_settings)
+    resonance_kwds = resonance_defaults.copy()
+    if resonance_settings is not None:
+        resonance_kwds.update(resonance_settings)
+    rd = resonator.extract(normalize=normalize, num_model_points=num_model_points)
+    if radians:
+        data_scale = lambda d: np.angle(d)
+    else:
+        data_scale = lambda d: np.degrees(np.angle(d))
+    axis.plot(f_scale * rd.f_data, data_scale(rd.s21_data), **sweep_mean_kwds)
+    axis.plot(f_scale * rd.f_model, data_scale(rd.s21_model), **model_kwds)
+    axis.plot(f_scale * rd.f_0, data_scale(rd.s21_0), **resonance_kwds)
+    if three_ticks:
+        axis.set_xticks(f_scale * np.array([rd.f_data.min(), rd.f_0, rd.f_data.max()]))
+    return rd
+
+
 def resonator_complex_plane(resonator, axis, normalize=True, num_model_points=1000,
                             sweep_mean_settings=None, model_settings=None, resonance_settings=None):
     sweep_mean_kwds = sweep_mean_defaults.copy()

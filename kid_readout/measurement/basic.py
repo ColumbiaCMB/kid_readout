@@ -531,7 +531,7 @@ class SweepArray(RoachMeasurement):
 
         Returns
         -------
-
+        pandas.DataFrame
         """
         dataframes = []
         if one_sweep_per_row:
@@ -645,7 +645,7 @@ class SingleSweep(RoachMeasurement):
         """
         self._delete_memoized_property_caches()
         self._resonator = model(frequency=self.frequency, s21=self.s21_point, errors=self.s21_point_error)
-        self._resonator.fit(params=params)
+        self._resonator.fit(params)
         return self._resonator
 
     def to_dataframe(self, add_origin=True):
@@ -1328,6 +1328,14 @@ class SingleSweepStreamList(RoachMeasurement):
         self.stream_list = stream_list
         self.number = number
         super(SingleSweepStreamList, self).__init__(state=state, description=description)
+
+    @property
+    def resonator(self):
+        return self.single_sweep.resonator
+
+    def x_and_q(self, index):
+        stream = self.stream_list[index]
+        return self.resonator.invert_raw(frequency=stream.frequency, s21_raw=stream.s21_raw)
 
     def state_vector(self, *keys):
         vector = []

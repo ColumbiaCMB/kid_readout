@@ -93,8 +93,7 @@ class LinearResonatorModel(ComplexModel):
         fmin = f.min()
         fmax = f.max()
         f_0_guess = f[argmin_s21]  # guess that the resonance is the lowest point
-        Q_min = 0.1 * (
-        f_0_guess / (fmax - fmin))  # assume the user isn't trying to fit just a small part of a resonance curve.
+        Q_min = 0.1 * (f_0_guess / (fmax - fmin))  # assume not trying to fit just a small part of a resonance curve.
         delta_f = np.diff(f)  # assume f is sorted
         min_delta_f = delta_f[delta_f > 0].min()
         Q_max = f_0_guess / min_delta_f  # assume data actually samples the resonance reasonably
@@ -128,28 +127,23 @@ class LinearLossResonatorModel(ComplexModel):
     def __init__(self, *args, **kwargs):
         super(LinearLossResonatorModel, self).__init__(equations.linear_loss_resonator, *args, **kwargs)
 
-    def guess(self, data, f=None, **kwargs):
-        verbose = kwargs.pop('verbose', False)
-        if f is None:
-            return self.make_params(verbose=verbose, **kwargs)
-        else:
-            f_0_guess = f[np.argmin(np.abs(data))]  # guess that the resonance is the lowest point
-            width = f.size // 10
-            gaussian = np.exp(-np.linspace(-4, 4, width) ** 2)
-            gaussian /= np.sum(gaussian)  # not necessary
-            smoothed = np.convolve(gaussian, abs(data), mode='same')
-            derivative = np.convolve(np.array([1, -1]), smoothed, mode='same')
-            # Exclude the edges, which are affected by zero padding.
-            linewidth = (f[np.argmax(derivative[width:-width])] -
-                         f[np.argmin(derivative[width:-width])])
-            i_plus_c = linewidth / f_0_guess
-            i_over_c = 1 / (1 / np.min(np.abs(data) - 1))
-            loss_c_guess = i_plus_c / (1 + i_over_c)
-            loss_i_guess = i_plus_c * i_over_c / (1 + i_over_c)
-            params = self.make_params(f_0=f_0_guess, loss_i=loss_i_guess, loss_c=loss_c_guess, asymmetry=0)
-            params['{}f_0'.format(self.prefix)].set(min=f.min(), max=f.max())
-            params['{}loss_i'.format(self.prefix)].set(min=0, max=1)
-            params['{}loss_c'.format(self.prefix)].set(min=0, max=1)
-            params['{}asymmetry'.format(self.prefix)].set(min=-10, max=10)
-            return update_param_values_and_limits(params, self.prefix, **kwargs)
+    def guess(self, data=None, f=None, **kwargs):
+        f_0_guess = f[np.argmin(np.abs(data))]  # guess that the resonance is the lowest point
+        width = f.size // 10
+        gaussian = np.exp(-np.linspace(-4, 4, width) ** 2)
+        gaussian /= np.sum(gaussian)  # not necessary
+        smoothed = np.convolve(gaussian, abs(data), mode='same')
+        derivative = np.convolve(np.array([1, -1]), smoothed, mode='same')
+        # Exclude the edges, which are affected by zero padding.
+        linewidth = 1 / 2 * (f[np.argmax(derivative[width:-width])] - f[np.argmin(derivative[width:-width])])
+        i_plus_c = linewidth / f_0_guess
+        i_over_c = 1 / (1 / np.min(np.abs(data)) - 1)
+        loss_c_guess = i_plus_c / (1 + i_over_c)
+        loss_i_guess = i_plus_c * i_over_c / (1 + i_over_c)
+        params = self.make_params(f_0=f_0_guess, loss_i=loss_i_guess, loss_c=loss_c_guess, asymmetry=0)
+        params['{}f_0'.format(self.prefix)].set(min=f.min(), max=f.max())
+        params['{}loss_i'.format(self.prefix)].set(min=0, max=1)
+        params['{}loss_c'.format(self.prefix)].set(min=0, max=1)
+        params['{}asymmetry'.format(self.prefix)].set(min=-10, max=10)
+        return update_param_values_and_limits(params, self.prefix, **kwargs)
 

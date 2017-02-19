@@ -60,10 +60,20 @@ class BaseResonator(FitterWithAttributeAccess):
         #            iter_cb=None, scale_covar=True, verbose=False, fit_kws=None, **kwargs):
         super(BaseResonator, self).__init__(data=s21, f=frequency,
                                             model=model, weights=weights, **kwargs)
-        self.frequency = frequency
+        #self.frequency = frequency
         self.errors = errors
-        self.weights = weights
+        #self.weights = weights
         self.fit()
+
+    # To reduce confusion, let's store these in only one place; see lmfit.ui.basefitter.BaseFitter
+
+    @property
+    def frequency(self):
+        return self.kwargs['f']
+
+    @property
+    def weights(self):
+        return self.kwargs['weights']
 
     @property
     def Q_i(self):
@@ -195,7 +205,6 @@ class BaseResonator(FitterWithAttributeAccess):
         """
         return self.invert(self.remove_background(frequency=frequency, s21_raw=s21_raw))
 
-    # ToDo: finish
     def invert(self, s21_normalized):
         """
         Invert the resonator model and return the time-ordered resonator parameters x(t) and Q_i^[-1}(t) that correspond
@@ -366,32 +375,26 @@ class GeneralCable(FitterWithAttributeAccess):
         self.fit()
 
 
-# This is a copy of the code surrounding LinearResonatorWithCable
-_linear_loss_resonator_model = lmfit_models.LinearLossResonatorModel()
-_linear_loss_resonator_with_cable = _general_cable_model * _linear_loss_resonator_model
-
-
-def _linear_loss_resonator_with_cable_guess(data, f=None, **kwargs):
-    cable_params = _general_cable_model.guess(data=data, f=f, **kwargs)
-    resonator_params = _linear_loss_resonator_model.guess(data=data, f=f, **kwargs)
-    cable_params.update(resonator_params)
-    return cable_params
-
-
-_linear_loss_resonator_with_cable.guess = _linear_loss_resonator_with_cable_guess
-
-
 class LinearLossResonatorWithCable(BaseResonator):
 
     def __init__(self, frequency, s21, errors, **kwargs):
         super(LinearLossResonatorWithCable, self).__init__(frequency=frequency, s21=s21, errors=errors,
-                                                           model=_linear_loss_resonator_with_cable, **kwargs)
+                                                           model=(lmfit_models.GeneralCableModel() *
+                                                                  lmfit_models.LinearLossResonatorModel()),
+                                                           **kwargs)
 
     def invert(self, s21_normalized):
         z = self.loss_c * (1j * self.asymmetry + s21_normalized) / (1 - s21_normalized)
         x = z.imag / 2
         q = z.real
         return x, q
+
+    def guess(self):
+        params = self.model.left.guess(data=self.s21, f=self.frequency)
+        params.update(self.model.right.guess(data=self.s21 / self.model.left.eval(params=params, f=self.frequency),
+                                             f=self.frequency))
+        self.current_params = params
+        return True
 
     # These properties improve compatibility with other models.
 
@@ -402,6 +405,14 @@ class LinearLossResonatorWithCable(BaseResonator):
     @property
     def Q_e(self):
         return 1 / (self.loss_c * (1 + 1j * self.asymmetry))
+
+    @property
+    def Q_e_real(self):
+        return float(np.real(self.Q_e))
+
+    @property
+    def Q_e_imag(self):
+        return float(np.imag(self.Q_e))
 
     @property
     def Q_i(self):
