@@ -10,7 +10,8 @@ install:
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
-  - conda create -q -n test-environment python=2.7 numpy scipy matplotlib pandas=0.18.1 nose requests pyserial netcdf4 cython numexpr
+  - conda create -q -n test-environment python=2.7 numpy scipy matplotlib pandas nose requests pyserial netcdf4 cython numexpr
+  - conda install hdf4 # apparently no longer expliclitly included by netcdf4
   - source activate test-environment
   - pip install -r requirements.txt
   - pip install codecov
