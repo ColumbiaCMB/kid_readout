@@ -72,7 +72,7 @@ boffile_delay_estimates = {
     'iq2xpfb14mcr7_2015_Nov_25_0907.bof': -31.3e-6,
     'r2bb2xpfb14mcr21_2015_Oct_08_1422.bof': -200.1e-6,
     'r2bb2xpfb14mcr23_2015_Oct_27_1357.bof': -63.68e-6,
-    'iq2xpfb11mcr11_2016_Jun_30_1215.bof': 0,  # ToDo: measure and update
+    'iq2xpfb11mcr11_2016_Jun_30_1215.bof': -15.307e-6,
 }
 
 baseband_nfft_delay_estimates = {
