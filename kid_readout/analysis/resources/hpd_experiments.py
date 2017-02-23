@@ -1,6 +1,11 @@
 from kid_readout.utils.time_tools import date_to_unix_time
 
 by_unix_time_table = [
+    dict(date='2017-02-22',
+         description='Stanford MKIDArray01-0101 niobium-over-aluminum 23-pixel filter-off-membrate (version 1) chip in holder H7 and lid L7 with new mu-metal magnetic shield.',
+         optical_state='dark',
+         chip_id='MKIDArray01-0101'
+         ),
     dict(date='2017-02-10',
          description='Stanford OneLayerNb01-0403 niobium v1 CPW medley chip in holder H6 and lid L6 (taped) with new mu-metal magnetic shield.',
          optical_state='dark',
