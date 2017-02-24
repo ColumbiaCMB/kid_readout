@@ -2,7 +2,7 @@ from kid_readout.utils.time_tools import date_to_unix_time
 
 by_unix_time_table = [
     dict(date='2017-02-22',
-         description='Stanford MKIDArray01-0101 niobium-over-aluminum 23-pixel filter-off-membrate (version 1) chip in holder H7 and lid L7 with new mu-metal magnetic shield.',
+         description='Stanford MKIDArray01-0101 niobium-over-aluminum 23-pixel filter-off-membrane (version 1) chip in holder H7 and lid L7 with new mu-metal magnetic shield.',
          optical_state='dark',
          chip_id='MKIDArray01-0101'
          ),
