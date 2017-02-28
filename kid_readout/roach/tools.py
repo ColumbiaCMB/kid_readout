@@ -1,6 +1,7 @@
 """
 Misc utils related to the ROACH hardware
 """
+import time
 import logging
 
 import numpy as np
@@ -188,3 +189,26 @@ def measure_hardware_delay(ri, frequencies=np.arange(1, 9) * 24, num_tone_sample
     total_delay = np.median(local_delays) + rad_per_Hz / (2 * np.pi)
     logger.debug("residual delay %.1f ns global delay = %.1f ns" % (1e9 * rad_per_Hz / (2 * np.pi), 1e9 * total_delay))
     return total_delay
+
+
+def set_and_attempt_external_phase_lock(ri, f_lo, df_lo, sleep=0.1, max_attempts=3):
+    attempt = 0
+    f_lock = 4000
+    ri.set_lo(lomhz=f_lo, chan_spacing=df_lo)
+    while not np.all(ri.lo_valon.get_phase_locks()):
+        attempt += 1
+        logger.info("Attempt {:d} of {:d} to lock LO Valon".format(attempt, max_attempts))
+        ri.lo_valon.set_ref_select(0)
+        # Not clear whether the channel spacing matters
+        ri.set_lo(lomhz=f_lock, chan_spacing=df_lo)
+        time.sleep(sleep)
+        ri.set_lo(lomhz=f_lo, chan_spacing=df_lo)
+        time.sleep(sleep)
+        ri.lo_valon.set_ref_select(1)
+        time.sleep(sleep)
+        if np.all(ri.lo_valon.get_phase_locks()):
+            return
+        elif attempt >= max_attempts:
+            message = "Unable to lock Valon to external reference!"
+            logger.error(message)
+            raise RuntimeError(message)
