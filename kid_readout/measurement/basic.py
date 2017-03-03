@@ -9,6 +9,7 @@ import logging
 import numpy as np
 import pandas as pd
 from matplotlib.pyplot import mlab
+from scipy import signal
 from memoized_property import memoized_property
 
 from kid_readout.measurement import core
@@ -431,7 +432,13 @@ class SweepArray(RoachMeasurement):
     """
     This class contains a list of StreamArrays.
 
-    The properties return values in ascending frequency order.
+    The analysis methods and properties are designed for two modes of operation.
+
+    For simultaneous sweeps across individual resonators, use the sweep() method (equivalent to __getitem__ access)
+    to return SingleSweep instances containing the data from individual resonators.
+
+    For scans over many unknown resonators, use the properties to return values in ascending frequency order, and use
+    find_resonators() and resonator() to locate resonance frequencies and extract resonator objects.
     """
 
     _version = 0
@@ -518,6 +525,45 @@ class SweepArray(RoachMeasurement):
         """numpy.ndarray[complex]: The raw s21 streams of all data points, in ascending frequency order."""
         return np.vstack([stream_array.s21_raw for stream_array in self.stream_arrays])[self.ascending_order, :]
 
+    @property
+    def s21_point_foreground(self, frequency=None):
+        return self.s21_point / self.background
+
+    @property
+    def s21_point_error_foreground(self):
+        return self.s21_point_error / self.background
+
+    @property
+    def background(self):
+        return self.fit_background(frequency=self.frequency, s21=self.s21_point)
+
+    # ToDo: swap this out for a lmfit model?
+    def fit_background(self, frequency=None, s21=None, amp_degree=4, phi_degree=4, weights=None):
+        if frequency is None:
+            frequency = self.frequency
+        if s21 is None:
+            s21 = self.s21_point
+        if weights is None:
+            weights = np.abs(s21) ** 2
+        amp_poly = np.polyfit(frequency, np.abs(s21), deg=amp_degree, w=weights)
+        phi_poly = np.polyfit(frequency, np.unwrap(np.angle(s21)), deg=phi_degree, w=weights)
+        return np.polyval(amp_poly, frequency) * np.exp(1j * np.polyval(phi_poly, frequency))
+
+    # ToDo: this could be much smarter about identifying large peaks
+    def find_resonances(self, expected_Q=30000, num_widths=100, threshold=1, **find_peaks_cwt_kwargs):
+        linewidth = self.frequency.mean() / expected_Q
+        width = linewidth / (self.frequency[1] - self.frequency[0])  # in samples
+        data = 1 / np.abs(self.s21_point_foreground) - 1
+        widths = np.linspace(width / 10, 10 * width, num_widths)
+        peaks = np.array(signal.find_peaks_cwt(vector=data, widths=widths, **find_peaks_cwt_kwargs))
+        mask = (width < peaks) & (peaks < data.size - width) & (data[peaks] > threshold * np.std(data))
+        return peaks[mask]
+
+    def resonator(self, frequency, width, model=lmfit_resonator.LinearLossResonatorWithCable):
+        mask = (frequency - width / 2 <= self.frequency) & (self.frequency <= frequency + width / 2)
+        return model(frequency=self.frequency[mask], s21=self.s21_point_foreground[mask],
+                     errors=self.s21_point_error_foreground[mask])
+
     def to_dataframe(self, add_origin=True, one_sweep_per_row=True):
         """
 
@@ -555,8 +601,9 @@ class SweepArray(RoachMeasurement):
             data['frequency'] = [self.frequency]
             data['s21_point'] = [self.s21_point]
             data['s21_point_error'] = [self.s21_point_error]
-
-            dataframes = [pd.DataFrame(data, index=[0])]
+            dataframe = pd.DataFrame(data, index=[0])
+            self.add_origin(dataframe)
+            dataframes = [dataframe]
         return pd.concat(dataframes, ignore_index=True)
 
 
