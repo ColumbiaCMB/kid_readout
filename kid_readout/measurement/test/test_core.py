@@ -76,6 +76,13 @@ def test_io_list():
     assert io.read(io.node_names()[0]) == basic.SingleSweep(streams)
 
 
+# ToDo: flesh out
+def test_state_dict():
+    s = core.StateDict()
+    s = core.StateDict({})
+    s.copy()
+
+
 def test_read_write():
     io = memory.Dictionary()
     original = utilities.CornerCases()

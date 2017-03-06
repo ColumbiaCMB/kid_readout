@@ -5,9 +5,10 @@ Each node is a directory:
 Numpy arrays are stored as .npy files;
 Other values are stored using json.
 
-Limitations and issues.
-
-Because json has only a single sequence type, all sequences that are not numpy arrays are returned as lists.
+Limitations and issues:
+-Because json has only a single sequence type, all sequences that are not declared to be numpy arrays (i.e. passed to
+ write_array() are saved as JSON sequences and loaded from disk as lists.
+-
 """
 import os
 import json
@@ -17,13 +18,15 @@ import numpy as np
 from kid_readout.measurement import core
 
 
-# TODO: implement tagging and closing of memmapped files
-# TODO: check node path validation -- how were tests passing?
+# ToDo: implement tagging and closing of memmapped files
+# ToDo: check node path validation -- how were tests passing?
+# ToDo: rewrite error messages as variables
 class NumpyDirectory(core.IO):
 
     # This can be used as a conventional extension for directories created by this IO class, but it is not used or
     # enforced anywhere internally.
     EXTENSION = '.npd'
+
 
     def __init__(self, root_path, metadata=None, memmap=False):
         super(NumpyDirectory, self).__init__(root_path=os.path.abspath(os.path.expanduser(root_path)),

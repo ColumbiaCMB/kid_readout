@@ -211,7 +211,7 @@ class RoachInterface(object):
                 return x
             else:
                 return np.asanyarray(x).copy()
-        state = StateDict(
+        state = dict(
                   tone_bin=copy_or_none(self.tone_bins),
                   tone_amplitude=copy_or_none(self.amps),
                   tone_phase=copy_or_none(self.phases),
@@ -226,10 +226,10 @@ class RoachInterface(object):
 
     def get_active_state_arrays(self):
         state = self.get_state_arrays()
-        if state.tone_bin is not None:
-            state.tone_bin = state.tone_bin[self.bank,:]
-        if state.filterbank_bin is not None:
-            state.filterbank_bin = state.filterbank_bin[self.bank,:]
+        if state['tone_bin'] is not None:
+            state['tone_bin'] = state['tone_bin'][self.bank,:]
+        if state['filterbank_bin'] is not None:
+            state['filterbank_bin'] = state['filterbank_bin'][self.bank,:]
         return state
 
     @property

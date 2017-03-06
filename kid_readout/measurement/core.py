@@ -7,6 +7,7 @@ import logging
 import inspect
 import keyword
 import importlib
+from numbers import Number
 from collections import OrderedDict
 
 import numpy as np
@@ -222,20 +223,9 @@ class Measurement(Node):
 
     Content restrictions.
     Measurements store state information in a dictionary. (They actually use a subclass called StateDict, which has
-    extra access features and validation.) Implementations of the IO class must be able to store the following objects:
-    -basic types, such as numbers, booleans, strings, booleans, and None;
-    -sequences, i.e. lists, tuples, and arrays, that contain exactly one of the above basic types except None; sequences
-     cannot contain other sequences, and all sequences are returned as lists on read.
-    -dictionaries whose keys are strings and whose values are dictionaries, sequences, or basic types; the contained
-     dictionaries and sequences have the same requirements as above.
-    Classes that do not obey these restrictions may fail to save or may have missing or corrupted data when read from
-    disk. Most of these restrictions come from the limitations of netCDF4 and json. Some of them could be relaxed
-    with more work, if necessary.
+    extra access features and validation.) Supporting multiple
 
-    Two values that are particularly problematic are None and NaN. None requires a special case because netCDF4
-    cannot write it, so it is allowed as an attribute value or dictionary value but not in sequences. NaN is stored
-    and retrieved correctly but is not recommended as an indicator of missing state because it causes comparisons to
-    fail: float('NaN') == float('NaN') is always False. See Measurement.__eq__() for more.
+
     """
 
     _version = 0
@@ -473,8 +463,29 @@ class StateDict(dict):
     """
     This class adds attribute access and some content restrictions to the dict class.
 
-    Measurements that require dictionaries can use the function to_state_dict() to perform partial validation of a
-    dictionary to ensure that the data can be re-created properly from disk.
+    To support attribute access, keys must be strings that are valid Python attributes The value restrictions are the
+    union of the restrictions imposed by the libraries used to write non-array data to disk. (Currently, these are
+    netCDF4 for the nc.NCFile class and JSON for the npy.NumpyDirectory class.)
+
+
+
+    -basic types, such as numbers, booleans, strings, booleans, and None;
+    -sequences, i.e. lists, tuples, and arrays, that contain exactly one of the above basic types except None; sequences
+     cannot contain other sequences
+    -dictionaries that obey the key and value restrictions.
+    Classes that do not obey these restrictions may fail to save or may have missing or corrupted data when read from
+    disk.
+
+
+    Two values that are particularly problematic are None and NaN. None requires a special case because netCDF4
+    cannot write it, so it is allowed as an attribute value or dictionary value but not in sequences. NaN is stored
+    and retrieved correctly but is not recommended as an indicator of missing state because it causes comparisons to
+    fail: float('NaN') == float('NaN') is always False. See Measurement.__eq__() for more.
+
+    Origin of restrictions:
+    -JSON has only a single sequence type, so all iterable non-dictionary objects are converted to lists on input;
+    -netCDF cannot write None, so it cannot be an element of a sequence;
+
     """
 
     __setattr__ = dict.__setitem__
@@ -484,18 +495,47 @@ class StateDict(dict):
     __getstate__ = lambda: None
     __slots__ = ()
 
+    ALLOWED_VALUE_TYPES = (Number, str, unicode)  #(Number, np.number, str, unicode)
+
+    _invalid_key_type = "Dictionary keys must be strings."
+    _invalid_variable_name = "Invalid variable name: {0}"
+    _invalid_value = "Key {0} maps to invalid value: {1!s} ({1!r})"
+    _invalid_sequence_value = "Key {0} maps to a sequence containing invalid value: {1!s} ({1!r})"
+
     def __init__(self, *args, **kwargs):
         super(StateDict, self).__init__(*args, **kwargs)
-        for k, v in self.items():
-            if not isinstance(k, (str, unicode)):
-                raise MeasurementError("Dictionary keys must be strings.")
-            elif re.match(r'[a-zA-Z_][a-zA-Z0-9_]*$', k) is None or keyword.iskeyword(k) or k in __builtins__:
-                raise MeasurementError("Invalid variable name: {}".format(k))
-            if isinstance(v, dict):
-                self[k] = StateDict(v)
+        for key, value in self.items():
+            if not isinstance(key, (str, unicode)):
+                raise MeasurementError(self._invalid_key_type)
+            elif re.match(r'[a-zA-Z_][a-zA-Z0-9_]*$', key) is None or keyword.iskeyword(key) or key in __builtins__:
+                raise MeasurementError(self._invalid_variable_name.format(key))
+            if isinstance(value, dict):
+                self[key] = StateDict(value)
             else:
-                # TODO: implement value validation here.
-                pass
+                # Given that we are testing for sequence-ness using iteration, we have to try value validation first
+                # because strings are iterable.
+                try:
+                    self[key] = self._validate_value(key, value)
+                except ValueError as e:
+                    try:
+                        self[key] = self._validate_list(key, list(value))
+                    except TypeError:  # Not iterable, and str would have passed value validation
+                        raise e
+
+    def _validate_value(self, key, value):
+        if value is None or isinstance(value, self.ALLOWED_VALUE_TYPES):
+            return value
+        else:
+            raise ValueError(self._invalid_value.format(key, value))
+
+    def _validate_list(self, key, list_):
+        for index, element in enumerate(list_):
+            if not isinstance(element, self.ALLOWED_VALUE_TYPES):
+                try:
+                    list_[index] = self._validate_list(key, list(element))
+                except TypeError:  # Not iterable, and str would have passed value validation
+                    raise ValueError(self._invalid_sequence_value.format(key, element))
+        return list_
 
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__, super(StateDict, self).__repr__())
@@ -525,7 +565,15 @@ class IO(object):
     """
     This is an abstract class that specifies the IO interface.
 
-    Implementations should implement the abstract methods and should be able to store large numpy arrays efficiently.
+    Implementations should implement the abstract methods and should be able to store large numpy arrays efficiently, as
+    well as the following objects:
+    -basic types, such as numbers, booleans, strings, and None;
+    -sequences, i.e. lists, tuples, and arrays, that contain exactly one of the above basic types; sequences
+     cannot contain None or other sequences, and all input sequences are returned as lists on read.
+    -dictionaries whose keys are strings and whose values are dictionaries, sequences, or basic types; the contained
+     dictionaries and sequences have the same requirements as above.
+    Classes that do not obey these restrictions may fail to save or may have missing or corrupted data when read from
+    disk. See StateDict for details.
     """
 
     # Subclasses can define a conventional extension for files or directories they create.
