@@ -1,6 +1,11 @@
 from kid_readout.utils.time_tools import date_to_unix_time
 
 by_unix_time_table = [
+    dict(date='2017-03-03',
+         description='Stanford TWB08-20A Nb-SiNx-Nb low-frequency (2-4 GHz) microstrip resonator chip in holder H5 and lid L5 with mu-metal magnetic shield.',
+         optical_state='dark',
+         chip_id='TWB08-20A'
+         ),
     dict(date='2017-02-22',
          description='Stanford MKIDArray01-0101 niobium-over-aluminum 23-pixel filter-off-membrane (version 1) chip in holder H7 and lid L7 with new mu-metal magnetic shield.',
          optical_state='dark',
