@@ -526,7 +526,7 @@ class SweepArray(RoachMeasurement):
         return np.vstack([stream_array.s21_raw for stream_array in self.stream_arrays])[self.ascending_order, :]
 
     @property
-    def s21_point_foreground(self, frequency=None):
+    def s21_point_foreground(self):
         return self.s21_point / self.background
 
     @property
@@ -537,20 +537,24 @@ class SweepArray(RoachMeasurement):
     def background(self):
         return self.fit_background(frequency=self.frequency, s21=self.s21_point)
 
-    # ToDo: swap this out for a lmfit model?
-    def fit_background(self, frequency=None, s21=None, amp_degree=4, phi_degree=4, weights=None):
+    # ToDo: swap this out for a lmfit model
+    def fit_background(self, frequency=None, s21=None, amp_degree=4, phi_degree=4, weights=None, mask=None):
         if frequency is None:
             frequency = self.frequency
         if s21 is None:
             s21 = self.s21_point
-        if weights is None:
+        if weights is None:  # Attempt to down-weight resonances
             weights = np.abs(s21) ** 2
+        if mask is None:
+            mask = np.ones(frequency.size, dtype=np.bool)
+        weights *= mask
         amp_poly = np.polyfit(frequency, np.abs(s21), deg=amp_degree, w=weights)
         phi_poly = np.polyfit(frequency, np.unwrap(np.angle(s21)), deg=phi_degree, w=weights)
         return np.polyval(amp_poly, frequency) * np.exp(1j * np.polyval(phi_poly, frequency))
 
     # ToDo: this could be much smarter about identifying large peaks
-    def find_resonances(self, expected_Q=30000, num_widths=100, threshold=1, **find_peaks_cwt_kwargs):
+    def find_resonances(self, expected_Q=30000, num_widths=100, threshold=1, minimum_linewidth_separation=1,
+                        **find_peaks_cwt_kwargs):
         linewidth = self.frequency.mean() / expected_Q
         width = linewidth / (self.frequency[1] - self.frequency[0])  # in samples
         data = 1 / np.abs(self.s21_point_foreground) - 1
