@@ -568,3 +568,54 @@ class Roach1Heterodyne11(RoachHeterodyne):
         self.attenuator = attenuator
         if initialize:
             self.initialize(use_config=use_config)
+
+
+class Roach1Heterodyne11Antialiased(RoachHeterodyne):
+    """
+    This class is identical to Roach1Heterodyne11 except that the channel filter frequencies are scaled by 0.8 so that
+    it greatly reduces the aliasing.
+    """
+
+    # The RoachHeterodyne class is a roach 1 class, so this build has the same DRAM size.
+
+    def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None, host_ip=None, initialize=False,
+                 use_config=False, nfs_root='/srv/roach_boot/etch', lo_valon=None, attenuator=None):
+        """
+        Class to represent the heterodyne readout system (high-frequency (1.5 GHz), IQ mixers)
+
+        roach: an FpgaClient instance for communicating with the ROACH.
+                If not specified, will try to instantiate one connected to *roachip*
+        wafer: 0
+                Not used for heterodyne system
+        roachip: (optional). Network address of the ROACH if you don't want to provide an FpgaClient
+        adc_valon: a Valon class, a string, or None
+                Provide access to the Valon class which controls the Valon synthesizer which provides
+                the ADC and DAC sampling clock.
+                The default None value will use the valon.find_valon function to locate a synthesizer
+                and create a Valon class for you.
+                You can alternatively pass a string such as '/dev/ttyUSB0' to specify the port for the
+                synthesizer, which will then be used for creating a Valon class.
+                Finally, for test suites, you can directly pass a Valon class or a class with the same
+                interface.
+        """
+        super(RoachHeterodyne, self).__init__(roach=roach, roachip=roachip, adc_valon=adc_valon, host_ip=host_ip,
+                                              nfs_root=nfs_root, lo_valon=lo_valon)
+
+        self.lo_frequency = 0.0
+        self.heterodyne = True
+        self.boffile = 'iq2xpfb11mcr12_2017_Mar_24_1439.bof'
+        self.iq_delay = 0
+        self.channel_selection_offset = 3
+        self.wafer = wafer
+        self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
+        self.nfft = 2 ** 11
+        self.fpga_cycles_per_filterbank_frame = 2 ** 10
+        self._fpga_output_buffer = 'ppout%d' % wafer
+        self._general_setup()
+        self.demodulator = Demodulator(nfft=self.nfft, num_taps=8, window=signal.hamming,
+                                       hardware_delay_samples=self.hardware_delay_estimate * self.fs * 1e6)
+        # ToDo: horrible hack alert!
+        self.demodulator._window_frequency *= 0.8
+        self.attenuator = attenuator
+        if initialize:
+            self.initialize(use_config=use_config)
