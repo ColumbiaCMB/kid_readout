@@ -50,3 +50,27 @@ def r1h11_with_mk1(**kwargs):
                                          lo_valon=None, attenuator=None, **kwargs)
 
 
+def r1h11a_with_mk2(**kwargs):
+    if MARK2_VALON is None:  # If lo_valon is None the roach will use its internal valon, with unfortunate results.
+        raise ValueError("MARK2_VALON is None.")
+    return heterodyne.Roach1Heterodyne11Antialiased(roachip=ROACH1_IP, adc_valon=ROACH1_VALON, host_ip=ROACH1_HOST_IP,
+                                                    lo_valon=MARK2_VALON, attenuator=attenuator.Attenuator(), **kwargs)
+
+
+def r1h11a_with_mk1(**kwargs):
+    return heterodyne.Roach1Heterodyne11Antialiased(roachip=ROACH1_IP, adc_valon=ROACH1_VALON, host_ip=ROACH1_HOST_IP,
+                                                    lo_valon=None, attenuator=None, **kwargs)
+
+
+def r1h09a_with_mk2(**kwargs):
+    if MARK2_VALON is None:  # If lo_valon is None the roach will use its internal valon, with unfortunate results.
+        raise ValueError("MARK2_VALON is None.")
+    return heterodyne.Roach1Heterodyne09Antialiased(roachip=ROACH1_IP, adc_valon=ROACH1_VALON, host_ip=ROACH1_HOST_IP,
+                                                    lo_valon=MARK2_VALON, attenuator=attenuator.Attenuator(), **kwargs)
+
+
+def r1h09a_with_mk1(**kwargs):
+    return heterodyne.Roach1Heterodyne09Antialiased(roachip=ROACH1_IP, adc_valon=ROACH1_VALON, host_ip=ROACH1_HOST_IP,
+                                                    lo_valon=None, attenuator=None, **kwargs)
+
+
