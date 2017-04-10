@@ -3,6 +3,7 @@ Misc utils related to the ROACH hardware
 """
 import time
 import logging
+import warnings
 
 import numpy as np
 import scipy.signal
@@ -214,3 +215,34 @@ def set_and_attempt_external_phase_lock(ri, f_lo, df_lo, sleep=0.1, max_attempts
             message = "Unable to lock Valon to external reference!"
             logger.error(message)
             raise RuntimeError(message)
+
+
+# ToDo: this should probably be a method of RoachInterface
+def optimize_fft_gain(ri, fraction_of_maximum=0.5):
+    """
+    Set the FFT gain to the highest value such that none of the tones currently played is affected by rounding.
+
+    The polyphase filter bank output is truncated to a signed 16-bit integer before being sent across the network.
+
+    Parameters
+    ----------
+    ri : RoachInterface
+    fraction_of_maximum : float
+    """
+    maximum_absolute_value = 2**15
+    fft_gain = 0
+    too_large = False
+    while not too_large:
+        ri.set_fft_gain(fft_gain)
+        sa = ri.get_measurement(num_seconds=0.1, demod=False)
+        # This will be true if any data point from any channel exceeds the limit
+        too_large = (np.any(np.abs(sa.s21_raw.real) > fraction_of_maximum * maximum_absolute_value) or
+                     np.any(np.abs(sa.s21_raw.imag) > fraction_of_maximum * maximum_absolute_value))
+        if too_large:  # This value is too large so use the previous value
+            fft_gain -= 1
+        else:  # This value is fine so try the next highest value
+            fft_gain += 1
+    if fft_gain == -1:
+        warnings.warn("Using fft_gain = 0 but output may still affected by rounding!")
+        fft_gain = 0
+    ri.set_fft_gain(fft_gain)

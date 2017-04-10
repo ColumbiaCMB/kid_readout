@@ -549,7 +549,7 @@ class Roach1Heterodyne11(RoachHeterodyne):
                 Finally, for test suites, you can directly pass a Valon class or a class with the same
                 interface.
         """
-        super(RoachHeterodyne, self).__init__(roach=roach, roachip=roachip, adc_valon=adc_valon, host_ip=host_ip,
+        super(Roach1Heterodyne11, self).__init__(roach=roach, roachip=roachip, adc_valon=adc_valon, host_ip=host_ip,
                                               nfs_root=nfs_root, lo_valon=lo_valon)
 
         self.lo_frequency = 0.0
@@ -570,10 +570,10 @@ class Roach1Heterodyne11(RoachHeterodyne):
             self.initialize(use_config=use_config)
 
 
-class Roach1Heterodyne11Antialiased(RoachHeterodyne):
+class Roach1Heterodyne11NarrowChannel(RoachHeterodyne):
     """
-    This class is identical to Roach1Heterodyne11 except that the channel filter frequencies are scaled by 0.8 so that
-    it greatly reduces the aliasing.
+    This class is identical to Roach1Heterodyne11 except that the channel filter frequencies are scaled by 0.8 to
+    reduce aliasing.
     """
 
     # The RoachHeterodyne class is a roach 1 class, so this build has the same DRAM size.
@@ -598,8 +598,8 @@ class Roach1Heterodyne11Antialiased(RoachHeterodyne):
                 Finally, for test suites, you can directly pass a Valon class or a class with the same
                 interface.
         """
-        super(RoachHeterodyne, self).__init__(roach=roach, roachip=roachip, adc_valon=adc_valon, host_ip=host_ip,
-                                              nfs_root=nfs_root, lo_valon=lo_valon)
+        super(Roach1Heterodyne11NarrowChannel, self).__init__(roach=roach, roachip=roachip, adc_valon=adc_valon,
+                                                              host_ip=host_ip, nfs_root=nfs_root, lo_valon=lo_valon)
 
         self.lo_frequency = 0.0
         self.heterodyne = True
@@ -621,9 +621,9 @@ class Roach1Heterodyne11Antialiased(RoachHeterodyne):
             self.initialize(use_config=use_config)
 
 
-class Roach1Heterodyne09Antialiased(RoachHeterodyne):
+class Roach1Heterodyne09NarrowChannel(RoachHeterodyne):
     """
-    This is a build with NFFT = 2**9 and channel filter frequencies are scaled by 0.8 to reduce the aliasing.
+    This is a build with NFFT = 2**9 and channel filter frequencies scaled by 0.8 to reduce aliasing.
     """
 
     # The RoachHeterodyne class is a roach 1 class, so this build has the same DRAM size.
@@ -648,8 +648,8 @@ class Roach1Heterodyne09Antialiased(RoachHeterodyne):
                 Finally, for test suites, you can directly pass a Valon class or a class with the same
                 interface.
         """
-        super(RoachHeterodyne, self).__init__(roach=roach, roachip=roachip, adc_valon=adc_valon, host_ip=host_ip,
-                                              nfs_root=nfs_root, lo_valon=lo_valon)
+        super(Roach1Heterodyne09NarrowChannel, self).__init__(roach=roach, roachip=roachip, adc_valon=adc_valon,
+                                                              host_ip=host_ip, nfs_root=nfs_root, lo_valon=lo_valon)
 
         self.lo_frequency = 0.0
         self.heterodyne = True
@@ -659,7 +659,7 @@ class Roach1Heterodyne09Antialiased(RoachHeterodyne):
         self.wafer = wafer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
         self.nfft = 2 ** 9
-        self.fpga_cycles_per_filterbank_frame = 2 ** 10
+        self.fpga_cycles_per_filterbank_frame = 2 ** 8
         self._fpga_output_buffer = 'ppout%d' % wafer
         self._general_setup()
         self.demodulator = Demodulator(nfft=self.nfft, num_taps=8, window=signal.hamming,
