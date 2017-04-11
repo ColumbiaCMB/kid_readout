@@ -62,7 +62,6 @@ class RoachHeterodyne(RoachInterface):
         """
         super(RoachHeterodyne,self).__init__(roach=roach, roachip=roachip, adc_valon=adc_valon, host_ip=host_ip,
                  nfs_root=nfs_root, lo_valon=lo_valon)
-
         self.lo_frequency = 0.0
         self.heterodyne = True
         #self.boffile = 'iq2xpfb14mcr7_2015_Nov_25_0907.bof'
@@ -70,15 +69,12 @@ class RoachHeterodyne(RoachInterface):
         self.boffile = 'iq2xpfb14mcr11_2016_Jun_30_1301.bof'
         self.iq_delay = 0
         self.channel_selection_offset=3
-
         self.wafer = wafer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
         self.nfft = 2 ** 14
         self.fpga_cycles_per_filterbank_frame = 2**13
         self._fpga_output_buffer = 'ppout%d' % wafer
-
         self._general_setup()
-
         self.demodulator = Demodulator(hardware_delay_samples=self.hardware_delay_estimate * self.fs * 1e6)
         self.attenuator = attenuator
         if initialize:
@@ -611,11 +607,11 @@ class Roach1Heterodyne11NarrowChannel(RoachHeterodyne):
         self.nfft = 2 ** 11
         self.fpga_cycles_per_filterbank_frame = 2 ** 10
         self._fpga_output_buffer = 'ppout%d' % wafer
+        self.window_frequency_scale = 0.8
         self._general_setup()
         self.demodulator = Demodulator(nfft=self.nfft, num_taps=8, window=signal.hamming,
-                                       hardware_delay_samples=self.hardware_delay_estimate * self.fs * 1e6)
-        # ToDo: horrible hack alert!
-        self.demodulator._window_frequency *= 0.8
+                                       hardware_delay_samples=self.hardware_delay_estimate * self.fs * 1e6,
+                                       window_frequency_scale=self.window_frequency_scale)
         self.attenuator = attenuator
         if initialize:
             self.initialize(use_config=use_config)
@@ -661,11 +657,11 @@ class Roach1Heterodyne09NarrowChannel(RoachHeterodyne):
         self.nfft = 2 ** 9
         self.fpga_cycles_per_filterbank_frame = 2 ** 8
         self._fpga_output_buffer = 'ppout%d' % wafer
+        self.window_frequency_scale = 0.8
         self._general_setup()
         self.demodulator = Demodulator(nfft=self.nfft, num_taps=8, window=signal.hamming,
-                                       hardware_delay_samples=self.hardware_delay_estimate * self.fs * 1e6)
-        # ToDo: horrible hack alert!
-        self.demodulator._window_frequency *= 0.8
+                                       hardware_delay_samples=self.hardware_delay_estimate * self.fs * 1e6,
+                                       window_frequency_scale=self.window_frequency_scale)
         self.attenuator = attenuator
         if initialize:
             self.initialize(use_config=use_config)
