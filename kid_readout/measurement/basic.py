@@ -1418,4 +1418,4 @@ class Scan(core.Measurement):
         if not isinstance(sweep_arrays, core.MeasurementList):
             sweep_arrays = core.MeasurementList(sweep_arrays)
         self.sweep_arrays = sweep_arrays
-        super(SweepStreamArray, self).__init__(state=state, description=description)
+        super(Scan, self).__init__(state=state, description=description)
