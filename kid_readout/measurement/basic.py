@@ -1398,3 +1398,24 @@ class SingleSweepStreamList(RoachMeasurement):
                 state = state.get(key, np.nan)
             vector.append(state)
         return np.array(vector)
+
+
+class Scan(core.Measurement):
+    """
+    This class contains a MeasurementList of SweepArrays, and allows them to be addressed as a single scan across the
+    entire range of frequencies. It can handle overlap by averaging.
+    """
+    _version = 0
+
+    def __init__(self, sweep_arrays, state=None, description=''):
+        """
+        Parameters
+        ----------
+        sweep_arrays : list (SweepArray)
+        state : dict
+        description : str
+        """
+        if not isinstance(sweep_arrays, core.MeasurementList):
+            sweep_arrays = core.MeasurementList(sweep_arrays)
+        self.sweep_arrays = sweep_arrays
+        super(SweepStreamArray, self).__init__(state=state, description=description)

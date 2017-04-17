@@ -86,7 +86,7 @@ _versioned = {'Measurement': {0: 'kid_readout.measurement.core.Measurement'},
               'SweepStreamArray': {0: 'kid_readout.measurement.basic.SweepStreamArray'},
               'SweepStreamList': {0: 'kid_readout.measurement.basic.SweepStreamList'},
               'SingleSweepStreamList': {0: 'kid_readout.measurement.basic.SingleSweepStreamList'},
-              'Scan': {0: 'kid_readout.measurement.basic.SweepArray'},  # Deprecated
+              'Scan': {0: 'kid_readout.measurement.basic.Scan'},
               'MMWSweepList': {0: 'kid_readout.measurement.mmw_source_sweep.MMWSweepList'},
               'DistilledSweep': {0: 'kid_readout.analysis.resonator.test.distill.DistilledSweep'},
               }

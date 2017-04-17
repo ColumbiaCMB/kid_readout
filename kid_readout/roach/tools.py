@@ -243,6 +243,6 @@ def optimize_fft_gain(ri, fraction_of_maximum=0.5):
         else:  # This value is fine so try the next highest value
             fft_gain += 1
     if fft_gain == -1:
-        warnings.warn("Using fft_gain = 0 but output may still affected by rounding!")
+        warnings.warn("Using fft_gain = 0 but output may still be affected by rounding!")
         fft_gain = 0
     ri.set_fft_gain(fft_gain)
