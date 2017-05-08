@@ -20,6 +20,11 @@ def find_resonators(frequency, s21, s21_error, frequency_span=1e6, detect_peaks_
     peak_indexes2 = detect_peaks.detect_peaks(-mag_s21[::2],threshold=detect_peaks_threshold,**detect_peaks_kwargs)
     peak_indexes = np.sort(np.array(list(set(peak_indexes) | set(peak_indexes2*2))))
     logger.debug("Found %d peaks",peak_indexes.shape[0])
+    return fit_candidates(peak_indexes,frequency, s21, s21_error, frequency_span=frequency_span,
+                    make_plot=make_plot,annotate=annotate)
+
+def fit_candidates(peak_indexes,frequency, s21, s21_error, frequency_span=1e6,
+                    make_plot=False,annotate=False):
     resonators = []
     for peak_index in peak_indexes:
         peak_f = frequency[peak_index]
