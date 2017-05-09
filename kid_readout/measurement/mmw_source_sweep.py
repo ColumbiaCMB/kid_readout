@@ -70,7 +70,7 @@ class MMWResponse(basic.SingleSweepStreamList):
     def get_sweep_stream_list(self, deglitch=False):
         result = []
         for stream in self.stream_list:
-            sss = basic.SingleSweepStream(sweep=self.sweep, stream=stream, state=stream.state,
+            sss = basic.SingleSweepStream(sweep=self.single_sweep, stream=stream, state=stream.state,
                                           description=stream.description)
             result.append(sss)
         return result
@@ -148,18 +148,18 @@ class MMWResponse(basic.SingleSweepStreamList):
         flat_state = self.state.flatten(wrap_lists=True)
         data.update(flat_state)
 
-        for param in self.sweep.resonator.current_result.params.values():
+        for param in self.single_sweep.resonator.current_result.params.values():
             data['res_{}'.format(param.name)] = param.value
             data['res_{}_error'.format(param.name)] = param.stderr
-        data['res_redchi'] = self.sweep.resonator.current_result.redchi
-        data['res_Q_i'] = self.sweep.resonator.Q_i
-        data['res_Q_e'] = self.sweep.resonator.Q_e
+        data['res_redchi'] = self.single_sweep.resonator.current_result.redchi
+        data['res_Q_i'] = self.single_sweep.resonator.Q_i
+        data['res_Q_e'] = self.single_sweep.resonator.Q_e
 
-        data['res_s21_data'] = [self.sweep.resonator.data]
-        data['res_frequency_data'] = [self.sweep.resonator.frequency]
-        data['res_s21_errors'] = [self.sweep.resonator.errors]
-        modelf = np.linspace(self.sweep.resonator.frequency.min(),self.sweep.resonator.frequency.max(),1000)
-        models21 = self.sweep.resonator.model.eval(params=self.sweep.resonator.current_params,f=modelf)
+        data['res_s21_data'] = [self.single_sweep.resonator.data]
+        data['res_frequency_data'] = [self.single_sweep.resonator.frequency]
+        data['res_s21_errors'] = [self.single_sweep.resonator.errors]
+        modelf = np.linspace(self.single_sweep.resonator.frequency.min(),self.single_sweep.resonator.frequency.max(),1000)
+        models21 = self.single_sweep.resonator.model.eval(params=self.single_sweep.resonator.current_params,f=modelf)
         data['res_model_frequency'] = [modelf]
         data['res_model_s21'] = [models21]
 

@@ -1264,6 +1264,8 @@ class SingleSweepStream(RoachMeasurement):
         except KeyError:
             pass
 
+        data['stream_frequency'] = [self.stream.frequency]
+
         for param in self.resonator.current_result.params.values():
             data['res_{}'.format(param.name)] = param.value
             data['res_{}_error'.format(param.name)] = param.stderr
