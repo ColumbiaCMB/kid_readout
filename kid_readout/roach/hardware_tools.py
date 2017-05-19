@@ -15,6 +15,10 @@ def r2_with_mk1(**kwargs):
                                        lo_valon=None, attenuator=None, **kwargs)
     return r2
 
+def r2h11_with_mk1(**kwargs):
+    r2 = r2heterodyne.Roach2Heterodyne11(roachip=ROACH2_IP, adc_valon=ROACH2_VALON, host_ip=ROACH2_GBE_HOST_IP,
+                                       lo_valon=None, attenuator=None, **kwargs)
+    return r2
 
 def r1_with_mk2(**kwargs):
     return r1h14_with_mk2(**kwargs)

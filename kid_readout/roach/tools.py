@@ -86,6 +86,7 @@ baseband_nfft_delay_estimates = {
 }
 
 heterodyne_nfft_delay_estimates = {
+    2 ** 11: -15.6e-6,
     2 ** 14: -31.3e-6,
     2 ** 15: -63.3e-6,
 }

@@ -39,29 +39,56 @@ class FIR1D(object):
         result = result[:,:-(self.num_taps-1)]
         return result.squeeze()
 
+class Delay1D(object):
+    def __init__(self,coeff,num_taps):
+        self.coeff = coeff
+        self.num_taps = num_taps
+        self._history = None
+    def apply(self,data):
+        data = np.atleast_2d(data)
+        result = np.empty((data.shape[0],data.shape[1]+self.num_taps-1),dtype=data.dtype)
+        result[:,:self.num_taps//2] = 0
+        result[:,self.num_taps//2:-(self.num_taps//2-1)] = data*self.coeff
+        if self._history is not None:
+            result[:,:self.num_taps-1] += self._history
+        self._history = result[:,-(self.num_taps-1):]
+        result = result[:,:-(self.num_taps-1)]
+        return result.squeeze()
+
+
 class HalfBandFilter(object):
     def __init__(self,num_taps=16,window_param=('chebwin',80),coeff_dtype=np.float32):
         self.num_taps = num_taps
         self.window_param=window_param
-        self.coeff = scipy.signal.firwin(num_taps+1,0.5,window=window_param).astype(coeff_dtype)
+        self.coeff = scipy.signal.firwin(num_taps+1,0.5,window=window_param).astype(coeff_dtype)[:-1]
         self.coeff[np.abs(self.coeff)<1e-14]=0.0
         self._naive_filter = FIR1D(self.coeff)
-        self._polyhase_component = FIR1D(self.coeff[1::2]*2)
+        self._polyphase_component = FIR1D(self.coeff[1::2])
+        self._polyphase_even_coeff = self.coeff[num_taps//2]
+        self._polyphase_component_even = FIR1D(self.coeff[::2])
+        #self._polyphase_component_even = Delay1D(self._polyphase_even_coeff,num_taps//2)
     def naive(self,data):
-        self._naive_filter.apply(data)
+        return self._naive_filter.apply(data)
+    def polyphase_explicit_even_component(self,data):
+        result = self._polyphase_component.apply(data[1::2])
+        result += self._polyphase_component_even.apply(data[::2])
+        return result
     def polyphase(self,data):
-        result = self._polyhase_component.apply(data[1::2])
-        result += data[::2]
-        return result/2.0
+        result = self._polyphase_component.apply(data[1::2])
+        result += self._polyphase_component_even.apply(data[::2])
+#        result[self.num_taps-1:,...] += self._polyphase_even_coeff*data[::2][:-(self.num_taps-1)]
+        return result
 
 class MultistageHalfBandDecimationFilter(object):
-    def __init__(self,taps):
+    def __init__(self,taps,window_param=('hamming',)):
         self.taps = taps
         self.num_stages = taps.size
-        self.filters = [HalfBandFilter(num_taps=num_taps) for num_taps in taps]
-    def naive(self,data):
+        self.filters = [HalfBandFilter(num_taps=num_taps,window_param=window_param) for num_taps in taps]
+    def naive(self,data,decimate=True):
         for filter_ in self.filters:
-            data = filter_.naive(data)[::2]
+            data = filter_.naive(data)
+            if decimate:
+                data = data[::2]
         return data
     def polyphase(self,data):
         for filter_ in self.filters:
