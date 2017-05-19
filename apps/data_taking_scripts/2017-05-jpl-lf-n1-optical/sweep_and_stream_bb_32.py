@@ -14,11 +14,13 @@ fg.enable_output(False)
 ri = Roach2Baseband()
 
 ri.set_modulation_output('high')
-initial_f0s = np.load('/data/readout/resonances/2017-05-JPL-8x8-LF-N1_resonances_optical.npy')/1e6
+all_f0s = np.load('/data/readout/resonances/2017-05-JPL-8x8-LF-N1_resonances_optical.npy')/1e6
 
+initial_f0s = all_f0s[:96][::6]
 
 nf = len(initial_f0s)
-atonce = 128
+
+atonce = 32
 if nf % atonce > 0:
     print "extending list of resonators to make a multiple of ", atonce
     initial_f0s = np.concatenate((initial_f0s, np.arange(1, 1 + atonce - (nf % atonce)) + initial_f0s.max()))
@@ -26,7 +28,7 @@ if nf % atonce > 0:
 
 print len(initial_f0s)
 
-nsamp = 2**18
+nsamp = 2**20
 step = 1
 nstep = 32
 offset_bins = np.arange(-(nstep + 1), (nstep + 1)) * step
@@ -34,7 +36,12 @@ offsets = offset_bins * 512.0 / nsamp
 
 last_f0s = initial_f0s
 
-for heater_voltage in np.sqrt(np.linspace(0,5**2,16)):
+#x = np.sqrt(np.linspace(0,5**2,16))
+
+x = [.1,.2,.4,.6,.8,1]
+
+#for heater_voltage in np.sqrt(np.linspace(0,5**2,16)):
+for heater_voltage in x:
     fg.set_dc_voltage(heater_voltage)
     if heater_voltage == 0:
         print "heater voltage is 0 V, skipping wait"
