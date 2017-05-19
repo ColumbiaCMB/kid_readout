@@ -88,7 +88,7 @@ class MMWResponse(basic.SingleSweepStreamList):
             try:
                 roll_by = int(np.round(phase*fx.shape[0]/(2*np.pi))) + fx.shape[0]//4
             except ValueError:
-                logger.error("NaN values encounterd while trying to fold data for stream %r. Data won't be aligned" %
+                logger.debug("NaN values encounterd while trying to fold data for stream %r. Data won't be aligned" %
                              sss.number)
             result.append(np.roll(fx,roll_by))
         return np.array(result)

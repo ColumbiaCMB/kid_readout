@@ -21,7 +21,7 @@ offsets = np.arange(-64,64)*512./nsamp
 
 dense_offsets = np.arange(-8,8)*512./2**21
 
-for dac_atten in [42,39,36,30]:
+for dac_atten in [42,39,36,33]:
     tic = time.time()
     ri.set_dac_atten(dac_atten)
     ncf = new_nc_file(suffix='%d_dB_dac' % dac_atten)
@@ -72,7 +72,7 @@ for dac_atten in [42,39,36,30]:
     ri.set_tone_freqs(current_f0s,2**21)
     ri.select_fft_bins(range(initial_f0s.shape[0]))
     #raw_input("turn off compressor")
-    meas = ri.get_measurement(num_seconds=120., description='source off stream')
+    meas = ri.get_measurement(num_seconds=240., description='source off stream')
     ncf.write(meas)
     print "dac_atten %f done in %.1f minutes" % (dac_atten, (time.time()-tic)/60.)
     ncf.close()
