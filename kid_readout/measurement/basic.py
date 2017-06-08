@@ -1455,3 +1455,37 @@ class Scan(core.Measurement):
             sweep_arrays = core.MeasurementList(sweep_arrays)
         self.sweep_arrays = sweep_arrays
         super(Scan, self).__init__(state=state, description=description)
+
+    @property
+    def frequency(self):
+        return np.concatenate([sa.frequency for sa in self.sweep_arrays])
+
+    @property
+    def s21_point(self):
+        return np.concatenate([sa.s21_point for sa in self.sweep_arrays])
+
+    # ToDo: test and finish
+    def stitch(self, kernel=None):
+        n = self.sweep_arrays[0].frequency.size
+        # ToDo: automatically calculate overlap for each segment
+        overlap = int(n / 2)
+        left_weight = np.linspace(1, 0, overlap)
+        right_weight = np.linspace(0, 1, overlap)
+        frequencies = [self.sweep_arrays[0].frequency[:overlap]]
+        amplitudes = [np.abs(self.sweep_arrays[0].s21_point[:overlap])]
+        for left, right in zip(self.sweep_arrays[:-1], self.sweep_arrays[1:]):
+            frequencies.append(left.frequency[overlap:])
+            amplitudes.append(left_weight * np.abs(left.s21_point[overlap:]) +
+                              right_weight * np.abs(right.s21_point[:overlap]))
+        frequencies.append(self.sweep_arrays[-1].frequency[overlap:])
+        amplitudes.append(np.abs(self.sweep_arrays[-1].s21_point[overlap:]))
+        frequency = np.concatenate(frequencies)
+        amplitude = np.concatenate(amplitudes)
+        if kernel is None:
+            width = int(n / 10)
+            kernel = np.exp(-np.linspace(-4, 4, width) ** 2)
+            kernel /= kernel.sum()
+        smoothed = np.convolve(kernel, amplitude, mode='same')
+        smoothed[:width] = smoothed[width + 1]
+        smoothed[-width:] = smoothed[-(width + 1)]
+        return frequency, amplitude, smoothed
