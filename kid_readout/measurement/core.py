@@ -342,6 +342,13 @@ class Measurement(Node):
             return False
         return True
 
+    def __ne__(self, other):
+        """The Python object model recommends implementing this if __eq__() is implemented."""
+        return not self.__eq__(other)
+
+    # Recommended by the Python object model docs.
+    __hash__ = None
+
 
 class MeasurementList(list, Node):
     """
