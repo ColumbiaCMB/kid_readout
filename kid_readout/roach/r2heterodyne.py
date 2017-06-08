@@ -146,9 +146,8 @@ class Roach2Heterodyne11(Roach2Heterodyne):
                 Finally, for test suites, you can directly pass a Valon class or a class with the same
                 interface.
         """
-        super(Roach2Heterodyne, self).__init__(roach=roach, roachip=roachip, adc_valon=adc_valon, host_ip=host_ip,
-                                              nfs_root=nfs_root, lo_valon=lo_valon)
-
+        super(Roach2Heterodyne11, self).__init__(roach=roach, roachip=roachip, adc_valon=adc_valon, host_ip=host_ip,
+                                                 nfs_root=nfs_root, lo_valon=lo_valon)
         self.lo_frequency = 0.0
         self.heterodyne = True
         self.boffile = 'r2iq2xpfb11mcr19gb_2017_Jan_13_1357.bof'

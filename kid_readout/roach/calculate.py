@@ -73,7 +73,6 @@ def packet_phase_original(seq_no,offset_frequencies,nchan,nfft,ns):
 def tone_offset_frequency(tone_bin,tone_num_samples,fft_bin,nfft):
     k = tone_bin
     m = fft_bin
-    nfft = nfft
     ns = tone_num_samples
     return nfft * (k / float(ns)) - m
 
