@@ -338,6 +338,11 @@ class StreamArray(RoachStream):
             offset = offset * self.stream_sample_rate
         return offset
 
+    def to_dataframe(self, add_origin = False):
+        dataframes = []
+        for number in range(self.tone_bin.shape[0]):
+            dataframes.append(self.stream(number).to_dataframe(add_origin=add_origin))
+        return pd.concat(dataframes, ignore_index=True)
 
 class StreamArray0(RoachStream0):
     """
@@ -415,6 +420,26 @@ class SingleStream(RoachStream):
         if not normalized_frequency:
             offset = offset * self.stream_sample_rate
         return offset
+
+    def to_dataframe(self, add_origin=True):
+        data = {'number': self.number, 'analysis_epoch': time.time(), 'start_epoch': self.start_epoch()}
+        try:
+            for key, value in self.roach_state.items():
+                data['roach_{}'.format(key)] = value
+        except KeyError:
+            pass
+
+        data.update(self.state.flatten(wrap_lists=True))
+
+        data['s21_point'] = [self.s21_point]
+        data['s21_point_error'] = [self.s21_point_error]
+        data['frequency'] = [self.frequency]
+        data['frequency_MHz'] = [self.frequency_MHz]
+
+        dataframe = pd.DataFrame(data, index=[0])
+        if add_origin:
+            self.add_origin(dataframe)
+        return dataframe
 
 
 class SingleStream0(RoachStream0):
@@ -863,13 +888,21 @@ class SingleSweepStream(RoachMeasurement):
         window_samples = int(2 ** np.ceil(np.log2(window_in_seconds * self.stream.stream_sample_rate)))
         logger.debug("deglitching with threshold %f, window %.f seconds, %d samples, extending mask by %d samples"
                      % (threshold, window_in_seconds,window_samples, mask_extend_samples))
-        self._glitch_mask = despike.deglitch_mask_mad(self.x_raw, thresh=threshold, window_length=window_samples,
-                                                      mask_extend=mask_extend_samples)
-        self._number_of_masked_samples = self._glitch_mask.sum()
-        self._x, self._q, self._stream_s21_normalized_deglitched = despike.mask_glitches([self.x_raw, self.q_raw,
-                                                                                          self.stream_s21_normalized],
-                                                                                         mask=self._glitch_mask,
-                                                                                         window_length=window_samples)
+        try:
+            self._glitch_mask = despike.deglitch_mask_mad(self.x_raw, thresh=threshold, window_length=window_samples,
+                                                          mask_extend=mask_extend_samples)
+            self._number_of_masked_samples = self._glitch_mask.sum()
+            self._x, self._q, self._stream_s21_normalized_deglitched = despike.mask_glitches([self.x_raw, self.q_raw,
+                                                                                              self.stream_s21_normalized],
+                                                                                             mask=self._glitch_mask,
+                                                                                             window_length=window_samples)
+        except:
+            self._glitch_mask = np.zeros(self.x_raw.shape, dtype='bool')
+            self._number_of_masked_samples = self._glitch_mask.sum()
+            self._x = self.x_raw
+            self._q = self.q_raw
+            self._stream_s21_normalized_deglitched = self.stream_s21_normalized
+
         logger.debug("masked %d samples out of %d total, fraction: %f" % (self._number_of_masked_samples,
                                                                           self._x_raw.size,
                                                                           (self._number_of_masked_samples /
@@ -939,6 +972,7 @@ class SingleSweepStream(RoachMeasurement):
         """
         if not hasattr(self, '_q'):
             self.deglitch()
+
         return self._q
 
     @property

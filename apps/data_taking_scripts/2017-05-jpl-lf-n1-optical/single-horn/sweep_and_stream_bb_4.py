@@ -6,7 +6,7 @@ from kid_readout.roach import analog
 from kid_readout.equipment import agilent_33220
 import time
 
-fg = agilent_33220.FunctionGenerator(addr=('192.168.0.202', 5025))
+fg = agilent_33220.FunctionGenerator(addr=('192.168.1.135', 5025))
 fg.set_load_ohms(1000)
 fg.set_dc_voltage(0)
 fg.enable_output(False)
@@ -14,13 +14,11 @@ fg.enable_output(False)
 ri = Roach2Baseband()
 
 ri.set_modulation_output('high')
-initial_f0s = np.load('/data/readout/resonances/2017-05-JPL-8x8-LF-N1_16resonances_mmw.npy')/1e6
+initial_f0s = np.load('/data/readout/resonances/2017-06-JPL-8x8-LF-N1_single_horn_4.npy')/1e6
 
-#initial_f0s = all_f0s[:96][::6]
 
 nf = len(initial_f0s)
-
-atonce = 16
+atonce = 4
 if nf % atonce > 0:
     print "extending list of resonators to make a multiple of ", atonce
     initial_f0s = np.concatenate((initial_f0s, np.arange(1, 1 + atonce - (nf % atonce)) + initial_f0s.max()))
@@ -28,24 +26,20 @@ if nf % atonce > 0:
 
 print len(initial_f0s)
 
-nsamp = 2**19
+nsamp = 2**20
 offsets = np.arange(-16,16)*512./nsamp
 
 last_f0s = initial_f0s
-
-#x = np.sqrt(np.linspace(0,5**2,16))
-
-#x = [.1,.2,.4,.6,.8,1]
 
 for heater_voltage in np.sqrt(np.linspace(0,4**2,16)):
     fg.set_dc_voltage(heater_voltage)
     if heater_voltage == 0:
         print "heater voltage is 0 V, skipping wait"
     else:
-        print "waiting 10 minutes", heater_voltage
-        time.sleep(600)
+        print "waiting 20 minutes", heater_voltage
+        time.sleep(1200)
     fg.enable_output(True)
-    for dac_atten in [20]:
+    for dac_atten in [35]:
         ri.set_dac_atten(dac_atten)
         tic = time.time()
         ncf = new_nc_file(suffix='%d_dB_load_heater_%.3f_V' % (dac_atten, heater_voltage))
@@ -80,12 +74,12 @@ for heater_voltage in np.sqrt(np.linspace(0,4**2,16)):
         ri.set_tone_freqs(current_f0s,nsamp)
         ri.select_fft_bins(range(last_f0s.shape[0]))
         last_f0s = current_f0s
-        #raw_input("turn off compressor")
+        raw_input("turn off compressor")
         meas = ri.get_measurement(num_seconds=30.,description='stream with bb')
-        #raw_input("turn on compressor")
+        raw_input("turn on compressor")
         ncf.write(meas)
         print "dac_atten %f heater voltage %.3f V done in %.1f minutes" % (dac_atten, heater_voltage, (time.time()-tic)/60.)
         ncf.close()
-
+        raw_input("check sweeps fit before going to next voltage step")
 
 ri.set_dac_atten(20)
