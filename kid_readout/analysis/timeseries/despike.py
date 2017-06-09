@@ -127,7 +127,7 @@ def mask_glitches(ts_list,mask,window_length):
             chunk = clean[start*step:(k+1)*step]
             nmask = local_mask.sum()
             if nmask:
-               chunk[local_mask] = np.random.choice(chunk[~local_mask],nmask)
+                chunk[local_mask] = np.random.choice(chunk[~local_mask],nmask)
     return clean_ts
 
 def deglitch_new(ts,thresh=6,mask_extend=50,window_length=2**16):
