@@ -222,8 +222,8 @@ class RoachStream(RoachMeasurement):
         Thus, the two slices stream_array.epochs(t0, t1) and stream_array.epochs(t1, t2) will contain all the data
         occurring at or after t0 and before t2, with no duplication.
         """
-        start_index = np.searchsorted(self.epoch + self.sample_time, (start,), side='left')
-        stop_index = np.searchsorted(self.epoch + self.sample_time, (stop,), side='right')  # This index is not included
+        start_index = np.searchsorted(self.epoch + self.sample_time, (start,), side='left')[0] # Need to be ints
+        stop_index = np.searchsorted(self.epoch + self.sample_time, (stop,), side='right')[0]  # This index not included
         return self.__class__(tone_bin=self.tone_bin, tone_amplitude=self.tone_amplitude,
                               tone_phase=self.tone_phase, tone_index=self.tone_index,
                               filterbank_bin=self.filterbank_bin, epoch=self.epoch + self.sample_time[start_index],
@@ -774,7 +774,7 @@ class SweepStreamArray(RoachMeasurement):
         self.stream_array = stream_array
         super(SweepStreamArray, self).__init__(state=state, description=description)
 
-    def epochs(self, start, stop):
+    def epochs(self, start=-np.inf, stop=np.inf):
         """
         Return a new SweepStreamArray containing the same sweep and only the stream data between the given epochs.
 
@@ -848,7 +848,7 @@ class SingleSweepStream(RoachMeasurement):
         self.number = number
         super(SingleSweepStream, self).__init__(state=state, description=description)
 
-    def epochs(self, start, stop):
+    def epochs(self, start=-np.inf, stop=np.inf):
         """
         Return a new SingleSweepStream containing the same sweep and only the stream data between the given epochs.
 
