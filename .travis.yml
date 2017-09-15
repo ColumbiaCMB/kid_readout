@@ -10,17 +10,12 @@ install:
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
-  - conda create -q -n test-environment python=2.7 numpy scipy matplotlib pandas nose requests pyserial cython numexpr
-  - conda install netcdf4=1.2.2 # 1.2.4 seems to be broken at the moment?
-  - conda install hdf4 # apparently no longer expliclitly included by netcdf4
+  - conda create -q -n test-environment python=2.7 numpy scipy matplotlib pandas nose requests pyserial cython numexpr netcdf4
   - source activate test-environment
   - pip install -r requirements.txt
   - pip install codecov
-#  - git clone https://github.com/lmfit/lmfit-py
-#  - cd lmfit-py; pip install .; cd ..
   - git clone https://github.com/nrao/ValonSynth.git
   - cd ValonSynth; python setup.py install; cd ..
-#  - python setup.py install
 after_success:
   - codecov
 # command to run tests
