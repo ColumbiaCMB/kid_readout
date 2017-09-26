@@ -1,15 +1,17 @@
-numpy
-scipy
-matplotlib
-pandas
-nose
-requests
-pyserial
-netcdf4
+# conda
 cython
+matplotlib
+netcdf4
+nose
+numexpr
+numpy
+pandas
+pyserial
+requests
+scipy
+# pip-only
 emcee
 corner
 lmfit
 testfixtures
 memoized-property
-numexpr

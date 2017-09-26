@@ -10,10 +10,13 @@ install:
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
-  - conda create -q -n test-environment python=2.7 numpy scipy matplotlib pandas nose requests pyserial cython numexpr netcdf4
+  - conda create -q -n test-environment python=2.7 cython matplotlib netcdf4 nose numexpr numpy pandas pyserial requests scipy  numpy scipy matplotlib pandas nose requests pyserial cython numexpr netcdf4
   - source activate test-environment
+  # Install the remaining packages that aren't available through conda
   - pip install -r requirements.txt
-  - curl -O https://github.com/casper-astro/mlib_devel/blob/master/xps_sw_support/qdr/roach2/qdr.py
+  # ToDo: figure out a cleaner solution
+  - curl -O https://raw.githubusercontent.com/casper-astro/mlib_devel/master/xps_sw_support/qdr/roach2/qdr.py
+  - mv qdr.py minconda/envs/test-environment/lib/python2.7/site-packages/
   - git clone https://github.com/nrao/ValonSynth.git
   - cd ValonSynth; python setup.py install; cd ..
   - pip install codecov
