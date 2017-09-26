@@ -13,9 +13,10 @@ install:
   - conda create -q -n test-environment python=2.7 numpy scipy matplotlib pandas nose requests pyserial cython numexpr netcdf4
   - source activate test-environment
   - pip install -r requirements.txt
-  - pip install codecov
+  - curl -O https://github.com/casper-astro/mlib_devel/blob/master/xps_sw_support/qdr/roach2/qdr.py
   - git clone https://github.com/nrao/ValonSynth.git
   - cd ValonSynth; python setup.py install; cd ..
+  - pip install codecov
 after_success:
   - codecov
 # command to run tests
