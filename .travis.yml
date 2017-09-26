@@ -14,9 +14,9 @@ install:
   - source activate test-environment
   # Install the remaining packages that aren't available through conda
   - pip install -r requirements.txt
+  # This file is required for the ROACH2, but we're not including it in the package for license reasons.
   # ToDo: figure out a cleaner solution
   - curl -O https://raw.githubusercontent.com/casper-astro/mlib_devel/master/xps_sw_support/qdr/roach2/qdr.py
-  - mv qdr.py miniconda/envs/test-environment/lib/python2.7/site-packages/
   - git clone https://github.com/nrao/ValonSynth.git
   - cd ValonSynth; python setup.py install; cd ..
   - pip install codecov
