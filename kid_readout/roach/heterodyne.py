@@ -1,3 +1,6 @@
+"""
+Classes to interface to ROACH2 hardware for KID readout systems
+"""
 import time
 import logging
 
@@ -43,7 +46,7 @@ class RoachHeterodyne(RoachInterface):
     def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None, host_ip=None, initialize=False,
                  nfs_root='/srv/roach_boot/etch', lo_valon=None, attenuator=None, use_config=True):
         """
-        Class to represent the heterodyne readout system (high-frequency (1.5 GHz), IQ mixers)
+        Class to represent the heterodyne readout system (high-frequency with IQ mixers)
 
         roach: an FpgaClient instance for communicating with the ROACH.
                 If not specified, will try to instantiate one connected to *roachip*
@@ -528,7 +531,7 @@ class Roach1Heterodyne11(RoachHeterodyne):
     def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None, host_ip=None, initialize=False,
                  use_config=False, nfs_root='/srv/roach_boot/etch', lo_valon=None, attenuator=None):
         """
-        Class to represent the heterodyne readout system (high-frequency (1.5 GHz), IQ mixers)
+        Class to represent the heterodyne readout system (high-frequency with IQ mixers)
 
         roach: an FpgaClient instance for communicating with the ROACH.
                 If not specified, will try to instantiate one connected to *roachip*
@@ -577,7 +580,7 @@ class Roach1Heterodyne11NarrowChannel(RoachHeterodyne):
     def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None, host_ip=None, initialize=False,
                  use_config=False, nfs_root='/srv/roach_boot/etch', lo_valon=None, attenuator=None):
         """
-        Class to represent the heterodyne readout system (high-frequency (1.5 GHz), IQ mixers)
+        Class to represent the heterodyne readout system (high-frequency with IQ mixers)
 
         roach: an FpgaClient instance for communicating with the ROACH.
                 If not specified, will try to instantiate one connected to *roachip*
