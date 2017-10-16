@@ -2,7 +2,7 @@ from distutils.core import setup
 from Cython.Build import cythonize
 import numpy
 
-setup(name='KID Readout',
+setup(name='KID-Readout',
       description='Code for the Columbia CMB ROACH KID readout',
       url='https://github.com/ColumbiaCMB/kid_readout',
       packages=['kid_readout'],

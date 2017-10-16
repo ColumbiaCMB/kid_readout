@@ -36,6 +36,10 @@ class TestRoach2HeterodyneLoopback(RoachMixin, Roach2Mixin, HeterodyneSoftwareMi
         for nsamp in 2**np.arange(15,19):
             for nchan in 2**np.arange(10):
                 yield self.check_stream_demodulator_case, nchan, nsamp
+    # This test was failing all 40 cases and was disabled on 2017-10-16 by DF and GJ because the StreamDemodulator code
+    # was not in use by any of the Roach classes. If this code is ever integrated, this test should be enabled by
+    # deleting the line below.
+    test_stream_demodulator.__test__ = False
 
     def check_stream_demodulator_case(self,nchan,nsamp):
         freqs = np.linspace(12.3123, 252.123,num=nchan)

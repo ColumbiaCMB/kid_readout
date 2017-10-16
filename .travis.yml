@@ -10,17 +10,10 @@ install:
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
-  - conda create -q -n test-environment python=2.7 cython matplotlib netcdf4 nose numexpr numpy pandas pyserial requests scipy  numpy scipy matplotlib pandas nose requests pyserial cython numexpr netcdf4
-  - source activate test-environment
-  # Install the remaining packages that aren't available through conda
-  - pip install -r requirements.txt
-  # This file is required for the ROACH2, but we're not including it in the package for license reasons.
-  # ToDo: figure out a cleaner solution
-  - curl -O https://raw.githubusercontent.com/casper-astro/mlib_devel/master/xps_sw_support/qdr/roach2/qdr.py
-  - git clone https://github.com/nrao/ValonSynth.git
-  - cd ValonSynth; python setup.py install; cd ..
+  - conda env create -q -f environment.yml
+  - source activate kid_readout
   - pip install codecov
 after_success:
   - codecov
 # command to run tests
-script: nosetests -v --with-coverage --cover-erase --cover-xml --cover-inclusive --cover-package=kid_readout --exclude=".*equipment.*" --ignore-files="setup.py|interactive.py|qdr.py"
+script: nosetests -v --with-coverage --cover-erase --cover-xml --cover-inclusive --cover-package=kid_readout --exclude=".*equipment.*" --ignore-files="setup.py|interactive.py"

@@ -56,9 +56,9 @@ class Demodulator(object):
 
 # ToDo: making this function work will require adding window_frequency_scale to Roach classes
 def get_stream_demodulator_from_roach_state(state, state_arrays):
-    return StreamDemodulator(tone_bins=state_arrays.tone_bin,
-                             phases=state_arrays.tone_phase,
-                             fft_bins=state_arrays.filterbank_bin,
+    return StreamDemodulator(tone_bins=state_arrays['tone_bin'],
+                             phases=state_arrays['tone_phase'],
+                             fft_bins=state_arrays['filterbank_bin'],
                              tone_nsamp=state.num_tone_samples,
                              nfft=state.num_filterbank_channels,
                              hardware_delay_samples=state.hardware_delay_samples,

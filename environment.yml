@@ -1,0 +1,23 @@
+name: kid_readout
+channels:
+- defaults
+dependencies:
+- cython
+- matplotlib
+- netcdf4
+- nose
+- numexpr
+- numpy
+- pandas
+- pyserial
+- requests
+- scipy
+- pip:
+  - corner
+  - corr==0.7.3
+  - emcee
+  - katcp==0.5.5
+  - lmfit
+  - memoized-property
+  - testfixtures
+  - git+https://github.com/nrao/valonsynth.git

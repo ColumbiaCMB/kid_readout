@@ -1,23 +1,49 @@
-import valon_synth
-import warnings
-try:
-    ver = valon_synth.valon_synth.__version__
-    if float(ver) < 1.0:
-        warnings.warn('insufficient valon_synth version')
-except AttributeError:
-    warnings.warn('insufficient valon_synth version')
-from valon_synth import Synthesizer, SYNTH_A, SYNTH_B
-import numpy as np
 import os
-import sys
-import subprocess
 import re
+import subprocess
+
+import valon_synth
+
 
 VALON_SERIAL_NUMBERS = dict(roach='AM01H05A',
                             roach2='A101FK1K',
                             mark2='A101FK1H')
 
 usbre = re.compile(r"usb (?P<port>\d*-\d*)")
+
+
+class Synthesizer(valon_synth.Synthesizer):
+
+    def __init__(self, port, timeout=1.0):
+        valon_synth.Synthesizer.__init__(self, port)  # The superclass is an old-style class
+        self.conn.setTimeout(timeout)
+
+    def get_frequency_a(self):
+        return self.get_frequency(valon_synth.SYNTH_A)
+
+    def get_frequency_b(self):
+        return self.get_frequency(valon_synth.SYNTH_B)
+
+    def get_frequencies(self):
+        return self.get_frequency_a(), self.get_frequency_b()
+
+    def set_frequency_a(self, freq, chan_spacing=10.):
+        return self.set_frequency(valon_synth.SYNTH_A, freq, chan_spacing=chan_spacing)
+
+    def set_frequency_b(self, freq, chan_spacing=10.):
+        return self.set_frequency(valon_synth.SYNTH_B, freq, chan_spacing=chan_spacing)
+
+    def get_rf_level_a(self):
+        return self.get_rf_level(valon_synth.SYNTH_A)
+
+    def get_rf_level_b(self):
+        return self.get_rf_level(valon_synth.SYNTH_B)
+
+    def get_rf_levels(self):
+        return self.get_rf_level_a(), self.get_rf_level_b()
+
+    def get_phase_locks(self):
+        return self.get_phase_lock(valon_synth.SYNTH_A), self.get_phase_lock(valon_synth.SYNTH_B)
 
 
 def find_valons():
@@ -27,6 +53,7 @@ def find_valons():
     print "couldn't find valons by id, trying dmesg"
     return find_valons_with_dmesg()
 
+
 def find_valons_by_id():
     basepath = '/dev/serial/by-id/'
     serial_ports = os.listdir(basepath)
@@ -34,6 +61,7 @@ def find_valons_by_id():
         if port.find('usb-FTDI_FT232R_USB_UART') >= 0:
             return os.path.realpath(os.path.join(basepath,port))
     return None
+
 
 def find_valons_with_dmesg():
     """
@@ -72,7 +100,8 @@ def find_valons_with_dmesg():
             if port not in ports:
                 ports.append(port)
     return ports
-    
+
+
 def check_output(*popenargs, **kwargs):
     r"""Run command with arguments and return its output as a byte string.
 
@@ -106,4 +135,3 @@ def check_output(*popenargs, **kwargs):
             cmd = popenargs[0]
         raise subprocess.CalledProcessError(retcode, cmd)#, output=output)
     return output
-    
