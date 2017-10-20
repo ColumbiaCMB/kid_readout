@@ -27,8 +27,10 @@ except ImportError:
     have_numexpr = False
 
 
-
 class Roach2Baseband(RoachBaseband):
+
+    MEMORY_SIZE_BYTES = 2 ** 23  # 8 MB
+
     def __init__(self,roach=None, wafer=0, roachip='r2kid', adc_valon=settings.ROACH2_VALON, host_ip=settings.ROACH2_GBE_HOST_IP,
                  initialize=True, nfs_root='/srv/roach_boot/etch'):
         super(Roach2Baseband,self).__init__(roach=roach,wafer=wafer,roachip=roachip, adc_valon=adc_valon,

@@ -23,32 +23,29 @@ except ImportError:
 
 
 class Roach2Heterodyne(RoachHeterodyne):
+
+    MEMORY_SIZE_BYTES = 2 ** 23  # 8 MB
+
     def __init__(self, roach=None, wafer=0, roachip='r2kid', adc_valon=None, host_ip=None, initialize=True,
-                 nfs_root='/srv/roach_boot/etch', lo_valon=None, attenuator=None):
+                 nfs_root='/srv/roach_boot/etch', lo_valon=None, attenuator=None, use_config=True):
         super(Roach2Heterodyne, self).__init__(roach=roach, wafer=wafer, roachip=roachip, adc_valon=adc_valon,
                                                host_ip=host_ip, nfs_root=nfs_root, lo_valon=lo_valon,
                                                attenuator=attenuator)
-
         self.lo_frequency = 0.0
         self.heterodyne = True
         self.is_roach2 = True
         self.boffile = 'r2iq2xpfb14mcr18gb_2016_Jun_30_1104.bof'
         self.iq_delay = 0
-        self.channel_selection_offset=3
-
-
+        self.channel_selection_offset = 3
         self.wafer = wafer
         self.raw_adc_ns = 2 ** 12  # number of samples in the raw ADC buffer
         self.nfft = 2 ** 14
         self.fpga_cycles_per_filterbank_frame = 2**13
         self._fpga_output_buffer = 'ppout%d' % wafer
-
         self.phase0 = None      #initial sequence number, if none then no data has been read in yet
-
         self._general_setup()
-
         if initialize:
-            self.initialize()
+            self.initialize(use_config=use_config)
 
     def initialize(self, fs=512.0, use_config=True, force_cal_qdr=False):
         reprogrammed = super(Roach2Heterodyne,self).initialize(fs=fs,start_udp=False,use_config=use_config)
@@ -126,6 +123,12 @@ class Roach2Heterodyne(RoachHeterodyne):
 
 
 class Roach2Heterodyne11(Roach2Heterodyne):
+    """
+    Compared to Roach2Heterodyne, this class has more bandwidth (250 kHz) per channel and a sharper channel filter.
+
+    The filter (8-tap Hamming) transmission is down to about 0.55 at the edges of the PFB bin, so using a tone too far
+    from the bin center may produce strange results.
+    """
 
     def __init__(self, roach=None, wafer=0, roachip='r2kid', adc_valon=None, host_ip=None, initialize=False,
                  use_config=False, nfs_root='/srv/roach_boot/etch', lo_valon=None, attenuator=None):
@@ -171,9 +174,10 @@ class Roach2Heterodyne11NarrowChannel(Roach2Heterodyne):
     """
     This class is identical to Roach1Heterodyne11 except that the channel filter frequencies are scaled by 0.8 to
     reduce aliasing.
-    """
 
-    # The RoachHeterodyne class is a roach 1 class, so this build has the same DRAM size.
+    The filter (8-tap Hamming) transmission is down to about 0.2 at the edges of the PFB bin, so using a tone too far
+    from the bin center may produce strange results.
+    """
 
     def __init__(self, roach=None, wafer=0, roachip='roach', adc_valon=None, host_ip=None, initialize=False,
                  use_config=False, nfs_root='/srv/roach_boot/etch', lo_valon=None, attenuator=None):

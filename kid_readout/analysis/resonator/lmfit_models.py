@@ -142,8 +142,8 @@ class LinearLossResonatorModel(ComplexModel):
         loss_i_guess = i_plus_c * i_over_c / (1 + i_over_c)
         params = self.make_params(f_0=f_0_guess, loss_i=loss_i_guess, loss_c=loss_c_guess, asymmetry=0)
         params['{}f_0'.format(self.prefix)].set(min=f.min(), max=f.max())
-        params['{}loss_i'.format(self.prefix)].set(min=0, max=1)
-        params['{}loss_c'.format(self.prefix)].set(min=0, max=1)
+        params['{}loss_i'.format(self.prefix)].set(min=1e-12, max=1)
+        params['{}loss_c'.format(self.prefix)].set(min=1e-12, max=1)
         params['{}asymmetry'.format(self.prefix)].set(min=-10, max=10)
         return update_param_values_and_limits(params, self.prefix, **kwargs)
 

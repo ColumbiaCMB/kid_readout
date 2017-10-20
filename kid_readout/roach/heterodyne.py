@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 class RoachHeterodyne(RoachInterface):
 
-    DRAM_SIZE_BYTES = 2 ** 28  # 256 MB
+    MEMORY_SIZE_BYTES = 2 ** 28  # 256 MB
 
     initial_values_for_writeable_registers = {
         'chans': -1,  # this isn't a register, but this will make the read table invalid
@@ -216,7 +216,9 @@ class RoachHeterodyne(RoachInterface):
             of the spectrum with no stimulus tone.
         load : bool (debug only). If false, don't actually load the waveform, just calculate it.
         """
-
+        if self.BYTES_PER_SAMPLE * nsamp > self.MEMORY_SIZE_BYTES:
+            message = "Requested tone size ({:d} bytes) exceeds available memory ({:d} bytes)"
+            raise ValueError(message.format(self.BYTES_PER_SAMPLE * nsamp, self.MEMORY_SIZE_BYTES))
         if bins.ndim == 1:
             bins.shape = (1, bins.shape[0])
         nwaves = bins.shape[0]

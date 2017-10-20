@@ -33,7 +33,7 @@ class RoachInterface(object):
     """
 
     BYTES_PER_SAMPLE = 4
-    DRAM_SIZE_BYTES = None  # Subclasses should give the appropriate value
+    MEMORY_SIZE_BYTES = None  # Subclasses should give the appropriate value
 
     def __init__(self, roach=None, roachip='roach', adc_valon=None, host_ip=None,
                  nfs_root='/srv/roach_boot/etch', lo_valon=None):
@@ -179,7 +179,7 @@ class RoachInterface(object):
     #            raise e
 
     def max_num_waveforms(self, num_tone_samples):
-        return self.DRAM_SIZE_BYTES // (self.BYTES_PER_SAMPLE * num_tone_samples)
+        return self.MEMORY_SIZE_BYTES // (self.BYTES_PER_SAMPLE * num_tone_samples)
 
     @property
     def num_tones(self):

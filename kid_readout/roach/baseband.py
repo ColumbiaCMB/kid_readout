@@ -27,6 +27,8 @@ except ImportError:
 
 class RoachBaseband(RoachInterface):
 
+    MEMORY_SIZE_BYTES = 2 ** 28  # 256 MB
+
     def __init__(self, roach=None, wafer=0, roachip=ROACH1_IP, adc_valon=ROACH1_VALON, host_ip=ROACH1_HOST_IP,
                  initialize=True, nfs_root='/srv/roach_boot/etch'):
         """
@@ -146,7 +148,9 @@ class RoachBaseband(RoachInterface):
             of the spectrum with no stimulus tone.
         load : bool (debug only). If false, don't actually load the waveform, just calculate it.
         """
-
+        if self.BYTES_PER_SAMPLE * nsamp > self.MEMORY_SIZE_BYTES:
+            message = "Requested tone size ({:d} bytes) exceeds available memory ({:d} bytes)"
+            raise ValueError(message.format(self.BYTES_PER_SAMPLE * nsamp, self.MEMORY_SIZE_BYTES))
         if bins.ndim == 1:
             bins.shape = (1, bins.shape[0])
         nwaves = bins.shape[0]
