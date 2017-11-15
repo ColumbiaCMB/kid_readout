@@ -16,7 +16,8 @@ class Synthesizer(valon_synth.Synthesizer):
 
     def __init__(self, port, timeout=1.0):
         valon_synth.Synthesizer.__init__(self, port)  # The superclass is an old-style class
-        self.conn.setTimeout(timeout)
+        #self.conn.setTimeout(timeout)
+        self.conn.timeout = float(timeout)
 
     def get_frequency_a(self):
         return self.get_frequency(valon_synth.SYNTH_A)
