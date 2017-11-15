@@ -6,6 +6,7 @@ DIODE_4_TEMP = 4
 ROX_1_TEMP = 9
 ROX_2_TEMP = 11
 ROX_3_TEMP = 13
+thermometry_2017_11_13 = dict(package=7, load=3, stepper=5)
 thermometry_2016_11_14 = dict(package=ROX_1_TEMP, secondary_package=ROX_2_TEMP, load=DIODE_1_TEMP)
 thermometry_2016_09_09 = dict(package=ROX_2_TEMP, load=DIODE_1_TEMP)
 thermometry_2016_08_10 = dict(package=9, load=1)
@@ -23,6 +24,12 @@ thermometry_2014_10_10 = dict(package=9, load=1, stage=11, waveguide=2)
 thermometry_2014_03_19 = dict(package=11, load=2, stage=13, copper=1)
 
 by_unix_time_table = [
+    dict(date='2017-11-13',
+         description='Stanford MKIDArray02-0001 multichroic 23-pixel Al-under-Nb array on SOI',
+         optical_state='light',
+         thermometry_config=thermometry_2017_11_13,
+         chip_id='MKIDArray02-0001'),
+
     dict(date='2016-11-18',
          description='Stanford AlMn LEKID',
          optical_state='dark',
