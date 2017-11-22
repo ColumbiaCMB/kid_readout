@@ -9,6 +9,7 @@ import time
 import bisect
 
 import numpy as np
+import tailer
 
 import kid_readout.equipment.parse_srs
 import kid_readout.analysis.resources.experiments
@@ -114,3 +115,19 @@ def get_temperatures_at(t):
             break
 
     return primary_package_temperature, secondary_package_temperature, primary_load_temperature, secondary_load_temperature
+
+
+def get_current_temperatures(filename=None, separator=','):
+    if filename is None:
+        _, filenames = get_temperature_log_file_list()
+        filename = filenames[-1]
+    with open(filename) as f:
+        header = [s.strip() for s in tailer.head(f, 1).pop().split(separator)]
+        current_strings = [s.strip() for s in tailer.tail(f, 1).pop().split(separator)]
+    current = []
+    for s in current_strings:
+        try:
+            current.append(float(s))
+        except ValueError:
+            current.append(s)
+    return dict(zip(header, current))

@@ -1467,8 +1467,11 @@ class Scan(core.Measurement):
     # ToDo: test and finish
     def stitch(self, kernel=None):
         n = self.sweep_arrays[0].frequency.size
-        # ToDo: automatically calculate overlap for each segment
-        overlap = int(n / 2)
+        duplicates = np.where(self.sweep_arrays[0].frequency == self.sweep_arrays[1].frequency[0])[0]
+        if duplicates.size == 0:
+            overlap = 0
+        else:
+            overlap = self.sweep_arrays[0].frequency.size - int(duplicates)  # will fail if more than 1 duplicate
         left_weight = np.linspace(1, 0, overlap)
         right_weight = np.linspace(0, 1, overlap)
         frequencies = [self.sweep_arrays[0].frequency[:overlap]]

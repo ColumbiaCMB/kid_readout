@@ -79,6 +79,10 @@ class Roach2Baseband(RoachBaseband):
             q.qdr_cal()
             logger.info("Succesfully recalibrated QDR")
 
+    def max_num_waveforms(self, num_tone_samples):
+        """The ROACH2 code currently allows for only one waveform."""
+        return 1
+
     def load_waveform(self, wave, start_offset=0, fast=True):
         """
         Load waveform

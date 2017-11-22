@@ -196,18 +196,18 @@ def measure_hardware_delay(ri, frequencies=np.arange(1, 9) * 24, num_tone_sample
     return total_delay
 
 
-def set_and_attempt_external_phase_lock(ri, f_lo, df_lo, sleep=0.1, max_attempts=3):
+def set_and_attempt_external_phase_lock(ri, f_lo, f_lo_spacing, sleep=0.1, max_attempts=3):
     attempt = 0
     f_lock = 4000
-    ri.set_lo(lomhz=f_lo, chan_spacing=df_lo)
+    ri.set_lo(lomhz=f_lo, chan_spacing=f_lo_spacing)
     while not np.all(ri.lo_valon.get_phase_locks()):
         attempt += 1
         logger.info("Attempt {:d} of {:d} to lock LO Valon".format(attempt, max_attempts))
         ri.lo_valon.set_ref_select(0)
         # Not clear whether the channel spacing matters
-        ri.set_lo(lomhz=f_lock, chan_spacing=df_lo)
+        ri.set_lo(lomhz=f_lock, chan_spacing=f_lo_spacing)
         time.sleep(sleep)
-        ri.set_lo(lomhz=f_lo, chan_spacing=df_lo)
+        ri.set_lo(lomhz=f_lo, chan_spacing=f_lo_spacing)
         time.sleep(sleep)
         ri.lo_valon.set_ref_select(1)
         time.sleep(sleep)
@@ -220,7 +220,7 @@ def set_and_attempt_external_phase_lock(ri, f_lo, df_lo, sleep=0.1, max_attempts
 
 
 # ToDo: this should probably be a method of RoachInterface
-def optimize_fft_gain(ri, fraction_of_maximum=0.8, num_seconds=0.1):
+def optimize_fft_gain(ri, fraction_of_maximum=0.5, num_seconds=0.1):
     """
     Set the FFT gain to the highest value such that none of the tones currently played is affected by rounding.
 

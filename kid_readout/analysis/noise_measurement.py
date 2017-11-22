@@ -5,9 +5,9 @@ import matplotlib
 from kid_readout.measurement.io import readoutnc
 
 
-matplotlib.use('agg')
+#matplotlib.use('agg')
 #matplotlib.rcParams['mathtext.fontset'] = 'stix'
-matplotlib.rcParams['font.size'] = 16.0
+#matplotlib.rcParams['font.size'] = 16.0
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from matplotlib.backends.backend_pdf import PdfPages
