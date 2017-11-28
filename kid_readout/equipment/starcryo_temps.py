@@ -14,7 +14,6 @@ import tailer
 import kid_readout.equipment.parse_srs
 import kid_readout.analysis.resources.experiments
 
-
 if os.path.exists('/data/readout'):
     temperature_log_file_dir = '/data/readout/SRS/'
 else:
@@ -131,3 +130,15 @@ def get_current_temperatures(filename=None, separator=','):
         except ValueError:
             current.append(s)
     return dict(zip(header, current))
+
+
+class Temperature(object):
+
+    name = 'temperature'
+
+    def __init__(self, filename=None):
+        self.filename = filename
+
+    @property
+    def state(self):
+        return get_current_temperatures(self.filename)

@@ -51,7 +51,7 @@ def load_heterodyne_sweep_tones(ri, tone_banks, num_tone_samples):
 
 
 def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=0, state=None, description='', verbose=False,
-              wait_for_sync=True, **kwargs):
+              wait_for_sync=0.1, **kwargs):
     """
     Return a SweepArray acquired using the given tone banks.
 
@@ -72,8 +72,8 @@ def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=0, state=None, de
         A human-readable description of the measurement.
     verbose : bool
         If true, print progress messages.
-    wait_for_sync : bool
-        If true, sleep for a short time to let the ROACH sync finish.
+    wait_for_sync : float
+        Sleep for this time in seconds to let the ROACH sync finish.
     kwargs
         Keyword arguments passed to ri.get_measurement().
 
@@ -91,8 +91,7 @@ def run_sweep(ri, tone_banks, num_tone_samples, length_seconds=0, state=None, de
         ri.set_tone_freqs(tone_bank, nsamp=num_tone_samples)
         ri.select_fft_bins(np.arange(tone_bank.size))
         # we wait a bit here to let the roach2 sync catch up.  figuring this out still.
-        if wait_for_sync:
-            time.sleep(0.1)
+        time.sleep(wait_for_sync)
         stream_arrays.append(ri.get_measurement(num_seconds=length_seconds, **kwargs))
     return basic.SweepArray(stream_arrays, state=state, description=description)
 
@@ -247,12 +246,12 @@ def show_git_status():
 
 # Logging
 
-def get_script_logger(name):
+def get_script_logger(name, level=logging.INFO):
     script_logger = logging.getLogger('kid_readout')
     script_logger.setLevel(logging.DEBUG)
     if log.default_handler not in script_logger.handlers:
         stream_handler = log.default_handler
-        stream_handler.setLevel(logging.INFO)
+        stream_handler.setLevel(level)
         script_logger.addHandler(stream_handler)
     script_logger.addHandler(log.file_handler(name))
     return script_logger

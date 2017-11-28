@@ -70,7 +70,11 @@ class Roach2Heterodyne(RoachHeterodyne):
         if not qdr_is_calibrated or force_cal_qdr or reprogrammed:
             logger.debug("Calibrating QDR")
             q.qdr_cal()
-            logger.info("Succesfully recalibrated QDR")
+            logger.info("Successfully recalibrated QDR")
+
+    def max_num_waveforms(self, num_tone_samples):
+        """The ROACH2 code currently allows for only one waveform."""
+        return 1
 
     def set_tone_bins(self, bins, nsamp, amps=None, load=True, normfact=None, phases=None, preset_norm=True):
         super(Roach2Heterodyne,self).set_tone_bins(bins=bins, nsamp=nsamp, amps=amps, load=load, normfact=normfact, phases=phases, preset_norm=preset_norm)
