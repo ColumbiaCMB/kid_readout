@@ -466,6 +466,7 @@ class MeasurementError(Exception):
     pass
 
 
+# ToDo: when a dict is added after construction, it is not converted to a StateDict so there is no type checking
 class StateDict(dict):
     """
     This class adds attribute access and some content restrictions to the dict class.

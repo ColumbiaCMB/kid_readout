@@ -563,7 +563,7 @@ class SweepArray(RoachMeasurement):
         return self.fit_background(frequency=self.frequency, s21=self.s21_point)
 
     # ToDo: swap this out for a lmfit model
-    def fit_background(self, frequency=None, s21=None, amp_degree=4, phi_degree=4, weights=None, mask=None):
+    def fit_background(self, frequency=None, s21=None, amp_degree=3, phi_degree=3, weights=None, mask=None):
         if frequency is None:
             frequency = self.frequency
         if s21 is None:
@@ -578,8 +578,8 @@ class SweepArray(RoachMeasurement):
         return np.polyval(amp_poly, frequency) * np.exp(1j * np.polyval(phi_poly, frequency))
 
     # ToDo: this could be much smarter about identifying large peaks
-    def find_resonances(self, expected_Q=30000, num_widths=100, threshold=1, minimum_linewidth_separation=1,
-                        **find_peaks_cwt_kwargs):
+    def find_peaks(self, expected_Q=30000, num_widths=100, threshold=1, minimum_linewidth_separation=1,
+                   **find_peaks_cwt_kwargs):
         linewidth = self.frequency.mean() / expected_Q
         width = linewidth / (self.frequency[1] - self.frequency[0])  # in samples
         data = 1 / np.abs(self.s21_point_foreground) - 1
@@ -972,7 +972,6 @@ class SingleSweepStream(RoachMeasurement):
         """
         if not hasattr(self, '_q'):
             self.deglitch()
-
         return self._q
 
     @property
@@ -1436,7 +1435,7 @@ class SingleSweepStreamList(RoachMeasurement):
         return np.array(vector)
 
 
-class Scan(core.Measurement):
+class Scan(RoachMeasurement):
     """
     This class contains a MeasurementList of SweepArrays, and allows them to be addressed as a single scan across the
     entire range of frequencies. It can handle overlap by averaging.
@@ -1463,6 +1462,10 @@ class Scan(core.Measurement):
     @property
     def s21_point(self):
         return np.concatenate([sa.s21_point for sa in self.sweep_arrays])
+
+    @property
+    def s21_point_foreground(self):
+        return np.concatenate([sa.s21_point_foreground for sa in self.sweep_arrays])
 
     # ToDo: test and finish
     def stitch(self, kernel=None):

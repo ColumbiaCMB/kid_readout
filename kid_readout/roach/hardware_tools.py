@@ -34,7 +34,7 @@ def r2h11_with_mk2(**kwargs):
     if MARK2_VALON is None:  # If lo_valon is None the roach will use its internal valon, with unfortunate results.
         raise ValueError("MARK2_VALON is None.")
     r2 = r2heterodyne.Roach2Heterodyne11(roachip=ROACH2_IP, adc_valon=ROACH2_VALON, host_ip=ROACH2_GBE_HOST_IP,
-                                         lo_valon=MARK2_VALON, attenuator=None, **kwargs)
+                                         lo_valon=MARK2_VALON, attenuator=attenuator.Attenuator(), **kwargs)
     return r2
 
 
@@ -49,8 +49,8 @@ def r2h11nc_with_mk2(**kwargs):
     if MARK2_VALON is None:  # If lo_valon is None the roach will use its internal valon, with unfortunate results.
         raise ValueError("MARK2_VALON is None.")
     r2 = r2heterodyne.Roach2Heterodyne11NarrowChannel(roachip=ROACH2_IP, adc_valon=ROACH2_VALON,
-                                                      host_ip=ROACH2_GBE_HOST_IP, lo_valon=MARK2_VALON, attenuator=None,
-                                                      **kwargs)
+                                                      host_ip=ROACH2_GBE_HOST_IP, lo_valon=MARK2_VALON,
+                                                      attenuator=attenuator.Attenuator(), **kwargs)
     return r2
 
 

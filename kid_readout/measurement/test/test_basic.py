@@ -89,6 +89,21 @@ class TestSweepArray(object):
         for attr in memoized:
             assert not hasattr(self.sa, '_' + attr), "Cache present: {}".format(attr)
 
+    def test_recursive_delete_memoized_property_caches(self):
+        memoized = ['ascending_order', 'frequency', 's21_point', 's21_point_error', 's21_raw']
+        for attr in memoized:
+            assert not hasattr(self.sa, '_' + attr), "Cache present: {}".format(attr)
+        _ = self.sa.frequency
+        _ = self.sa.s21_point
+        _ = self.sa.s21_point_error
+        _ = self.sa.s21_raw
+        for attr in memoized:
+            assert hasattr(self.sa, '_' + attr), "Cache missing in SweepArray: {}".format(attr)
+        self.sa.stream_arrays[0]._delete_memoized_property_caches()
+        for attr in memoized:
+            assert not hasattr(self.sa, '_' + attr), "Cache present in SweepArray: {}".format(attr)
+            assert not hasattr(self.sa.stream_arrays[0], '_' + attr), "Cache present in StreamArray: {}".format(attr)
+
     def test_frequency(self):
         assert np.all(np.diff(self.sa.frequency))  # Note that this will fail if there are duplicate tones.
 

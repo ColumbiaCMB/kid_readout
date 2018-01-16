@@ -353,7 +353,6 @@ class RoachInterface(object):
 #        except AttributeError:
 #            self.select_fft_bins(np.arange(self.tone_bins.shape[1]))
 
-
     def set_modulation_output(self, rate='low'):
         """
         rate: can be 'high', 'low', 1-8.
@@ -390,6 +389,7 @@ class RoachInterface(object):
         else:
             raise ValueError('Invalid value for rate: got %s, expected one of "high", "low", or 1-8' % str(rate))
 
+    # Todo: this is wrong for the r2h11 build: it reports a  frequency that is factor of 8 too high
     def get_modulation_rate_hz(self):
         if self.modulation_rate == 0:
             return 0.0

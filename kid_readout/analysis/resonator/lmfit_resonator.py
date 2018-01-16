@@ -185,7 +185,7 @@ class BaseResonator(FitterWithAttributeAccess):
 
     def invert_raw(self, frequency, s21_raw):
         """
-        Invert the resonator model and return the time-ordered resonator parameters x(t) and Q_i^[-1}(t) that correspond
+        Invert the resonator model and return the time-ordered resonator parameters x(t) and Q_i^{-1}(t) that correspond
         to the given time-ordered non-normalized s21 data; see invert().
 
         Parameters
