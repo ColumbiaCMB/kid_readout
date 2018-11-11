@@ -67,7 +67,7 @@ state = dict(magnetic_shield = 'on', cryostat='starcryo')
 state.update(other=setup.state())
 
 tic = time.time()
-for lo in 880.+190*np.arange(0,3):
+for lo in 880.+190*np.arange(0,2):
     logger.info("Measuring at LO %.1f" % lo)
     df = acquire.new_nc_file(suffix='scan_lo_%.1f_MHz' % lo)
     ri.set_lo(lo)

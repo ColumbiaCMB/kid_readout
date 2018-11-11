@@ -20,7 +20,7 @@ offsets = np.arange(-16,16)*512./nsamp
 for dac_atten in [15]:
     tic = time.time()
     ri.set_dac_atten(dac_atten)
-    ncf = new_nc_file(suffix='%d_dB_dac' % dac_atten)
+    ncf = new_nc_file(suffix='%d_dB_dac_300s' % dac_atten)
     swpa = acquire.run_sweep(ri, tone_banks=initial_f0s[None,:] + offsets[:,None], num_tone_samples=nsamp,
                                  length_seconds=0, verbose=True,
                              )
@@ -51,7 +51,7 @@ for dac_atten in [15]:
     ri.set_tone_freqs(current_f0s,nsamp)
     ri.select_fft_bins(range(initial_f0s.shape[0]))
     raw_input("turn off compressor")
-    meas = ri.get_measurement(num_seconds=30., description='compressor off')
+    meas = ri.get_measurement(num_seconds=300., description='compressor off')
     raw_input("turn on compressor")
     ncf.write(meas)
     print "dac_atten %f done in %.1f minutes" % (dac_atten, (time.time()-tic)/60.)

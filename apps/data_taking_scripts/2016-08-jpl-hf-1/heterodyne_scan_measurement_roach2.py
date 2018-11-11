@@ -26,7 +26,7 @@ setup = hardware.Hardware()
 ri = hardware_tools.r2_with_mk1()
 ri.iq_delay=-1
 
-ri.set_dac_atten(20)
+ri.set_dac_atten(5)
 ri.set_fft_gain(4)
 
 nsamp = 2**15

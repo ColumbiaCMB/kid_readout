@@ -13,23 +13,22 @@ ifboard = analog.HeterodyneMarkI()
 setup = hardware.Hardware(ifboard)
 
 ri = hardware_tools.r2_with_mk1()
-
 ri.iq_delay=-1
 ri.set_fft_gain(6)
 
 #initial_f0s = np.load('/data/readout/resonances/2016-06-18-jpl-hex-271-32-high-qi-lo-1210-resonances.npy')
 #initial_f0s = initial_f0s/1e6
-initial_f0s = np.load('/data/readout/resonances/2016-09-13-JPL-8x8-HF-1_thirdcooldown_resonances.npy')/1e6
+initial_f0s = np.load('/data/readout/resonances/2017-06-JPL-8x8-LF-N1_higher.npy')/1e6
 initial_lo = 1010.
 
 nf = len(initial_f0s)
-atonce = 128
+atonce = 64
 if nf % atonce > 0:
     print "extending list of resonators to make a multiple of ", atonce
     initial_f0s = np.concatenate((initial_f0s, np.arange(1, 1 + atonce - (nf % atonce)) + initial_f0s.max()))
 
 print len(initial_f0s)
-nsamp = 2**17
+nsamp = 2**18
 step = 1
 nstep = 32
 offset_bins = np.arange(-(nstep + 1), (nstep + 1)) * step
@@ -40,10 +39,11 @@ offsets = offset_bins * 512.0 / nsamp
 for (lo,f0s) in [(initial_lo,initial_f0s)]:
     ri.set_lo(lo)
     #for dac_atten in [2,6,10,20]:
-    for dac_atten in [2]:
+    for dac_atten in [30,25,20,15]:
         ri.set_dac_atten(dac_atten)
         tic = time.time()
         ncf = new_nc_file(suffix='%d_dB_dac' % dac_atten)
+        print f0s
         swpa = acquire.run_sweep(ri, tone_banks=f0s[None,:] + offsets[:,None], num_tone_samples=nsamp,
                                  length_seconds=0, state=setup.state(), verbose=True,
                                  description='dark sweep')

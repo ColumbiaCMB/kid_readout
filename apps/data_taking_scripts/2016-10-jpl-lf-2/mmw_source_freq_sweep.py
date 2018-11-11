@@ -29,7 +29,7 @@ setup = hardware.Hardware(hittite, source, lockin)
 
 ri = Roach2Baseband()
 
-initial_f0s = np.load('/data/readout/resonances/2016-10-03-jpl-lf-2-crude-initial-resonator-list.npy')/1e6
+initial_f0s = np.load('/data/readout/resonances/2016-10-04-JPL-8x8-LF-2_firstcooldown_resonances.npy')/1e6
 
 nf = len(initial_f0s)
 atonce = 128

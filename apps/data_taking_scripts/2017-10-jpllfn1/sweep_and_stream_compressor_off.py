@@ -3,10 +3,11 @@ import time
 
 #setup = hardware.Hardware()
 
+
 ri = Roach2Baseband()
 
 ri.set_modulation_output('high')
-initial_f0s = np.load('/data/readout/resonances/2017-07-JPL-8x8-LF-N1_single_horn.npy')/1e6
+initial_f0s = np.load('/data/readout/resonances/2017-10-JPL-LF-N1.npy')/1e6
 
 nf = len(initial_f0s)
 atonce = 128
@@ -17,7 +18,7 @@ if nf % atonce > 0:
 nsamp = 2**18 #going above 2**18 with 128 simultaneous tones doesn't quite work yet
 offsets = np.arange(-16,16)*512./nsamp
 
-for dac_atten in [15]:
+for dac_atten in [10]:
     tic = time.time()
     ri.set_dac_atten(dac_atten)
     ncf = new_nc_file(suffix='%d_dB_dac' % dac_atten)
